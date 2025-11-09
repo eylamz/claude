@@ -1,0 +1,339 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
+import { useTranslation } from '@/hooks';
+import { Button } from '@/components/ui';
+
+interface ResetErrors {
+  password?: string;
+  confirmPassword?: string;
+  general?: string;
+}
+
+interface PasswordStrength {
+  score: number;
+  checks: {
+    length: boolean;
+    uppercase: boolean;
+    lowercase: boolean;
+    number: boolean;
+    special: boolean;
+  };
+}
+
+function getPasswordStrength(password: string): PasswordStrength {
+  const checks = {
+    length: password.length >= 8,
+    uppercase: /[A-Z]/.test(password),
+    lowercase: /[a-z]/.test(password),
+    number: /\d/.test(password),
+    special: /[^A-Za-z0-9]/.test(password),
+  };
+
+  const score = Object.values(checks).filter(Boolean).length;
+  return { score, checks };
+}
+
+function getStrengthColor(score: number) {
+  const colors = {
+    0: 'bg-red-500',
+    1: 'bg-red-400',
+    2: 'bg-orange-500',
+    3: 'bg-yellow-500',
+    4: 'bg-green-500',
+    5: 'bg-green-600',
+  };
+  return colors[score as keyof typeof colors] || 'bg-gray-300';
+}
+
+export default function ResetConfirmPage() {
+  const params = useParams();
+  const router = useRouter();
+  const t = useTranslation('auth');
+
+  const [isValidating, setIsValidating] = useState(true);
+  const [isValid, setIsValid] = useState(false);
+  const [email, setEmail] = useState('');
+  const [formData, setFormData] = useState({
+    password: '',
+    confirmPassword: '',
+  });
+  const [errors, setErrors] = useState<ResetErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  const passwordStrength = getPasswordStrength(formData.password);
+  const token = params.token as string;
+
+  // Validate token on mount
+  useEffect(() => {
+    const validateToken = async () => {
+      if (!token) {
+        setIsValidating(false);
+        setIsValid(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/auth/reset-password/validate?token=${token}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          setIsValidating(false);
+          setIsValid(false);
+          return;
+        }
+
+        setIsValid(true);
+        setEmail(data.email);
+        setIsValidating(false);
+      } catch (error) {
+        console.error('Token validation error:', error);
+        setIsValidating(false);
+        setIsValid(false);
+      }
+    };
+
+    validateToken();
+  }, [token]);
+
+  const validate = (): boolean => {
+    const newErrors: ResetErrors = {};
+
+    if (!formData.password) {
+      newErrors.password = t('reset.confirm.errors.passwordRequired');
+    } else if (formData.password.length < 8) {
+      newErrors.password = t('reset.confirm.errors.passwordMin');
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = t('reset.confirm.errors.confirmPasswordRequired');
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = t('reset.confirm.errors.passwordsDontMatch');
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+
+    if (!validate()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/reset-password/confirm', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrors({ general: data.error || t('reset.confirm.errors.somethingWentWrong') });
+        setIsLoading(false);
+        return;
+      }
+
+      // Auto-login after password reset
+      await signIn('credentials', {
+        email,
+        password: formData.password,
+        redirect: false,
+      });
+
+      // Redirect to account page
+      router.push(`/${params.locale}/account`);
+    } catch (error) {
+      console.error('Reset confirmation error:', error);
+      setErrors({ general: t('reset.confirm.errors.somethingWentWrong') });
+      setIsLoading(false);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    if (errors[name as keyof ResetErrors]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: undefined,
+      }));
+    }
+  };
+
+  if (isValidating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!isValid) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="max-w-[400px] w-full">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 space-y-4 border border-gray-200 dark:border-gray-800">
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 mx-auto bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                {t('reset.confirm.invalidToken')}
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                {t('reset.confirm.invalidTokenDescription')}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="w-full max-w-[400px] animate-fade-in">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 space-y-6 border border-gray-200 dark:border-gray-800">
+          {/* Header */}
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              {t('reset.confirm.title')}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              {t('reset.confirm.subtitle')}
+            </p>
+          </div>
+
+          {/* Error Message */}
+          {errors.general && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg p-3 text-sm text-red-600 dark:text-red-400 animate-fade-in">
+              {errors.general}
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Password Field */}
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('reset.confirm.newPassword')}
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                value={formData.password}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-lg border ${
+                  errors.password
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500'
+                } bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200`}
+                placeholder={t('reset.confirm.newPassword')}
+                disabled={isLoading}
+                autoComplete="new-password"
+              />
+              {errors.password && (
+                <p className="text-sm text-red-600 dark:text-red-400 animate-fade-in">
+                  {errors.password}
+                </p>
+              )}
+
+              {/* Password Strength Indicator */}
+              {formData.password && (
+                <div className="space-y-2">
+                  <div className="flex gap-1">
+                    {[0, 1, 2, 3, 4].map(i => (
+                      <div
+                        key={i}
+                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                          i < passwordStrength.score
+                            ? getStrengthColor(passwordStrength.score)
+                            : 'bg-gray-200 dark:bg-gray-700'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Confirm Password Field */}
+            <div className="space-y-2">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('reset.confirm.confirmPassword')}
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-lg border ${
+                  errors.confirmPassword
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500'
+                } bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200`}
+                placeholder={t('reset.confirm.confirmPassword')}
+                disabled={isLoading}
+                autoComplete="new-password"
+              />
+              {errors.confirmPassword && (
+                <p className="text-sm text-red-600 dark:text-red-400 animate-fade-in">
+                  {errors.confirmPassword}
+                </p>
+              )}
+              {formData.confirmPassword && formData.password === formData.confirmPassword && (
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  ✓ {t('reset.confirm.passwordsMatch')}
+                </p>
+              )}
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              className="w-full"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  {t('reset.confirm.updating')}
+                </span>
+              ) : (
+                t('reset.confirm.updatePassword')
+              )}
+            </Button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+

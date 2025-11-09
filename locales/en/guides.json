@@ -1,0 +1,30 @@
+{
+  "title": "Guides",
+  "guide": "guide",
+  "guides": "guides",
+  "noGuidesFound": "No guides found",
+  "filters": {
+    "title": "Filters",
+    "sports": "Sports",
+    "difficulty": "Difficulty",
+    "minRating": "Minimum Rating",
+    "rating": "Rating",
+    "any": "Any",
+    "clear": "Clear Filters"
+  },
+  "sort": {
+    "newest": "Newest",
+    "rating": "Highest Rated",
+    "views": "Most Viewed",
+    "alphabetical": "Alphabetical"
+  },
+  "search": {
+    "placeholder": "Search guides...",
+    "button": "Search"
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page"
+  }
+}

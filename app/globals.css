@@ -1,8 +1,63 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --h00-size-mobile: 2.5rem;
+  --h0-size-mobile: 2rem;
+  --h1-size-mobile: 1.625rem;
+  --h2-size-mobile: 1.375rem;
+  --h3-size-mobile: 1.125rem;
+  --h00-size: 3rem;
+  --h0-size: 2.5rem;
+  --h1-size: 2rem;
+  --h2-size: 1.5rem;
+  --h3-size: 1.25rem;
+    --h1-size-mobile: 1.625rem;
+    --h2-size-mobile: 1.375rem;
+    --h3-size-mobile: 1.125rem;
+    --h00-size: 3rem;
+    --h0-size: 2.5rem;
+    --h1-size: 2rem;
+    --h2-size: 1.5rem;
+    --h3-size: 1.25rem;
+    --h4-size: 1rem;
+    --h5-size: 0.875rem;
+    --h6-size: 0.75rem;
+    --body-font-size: 0.875rem;
+    --font-size-small: 0.75rem;
+}
+
+/* Desktop font sizes */
+@media (min-width: 768px) {
+  h1 { font-size: var(--h1-size); }
+  h2 { font-size: var(--h2-size); }
+  h3 { font-size: var(--h3-size); }
+  h4 { font-size: var(--h4-size); }
+  h5 { font-size: var(--h5-size); }
+  h6 { font-size: var(--h6-size); }
+  body { font-size: var(--body-font-size); }
+  
+}
+/* Mobile font sizes */
+@media (max-width: 768px) {
+  h1 { font-size: var(--h1-size-mobile); }
+  h2 { font-size: var(--h2-size-mobile); }
+  h3 { font-size: var(--h3-size-mobile); }
+  h4 { font-size: var(--h4-size-mobile); }
+  h5 { font-size: var(--h5-size-mobile); }
+  h6 { font-size: var(--h6-size-mobile); }
+  body { font-size: var(--body-font-size-mobile); }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: hsl(207, 16%, 11%) !important;
+    --foreground: hsl(220, 18%, 97%) !important;
+  }
 }
 
 @theme inline {
@@ -19,8 +74,323 @@
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Improve text contrast for accessibility */
+  body {
+    @apply overflow-x-hidden bg-background dark:bg-background-dark text-content dark:text-content-dark min-h-screen transition-all duration-300;
+    font-family: var(--font-poppins), sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+    /* RTL text alignment */
+    [dir="rtl"] {
+      text-align: right;
+    }
+  
+    [dir="ltr"] {
+      text-align: left;
+    }
+    [dir="ltr"] input,
+    [dir="ltr"] textarea {
+      text-align: left;
+    }
+    /* RTL input adjustments */
+    [dir="rtl"] input,
+    [dir="rtl"] textarea {
+      text-align: right;
+    }
+
+    /* Prevent mobile zoom on input focus */
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
+    
+    /* Ensure inputs maintain 16px font size on mobile */
+    @media screen and (max-width: 768px) {
+      input,
+      textarea,
+      select {
+        font-size: 16px !important;
+      }
+    }
+
+    .outlineTab {
+      @apply focus-visible:outline-none focus-visible:outline-header;
+    }
+  
+    .page {
+      @apply my-24 md:my-28;
+    }
+  
+    .bg-primary {
+      background-color: var(--bg-primary);
+    }
+  
+    .bg-gradient-custom {
+      background: var(--bg-gradient);
+    }
+    
+    
+    h1 {
+      @apply  text-[1.625rem] md:text-[2rem];
+    }
+  
+    h2 {
+      @apply text-[1.375rem] md:text-[1.5rem];
+    }
+  
+    h3 {
+      @apply text-[1.125rem] md:text-[1.25rem];
+    }
+
+    h4 {
+      @apply text-[1rem] md:text-[1.125rem];
+    }
+  
+    .card {
+      @apply bg-card dark:bg-card-dark 
+             border border-card-border dark:!border-card-border-dark 
+             rounded-lg;
+    }
+  
+    .mainback {
+      @apply bg-background dark:bg-background-dark transition-colors duration-200 ease-in-out
+    }
+    .secondaryback {
+      @apply bg-background-secondary dark:bg-background-secondary-dark transition-colors duration-200 ease-in-out
+    }
+    .bord { 
+      @apply border border-border dark:border-border-dark
+    }
+  
+
+
+    /* Improve scrolling performance with transforms */
+.transform-gpu {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform; /* Use sparingly - only for elements that actually change */
+}
+
+/* Container for maintaining layouts during scroll */
+
+
+/* Optimize image rendering */
+img {
+  image-rendering: auto;
+  /* Remove any filters that might affect performance */
+}
+
+/* Optimize animations */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+
+input{
+  caret-color: theme('colors.brand.main');
+}
+
+/* Default (light mode) */
+::selection {
+  color: theme('colors.text.DEFAULT');
+  background-color: theme('colors.brand.main'); /* Uses your Tailwind theme color */
+}
+
+/* Dark mode */
+.dark ::selection {
+  color: theme('colors.text.DEFAULT');
+  background-color: theme('colors.brand.main'); /* Uses your Tailwind theme color */
+}
+
+
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  margin-left: -10px;
+}
+
+html {
+  font-size: 18px;
+  scrollbar-gutter: stable;
+  /* You can also use 'stable both-edges' if you need to reserve space on both sides, though less common for vertical scrollbars */
+  font-family: var(--font-poppins), sans-serif;
+}
+
+/* Hebrew (RTL) font */
+[dir="rtl"],
+[lang="he"] {
+  font-family: var(--font-arimo), sans-serif;
+}
+
+/* English (LTR) font */
+[dir="ltr"],
+[lang="en"] {
+  font-family: var(--font-poppins), sans-serif;
+}
+
+
+/* Firefox Scrollbar */
+* {
+  scrollbar-color: #dde3ea #f1f1f1;
+}
+
+* {
+  @apply outline-none outline-offset-0;
+}
+
+*:focus-visible {
+  @apply focus-visible:outline-2 focus:outline-header-dark focus:outline-offset-4 focus:ring-0;
+}
+
+.brandTab:focus-visible {
+  outline-width: 2px !important;
+  outline-color: theme('colors.header.dark') !important;
+  outline-offset: 4px !important;
+  @apply ring-0
+}
+
+
+.dark {
+  scrollbar-width: auto;
+  scrollbar-color: #3d3f42 #1a1a1a;
+}
+
+/* Light Mode Scrollbar */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 5px;
+  border: 2px solid #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c4c7c5;
+}
+
+/* Dark Mode Scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #3d3f42;
+  border: 2px solid #1a1a1a;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #4a5050;
+}
+
+
+
+
+
+.navShadow {
+  filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.25));
+}
+.navMdShadow {
+  filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.85));
+}
+.navHighShadow {
+  filter: drop-shadow(2px 2px 3px rgba(0,0,0,1));
+}
+
+.outlineTab {
+  @apply focus-visible:outline-none focus-visible:outline-header;
+}
+
+
+.shopBadge {
+border-bottom-right-radius: 50%;
+}
+
+
+.shopBadge::before {
+  content: '';
+  position: absolute;
+  bottom: -50%;
+  left: 0;
+  width: 50%;
+  height: 50%;
+  background: transparent;
+  border-top-left-radius: 30px;
+  box-shadow: -5px -5px 0 5px #f6f7f9;
+  @apply transition-all duration-200;
+}
+
+.dark .shopBadge::before {
+  box-shadow: -5px -5px 0 5px #181c21;
+}
+
+.shopBadge::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -40%;
+  width: 40%;
+  height: 40%;
+  background: transparnet;
+  border-top-left-radius: 30px;
+  box-shadow: -5px -5px 0 5px #f6f7f9;
+  @apply transition-all duration-200;
+}
+
+.dark .shopBadge::after {
+  box-shadow: -5px -5px 0 5px #181c21;
+}
+
+.shopBadgeB {
+border-top-left-radius: 12px;
+}
+
+
+.shopBadgeB::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -40%;
+  width: 40%;
+  height: 40%;
+  background: transparent;
+  border-bottom-right-radius: 30px;
+  box-shadow: 5px 5px 0 5px #f6f7f9;
+  @apply transition-all duration-200;
+}
+
+.dark .shopBadgeB::before {
+  box-shadow: 5px 5px 0 5px #181c21;
+}
+
+.shopBadgeB::after {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: 0;
+  width: 40%;
+  height: 40%;
+  background: transparent;
+  border-bottom-right-radius: 30px;
+  box-shadow: 5px 5px 0 5px #f6f7f9;
+  @apply transition-all duration-200;
+}
+
+.dark .shopBadgeB::after {
+  box-shadow: 5px 5px 0 5px #181c21;
 }

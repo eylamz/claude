@@ -1,0 +1,37 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: Warm up
+    - duration: 120
+      arrivalRate: 20
+      name: Ramp up
+    - duration: 60
+      arrivalRate: 50
+      name: Spike
+  plugins:
+    metrics-by-endpoint: {}
+  ensure:
+    maxErrorRate: 1
+scenarios:
+  - name: Public pages
+    flow:
+      - get:
+          url: "/en"
+      - get:
+          url: "/en/shop"
+      - get:
+          url: "/en/skateparks"
+  - name: Products API search
+    flow:
+      - get:
+          url: "/api/products?limit=12&page=1&sort=new"
+      - get:
+          url: "/api/products?limit=12&page=1&category=boards"
+  - name: Cart API
+    flow:
+      - get:
+          url: "/api/cart?sessionId=loadtest"
+
+

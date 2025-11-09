@@ -1,0 +1,169 @@
+import createMiddleware from 'next-intl/middleware';
+import { withAuth } from 'next-auth/middleware';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { locales, defaultLocale } from './i18n';
+
+// Create i18n middleware
+const intlMiddleware = createMiddleware({
+  locales,
+  defaultLocale,
+  localePrefix: 'always',
+  localeDetection: true,
+});
+
+// Define public routes that don't require authentication
+const publicRoutes = [
+  '/',
+  '/login',
+  '/signout',
+  '/register',
+  '/signin',
+  '/error',
+];
+
+// Protected routes that require authentication (but not admin)
+const protectedRoutes = [
+  '/account',
+];
+
+// Check if a route is public (includes routes under (public) folder)
+function isPublicRoute(pathname: string): boolean {
+  // Root localized pages are public
+  if (pathname === '/en' || pathname === '/he') {
+    return true;
+  }
+
+  // Root page is public
+  if (pathname === '/') {
+    return true;
+  }
+
+  // Auth pages are public
+  if (
+    pathname.includes('/login') ||
+    pathname.includes('/register') ||
+    pathname.includes('/signin') ||
+    pathname.includes('/signout') ||
+    pathname.includes('/forgot-password')
+  ) {
+    return true;
+  }
+
+  // Check for localized public routes
+  const matchesPublicRoute = publicRoutes.some((route) => {
+    if (route === '/') {
+      // Root route - check if it's exactly /en or /he or /
+      return pathname === route || pathname === '/en' || pathname === '/he';
+    }
+    // Other public routes
+    return (
+      pathname === route ||
+      pathname.startsWith(`/en${route}`) ||
+      pathname.startsWith(`/he${route}`)
+    );
+  });
+
+  if (matchesPublicRoute) {
+    return true;
+  }
+
+  // Routes under (public) folder are public:
+  // shop, skateparks, trainers, guides, events, cart, checkout, search
+  const publicPathPatterns = [
+    /^\/[a-z]{2}\/shop/,
+    /^\/[a-z]{2}\/skateparks/,
+    /^\/[a-z]{2}\/trainers/,
+    /^\/[a-z]{2}\/guides/,
+    /^\/[a-z]{2}\/events/,
+    /^\/[a-z]{2}\/cart/,
+    /^\/[a-z]{2}\/checkout/,
+    /^\/[a-z]{2}\/search/,
+  ];
+
+  return publicPathPatterns.some((pattern) => pattern.test(pathname));
+}
+
+// Check if a route requires admin role
+function isAdminRoute(pathname: string): boolean {
+  return (
+    pathname.includes('/admin') ||
+    pathname.match(/^\/[a-z]{2}\/admin/) ||
+    pathname === '/admin'
+  );
+}
+
+// Check if a route requires authentication (but not admin)
+function isProtectedRoute(pathname: string): boolean {
+  // Check for localized protected routes
+  return protectedRoutes.some((route) => {
+    return (
+      pathname === route ||
+      pathname.startsWith(`/en${route}`) ||
+      pathname.startsWith(`/he${route}`)
+    );
+  });
+}
+
+// Auth middleware configuration
+export default withAuth(
+  function onSuccess(req: NextRequest) {
+    // Get the token from the request
+    const token = (req as any).nextauth.token;
+
+    // Get the pathname
+    const pathname = req.nextUrl.pathname;
+
+    // Check if the path requires admin role
+    if (isAdminRoute(pathname) && token?.role !== 'admin') {
+      const url = req.nextUrl.clone();
+      url.pathname = '/';
+      return NextResponse.redirect(url);
+    }
+
+    // Continue with i18n middleware
+    return intlMiddleware(req);
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }: { token: any; req: any }) => {
+        const pathname = req.nextUrl.pathname;
+
+        // Allow public routes (no authentication required)
+        if (isPublicRoute(pathname)) {
+          return true;
+        }
+
+        // Check admin routes (require admin role)
+        if (isAdminRoute(pathname)) {
+          return token?.role === 'admin';
+        }
+
+        // Check protected routes (require authentication but not admin)
+        if (isProtectedRoute(pathname)) {
+          return !!token;
+        }
+
+        // For all other routes, allow without authentication (they might be new public routes)
+        // If you want to protect everything by default, change this to: return !!token;
+        return true;
+      },
+    },
+  }
+);
+
+export const config = {
+  // Match all paths except API routes, Next.js internals, static files, etc.
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, robots.txt, etc. (static files)
+     * - *.* files (all files with extensions)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|.*\\..*).*)',
+  ],
+};
+

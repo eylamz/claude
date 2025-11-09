@@ -1,0 +1,32 @@
+{
+  "title": "מדריכים",
+  "guide": "מדריך",
+  "guides": "מדריכים",
+  "noGuidesFound": "לא נמצאו מדריכים",
+  "filters": {
+    "title": "סינון",
+    "sports": "ענפי ספורט",
+    "difficulty": "רמת קושי",
+    "minRating": "דירוג מינימלי",
+    "rating": "דירוג",
+    "any": "כל",
+    "clear": "נקה סינונים"
+  },
+  "sort": {
+    "newest": "החדש ביותר",
+    "rating": "הדירוג הגבוה ביותר",
+    "views": "הצפיות הרבות ביותר",
+    "alphabetical": "אלפביתי"
+  },
+  "search": {
+    "placeholder": "חפש מדריכים...",
+    "button": "חיפוש"
+  },
+  "pagination": {
+    "previous": "הקודם",
+    "next": "הבא",
+    "page": "עמוד"
+  }
+}
+
+
