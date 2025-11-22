@@ -32,8 +32,8 @@ export const colors = {
       dark: 'hsl(166 98% 28% / 1)',
     },
     text: {
-      light: 'white',
-      dark: 'hsl(162, 48%, 16%)',
+      light: 'hsl(162, 48%, 16%)',
+      dark: 'hsl(162, 48%, 46%)',
     },
     guide: {
       light: 'hsl(199, 85%, 42%)',
@@ -98,11 +98,11 @@ export const colors = {
     },
   },
   input: {
-    light: 'hsl(220, 6%, 90%)',
-    dark: 'hsl(222, 10%, 20%)',
+    light: 'hsl(220, 6%, 97%)',
+    dark: 'hsl(214, 16%, 9%)',
     hover: {
-      light: 'hsl(220, 5%, 87%)',
-      dark: 'hsl(222, 8%, 25%)',
+      light: 'hsl(220, 6%, 99%)',
+      dark: 'hsl(214, 16%, 7%)',
     },
     text: {
       light: 'hsl(220, 1%, 52%)',
@@ -212,6 +212,10 @@ export const colors = {
     }
   }
 } as const;
+
+
+
+
 
 
 

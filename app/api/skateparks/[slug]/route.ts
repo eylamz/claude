@@ -75,7 +75,7 @@ export async function GET(
     ];
     const dayHours = skatepark.operatingHours?.[currentDay as keyof typeof skatepark.operatingHours];
     let isOpen = false;
-    if (skatepark.is24Hours) {
+    if (skatepark.lightingHours?.is24Hours) {
       isOpen = true;
     } else if (dayHours && !dayHours.closed && dayHours.open && dayHours.close) {
       const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -95,8 +95,7 @@ export async function GET(
       },
       images: skatepark.images || [],
       operatingHours: skatepark.operatingHours || {},
-      is24Hours: skatepark.is24Hours || false,
-      lightingUntil: skatepark.lightingUntil,
+      lightingHours: skatepark.lightingHours || undefined,
       amenities: skatepark.amenities || {},
       openingYear: skatepark.openingYear,
       closingYear: skatepark.closingYear,

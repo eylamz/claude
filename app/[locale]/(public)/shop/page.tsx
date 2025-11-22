@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { ProductCard, ViewToggle } from '@/components/shop';
+import { ProductCard } from '@/components/shop';
 import { Accordion, Checkbox, Slider, Drawer, Button, Select, Skeleton } from '@/components/ui';
 
 interface Product {
@@ -36,7 +36,9 @@ export default function ShopPage() {
   const [totalResults, setTotalResults] = useState(0);
   
   // Filters
-  const [category, setCategory] = useState(searchParams.get('category') || '');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    searchParams.get('categories')?.split(',').filter(Boolean) || []
+  );
   const [selectedSports, setSelectedSports] = useState<string[]>(
     searchParams.get('sports')?.split(',').filter(Boolean) || []
   );
@@ -44,13 +46,8 @@ export default function ShopPage() {
   const [selectedSizes, setSelectedSizes] = useState<string[]>(
     searchParams.get('sizes')?.split(',').filter(Boolean) || []
   );
-  const [selectedColors, setSelectedColors] = useState<string[]>(
-    searchParams.get('colors')?.split(',').filter(Boolean) || []
-  );
-  const [inStockOnly, setInStockOnly] = useState(searchParams.get('inStockOnly') === 'true');
   
-  // View and sort
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  // Sort
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'new');
   const [page, setPage] = useState(1);
   
@@ -65,7 +62,7 @@ export default function ShopPage() {
   // Fetch products
   useEffect(() => {
     fetchProducts();
-  }, [category, selectedSports, priceRange, selectedSizes, selectedColors, inStockOnly, sortBy, page, locale]);
+  }, [selectedCategories, selectedSports, priceRange, selectedSizes, sortBy, page, locale]);
   
   const fetchCategories = async () => {
     try {
@@ -85,13 +82,11 @@ export default function ShopPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set('category', category);
+      params.set('categories', selectedCategories.join(','));
       params.set('sports', selectedSports.join(','));
       params.set('minPrice', priceRange[0].toString());
       params.set('maxPrice', priceRange[1].toString());
-      params.set('inStockOnly', inStockOnly.toString());
       params.set('sizes', selectedSizes.join(','));
-      params.set('colors', selectedColors.join(','));
       params.set('sort', sortBy);
       params.set('page', page.toString());
       params.set('locale', locale);
@@ -111,18 +106,18 @@ export default function ShopPage() {
   
   const updateURL = useCallback(() => {
     const params = new URLSearchParams();
-    if (category) params.set('category', category);
+    if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
     if (selectedSports.length > 0) params.set('sports', selectedSports.join(','));
     if (selectedSizes.length > 0) params.set('sizes', selectedSizes.join(','));
-    if (selectedColors.length > 0) params.set('colors', selectedColors.join(','));
-    if (inStockOnly) params.set('inStockOnly', 'true');
     if (sortBy && sortBy !== 'new') params.set('sort', sortBy);
     
     router.push(`/${locale}/shop?${params.toString()}`);
-  }, [category, selectedSports, selectedSizes, selectedColors, inStockOnly, sortBy, locale, router]);
+  }, [selectedCategories, selectedSports, selectedSizes, sortBy, locale, router]);
   
-  const handleCategoryChange = (cat: string) => {
-    setCategory(cat === category ? '' : cat);
+  const handleCategoryToggle = (cat: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
     setPage(1);
   };
   
@@ -140,21 +135,21 @@ export default function ShopPage() {
     setPage(1);
   };
   
-  const handleColorToggle = (color: string) => {
-    setSelectedColors((prev) =>
-      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]
-    );
+  const handleClearFilters = () => {
+    setSelectedCategories([]);
+    setSelectedSports([]);
+    setSelectedSizes([]);
+    setPriceRange([0, 1000]);
     setPage(1);
   };
   
-  const handleClearFilters = () => {
-    setCategory('');
-    setSelectedSports([]);
-    setSelectedSizes([]);
-    setSelectedColors([]);
-    setPriceRange([0, 1000]);
-    setInStockOnly(false);
-    setPage(1);
+  // Translation helper for categories and sports
+  const getTranslatedCategory = (category: string) => {
+    return t(`categoryLabels.${category}`, { defaultValue: category });
+  };
+  
+  const getTranslatedSport = (sport: string) => {
+    return t(`sportLabels.${sport}`, { defaultValue: sport });
   };
   
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -166,23 +161,18 @@ export default function ShopPage() {
   
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
   
-  const allAvailableColors = products
-    .flatMap((p) => p.variants || [])
-    .map((v) => v.color)
-    .filter((c, i, arr) => arr.findIndex((x) => x.hex === c.hex) === i);
-  
   const sidebarContent = (
-    <div className="space-y-6">
+    <div className="space-y-4 pt-4">
       {/* Categories */}
       <Accordion title={t('categories')} defaultOpen>
-        <div className="space-y-2">
+        <div className="space-y-1">
           {categories.categories.map((cat) => (
             <Checkbox
               key={cat}
               id={`category-${cat}`}
-              checked={category === cat}
-              onChange={() => handleCategoryChange(cat)}
-              label={cat}
+              checked={selectedCategories.includes(cat)}
+              onChange={() => handleCategoryToggle(cat)}
+              label={getTranslatedCategory(cat)}
             />
           ))}
         </div>
@@ -191,14 +181,14 @@ export default function ShopPage() {
       {/* Related Sports */}
       {categories.sports.length > 0 && (
         <Accordion title={t('relatedSports')}>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {categories.sports.map((sport) => (
               <Checkbox
                 key={sport}
                 id={`sport-${sport}`}
                 checked={selectedSports.includes(sport)}
                 onChange={() => handleSportToggle(sport)}
-                label={sport}
+                label={getTranslatedSport(sport)}
               />
             ))}
           </div>
@@ -207,26 +197,28 @@ export default function ShopPage() {
       
       {/* Price Range */}
       <Accordion title={t('filterBy.priceRange')}>
-        <Slider
-          min={0}
-          max={1000}
-          values={priceRange}
-          onChange={setPriceRange}
-          step={10}
-        />
+        <div className="py-2">
+          <Slider
+            min={0}
+            max={1000}
+            values={priceRange}
+            onChange={setPriceRange}
+            step={10}
+          />
+        </div>
       </Accordion>
       
       {/* Sizes */}
       <Accordion title={t('sizes')}>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 py-2">
           {sizeOptions.map((size) => (
             <button
               key={size}
               onClick={() => handleSizeToggle(size)}
-              className={`p-2 border rounded text-sm ${
+              className={`p-3 border rounded-lg text-sm font-medium transition-all ${
                 selectedSizes.includes(size)
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900'
-                  : 'border-gray-300 dark:border-gray-600'
+                  ? 'border-brand-main bg-brand-main/10 dark:bg-brand-main/20 text-brand-main dark:text-brand-main'
+                  : 'border-border dark:border-border-dark bg-black/5 dark:bg-black/30 text-header-text-dark dark:text-header-text hover:border-brand-main/50'
               }`}
             >
               {size}
@@ -235,39 +227,12 @@ export default function ShopPage() {
         </div>
       </Accordion>
       
-      {/* Colors */}
-      {allAvailableColors.length > 0 && (
-        <Accordion title={t('colors')}>
-          <div className="flex flex-wrap gap-2">
-            {allAvailableColors.slice(0, 10).map((color) => (
-              <button
-                key={color.hex}
-                onClick={() => handleColorToggle(color.hex)}
-                className={`w-10 h-10 rounded-full border-2 ${
-                  selectedColors.includes(color.hex)
-                    ? 'border-blue-500 ring-2 ring-blue-200'
-                    : 'border-gray-300 dark:border-gray-600'
-                }`}
-                style={{ backgroundColor: color.hex }}
-                title={color.name?.en || color.name}
-              />
-            ))}
-          </div>
-        </Accordion>
-      )}
-      
-      {/* In Stock Only */}
-      <Checkbox
-        id="inStockOnly"
-        checked={inStockOnly}
-        onChange={setInStockOnly}
-        label={t('inStockOnly')}
-      />
-      
       {/* Clear Filters */}
-      <Button onClick={handleClearFilters} variant="outline" className="w-full">
-        {t('clearFilters')}
-      </Button>
+      <div className="pt-2">
+        <Button onClick={handleClearFilters} variant="outline" className="w-full">
+          {t('clearFilters')}
+        </Button>
+      </div>
     </div>
   );
   
@@ -285,12 +250,13 @@ export default function ShopPage() {
             </div>
             <div className="flex items-center gap-4">
               {/* Mobile Filter Button */}
-              <button
+              <Button
                 onClick={() => setIsDrawerOpen(true)}
-                className="md:hidden px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300"
+                variant="outline"
+                className="md:hidden"
               >
                 {t('filters')}
-              </button>
+              </Button>
               {/* Sort */}
               <Select
                 value={sortBy}
@@ -302,8 +268,6 @@ export default function ShopPage() {
                   { value: 'price-desc', label: t('sort.priceHigh') },
                 ]}
               />
-              {/* View Toggle */}
-              <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
             </div>
           </div>
         </div>
@@ -324,13 +288,13 @@ export default function ShopPage() {
           {/* Products */}
           <main className="flex-1">
             {loading ? (
-              <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6' : 'space-y-4'}>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {[...Array(8)].map((_, i) => (
                   <Skeleton key={i} className="aspect-square rounded-lg" />
                 ))}
               </div>
             ) : products.length > 0 ? (
-              <div className={viewMode === 'grid' ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6' : 'space-y-4'}>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {products.map((product) => (
                   <ProductCard key={product.id} {...product} />
                 ))}

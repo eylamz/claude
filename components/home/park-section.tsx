@@ -146,24 +146,24 @@ export const ParkSection = ({ parks, t }: ParkSectionProps) => {
               }}
             >
               <Card 
-                className={`flex-none bg-card dark:bg-card-dark opacity-0 snap-center w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] hover:shadow-lg dark:hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent before:z-[1] before:pointer-events-none ${clickedCardId === park.id ? 'before:animate-shimmer' : ''}`}
+                className={`flex-none !rounded-3xl bg-card dark:bg-card-dark opacity-0 snap-center w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] hover:shadow-lg dark:hover:!scale-[1.02] overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent before:z-[1] before:pointer-events-none ${clickedCardId === park.id ? 'before:animate-shimmer' : ''}`}
                 style={{ animationDelay: `${550 + (index * 125)}ms` }}
               >
                 <div className="relative">
                   <img
                     src={park.image ?? '/placeholder.jpg'}
                     alt={park.name}
-                    className="select-none w-full h-36 md:h-40 object-cover rounded-t-xl saturate-[1.75]"
+                    className="select-none w-full h-40 md:h-44 object-cover saturate-[1.75]"
                   />
                 </div>
-                <CardContent className="px-4 py-2 w-full">
+                <CardContent className="ps-3 pe-2 py-2 w-full">
                   <div className="flex flex-col w-full text-text-secondary dark:text-text-secondary-dark">
                     <div className="w-full">
-                      <h3 className="h3 font-semibold truncate text-lg text-text dark:text-text-dark w-full">{park.name}</h3>
+                      <h3 className="font-semibold truncate text-base text-text dark:text-text-dark w-full">{park.name}</h3>
                       <div className="w-full flex justify-between items-center">
-                        <div className="flex">
-                          <Icon name="calendar" className="h-4 w-4 rtl:ml-1 ltr:mr-1" />
-                          <span className="text-sm">{park.openingYear}</span>
+                        <div className="flex items-center gap-1">
+                          <Icon name="calendar" className="h-4 w-4" />
+                          <span className="text-sm pt-[0.125rem]">{park.openingYear}</span>
                         </div>
                       </div>
                     </div>
@@ -217,4 +217,8 @@ export const ParkSection = ({ parks, t }: ParkSectionProps) => {
     </section>
   );
 };
+
+
+
+
 

@@ -2,8 +2,105 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { Button, Card, CardContent, Input, Select, Dropdown, Skeleton } from '@/components/ui';
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+} from 'recharts';
+import { Icon } from '@/components/icons';
+
+// Custom Tooltip for amenities chart
+const AmenitiesTooltip = ({ active, payload, t }: any) => {
+  if (!active || !payload || !payload[0]) return null;
+  
+  const data = payload[0].payload;
+  const parks = data.parks || [];
+  const value = data.value || 0;
+  const name = data.name || '';
+
+  return (
+    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 max-w-md">
+      <div className="font-semibold text-gray-900 dark:text-white mb-2">{name}</div>
+      <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+        {value} {value === 1 ? t('admin.statistics.amenities.park') : t('admin.statistics.amenities.parksPlural')}
+      </div>
+      {parks.length > 0 && (
+        <div className="mt-2 max-h-60 overflow-y-auto">
+          <div className="text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">{t('admin.statistics.amenities.parks')}:</div>
+          <ul className="list-disc list-inside text-xs space-y-1 text-gray-600 dark:text-gray-400">
+            {parks.slice(0, 20).map((park: string, idx: number) => (
+              <li key={idx} className="truncate">{park}</li>
+            ))}
+            {parks.length > 20 && (
+              <li className="text-gray-500 dark:text-gray-500 italic">
+                {t('admin.statistics.amenities.andMore', { count: parks.length - 20 })}
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Custom Tooltip for opening years chart
+const OpeningYearsTooltip = ({ active, payload, t }: any) => {
+  if (!active || !payload || !payload[0]) return null;
+  
+  const data = payload[0].payload;
+  const parks = data.parks || [];
+  const count = data.count || 0;
+  const year = data.year || '';
+
+  return (
+    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 max-w-md">
+      <div className="font-semibold text-gray-900 dark:text-white mb-2">{t('admin.statistics.openingYears.year', { year })}</div>
+      <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+        {count} {count === 1 ? t('admin.statistics.openingYears.park') : t('admin.statistics.openingYears.parks')}
+      </div>
+      {parks.length > 0 && (
+        <div className="mt-2 max-h-40 overflow-y-auto">
+          <div className="text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">{t('admin.statistics.amenities.parks')}:</div>
+          <ul className="list-disc list-inside text-xs space-y-0.5 text-gray-600 dark:text-gray-400">
+            {parks.map((park: string, idx: number) => (
+              <li key={idx}>{park}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Custom Tooltip for areas chart
+const AreasTooltip = ({ active, payload, t }: any) => {
+  if (!active || !payload || !payload[0]) return null;
+  
+  const data = payload[0].payload;
+  const value = data.value || 0;
+  const name = data.name || '';
+
+  return (
+    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4">
+      <div className="font-semibold text-gray-900 dark:text-white mb-1">{name}</div>
+      <div className="text-sm text-gray-700 dark:text-gray-300">
+        {t('admin.statistics.areas.count', { count: value })}
+      </div>
+    </div>
+  );
+};
 
 interface Skatepark {
   _id?: string;
@@ -21,7 +118,8 @@ interface Skatepark {
   status: 'active' | 'inactive';
   isFeatured: boolean;
   openingYear?: number;
-  images: Array<{
+  image?: string; // Main image URL from API
+  images?: Array<{
     url: string;
     isFeatured: boolean;
     orderNumber: number;
@@ -44,6 +142,7 @@ interface Pagination {
 export default function SkateparksPage() {
   const locale = useLocale();
   const router = useRouter();
+  const t = useTranslations('skateparks');
   const [skateparks, setSkateparks] = useState<Skatepark[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -63,6 +162,17 @@ export default function SkateparksPage() {
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  
+  // Statistics modal
+  const [showStatistics, setShowStatistics] = useState(false);
+  const [statisticsLoading, setStatisticsLoading] = useState(false);
+  const [statisticsData, setStatisticsData] = useState<{
+    amenities: Record<string, { count: number; parks: string[] }>;
+    openingYears: Array<{ year: number; count: number; parks: string[] }>;
+    areas: { north: number; center: number; south: number };
+    totalParks: number;
+  } | null>(null);
+  const [activeTab, setActiveTab] = useState<'amenities' | 'openingYears' | 'areas'>('amenities');
 
   // Debounce search input
   useEffect(() => {
@@ -111,6 +221,155 @@ export default function SkateparksPage() {
     fetchSkateparks();
   }, [fetchSkateparks]);
 
+  // Calculate statistics from parks data
+  const calculateStatistics = useCallback((allParks: any[]) => {
+    // Calculate amenities statistics with park names
+    const amenitiesStats: Record<string, { count: number; parks: string[] }> = {
+      paidEntry: { count: 0, parks: [] },
+      bikesAllowed: { count: 0, parks: [] },
+      parking: { count: 0, parks: [] },
+      shade: { count: 0, parks: [] },
+      bathroom: { count: 0, parks: [] },
+      helmetRequired: { count: 0, parks: [] },
+      guard: { count: 0, parks: [] },
+      seating: { count: 0, parks: [] },
+      bombShelter: { count: 0, parks: [] },
+      scootersAllowed: { count: 0, parks: [] },
+      noWax: { count: 0, parks: [] },
+      nearbyRestaurants: { count: 0, parks: [] },
+    };
+
+    // Calculate opening years distribution with park names
+    const openingYearsMap: Record<number, { count: number; parks: string[] }> = {};
+
+    // Calculate area distribution
+    const areaStats = {
+      north: 0,
+      center: 0,
+      south: 0,
+    };
+
+    allParks.forEach((skatepark: any) => {
+      // Amenities with park names
+      if (skatepark.amenities) {
+        const parkName = skatepark.name?.en || skatepark.name?.he || 'Unknown';
+        
+        if (skatepark.amenities.entryFee === true) {
+          amenitiesStats.paidEntry.count++;
+          amenitiesStats.paidEntry.parks.push(parkName);
+        }
+        if (skatepark.amenities.bikesAllowed === true) {
+          amenitiesStats.bikesAllowed.count++;
+          amenitiesStats.bikesAllowed.parks.push(parkName);
+        }
+        if (skatepark.amenities.parking === true) {
+          amenitiesStats.parking.count++;
+          amenitiesStats.parking.parks.push(parkName);
+        }
+        if (skatepark.amenities.shade === true) {
+          amenitiesStats.shade.count++;
+          amenitiesStats.shade.parks.push(parkName);
+        }
+        if (skatepark.amenities.bathroom === true) {
+          amenitiesStats.bathroom.count++;
+          amenitiesStats.bathroom.parks.push(parkName);
+        }
+        if (skatepark.amenities.helmetRequired === true) {
+          amenitiesStats.helmetRequired.count++;
+          amenitiesStats.helmetRequired.parks.push(parkName);
+        }
+        if (skatepark.amenities.guard === true) {
+          amenitiesStats.guard.count++;
+          amenitiesStats.guard.parks.push(parkName);
+        }
+        if (skatepark.amenities.seating === true) {
+          amenitiesStats.seating.count++;
+          amenitiesStats.seating.parks.push(parkName);
+        }
+        if (skatepark.amenities.bombShelter === true) {
+          amenitiesStats.bombShelter.count++;
+          amenitiesStats.bombShelter.parks.push(parkName);
+        }
+        if (skatepark.amenities.scootersAllowed === true) {
+          amenitiesStats.scootersAllowed.count++;
+          amenitiesStats.scootersAllowed.parks.push(parkName);
+        }
+        if (skatepark.amenities.noWax === true) {
+          amenitiesStats.noWax.count++;
+          amenitiesStats.noWax.parks.push(parkName);
+        }
+        if (skatepark.amenities.nearbyRestaurants === true) {
+          amenitiesStats.nearbyRestaurants.count++;
+          amenitiesStats.nearbyRestaurants.parks.push(parkName);
+        }
+      }
+
+      // Opening years with park names
+      if (skatepark.openingYear) {
+        const year = skatepark.openingYear;
+        if (!openingYearsMap[year]) {
+          openingYearsMap[year] = { count: 0, parks: [] };
+        }
+        openingYearsMap[year].count++;
+        const parkName = skatepark.name?.en || skatepark.name?.he || 'Unknown';
+        openingYearsMap[year].parks.push(parkName);
+      }
+
+      // Area distribution
+      if (skatepark.area) {
+        if (skatepark.area === 'north') {
+          areaStats.north++;
+        } else if (skatepark.area === 'center') {
+          areaStats.center++;
+        } else if (skatepark.area === 'south') {
+          areaStats.south++;
+        }
+      }
+    });
+
+    // Generate all years from 2005 to current year
+    const currentYear = new Date().getFullYear();
+    const openingYears = [];
+    for (let year = 2005; year <= currentYear; year++) {
+      const yearData = openingYearsMap[year];
+      openingYears.push({
+        year,
+        count: yearData ? yearData.count : 0,
+        parks: yearData ? yearData.parks : [],
+      });
+    }
+
+    return {
+      amenities: amenitiesStats,
+      openingYears,
+      areas: areaStats,
+      totalParks: allParks.length,
+    };
+  }, []);
+
+  const fetchStatistics = useCallback(async () => {
+    try {
+      setStatisticsLoading(true);
+      // Fetch all parks without pagination
+      const response = await fetch('/api/admin/skateparks?all=true&limit=10000');
+      if (!response.ok) throw new Error('Failed to fetch parks');
+      const data = await response.json();
+      // Calculate statistics from the parks data
+      const stats = calculateStatistics(data.skateparks);
+      setStatisticsData(stats);
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+    } finally {
+      setStatisticsLoading(false);
+    }
+  }, [calculateStatistics]);
+
+  useEffect(() => {
+    if (showStatistics && !statisticsData) {
+      fetchStatistics();
+    }
+  }, [showStatistics, statisticsData, fetchStatistics]);
+
   const toggleSelection = (id: string) => {
     const newSelection = new Set(selectedItems);
     if (newSelection.has(id)) {
@@ -150,12 +409,7 @@ export default function SkateparksPage() {
   };
 
   const getAreaName = (area: string) => {
-    const areas: Record<string, string> = {
-      north: 'North',
-      center: 'Center',
-      south: 'South',
-    };
-    return areas[area] || area;
+    return t(`search.area.${area}`) || area;
   };
 
   const formatAddress = (address: { en: string; he: string }) => {
@@ -167,20 +421,31 @@ export default function SkateparksPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Skateparks</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('admin.title')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            Manage skatepark listings
+            {t('admin.subtitle')}
           </p>
         </div>
         <div className="flex items-center space-x-3">
           <Button
             variant="secondary"
+            onClick={() => {
+              setShowStatistics(true);
+              if (!statisticsData) {
+                fetchStatistics();
+              }
+            }}
+          >
+            {t('admin.viewStatistics')}
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
           >
-            {viewMode === 'list' ? 'Map View' : 'List View'}
+            {viewMode === 'list' ? t('admin.mapView') : t('admin.listView')}
           </Button>
           <Button variant="primary" onClick={() => router.push(`/${locale}/admin/skateparks/new`)}>
-            Add Skatepark
+            {t('admin.addSkatepark')}
           </Button>
         </div>
       </div>
@@ -192,7 +457,7 @@ export default function SkateparksPage() {
             <div className="flex-1 min-w-64">
               <Input
                 type="text"
-                placeholder="Search by name or address..."
+                placeholder={t('admin.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -202,10 +467,10 @@ export default function SkateparksPage() {
                 value={area}
                 onChange={(e) => setArea(e.target.value)}
                 options={[
-                  { value: '', label: 'All Areas' },
-                  { value: 'north', label: 'North' },
-                  { value: 'center', label: 'Center' },
-                  { value: 'south', label: 'South' },
+                  { value: '', label: t('admin.allAreas') },
+                  { value: 'north', label: t('search.area.north') },
+                  { value: 'center', label: t('search.area.center') },
+                  { value: 'south', label: t('search.area.south') },
                 ]}
               />
             </div>
@@ -214,9 +479,9 @@ export default function SkateparksPage() {
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 options={[
-                  { value: '', label: 'All Statuses' },
-                  { value: 'active', label: 'Active' },
-                  { value: 'inactive', label: 'Inactive' },
+                  { value: '', label: t('admin.allStatuses') },
+                  { value: 'active', label: t('admin.status.active') },
+                  { value: 'inactive', label: t('admin.status.inactive') },
                 ]}
               />
             </div>
@@ -225,13 +490,13 @@ export default function SkateparksPage() {
                 value={amenities}
                 onChange={(e) => setAmenities(e.target.value)}
                 options={[
-                  { value: '', label: 'All Amenities' },
-                  { value: 'parking', label: 'Parking' },
-                  { value: 'bathroom', label: 'Bathroom' },
-                  { value: 'shade', label: 'Shade' },
-                  { value: 'guard', label: 'Guard' },
-                  { value: 'seating', label: 'Seating' },
-                  { value: 'bombShelter', label: 'Bomb Shelter' },
+                  { value: '', label: t('admin.allAmenities') },
+                  { value: 'parking', label: t('amenities.parking') },
+                  { value: 'bathroom', label: t('amenities.bathroom') },
+                  { value: 'shade', label: t('amenities.shade') },
+                  { value: 'guard', label: t('amenities.guard') },
+                  { value: 'seating', label: t('amenities.seating') },
+                  { value: 'bombShelter', label: t('amenities.bombShelter') },
                 ]}
               />
             </div>
@@ -245,20 +510,20 @@ export default function SkateparksPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {selectedItems.size} skatepark(s) selected
+                {t('admin.selected', { count: selectedItems.size })}
               </p>
               <div className="flex items-center space-x-2">
                 <Button variant="secondary" onClick={() => handleBulkStatusUpdate('active')}>
-                  Set Active
+                  {t('admin.setActive')}
                 </Button>
                 <Button variant="secondary" onClick={() => handleBulkStatusUpdate('inactive')}>
-                  Set Inactive
+                  {t('admin.setInactive')}
                 </Button>
                 <Button variant="secondary" onClick={() => console.log('Export to CSV')}>
-                  Export to CSV
+                  {t('admin.exportToCSV')}
                 </Button>
                 <Button variant="destructive" onClick={handleBulkDelete}>
-                  Delete Selected
+                  {t('admin.deleteSelected')}
                 </Button>
               </div>
             </div>
@@ -282,28 +547,28 @@ export default function SkateparksPage() {
                     />
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Image
+                    {t('admin.table.image')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Name
+                    {t('admin.table.name')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Area
+                    {t('admin.table.area')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Address
+                    {t('admin.table.address')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Opening Year
+                    {t('admin.table.openingYear')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Featured
+                    {t('admin.table.featured')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status
+                    {t('admin.table.status')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
+                    {t('admin.table.actions')}
                   </th>
                 </tr>
               </thead>
@@ -321,7 +586,7 @@ export default function SkateparksPage() {
                 ) : skateparks.length === 0 ? (
                   <tr>
                     <td colSpan={9} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                      No skateparks found
+                      {t('admin.table.noSkateparksFound')}
                     </td>
                   </tr>
                 ) : (
@@ -338,15 +603,34 @@ export default function SkateparksPage() {
                         />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded overflow-hidden">
-                          <img
-                            src={skatepark.images?.[0]?.url || '/placeholder-skatepark.jpg'}
-                            alt={skatepark.name.en}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/placeholder-skatepark.jpg';
-                            }}
-                          />
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded overflow-hidden flex items-center justify-center">
+                          {(() => {
+                            const imageUrl = skatepark.image || skatepark.images?.[0]?.url;
+                            if (imageUrl) {
+                              return (
+                                <img
+                                  src={imageUrl}
+                                  alt={skatepark.name.en}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    // Prevent infinite loop by hiding the image on error
+                                    const img = e.target as HTMLImageElement;
+                                    if (!img.dataset.errorHandled) {
+                                      img.dataset.errorHandled = 'true';
+                                      img.style.display = 'none';
+                                    }
+                                  }}
+                                />
+                              );
+                            }
+                            return (
+                              <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </td>
                       <td className="px-6 py-4">
@@ -372,7 +656,7 @@ export default function SkateparksPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {skatepark.isFeatured ? (
                           <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
-                            Featured
+                            {t('admin.table.featured')}
                           </span>
                         ) : (
                           <span className="text-gray-400 dark:text-gray-500">—</span>
@@ -380,7 +664,7 @@ export default function SkateparksPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(skatepark.status)}`}>
-                          {skatepark.status}
+                          {t(`admin.status.${skatepark.status}`)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -394,15 +678,15 @@ export default function SkateparksPage() {
                           }
                           options={[
                             {
-                              label: 'Edit',
+                              label: t('admin.table.edit'),
                               value: 'edit',
                               onClick: () => router.push(`/${locale}/admin/skateparks/${skateparkId}`),
                             },
                             {
-                              label: 'Delete',
+                              label: t('admin.table.delete'),
                               value: 'delete',
                               onClick: () => {
-                                if (confirm(`Delete ${skatepark.name.en}?`)) {
+                                if (confirm(t('admin.table.deleteConfirm', { name: skatepark.name.en }))) {
                                   console.log('Delete:', skateparkId);
                                 }
                               },
@@ -422,9 +706,11 @@ export default function SkateparksPage() {
           {pagination.totalPages > 1 && (
             <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
               <div className="text-sm text-gray-700 dark:text-gray-300">
-                Showing {(pagination.currentPage - 1) * pagination.limit + 1} to{' '}
-                {Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} of{' '}
-                {pagination.totalCount} skateparks
+                {t('admin.table.showing', {
+                  from: (pagination.currentPage - 1) * pagination.limit + 1,
+                  to: Math.min(pagination.currentPage * pagination.limit, pagination.totalCount),
+                  total: pagination.totalCount
+                })}
               </div>
               <div className="flex items-center space-x-2">
                 <Button
@@ -433,7 +719,7 @@ export default function SkateparksPage() {
                   onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage - 1 })}
                   disabled={pagination.currentPage === 1}
                 >
-                  Previous
+                  {t('admin.table.previous')}
                 </Button>
                 <div className="flex items-center space-x-1">
                   {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => i + 1)
@@ -457,13 +743,267 @@ export default function SkateparksPage() {
                   onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage + 1 })}
                   disabled={pagination.currentPage === pagination.totalPages}
                 >
-                  Next
+                  {t('admin.table.next')}
                 </Button>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Statistics Modal */}
+      {showStatistics && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 dark:bg-opacity-70">
+          <div className="bg-background dark:bg-background-dark rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-border dark:border-border-dark">
+              <h2 className="text-2xl font-bold text-text dark:text-text-dark">{t('admin.statistics.title')}</h2>
+              <button
+                onClick={() => setShowStatistics(false)}
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setActiveTab('amenities')}
+                className={`px-6 py-3 font-medium text-sm transition-colors ${
+                  activeTab === 'amenities'
+                  ? 'text-header-text dark:text-header-text-dark border-b-2 border-header-text dark:border-header-text-dark'
+                  : 'text-text-secondary dark:text-text-secondary-dark hover:text-text dark:hover:text-text-dark'
+                }`}
+              >
+                {t('admin.statistics.tabs.amenities')}
+              </button>
+              <button
+                onClick={() => setActiveTab('openingYears')}
+                className={`px-6 py-3 font-medium text-sm transition-colors ${
+                  activeTab === 'openingYears'
+                    ? 'text-header-text dark:text-header-text-dark border-b-2 border-header-text dark:border-header-text-dark'
+                    : 'text-text-secondary dark:text-text-secondary-dark hover:text-text dark:hover:text-text-dark'
+                }`}
+              >
+                {t('admin.statistics.tabs.openingYears')}
+              </button>
+              <button
+                onClick={() => setActiveTab('areas')}
+                className={`px-6 py-3 font-medium text-sm transition-colors ${
+                  activeTab === 'areas'
+                  ? 'text-header-text dark:text-header-text-dark border-b-2 border-header-text dark:border-header-text-dark'
+                  : 'text-text-secondary dark:text-text-secondary-dark hover:text-text dark:hover:text-text-dark'
+                }`}
+              >
+                {t('admin.statistics.tabs.areas')}
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {statisticsLoading ? (
+                <div className="flex items-center justify-center h-96">
+                  <Skeleton className="h-64 w-full" />
+                </div>
+              ) : statisticsData ? (
+                <>
+                  {/* Amenities Chart */}
+                  {activeTab === 'amenities' && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-text dark:text-text-dark">
+                        {t('admin.statistics.amenities.title')}
+                      </h3>
+                      <ResponsiveContainer width="100%" height={400}>
+                        <BarChart data={[
+                          { key: 'paidEntry', name: t('admin.statistics.amenities.paidEntry'), icon: 'shekel', value: statisticsData.amenities.paidEntry?.count || 0, parks: statisticsData.amenities.paidEntry?.parks || [] },
+                          { key: 'bikesAllowed', name: t('admin.statistics.amenities.bikesAllowed'), icon: 'bmx-icon', value: statisticsData.amenities.bikesAllowed?.count || 0, parks: statisticsData.amenities.bikesAllowed?.parks || [] },
+                          { key: 'parking', name: t('admin.statistics.amenities.parking'), icon: 'parking', value: statisticsData.amenities.parking?.count || 0, parks: statisticsData.amenities.parking?.parks || [] },
+                          { key: 'shade', name: t('admin.statistics.amenities.shade'), icon: 'umbrella', value: statisticsData.amenities.shade?.count || 0, parks: statisticsData.amenities.shade?.parks || [] },
+                          { key: 'bathroom', name: t('admin.statistics.amenities.bathroom'), icon: 'toilet', value: statisticsData.amenities.bathroom?.count || 0, parks: statisticsData.amenities.bathroom?.parks || [] },
+                          { key: 'helmetRequired', name: t('admin.statistics.amenities.helmetRequired'), icon: 'helmet', value: statisticsData.amenities.helmetRequired?.count || 0, parks: statisticsData.amenities.helmetRequired?.parks || [] },
+                          { key: 'guard', name: t('admin.statistics.amenities.guard'), icon: 'securityGuard', value: statisticsData.amenities.guard?.count || 0, parks: statisticsData.amenities.guard?.parks || [] },
+                          { key: 'seating', name: t('admin.statistics.amenities.seating'), icon: 'couch', value: statisticsData.amenities.seating?.count || 0, parks: statisticsData.amenities.seating?.parks || [] },
+                          { key: 'bombShelter', name: t('admin.statistics.amenities.bombShelter'), icon: 'safe-house', value: statisticsData.amenities.bombShelter?.count || 0, parks: statisticsData.amenities.bombShelter?.parks || [] },
+                          { key: 'scootersAllowed', name: t('admin.statistics.amenities.scootersAllowed'), icon: 'scooter', value: statisticsData.amenities.scootersAllowed?.count || 0, parks: statisticsData.amenities.scootersAllowed?.parks || [] },
+                          { key: 'noWax', name: t('admin.statistics.amenities.noWax'), icon: 'Wax', value: statisticsData.amenities.noWax?.count || 0, parks: statisticsData.amenities.noWax?.parks || [] },
+                          { key: 'nearbyRestaurants', name: t('admin.statistics.amenities.nearbyRestaurants'), icon: 'nearbyResturants', value: statisticsData.amenities.nearbyRestaurants?.count || 0, parks: statisticsData.amenities.nearbyRestaurants?.parks || [] },
+                        ]}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#006f4e" className="dark:stroke-gray-700" />
+                          <XAxis 
+                            dataKey="name" 
+                            angle={-45}
+                            textAnchor={locale === 'he' ? 'start' : 'end'}
+                            height={120}
+                            tick={{ fontSize: 12, fill: 'currentColor' }}
+                            className="text-header-text dark:text-header-text-dark"
+                            tickFormatter={(value, index) => {
+                              const data = [
+                                { key: 'paidEntry', name: t('admin.statistics.amenities.paidEntry'), icon: 'shekel' },
+                                { key: 'bikesAllowed', name: t('admin.statistics.amenities.bikesAllowed'), icon: 'bmx-icon' },
+                                { key: 'parking', name: t('admin.statistics.amenities.parking'), icon: 'parking' },
+                                { key: 'shade', name: t('admin.statistics.amenities.shade'), icon: 'umbrella' },
+                                { key: 'bathroom', name: t('admin.statistics.amenities.bathroom'), icon: 'toilet' },
+                                { key: 'helmetRequired', name: t('admin.statistics.amenities.helmetRequired'), icon: 'helmet' },
+                                { key: 'guard', name: t('admin.statistics.amenities.guard'), icon: 'securityGuard' },
+                                { key: 'seating', name: t('admin.statistics.amenities.seating'), icon: 'couch' },
+                                { key: 'bombShelter', name: t('admin.statistics.amenities.bombShelter'), icon: 'safe-house' },
+                                { key: 'scootersAllowed', name: t('admin.statistics.amenities.scootersAllowed'), icon: 'scooter' },
+                                { key: 'noWax', name: t('admin.statistics.amenities.noWax'), icon: 'Wax' },
+                                { key: 'nearbyRestaurants', name: t('admin.statistics.amenities.nearbyRestaurants'), icon: 'nearbyResturants' },
+                              ];
+                              return data[index]?.name || value;
+                            }}
+                          />
+                          <YAxis 
+                            tick={{ fontSize: 12, fill: 'currentColor' }}
+                            className="text-text-secondary dark:text-text-secondary-dark"
+                          />
+                          <Tooltip content={<AmenitiesTooltip t={t} />} />
+                          <Bar dataKey="value" fill="#006f4e" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mt-4">
+                        {[
+                          { key: 'paidEntry', name: t('admin.statistics.amenities.paidEntry'), icon: 'shekel' as const, value: statisticsData.amenities.paidEntry?.count || 0 },
+                          { key: 'bikesAllowed', name: t('admin.statistics.amenities.bikesAllowed'), icon: 'bmx-icon' as const, value: statisticsData.amenities.bikesAllowed?.count || 0 },
+                          { key: 'parking', name: t('admin.statistics.amenities.parking'), icon: 'parking' as const, value: statisticsData.amenities.parking?.count || 0 },
+                          { key: 'shade', name: t('admin.statistics.amenities.shade'), icon: 'umbrella' as const, value: statisticsData.amenities.shade?.count || 0 },
+                          { key: 'bathroom', name: t('admin.statistics.amenities.bathroom'), icon: 'toilet' as const, value: statisticsData.amenities.bathroom?.count || 0 },
+                          { key: 'helmetRequired', name: t('admin.statistics.amenities.helmetRequired'), icon: 'helmet' as const, value: statisticsData.amenities.helmetRequired?.count || 0 },
+                          { key: 'guard', name: t('admin.statistics.amenities.guard'), icon: 'securityGuard' as const, value: statisticsData.amenities.guard?.count || 0 },
+                          { key: 'seating', name: t('admin.statistics.amenities.seating'), icon: 'couch' as const, value: statisticsData.amenities.seating?.count || 0 },
+                          { key: 'bombShelter', name: t('admin.statistics.amenities.bombShelter'), icon: 'safe-house' as const, value: statisticsData.amenities.bombShelter?.count || 0 },
+                          { key: 'scootersAllowed', name: t('admin.statistics.amenities.scootersAllowed'), icon: 'scooter' as const, value: statisticsData.amenities.scootersAllowed?.count || 0 },
+                          { key: 'noWax', name: t('admin.statistics.amenities.noWax'), icon: 'Wax' as const, value: statisticsData.amenities.noWax?.count || 0 },
+                          { key: 'nearbyRestaurants', name: t('admin.statistics.amenities.nearbyRestaurants'), icon: 'nearbyResturants' as const, value: statisticsData.amenities.nearbyRestaurants?.count || 0 },
+                        ].map((amenity) => (
+                          <div key={amenity.key} className="flex flex-col items-center p-3 bg-white/50 dark:bg-black/0 rounded-lg">
+                            <Icon name={amenity.icon} className="w-6 h-6 text-[#006f4e]/80 dark:text-header-text-dark mb-2" />
+                            <div className="text-lg font-bold text-[#006f4e]/60 dark:text-text-dark">{amenity.value}</div>
+                            <div className="text-xs text-text-secondary dark:text-text-secondary-dark text-center mt-1">{amenity.name}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Opening Years Chart */}
+                  {activeTab === 'openingYears' && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-text dark:text-text-dark">
+                        {t('admin.statistics.openingYears.title')}
+                      </h3>
+                      {statisticsData.openingYears.length > 0 ? (
+                        <ResponsiveContainer width="100%" height={400}>
+                          <LineChart data={statisticsData.openingYears}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" className="dark:stroke-gray-700" />
+                            <XAxis 
+                              dataKey="year" 
+                              tick={{ fontSize: 12, fill: 'currentColor' }}
+                              className="text-text-secondary dark:text-text-dark"
+                              tickFormatter={(value) => {
+                                const date = new Date(value, 0, 1);
+                                return `${date.getFullYear()}`;
+                              }}
+                            />
+                            <YAxis 
+                              tick={{ fontSize: 12, fill: 'currentColor' }}
+                              className="text-text-secondary dark:text-text-secondary-dark"
+                            />
+                            <Tooltip content={<OpeningYearsTooltip t={t} />} />
+                            <Line 
+                              type="monotone" 
+                              dataKey="count" 
+                              stroke="#10B981" 
+                              strokeWidth={2}
+                              dot={{ r: 4 }}
+                              activeDot={{ r: 6 }}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-96 text-text-secondary dark:text-text-secondary-dark">
+                          {t('admin.statistics.openingYears.noData')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Areas Chart */}
+                  {activeTab === 'areas' && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-text dark:text-text-dark">
+                          {t('admin.statistics.areas.title')}
+                        </h3>
+                        <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                          {t('admin.statistics.areas.totalParks')}: <span className="font-bold text-text dark:text-text-dark">{statisticsData.totalParks}</span>
+                        </div>
+                      </div>
+                      <ResponsiveContainer width="100%" height={400}>
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: t('admin.statistics.areas.north'), value: statisticsData.areas.north },
+                              { name: t('admin.statistics.areas.center'), value: statisticsData.areas.center },
+                              { name: t('admin.statistics.areas.south'), value: statisticsData.areas.south },
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                            outerRadius={120}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {[
+                              { name: 'North', value: statisticsData.areas.north },
+                              { name: 'Center', value: statisticsData.areas.center },
+                              { name: 'South', value: statisticsData.areas.south },
+                            ].map((_, index) => {
+                              const colors = ['#4CAF50', '#9C27B0', '#FF9800'];
+                              return <Cell key={`cell-${index}`} fill={colors[index]} />;
+                            })}
+                          </Pie>
+                          <Tooltip content={<AreasTooltip t={t} />} />
+                          <Legend />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="mt-4 grid grid-cols-3 gap-4">
+                        <div className="text-center p-4 bg-[#9c27b0]/5 dark:bg-blue-900/20 rounded-lg">
+                          <div className="text-2xl font-bold text-[#9c27b0] dark:text-blue-400">
+                            {statisticsData.areas.north}
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">{t('admin.statistics.areas.north')}</div>
+                        </div>
+                        <div className="text-center p-4 bg-[#4caf50]/5 dark:bg-green-900/20 rounded-lg">
+                          <div className="text-2xl font-bold text-[#4caf50] dark:text-green-400">
+                            {statisticsData.areas.center}
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">{t('admin.statistics.areas.center')}</div>
+                        </div>
+                        <div className="text-center p-4 bg-[#ff9800]/5 dark:bg-amber-900/20 rounded-lg">
+                          <div className="text-2xl font-bold text-[#ff9800] dark:text-amber-400">
+                            {statisticsData.areas.south}
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">{t('admin.statistics.areas.south')}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex items-center justify-center h-96 text-gray-500 dark:text-gray-400">
+                  Failed to load statistics
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

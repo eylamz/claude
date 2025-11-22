@@ -28,8 +28,9 @@ export async function GET(request: Request) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
+    const fetchAll = searchParams.get('all') === 'true';
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = fetchAll ? 10000 : parseInt(searchParams.get('limit') || '20');
     const search = searchParams.get('search') || '';
     const area = searchParams.get('area') || '';
     const status = searchParams.get('status') || '';
@@ -52,7 +53,7 @@ export async function GET(request: Request) {
 
     // Area filter
     if (area) {
-      filter['address.area'] = area;
+      filter.area = area;
     }
 
     // Status filter
@@ -88,8 +89,10 @@ export async function GET(request: Request) {
         en: skatepark.name?.en || 'Untitled',
         he: skatepark.name?.he || 'ללא כותרת',
       },
-      area: skatepark.address?.area || '',
+      area: skatepark.area || skatepark.address?.area || '',
       address: {
+        en: skatepark.address?.en || skatepark.address?.street || '',
+        he: skatepark.address?.he || skatepark.address?.city || '',
         street: skatepark.address?.street || '',
         city: skatepark.address?.city || '',
         zip: skatepark.address?.zip || '',
@@ -97,8 +100,8 @@ export async function GET(request: Request) {
       status: skatepark.status || 'active',
       isFeatured: skatepark.isFeatured || false,
       openingYear: skatepark.openingYear || null,
-      image: skatepark.images?.[0]?.url || '/placeholder-skatepark.jpg',
-      amenities: skatepark.amenities || [],
+      image: skatepark.images?.[0]?.url || null,
+      amenities: skatepark.amenities || {},
       location: skatepark.location || { lat: 0, lng: 0 },
     }));
 

@@ -41,6 +41,7 @@ export interface ISizeVariant {
 export interface IProductVariant {
   color: IColorVariant;
   sizes: ISizeVariant[];
+  images?: IProductImage[];
 }
 
 /**
@@ -265,6 +266,36 @@ const ProductSchema: Schema<IProduct> = new Schema<IProduct>(
             },
           },
         ],
+        images: [
+          {
+            url: {
+              type: String,
+              required: [true, 'Image URL is required'],
+              trim: true,
+            },
+            alt: {
+              en: {
+                type: String,
+                required: true,
+                trim: true,
+              },
+              he: {
+                type: String,
+                required: true,
+                trim: true,
+              },
+            },
+            order: {
+              type: Number,
+              default: 0,
+            },
+            publicId: {
+              type: String,
+              required: [true, 'Public ID is required'],
+              trim: true,
+            },
+          },
+        ],
       },
     ],
     isFeatured: {
@@ -441,6 +472,14 @@ ProductSchema.statics.searchProducts = function (query: string) {
 ProductSchema.pre('save', function (next) {
   if (this.isModified('images') && this.images.length > 0) {
     this.images.sort((a, b) => a.order - b.order);
+  }
+  // Sort variant images by order
+  if (this.isModified('variants')) {
+    this.variants.forEach((variant: IProductVariant) => {
+      if (variant.images && variant.images.length > 0) {
+        variant.images.sort((a, b) => a.order - b.order);
+      }
+    });
   }
   next();
 });

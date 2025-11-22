@@ -68,6 +68,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
               "bg-input dark:bg-input-dark",
 
+              "bord focus:border-opacity-40",
+
               "hover:bg-input-hover dark:hover:bg-input-hover-dark",
 
               "placeholder:text-input-text dark:placeholder:text-input-text-dark",

@@ -422,35 +422,45 @@ export const formatDayRanges = (days: DayOfWeek[], locale: string = 'en'): strin
   return daysPrefix ? `${daysPrefix} ${formattedDays}` : formattedDays;
 };
 
+// Format time range based on locale
+// For Hebrew (RTL): endTime - startTime
+// For English (LTR): startTime - endTime
+export const formatTimeRange = (startTime: string, endTime: string, locale: string = 'en'): string => {
+  if (locale === 'he') {
+    return `${endTime} - ${startTime}`;
+  }
+  return `${startTime} - ${endTime}`;
+};
+
 // Format lighting hours with special handling for sunset
 // lightingUntil is a string representing the time until which lighting is available (e.g., "22:00" or "sunset")
+// Always shows "From sunset until [time]" format if time is provided, otherwise "No lighting"
+// Never shows "Until [time]" format
 export const formatLightingHours = (lightingUntil: string | undefined, locale: string = 'en'): string => {
-  if (!lightingUntil) {
-    const translations = { en: 'No lighting', he: 'ללא תאורה' };
-    return translations[locale] || translations.en;
-  }
-
   const translations = {
     fromSunsetTill: { en: 'From sunset until', he: 'משקיעה עד' },
-    until: { en: 'Until', he: 'עד' },
     noLighting: { en: 'No lighting', he: 'ללא תאורה' },
   };
 
-  const t = (key: string): string => {
-    return translations[key as keyof typeof translations]?.[locale] || translations[key as keyof typeof translations]?.en || key;
+  const t = (key: keyof typeof translations): string => {
+    const translation = translations[key];
+    if (!translation) return key;
+    return (translation[locale as 'en' | 'he'] || translation.en) as string;
   };
 
-  // If it contains "sunset" or is "00:01", treat as sunset
-  if (lightingUntil.toLowerCase().includes('sunset') || lightingUntil === '00:01') {
-    // Extract time if there's one, otherwise just show sunset
-    const timeMatch = lightingUntil.match(/(\d{2}:\d{2})/);
-    if (timeMatch) {
-      return `${t('fromSunsetTill')} ${timeMatch[1]}`;
-    }
-    return t('fromSunsetTill');
+  // If no lightingUntil provided, show "No lighting"
+  if (!lightingUntil) {
+    return t('noLighting');
   }
 
-  // Normal hours format - display "Until [time]"
-  return `${t('until')} ${lightingUntil}`;
+  // Extract time if it's in the string (e.g., "sunset 22:00" or just "22:00")
+  // Time format should be HH:MM (e.g., "22:00", "23:30")
+  const timeMatch = lightingUntil.match(/(\d{2}:\d{2})/);
+  if (timeMatch) {
+    return `${t('fromSunsetTill')} ${timeMatch[1]}`;
+  }
+  
+  // If lightingUntil exists but no valid time format found, show "No lighting"
+  return t('noLighting');
 };
 

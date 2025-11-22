@@ -119,7 +119,7 @@ export function PopoverContent({ children, className = '' }: PopoverContentProps
     <div className="relative">
       <div
         ref={contentRef}
-        className={`absolute top-full left-0 mt-3 z-50 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 min-w-[200px] ${className}`}
+        className={`w-fit absolute top-full left-0 mt-3 z-50 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 min-w-[200px] ${className}`}
       >
         {children}
       </div>

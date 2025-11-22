@@ -1,10 +1,11 @@
 'use client';
 
-import { FC, useState } from 'react';
+import { FC, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/use-translation';
 import { useLocaleInfo } from '@/hooks/use-translation';
 import { cn } from '@/lib/utils/cn';
+import { Icon } from '@/components/icons/Icon';
 
 /**
  * Product interface for the card
@@ -33,6 +34,11 @@ interface ProductCardProduct {
     sizes: Array<{
       size: string;
       stock: number;
+    }>;
+    images?: Array<{
+      url: string;
+      alt?: { en: string; he: string } | string;
+      order?: number;
     }>;
   }>;
   totalStock?: number;
@@ -89,6 +95,7 @@ export const ProductCard: FC<ProductCardProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [selectedColorHex, setSelectedColorHex] = useState<string | null>(null);
 
   // Construct product object from props or use provided product prop
   const product: ProductCardProduct = productProp || {
@@ -108,13 +115,33 @@ export const ProductCard: FC<ProductCardProps> = ({
   // Helper functions
   const getLocalizedName = (name: ProductCardProduct['name']): string => {
     if (typeof name === 'string') return name;
-    return name[locale] || name.en || name.he || '';
+    const localizedName = name as { en: string; he: string };
+    return localizedName[locale as 'en' | 'he'] || localizedName.en || localizedName.he || '';
+  };
+
+  // Helper to get localized color name
+  const getLocalizedColorName = (colorName: { en: string; he: string } | string): string => {
+    if (typeof colorName === 'string') return colorName;
+    return colorName[locale as 'en' | 'he'] || colorName.en || colorName.he || '';
   };
 
   const getImageAlt = (alt: any, productName: string): string => {
     if (!alt) return productName;
     if (typeof alt === 'string') return alt;
-    return alt[locale] || alt.en || alt.he || productName;
+    const localizedAlt = alt as { en: string; he: string };
+    return localizedAlt[locale as 'en' | 'he'] || localizedAlt.en || localizedAlt.he || productName;
+  };
+
+  // Format price to show decimals only if needed
+  const formatPrice = (price: number): string => {
+    // Round to 2 decimal places to handle floating point precision issues
+    const rounded = Math.round(price * 100) / 100;
+    // Check if the rounded price is an integer (no decimal part)
+    if (rounded % 1 === 0) {
+      return rounded.toString();
+    }
+    // Show decimals if the price has a decimal part
+    return rounded.toFixed(2);
   };
 
   // Calculate stock
@@ -164,15 +191,78 @@ export const ProductCard: FC<ProductCardProps> = ({
     }));
   };
 
+  // Set default selected color on mount
+  useEffect(() => {
+    if (!selectedColorHex && product.variants && product.variants.length > 0) {
+      setSelectedColorHex(product.variants[0].color.hex);
+    }
+  }, [product.variants, selectedColorHex]);
+
+  // Get image for a specific color variant
+  const getImageForColor = (colorHex: string) => {
+    if (!product.variants) {
+      return null;
+    }
+    
+    // Find the variant for this color
+    const variant = product.variants.find((v) => v.color.hex === colorHex);
+    
+    if (!variant) return null;
+    
+    // If variant has its own images, use the first one
+    if (variant.images && variant.images.length > 0) {
+      return variant.images[0]?.url || null;
+    }
+    
+    // Fallback to product-level images
+    if (product.images && product.images.length > 0) {
+      const variantIndex = product.variants.findIndex((v) => v.color.hex === colorHex);
+      const imageIndex = variantIndex % product.images.length;
+      return product.images[imageIndex]?.url || null;
+    }
+    
+    return null;
+  };
+
+  // Get all images for a specific color variant
+  const getImagesForColor = (colorHex: string) => {
+    if (!product.variants) {
+      return product.images || [];
+    }
+    
+    // Find the variant for this color
+    const variant = product.variants.find((v) => v.color.hex === colorHex);
+    
+    if (!variant) return product.images || [];
+    
+    // If variant has its own images, use those
+    if (variant.images && variant.images.length > 0) {
+      return variant.images;
+    }
+    
+    // Fallback to product-level images
+    return product.images || [];
+  };
+
   const totalStock = calculateTotalStock();
   const isOutOfStock = totalStock === 0;
   const hasDiscount = isDiscountActive();
   const finalPrice = hasDiscount ? product.discountPrice! : product.price;
   const productName = getLocalizedName(product.name);
 
-  // Images
-  const images = product.images || [];
-  const primaryImage = images[0]?.url || '';
+  // Get images based on selected color variant or default
+  const variantImages = selectedColorHex ? getImagesForColor(selectedColorHex) : (product.images || []);
+  const images = variantImages.length > 0 ? variantImages : (product.images || []);
+  
+  // Determine primary image based on selected color or default
+  let primaryImage = images[0]?.url || '';
+  if (selectedColorHex) {
+    const colorImage = getImageForColor(selectedColorHex);
+    if (colorImage) {
+      primaryImage = colorImage;
+    }
+  }
+  
   const secondaryImage = images[1]?.url || primaryImage;
   const displayImage = isHovered && secondaryImage && secondaryImage !== primaryImage
     ? secondaryImage
@@ -189,7 +279,7 @@ export const ProductCard: FC<ProductCardProps> = ({
     return (
       <div
         className={cn(
-          'group relative flex gap-4 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg',
+          'group relative flex gap-4 p-4 ',
           'hover:shadow-lg transition-all duration-300',
           className
         )}
@@ -245,27 +335,42 @@ export const ProductCard: FC<ProductCardProps> = ({
                     : 'text-gray-900 dark:text-white'
                 )}
               >
-                ₪{finalPrice.toFixed(2)}
+                ₪{formatPrice(finalPrice)}
               </span>
               {hasDiscount && (
                 <span className="text-sm text-gray-500 dark:text-gray-400 line-through">
-                  ₪{product.price.toFixed(2)}
+                  ₪{formatPrice(product.price)}
                 </span>
               )}
             </div>
 
             {/* Color swatches */}
-            {colors.length > 0 && (
+            {colors.length > 1 && (
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex items-center gap-1.5">
-                  {visibleColors.map((color, idx) => (
-                    <div
-                      key={idx}
-                      className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-gray-600 shadow-sm"
-                      style={{ backgroundColor: color.hex }}
-                      title={typeof color.name === 'string' ? color.name : color.name[locale]}
-                    />
-                  ))}
+                  {visibleColors.map((color, idx) => {
+                    const isSelected = selectedColorHex === color.hex;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedColorHex(color.hex);
+                        }}
+                        className={cn(
+                          'w-5 h-5 rounded-full border-2 shadow-sm transition-all cursor-pointer',
+                          isSelected
+                            ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20 dark:ring-blue-400/20'
+                            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                        )}
+                        style={{ backgroundColor: color.hex }}
+                        title={getLocalizedColorName(color.name)}
+                        aria-label={`Select color: ${getLocalizedColorName(color.name)}`}
+                      />
+                    );
+                  })}
                   {remainingColors > 0 && (
                     <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">
                       +{remainingColors}
@@ -320,22 +425,15 @@ export const ProductCard: FC<ProductCardProps> = ({
           )}
           aria-label={isWishlisted ? t('removeFromWishlist') : t('addToWishlist')}
         >
-          <svg
+          <Icon
+            name={isWishlisted ? 'heartLike' : 'heart'}
             className={cn(
               'w-5 h-5 transition-all duration-300',
               isWishlisted
-                ? 'fill-red-500 text-red-500'
-                : 'fill-none text-gray-600 dark:text-gray-400'
+                ? 'text-red-500'
+                : 'text-gray-600 dark:text-gray-400'
             )}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
+          />
         </button>
       </div>
     );
@@ -345,9 +443,8 @@ export const ProductCard: FC<ProductCardProps> = ({
   return (
     <div
       className={cn(
-        'group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg',
-        'overflow-hidden hover:shadow-xl transition-all duration-300',
-        'transform hover:scale-[1.02]',
+        'group relative',
+        'overflow-hidden',
         className
       )}
       onMouseEnter={() => setIsHovered(true)}
@@ -463,29 +560,22 @@ export const ProductCard: FC<ProductCardProps> = ({
               setIsWishlisted(!isWishlisted);
             }}
             className={cn(
-              'absolute top-3 right-3 p-2 rounded-full bg-white dark:bg-gray-800 shadow-lg',
+              'absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-xl bg-card/85 dark:bg-card-dark/85 shadow-lg',
               'opacity-0 group-hover:opacity-100 transition-all duration-300 z-10',
               'hover:scale-110 transform',
               'focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2'
             )}
             aria-label={isWishlisted ? t('removeFromWishlist') : t('addToWishlist')}
           >
-            <svg
+            <Icon
+              name={isWishlisted ? 'heartBold' : 'heart'}
               className={cn(
                 'w-5 h-5 transition-all duration-300',
                 isWishlisted
-                  ? 'fill-red-500 text-red-500 scale-110'
-                  : 'fill-none text-gray-600 dark:text-gray-400 hover:text-red-500'
+                  ? 'text-red-500 scale-110'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-red-500'
               )}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
+            />
           </button>
         </div>
       </Link>
@@ -512,32 +602,43 @@ export const ProductCard: FC<ProductCardProps> = ({
                 : 'text-gray-900 dark:text-white'
             )}
           >
-            ₪{finalPrice.toFixed(2)}
+            ₪{formatPrice(finalPrice)}
           </span>
           {hasDiscount && (
             <span className="text-sm text-gray-500 dark:text-gray-400 line-through">
-              ₪{product.price.toFixed(2)}
+              ₪{formatPrice(product.price)}
             </span>
           )}
         </div>
 
         {/* Color Swatches */}
-        {colors.length > 0 && (
+        {colors.length > 1 && (
           <div className="flex items-center gap-1.5">
-            {visibleColors.map((color, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  'w-6 h-6 rounded-full border-2 transition-all duration-200',
-                  'hover:scale-110 hover:shadow-md',
-                  'border-gray-300 dark:border-gray-600',
-                  'shadow-sm'
-                )}
-                style={{ backgroundColor: color.hex }}
-                title={typeof color.name === 'string' ? color.name : color.name[locale]}
-                aria-label={`Color: ${typeof color.name === 'string' ? color.name : color.name[locale]}`}
-              />
-            ))}
+            {visibleColors.map((color, idx) => {
+              const isSelected = selectedColorHex === color.hex;
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedColorHex(color.hex);
+                  }}
+                  className={cn(
+                    'w-6 h-6 rounded-full border-2 transition-all duration-200 cursor-pointer',
+                    'hover:scale-110 hover:shadow-md',
+                    isSelected
+                      ? 'border-blue-500 dark:border-blue-400 ring-2 ring-blue-500/20 dark:ring-blue-400/20'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500',
+                    'shadow-sm'
+                  )}
+                  style={{ backgroundColor: color.hex }}
+                  title={getLocalizedColorName(color.name)}
+                  aria-label={`Select color: ${getLocalizedColorName(color.name)}`}
+                />
+              );
+            })}
             {remainingColors > 0 && (
               <span className="text-xs text-gray-500 dark:text-gray-400 ml-1 font-medium">
                 +{remainingColors} more

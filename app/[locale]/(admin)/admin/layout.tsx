@@ -187,7 +187,7 @@ function AdminLayoutContent({
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 bg-black text-white transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        className={`fixed inset-y-0 left-0 z-50 bg-black text-white transform transition-all duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } ${sidebarCollapsed ? 'lg:w-20' : 'w-64 lg:w-64'}`}
       >
@@ -273,7 +273,7 @@ function AdminLayoutContent({
       </div>
 
       {/* Main content */}
-      <div className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
+      <div className={`transition-all duration-200 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
         {/* Header */}
         <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
@@ -330,7 +330,7 @@ function AdminLayoutContent({
         </header>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8 bg-background dark:bg-background-dark">
+        <main className="p-4 sm:p-6 lg:p-8 bg-background dark:bg-background-dark transition-all duration-200">
           {children}
         </main>
       </div>

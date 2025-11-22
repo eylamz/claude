@@ -184,7 +184,7 @@ export default function HomePage() {
 
 
   return (
-    <main className="w-full">
+    <main className="w-full bg-background dark:bg-background-dark">
 
       {/* Hero Carousel Section */}
       {homepageSettings?.heroCarouselImages && homepageSettings.heroCarouselImages.length > 0 && (
@@ -203,7 +203,7 @@ export default function HomePage() {
                 style={{ animationDelay: '400ms' }}
               >
                 {t('seeAllProducts')}
-                <ArrowRight className="ltr:ml-2 rtl:mr-2 h-4 w-4 rtl:rotate-180 transition-all duration-300 group-hover:w-[1.25rem] group-hover:h-[1.25rem] group-hover:ltr:translate-x-[10px] group-hover:rtl:translate-x-[-10px]" />
+                <ArrowRight className="ltr:ml-2 rtl:mr-2 h-4 w-4 rtl:rotate-180 transition-all duration-200 group-hover:w-[1.25rem] group-hover:h-[1.25rem] group-hover:ltr:translate-x-[10px] group-hover:rtl:translate-x-[-10px]" />
               </Button>
             </Link>
           </div>
@@ -216,7 +216,7 @@ export default function HomePage() {
       </section>
 
       {/* Skateparks Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-2 px-4 select-none">
             <h2 
@@ -231,7 +231,7 @@ export default function HomePage() {
                 className="opacity-0 !px-0 animate-popFadeIn group [animation-delay:900ms]"
               >
                 {t('viewAllSkateparks')}
-                <ArrowRight className="ltr:ml-2 rtl:mr-2 h-4 w-4 rtl:rotate-180 transition-all duration-300 group-hover:w-[1.25rem] group-hover:h-[1.25rem] group-hover:ltr:translate-x-[10px] group-hover:rtl:translate-x-[-10px]" />
+                <ArrowRight className="ltr:ml-2 rtl:mr-2 h-4 w-4 rtl:rotate-180 transition-all duration-200 group-hover:w-[1.25rem] group-hover:h-[1.25rem] group-hover:ltr:translate-x-[10px] group-hover:rtl:translate-x-[-10px]" />
               </Button>
             </Link>
           </div>
@@ -267,7 +267,7 @@ export default function HomePage() {
                 style={{ animationDelay: '1600ms' }}
               >
                 {t('viewAllGuides') || t('explore')}
-                <ArrowRight className="ltr:ml-2 rtl:mr-2 h-4 w-4 rtl:rotate-180 transition-all duration-300 group-hover:w-[1.25rem] group-hover:h-[1.25rem] group-hover:ltr:translate-x-[10px] group-hover:rtl:translate-x-[-10px]" />
+                <ArrowRight className="ltr:ml-2 rtl:mr-2 h-4 w-4 rtl:rotate-180 transition-all duration-200 group-hover:w-[1.25rem] group-hover:h-[1.25rem] group-hover:ltr:translate-x-[10px] group-hover:rtl:translate-x-[-10px]" />
               </Button>
             </Link>
           </div>

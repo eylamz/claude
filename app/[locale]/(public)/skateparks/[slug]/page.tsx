@@ -12,6 +12,7 @@ import { Button } from '@/components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { Select } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import ReviewForm from '@/components/reviews/ReviewForm';
 import ImageSlider from '@/components/skateparks/ImageSlider';
@@ -20,6 +21,7 @@ import {
   groupDaysWithSameHours,
   formatDayRanges,
   formatLightingHours,
+  formatTimeRange,
   type OperatingHours as OperatingHoursType,
 } from '@/lib/utils/hoursFormatter';
 
@@ -111,7 +113,7 @@ type ReviewSort = 'newest' | 'oldest' | 'highest' | 'lowest';
 
 const AMENITY_ICONS: Record<string, string> = {
   parking: 'parking',
-  shade: 'sun',
+  shade: 'umbrella',
   bathroom: 'toilet',
   guard: 'securityGuard',
   seating: 'couch', // Using couch as closest match for seating
@@ -205,7 +207,7 @@ function FormattedHours({
       <div className="space-y-2">
         {/* Header with closed badge */}
         <div className="flex items-center gap-2">
-          <Icon name="clockBold" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <Icon name="clockBold" className="w-5 h-5" />
           <span className="font-semibold">{t('openingHours')}: </span>
           <span className="inline-flex items-center px-2 py-1 rounded text-sm font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border border-red-300 dark:border-red-700">
             {t('permanentlyClosed')}
@@ -234,17 +236,17 @@ function FormattedHours({
       <div className="space-y-2">
         {/* 24/7 Header */}
         <div className="flex items-center gap-2">
-          <Icon name="clockBold" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <Icon name="clockBold" className="w-5 h-5" />
           <span className="font-semibold">{t('openingHours')}: </span>
           <span className="inline-flex items-center px-2 py-1 rounded text-sm font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-300 dark:border-green-700">
             {t('open247')}
           </span>
         </div>
         
-        {/* ALWAYS show lighting hours for 24/7 parks */}
+        {/* ALWAYS show lighting hours for 24/7 parks when is24Hours is true */}
         <div className="flex items-start gap-2">
           <div className="flex items-center gap-2">
-            <Icon name="sun" className={`w-5 h-5 ${lightingHours?.endTime ? 'text-yellow-600/90' : 'text-gray-500'}`} />
+            <Icon name="sunBold" className={`w-5 h-5 ${lightingHours?.endTime ? 'text-yellow-600/90' : 'text-gray-500'}`} />
             <span className="font-semibold">{t('lightingHours')}: </span>
           </div>
           <div>
@@ -285,7 +287,7 @@ function FormattedHours({
       <div className="space-y-2">
         {/* Header */}
         <div className="flex items-center gap-2">
-          <Icon name="clockBold" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <Icon name="clockBold" className="w-5 h-5 " />
           <span className="font-semibold">{t('openingHours')}</span>
         </div>
         
@@ -299,7 +301,7 @@ function FormattedHours({
             {schedule.isOpen 
               ? scheduleKey === 'openAllDay'
                 ? t('openAllDay')
-                : `${schedule.openTime} - ${schedule.closeTime}`
+                : formatTimeRange(schedule.openTime, schedule.closeTime, locale)
               : t('closedStatus')}
           </span>
         </div>
@@ -318,7 +320,7 @@ function FormattedHours({
       <div className="space-y-3">
         {/* Header */}
         <div className="flex items-center gap-2">
-          <Icon name="clockBold" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <Icon name="clockBold" className="w-5 h-5 " />
           <span className="font-semibold">{t('openingHours')}</span>
         </div>
         
@@ -331,7 +333,7 @@ function FormattedHours({
             
             <span className={weekSchedule.isOpen ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'}>
               {weekSchedule.isOpen 
-                ? `${weekSchedule.openTime} - ${weekSchedule.closeTime}`
+                ? formatTimeRange(weekSchedule.openTime, weekSchedule.closeTime, locale)
                 : t('closedStatus')}
             </span>
           </div>
@@ -344,7 +346,7 @@ function FormattedHours({
             
             <span className={holidaySchedule.isOpen ? 'text-gray-900 dark:text-white' : 'font-semibold text-red-600 dark:text-red-400'}>
               {holidaySchedule.isOpen 
-                ? `${holidaySchedule.openTime} - ${holidaySchedule.closeTime}`
+                ? formatTimeRange(holidaySchedule.openTime, holidaySchedule.closeTime, locale)
                 : t('closedStatus')}
             </span>
           </div>
@@ -385,7 +387,7 @@ function FormattedHours({
                 {schedule.isOpen 
                   ? (scheduleKey === 'openAllDay' || (schedule.openTime === '00:00' && schedule.closeTime === '00:00'))
                     ? t('openAllDay')
-                    : `${schedule.openTime} - ${schedule.closeTime}`
+                    : formatTimeRange(schedule.openTime, schedule.closeTime, locale)
                   : t('closedStatus')}
               </span>
             </div>
@@ -417,7 +419,6 @@ export default function SkateparkPage() {
   const [addressCopied, setAddressCopied] = useState(false);
   const [reviewSort, setReviewSort] = useState<ReviewSort>('newest');
   const [showAddReview, setShowAddReview] = useState(false);
-  const [openTooltip, setOpenTooltip] = useState<string | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
@@ -702,7 +703,7 @@ export default function SkateparkPage() {
 
         <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
           {/* Header */}
-          <div className=" rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-white/80 dark:bg-gray-800/70">
+          <div className=" rounded-lg shadow-sm p-6 border border-border-dark/20 dark:border-text-secondary-dark/70 backdrop-blur-sm bg-white/80 dark:bg-gray-800/70">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div>
                 <div className="flex items-center gap-3 mb-2">
@@ -767,7 +768,7 @@ export default function SkateparkPage() {
           {/* Info Cards */}
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Hours Card - Now using FormattedHours component */}
-            <Card className="text-gray-900 dark:text-gray-300 p-4 backdrop-blur-sm bg-white/80 dark:bg-gray-800/80">
+            <Card className="text-text dark:text-[#7991a0] p-4 backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/80">
               <div className="flex gap-4 mb-4 justify-between">
                 <div className={locale === 'he' ? '-ml-10' : ''}>
                   <FormattedHours
@@ -806,10 +807,10 @@ export default function SkateparkPage() {
               </div>
 
               {/* Address Section */}
-              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 dark:text-gray-400">
+              <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-secondary-dark/70 dark:text-gray-400">
                 <div className="flex items-center mb-3">
-                  <h2 className="text-lg font-semibold flex items-center">
-                    <Icon name="locationBold" className={`w-5 h-5 ${locale === 'he' ? 'ml-1.5 mr-0' : 'mr-1.5 ml-0'}`} />
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <Icon name="locationBold" className={`w-5 h-5`} />
                     {t('address')}
                   </h2>
                 </div>
@@ -820,7 +821,7 @@ export default function SkateparkPage() {
               </div>
 
               {/* Opening/Closing Year Section */}
-              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 dark:text-gray-400">
+              <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-secondary-dark/70 dark:text-gray-400">
                 <div className="flex flex-col flex-wrap gap-2 mb-2">
                   {skatepark.openingYear && (
                     <span>{t('opened')} {skatepark.openingYear}.</span>
@@ -833,10 +834,10 @@ export default function SkateparkPage() {
             </Card>
 
             {/* Amenities Card */}
-            <Card className="p-4 backdrop-blur-sm bg-white/80 dark:bg-gray-800/70">
-              <div className="flex items-center justify-between mb-3 text-gray-900 dark:text-gray-400">
+            <Card className="p-4 overflow-visible backdrop-blur-sm bg-background/80 dark:bg-background-secondary-dark/70">
+              <div className="flex items-center justify-between mb-3 text-text dark:text-[#7991a0]">
                 <h2 className="text-lg font-semibold flex items-center">
-                  <Icon name="notesBold" className={`w-5 h-5 ${locale === 'he' ? 'ml-1.5 mr-0' : 'mr-1.5 ml-0'}`} />
+                  <Icon name="notesBold" className={`w-5 h-5 me-1.5`} />
                   {t('amenities.title')}
                 </h2>
               </div>
@@ -853,50 +854,50 @@ export default function SkateparkPage() {
                   return (
                     <div key={key} className="w-1/4 px-1 mb-2">
                       {isAvailable ? (
-                        <div
-                          className={`rounded-lg p-2 h-full cursor-pointer relative ${
-                            isParkClosed
-                              ? 'bg-red-50 dark:bg-red-900/15'
-                              : 'bg-blue-50 dark:bg-white/5'
-                          }`}
-                          onMouseEnter={() => setOpenTooltip(key)}
-                          onMouseLeave={() => setOpenTooltip(null)}
-                        >
-                          <div className="text-center">
-                            <div className="mb-1.5">
-                              <Icon
-                                name={iconName as any}
-                                className={`w-5 h-5 mx-auto ${
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={`rounded-lg p-2 h-full cursor-pointer ${
+                                isParkClosed
+                                  ? 'bg-error/[8%] dark:bg-error-bg-dark/[15%]'
+                                  : 'bg-brand-main/[8%] dark:bg-white/[2%]'
+                              }`}
+                            >
+                              <div className="text-center">
+                                <div className="mb-1.5">
+                                  <Icon
+                                    name={iconName as any}
+                                    className={`w-5 h-5 mx-auto ${
+                                      isParkClosed
+                                        ? 'text-error dark:text-error/80' 
+                                        : 'text-brand-color dark:text-brand-main/80' 
+                                    }`} 
+                                  />
+                                </div>
+                                <div className={`text-xs font-thin ${
                                   isParkClosed
-                                    ? 'text-red-600 dark:text-red-400/80'
-                                    : 'text-blue-600 dark:text-blue-400/80'
-                                }`}
-                              />
+                                    ? 'text-text dark:text-text-dark' 
+                                  : 'text-text dark:text-text-dark' 
+                                }`}>
+                                  {t(`amenities.${key}`) || key.replace(/([A-Z])/g, ' $1').trim()}
+                                </div>
+                              </div>
                             </div>
-                            <div className={`text-xs font-thin ${
-                              isParkClosed
-                                ? 'text-gray-900 dark:text-gray-300'
-                                : 'text-gray-900 dark:text-gray-300'
-                            }`}>
-                              {t(`amenities.${key}`) || key.replace(/([A-Z])/g, ' $1').trim()}
-                            </div>
-                          </div>
-                          {openTooltip === key && (
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg shadow-lg z-10 max-w-[200px]">
-                              <div>{t(`amenities.${key}Description`)}</div>
-                            </div>
-                          )}
-                        </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[200px]">
+                            <div>{t(`amenities.${key}Description`)}</div>
+                          </TooltipContent>
+                        </Tooltip>
                       ) : (
-                        <div className="rounded-lg p-2 h-full bg-gray-100 dark:bg-black/5 dark:shadow-inner">
+                        <div className="rounded-lg p-2 h-full bg-black/[3%] dark:bg-black/[5%] dark:shadow-inner">
                           <div className="text-center">
                             <div className="mb-1.5">
                               <Icon
                                 name={iconName as any}
-                                className="w-5 h-5 mx-auto text-gray-400 dark:text-gray-600"
-                              />
+                                className="w-5 h-5 mx-auto text-gray-400 dark:text-[#40535e]"
+                                />
                             </div>
-                            <div className="text-xs font-thin text-gray-400 dark:text-gray-500 line-through">
+                            <div className="text-xs font-thin text-gray-400 dark:text-text-dark/50 line-through">
                               {t(`amenities.${key}`) || key.replace(/([A-Z])/g, ' $1').trim()}
                             </div>
                           </div>
@@ -909,7 +910,7 @@ export default function SkateparkPage() {
 
               {/* Notes Section */}
               {notes && notes.trim() !== '' && (
-                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-400">
+                <div className="mt-3 pt-3 border-t border-border-dark/20 dark:border-text-secondary-dark/70 text-gray-900 dark:text-gray-400">
                   <div className="flex items-center mb-2">
                     <Icon name="infoBold" className={`w-5 h-5 ${locale === 'he' ? 'ml-1.5 mr-0' : 'mr-1.5 ml-0'}`} />
                     <h3 className="text-lg font-semibold">{t('notes')}</h3>
@@ -1140,7 +1141,7 @@ export default function SkateparkPage() {
                     {sortedReviews.map((review) => (
                       <div
                         key={review._id}
-                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                        className="border border-border-dark/20 dark:border-text-secondary-dark/70 rounded-lg p-4"
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div>
@@ -1195,7 +1196,7 @@ export default function SkateparkPage() {
                     {t('addReview')}
                   </Button>
                 ) : (
-                  <div className="text-center py-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                  <div className="text-center py-4 border border-border-dark/20 dark:border-text-secondary-dark/70 rounded-lg bg-gray-50 dark:bg-gray-800/50">
                     <p className="text-gray-600 dark:text-gray-400 mb-3">
                       {t('loginToReview')}
                     </p>
@@ -1266,7 +1267,7 @@ export default function SkateparkPage() {
 
           {/* Modal */}
           <div className="fixed inset-0 flex items-center justify-center p-4">
-            <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 backdrop-blur-sm bg-white/80 dark:bg-gray-800/70">
+            <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10 rounded-lg shadow-sm border border-border-dark/20 dark:border-text-secondary-dark/70 p-4 backdrop-blur-sm bg-white/80 dark:bg-gray-800/70">
               {/* Header */}
               <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-6 flex items-center justify-between z-10">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t('writeReview')}</h2>

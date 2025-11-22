@@ -33,7 +33,6 @@
     "nameAtoZ": "שם: א-ת",
     "nameZtoA": "שם: ת-א"
   },
-  "categories": "קטגוריות",
   "relatedSports": "ספורט קשור",
   "sizes": "מידות",
   "colors": "צבעים",
@@ -46,5 +45,22 @@
   "next": "הבא",
   "noProductsFound": "לא נמצאו מוצרים",
   "product": "מוצר",
-  "products": "מוצרים"
+  "products": "מוצרים",
+  "categoryLabels": {
+    "clothing": "ביגוד",
+    "accessories": "אביזרים",
+    "equipment": "ציוד",
+    "shoes": "נעליים",
+    "boards": "לוחות",
+    "wheels": "גלגלים",
+    "trucks": "טראקים",
+    "bearings": "מיסבים"
+  },
+  "sportLabels": {
+    "skateboarding": "סקייטבורד",
+    "bmx": "BMX",
+    "scooter": "קורקינט",
+    "rollerblades": "רולרבליידס",
+    "longboard": "לונגבורד"
+  }
 }

@@ -20,6 +20,7 @@
     "perf:load": "artillery run artillery.config.yml",
     "perf:bundle": "next build && source-map-explorer \".next/static/chunks/*.js\" --html .sme-report.html || true",
     "db:seed": "tsx lib/db/seed.ts",
+    "db:seed-products": "tsx lib/db/seed-products.ts",
     "db:seed-parks": "tsx lib/db/seed-parks.ts"
   },
   "dependencies": {

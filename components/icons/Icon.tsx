@@ -124,6 +124,9 @@ import FavIcon from './favIcon.svg';
 import FavIconNew from './favIconNew.svg';
 import TrashCan from './trash-can.svg';
 import Settings from './settings.svg';
+import Admin from './admin.svg';
+import AdminBold from './adminBold.svg';
+import Logout from './logout.svg';
 
 // Type for SVG components (Next.js imports SVGs as URLs by default)
 type SvgComponent = React.ComponentType<React.SVGProps<SVGSVGElement>> | string;
@@ -164,6 +167,9 @@ const iconMap: Record<string, SvgComponent> = {
   shop: Shop,
   shopBold: ShopBold,
   settings: Settings,
+  admin: Admin,
+  adminBold: AdminBold,
+  logout: Logout,
   
   // Action Icons
   heart: Heart,
@@ -431,6 +437,9 @@ export type IconName =
   | 'umbrella'
   | 'broom'
   | 'settings'
+  | 'admin'
+  | 'adminBold'
+  | 'logout'
   | 'clock'; // Alias for clockBold if needed
 
 interface IconProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'size'> {

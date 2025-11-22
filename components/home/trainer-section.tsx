@@ -221,3 +221,7 @@ export const TrainerSection = ({ trainers, t }: TrainerSectionProps) => {
   );
 };
 
+
+
+
+

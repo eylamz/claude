@@ -441,7 +441,7 @@ const SkateparkThumbnail = memo(({
           ref={imgRef}
           src={optimizedUrl}
           alt={parkName}
-          className={`w-full h-full rounded-t-3xl object-cover transition-all duration-200 saturate-[1.75] select-none ${
+          className={`w-full h-full rounded-t-3xl object-cover transition-all duration-200 saturate-150 group-hover:saturate-[1.75] select-none ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           loading="lazy"
@@ -634,7 +634,7 @@ export default function SkateparksPage() {
 
   const AMENITY_OPTIONS = [
     { key: 'parking', label: tr('Parking', 'חניה'), iconName: 'parking' },
-    { key: 'shade', label: tr('Shade', 'צל'), iconName: 'sun' },
+    { key: 'shade', label: tr('Shade', 'צל'), iconName: 'umbrella' },
     { key: 'bathroom', label: tr('Bathroom', 'שירותים'), iconName: 'toilet' },
     { key: 'seating', label: tr('Seating', 'מקומות ישיבה'), iconName: 'couch' },
     { key: 'nearbyRestaurants', label: tr('Restaurants Nearby', 'מסעדות בקרבת מקום'), iconName: 'nearbyResturants' },
@@ -951,7 +951,7 @@ export default function SkateparksPage() {
       {/* Content */}
       <div className="max-w-7xl mx-auto p-4 lg:p-6">
         {/* Top Controls Bar - Above Park Cards */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-1">
             {/* Search Input */}
             <div className="flex-1 min-w-64 max-w-md">
@@ -1007,16 +1007,55 @@ export default function SkateparksPage() {
 
         {/* Status Indicators */}
         {(() => {
-          const visibleStatusItemsCount = 
-            1 + // Always show parks count
-            (areaFilter ? 1 : 0) +
-            (selectedAmenities.length > 0 ? 1 : 0) +
-            (userLocation && sortBy === 'nearest' ? 1 : 0);
+          // Count active filters (area or amenities)
+          const hasAreaFilter = !!areaFilter;
+          const hasAmenitiesFilter = selectedAmenities.length > 0;
+          const hasOpenNowFilter = openNowOnly;
+          const activeFiltersCount = (hasAreaFilter ? 1 : 0) + (hasAmenitiesFilter ? 1 : 0) + (hasOpenNowFilter ? 1 : 0);
+          const hasAnyFilter = activeFiltersCount > 0;
+          
+          // Location sorting status
+          const hasLocationSorting = userLocation && sortBy === 'nearest';
+          
+          // Show parks count only when there are filters (area or amenities)
+          const showParksCount = hasAnyFilter && !loading;
+          
+          // Determine layout
+          // If only location sorting (no filters): show only location
+          // If 1 filter (no location sorting): row layout
+          // If 2+ filters OR (filters + location sorting): column layout
+          const shouldUseColumnLayout = activeFiltersCount > 1 || (hasAnyFilter && hasLocationSorting);
+          const shouldUseRowLayout = activeFiltersCount === 1 && !hasLocationSorting;
+          
+          // If only location sorting, show only location indicator
+          if (hasLocationSorting && !hasAnyFilter) {
+            return (
+              <div className="w-fit mb-2 flex flex-col sm:flex-row gap-2 md:gap-1 items-center justify-start text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex items-center gap-2">
+                  <span>{t('search.filterStatus.sortedByDistance')}</span>
+                  <Icon 
+                    name="locationBold" 
+                    className={`w-4 h-4 text-brand-main ${shouldAnimateLocation ? 'animate-pop' : ''}`} 
+                  />
+                  {userCity && (
+                    <span className="text-sm text-brand-text dark:text-brand-main">
+                      ({userCity})
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          }
+          
+          // If no filters and no location sorting, don't show anything
+          if (!hasAnyFilter && !hasLocationSorting) {
+            return null;
+          }
 
           return (
-            <div className={`mb-6 flex ${visibleStatusItemsCount > 1 ? 'flex-col' : 'flex-col sm:flex-row'} gap-2 md:gap-1 items-center text-sm text-gray-600 dark:text-gray-400`}>
-              {/* Showing X of Y parks - Always show, even when 0 */}
-              {!loading && (
+            <div className={`mb-2 flex ${shouldUseColumnLayout ? 'flex-col' : shouldUseRowLayout ? 'flex-col sm:flex-row' : 'flex-col sm:flex-row'} gap-2 md:gap-1 items-start justify-start text-sm text-gray-600 dark:text-gray-400`}>
+              {/* Showing X of Y parks - Only show when filters are applied */}
+              {showParksCount && (
                 <div className="flex items-center gap-2">
                   <span>
                     {t('search.filterStatus.showing', { 
@@ -1029,7 +1068,7 @@ export default function SkateparksPage() {
               )}
 
               {/* Filtered by Area Status */}
-              {areaFilter && (
+              {hasAreaFilter && (
                 <div className="flex items-center gap-1">
                   <span>{t('search.filterStatus.filteredByArea')}</span>
                   <span className="font-semibold">
@@ -1039,7 +1078,7 @@ export default function SkateparksPage() {
               )}
 
               {/* Sorted by Amenities Status */}
-              {selectedAmenities.length > 0 && (
+              {hasAmenitiesFilter && (
                 <div className="flex items-center gap-2">
                   <span>{t('search.filterStatus.sortedByAmenities')}</span>
                   <div className="flex items-center gap-2">
@@ -1060,8 +1099,8 @@ export default function SkateparksPage() {
               )}
 
               {/* Sorted by Location Status */}
-              {userLocation && sortBy === 'nearest' && (
-                <div className="flex items-center gap-2">
+              {hasLocationSorting && (
+                <div className="w-fit flex items-center gap-2 justify-start">
                   <span>{t('search.filterStatus.sortedByDistance')}</span>
                   <Icon 
                     name="locationBold" 

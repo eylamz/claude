@@ -38,10 +38,25 @@ export function ThemeToggle({ className = '', lng }: ThemeToggleProps) {
     }
   }, [shouldAnimate])
 
+  // Update meta theme-color when theme changes
+  useEffect(() => {
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+    const color = theme === 'dark' ? '#181c21' : '#f6f7f9'
+    
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', color)
+    } else {
+      const meta = document.createElement('meta')
+      meta.name = 'theme-color'
+      meta.content = color
+      document.getElementsByTagName('head')[0].appendChild(meta)
+    }
+  }, [theme])
+
   return (
     <button
       onClick={handleThemeToggle}
-      className={`group inline-flex items-center gap-2 rounded-lg text-sm font-medium transition-all duration-100 text-gray-600 dark:text-gray-300 ${className}`}
+      className={`group inline-flex items-center gap-2 rounded-lg text-sm font-medium transition-all duration-200 text-gray-600 dark:text-gray-300 ${className}`}
       aria-label={theme === 'dark' ? t('light_mode') : t('dark_mode')}
     >
       {theme === 'dark' ? (
@@ -53,7 +68,7 @@ export function ThemeToggle({ className = '', lng }: ThemeToggleProps) {
           className={`h-4 w-4 ${shouldAnimate ? 'animate-pop' : ''}`}
         />
       )}
-      <span className="hidden sm:inline transition-all duration-100 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">{theme === 'dark' ? t('light_mode') : t('dark_mode')}</span>
+      <span className="hidden sm:inline transition-all duration-200 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">{theme === 'dark' ? t('light_mode') : t('dark_mode')}</span>
     </button>
   )
 }

@@ -63,7 +63,7 @@ export default function LanguageToggle({ className = '', lng }: LanguageTogglePr
   return (
     <button
       onClick={toggleLanguage}
-      className={`group outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 inline-flex items-center gap-2 text-sm font-medium transition-all duration-100 text-gray-600 dark:text-gray-300 ${className}`}
+      className={`group outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 inline-flex items-center gap-2 text-sm font-medium transition-all duration-200 text-gray-600 dark:text-gray-300 ${className}`}
       aria-label={t('toggle_language')}
       disabled={isLoading}
     >
@@ -74,12 +74,12 @@ export default function LanguageToggle({ className = '', lng }: LanguageTogglePr
           {currentLng === 'en' ? (
             <div className="flex items-center gap-2">
               <Icon name="israelFlag" className="w-6 h-6" />
-              <p className="font-arimo transition-all duration-100 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">עברית</p>
+              <p className="font-arimo transition-all duration-200 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">עברית</p>
             </div>
           ) : (
             <div className="flex items-center gap-2">
               <Icon name="usaFlag" className="w-6 h-6" />
-              <p className="font-poppins transition-all duration-100 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">English</p>
+              <p className="font-poppins transition-all duration-200 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">English</p>
             </div>
           )}
         </>

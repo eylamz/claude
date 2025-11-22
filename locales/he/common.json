@@ -34,8 +34,10 @@
   "homepage": {
     "newArrivals": "מוצרים חדשים",
     "seeAllProducts": "צפה בכל המוצרים",
-    "discoverSkateparks": "גלה סקייטפארקים",
-    "viewAllSkateparks": "צפה בכל הסקייטפארקים",
+    "discoverSkateparks": "פארקים חדשים",
+    "viewAllSkateparks": "הצג עוד",
+    "viewAllTrainers": "מאמנים נוספים",
+    "viewAllGuides": "מדריכים",
     "community": "קהילה",
     "featuredTrainers": "מאמנים מומלצים",
     "featuredGuides": "מדריכים מומלצים",

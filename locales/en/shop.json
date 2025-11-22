@@ -33,7 +33,6 @@
     "nameAtoZ": "Name: A to Z",
     "nameZtoA": "Name: Z to A"
   },
-  "categories": "Categories",
   "relatedSports": "Related Sports",
   "sizes": "Sizes",
   "colors": "Colors",
@@ -46,5 +45,22 @@
   "next": "Next",
   "noProductsFound": "No products found",
   "product": "product",
-  "products": "products"
+  "products": "products",
+  "categoryLabels": {
+    "clothing": "Clothing",
+    "accessories": "Accessories",
+    "equipment": "Equipment",
+    "shoes": "Shoes",
+    "boards": "Boards",
+    "wheels": "Wheels",
+    "trucks": "Trucks",
+    "bearings": "Bearings"
+  },
+  "sportLabels": {
+    "skateboarding": "Skateboarding",
+    "bmx": "BMX",
+    "scooter": "Scooter",
+    "rollerblades": "Rollerblades",
+    "longboard": "Longboard"
+  }
 }

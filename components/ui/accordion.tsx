@@ -12,14 +12,14 @@ export const Accordion = ({ title, children, defaultOpen = false }: AccordionPro
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-gray-200 dark:border-gray-700">
+    <div className="border-b border-border dark:border-border-dark">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between py-4 text-left text-sm font-semibold text-gray-900 dark:text-white"
+        className="w-full flex items-center justify-between py-4 text-left text-base font-semibold text-header-text-dark dark:text-header-text hover:text-brand-main dark:hover:text-brand-main transition-colors"
       >
         <span>{title}</span>
         <svg
-          className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-5 h-5 transition-transform duration-200 text-black/60 dark:text-white/60 ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

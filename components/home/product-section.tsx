@@ -233,3 +233,7 @@ export const ProductSection = ({ products, t }: ProductSectionProps) => {
   );
 };
 
+
+
+
+

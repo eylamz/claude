@@ -51,11 +51,11 @@ export const Footer: FC = () => {
   }
 
   return (
-    <footer role="contentinfo" className="footer pt-6 position-relative">
+    <footer role="contentinfo" className="footer pt-6 position-relative bg-white dark:bg-[#15181d]">
       <h2 className="sr-only">{t('footer.siteWideLinks')}</h2>
 
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex flex-wrap py-5 mb-5">
+        <div className="flex flex-wrap py-5 mb-5 ">
           {/* Logo and Newsletter Section */}
           <section className="w-full lg:w-1/3 mb-5 lg:pe-4">
             <Link 
@@ -123,7 +123,7 @@ export const Footer: FC = () => {
       </div>
 
       {/* Bottom Section */}
-      <div className="bg-background-secondary dark:bg-background-secondary-dark">
+      <div className="bg-background-secondary/60 dark:bg-background-secondary-dark">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-3 text-sm">
           <nav className="w-full" aria-label={t('footer.legalAndResourceLinks')}>
             <ul className="list-none flex flex-wrap items-start gap-x-3 text-gray-600 dark:text-gray-400">
@@ -160,7 +160,7 @@ export const Footer: FC = () => {
           {/* Social Media and Controls */}
           <nav
             aria-label={t('footer.socialMediaAndSettings')}
-            className="flex w-full justify-end items-center gap-6 mt-3 md:mt-0"
+            className="flex w-full md:justify-end items-center gap-6 mt-3 md:mt-0"
           >
             {/* Social Media Icons - Add your social links here */}
             <div className="flex items-center justify-end gap-3">

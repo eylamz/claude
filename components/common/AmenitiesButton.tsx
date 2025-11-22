@@ -107,7 +107,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <PopoverContent className="w-full max-w-sm p-2">
+      <PopoverContent className="w-fit min-w-[330px] p-2">
         <div className="space-y-2">
           <div className="flex items-center justify-between h-[32px]">
             <h4 className="font-medium">{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
@@ -141,7 +141,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                 >
                   <Icon 
                     name={iconName as any}
-                    className={`w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0 transition-all duration-300 ${isSelected ? 'text-info dark:text-info-dark' : 'text-text-secondary dark:text-text-secondary-dark'}`}
+                    className={`w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0 transition-all duration-200 ${isSelected ? 'text-info dark:text-info-dark' : 'text-text-secondary dark:text-text-secondary-dark'}`}
                   />
                   {tSkateparks(amenity.label)}
                 </Button>

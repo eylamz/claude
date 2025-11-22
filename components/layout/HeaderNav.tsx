@@ -21,6 +21,7 @@ import { Icon } from '@/components/icons/Icon';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LanguageSwitcher } from '@/components/ui/language-switcher';
+import { useTheme } from '@/context/ThemeProvider';
 import { 
   useCartStore, 
   useCartItemCount, 
@@ -44,6 +45,7 @@ export default function HeaderNav() {
   const tShop = useTranslations('shop');
   const tEvents = useTranslations('events');
   const tAdmin = useTranslations('admin');
+  const { theme } = useTheme();
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,6 +67,21 @@ export default function HeaderNav() {
     }
   }, []);
 
+  // Update meta theme-color when theme changes
+  useEffect(() => {
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    const color = theme === 'dark' ? '#181c21' : '#f6f7f9';
+    
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', color);
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = color;
+      document.getElementsByTagName('head')[0].appendChild(meta);
+    }
+  }, [theme]);
+
   // Save search to recent searches
   const saveSearch = useCallback((query: string) => {
     if (!query.trim()) return;
@@ -82,9 +99,27 @@ export default function HeaderNav() {
     router.push(`/${locale}/search?q=${encodeURIComponent(query)}`);
   }, [locale, router, saveSearch]);
 
-  // Handle logout
+  // Handle logout - works like next-auth's internal signOut
   const handleLogout = async () => {
-    await signOut({ callbackUrl: `/${locale}/login` });
+    try {
+      // Use callbackUrl like next-auth's signOut does (defaults to window.location.href if not provided)
+      const callbackUrl = `/${locale}/login`;
+      
+      // Call signOut with redirect enabled (default behavior, like next-auth)
+      await signOut({ 
+        callbackUrl,
+        redirect: true 
+      });
+    } catch (error) {
+      console.error('Failed to sign out:', error);
+      // Fallback: redirect manually if signOut fails (similar to next-auth's behavior)
+      const fallbackUrl = `/${locale}/login`;
+      window.location.href = fallbackUrl;
+      // If URL contains a hash, reload manually (like next-auth does)
+      if (fallbackUrl.includes('#')) {
+        window.location.reload();
+      }
+    }
   };
 
   // Handle quantity update
@@ -147,7 +182,7 @@ export default function HeaderNav() {
   return (
     <>
       {/* Desktop Header Navigation */}
-      <header className="glass hidden md:block fixed top-0 left-0 right-0 z-[50] px-3 select-none transition-all duration-200 ease-in-out text-white backdrop-blur-sm shadow-lg bg-[linear-gradient(to_right,transparent_0%,#ffffffd4_10%,#ffffff_50%,#ffffffd4_90%,transparent_100%)] dark:bg-[linear-gradient(to_right,transparent_0%,#101317b3_10%,#101317_50%,#101317b3_90%,transparent_100%)]">
+      <header className="hidden md:block fixed top-0 left-0 right-0 z-[50] px-3 select-none transition-all duration-200 ease text-white backdrop-blur-sm shadow-lg bg-[linear-gradient(to_right,transparent_0%,#ffffffd4_10%,#ffffff_50%,#ffffffd4_90%,transparent_100%)] dark:bg-[linear-gradient(to_right,transparent_0%,#101317b3_10%,#101317_50%,#101317b3_90%,transparent_100%)]">
         <div className="mx-auto  border-b border-border/50 dark:border-border-dark w-full max-w-7xl px-2 overflow-visible text-header-text-dark dark:text-header-text">
           <div className=" flex items-center justify-between h-14">
             {/* Logo */}
@@ -156,7 +191,7 @@ export default function HeaderNav() {
             </Link>
 
             {/* Navigation Links */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-2">
               {navItems.map((item) => {
                 const active = isActive(item.href);
 
@@ -164,7 +199,7 @@ export default function HeaderNav() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`px-4 py-2 rounded-lg transition-all duration-100 font-medium ${
+                    className={`px-2 py-2 rounded-lg transition-all duration-200 font-medium ${
                       active
                         ? 'underline-offset-4 decoration-[1px] underline scale-105 text-black dark:text-white'
                         : 'text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white'
@@ -181,7 +216,7 @@ export default function HeaderNav() {
               {/* Search Button */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="p-2 h-9 text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white transition-all duration-100"
+                className="p-2 h-9 text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white transition-all duration-200"
                 aria-label="Open search"
               >
                 <Icon name="search" className="w-5 h-5" />
@@ -192,7 +227,7 @@ export default function HeaderNav() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className="relative h-9 p-2 text-black/80 hover:text-black dark:text-white/80 hover:scale-105 dark:hover:text-white transition-all duration-100"
+                      className="relative h-9 p-2 text-black/80 hover:text-black dark:text-white/80 hover:scale-105 dark:hover:text-white transition-all duration-200"
                       aria-label={`Shopping cart with ${itemCount} items`}
                     >
                       <Icon name="cart" className="w-5 h-5" />

@@ -13,8 +13,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
-import { LanguageSwitcher } from '@/components/ui/language-switcher';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useTheme } from '@/context/ThemeProvider';
 import { Button } from '@/components/ui';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
@@ -46,6 +45,7 @@ export default function MobileNav({ userId }: MobileNavProps) {
   const tShop = useTranslations('shop');
   const tEvents = useTranslations('events');
   const tAdmin = useTranslations('admin');
+  const { theme, toggleTheme } = useTheme();
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -59,6 +59,7 @@ export default function MobileNav({ userId }: MobileNavProps) {
   const { updateQuantity, removeItem } = useCartStore();
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
+  const [shouldAnimate, setShouldAnimate] = useState(false);
   
   // Gesture state
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -94,7 +95,21 @@ export default function MobileNav({ userId }: MobileNavProps) {
 
   // Handle logout
   const handleLogout = async () => {
-    await signOut({ callbackUrl: `/${locale}/login` });
+    await signOut;
+  };
+
+  // Handle theme toggle
+  const handleThemeToggle = () => {
+    setShouldAnimate(true);
+    toggleTheme();
+  };
+
+  // Handle language toggle
+  const handleLanguageToggle = async () => {
+    const newLang = locale === 'en' ? 'he' : 'en';
+    const segments = pathname.split('/');
+    segments[1] = newLang;
+    await router.push(segments.join('/'));
   };
 
   // Handle quantity update
@@ -145,8 +160,10 @@ export default function MobileNav({ userId }: MobileNavProps) {
     { href: `/${locale}/shop`, iconName: 'shopBold', label: tShop('title') },
     { href: `/${locale}/skateparks`, iconName: 'trees', label: tAdmin('skateparks') },
     { href: `/${locale}/events`, iconName: 'calendarBold', label: tEvents('title') },
-    { href: `/${locale}/guides`, iconName: 'books', label: tAdmin('guides') },
     { href: `/${locale}/trainers`, iconName: 'accounts', label: tAdmin('trainers') },
+    { href: `/${locale}/guides`, iconName: 'books', label: tAdmin('guides') },
+    { href: `/${locale}/contact`, iconName: 'messages', label: tCommon('contact') },
+    { href: `/${locale}/about`, iconName: 'info', label: tCommon('about') },
   ];
 
   const isAdmin = session?.user?.role === 'admin';
@@ -226,6 +243,16 @@ export default function MobileNav({ userId }: MobileNavProps) {
     };
   }, [isMenuOpen, isSearchOpen]);
 
+  // Handle theme toggle animation
+  useEffect(() => {
+    if (shouldAnimate) {
+      const timer = setTimeout(() => {
+        setShouldAnimate(false);
+      }, 300); // Match the animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [shouldAnimate]);
+
   // Handle Enter key for search input
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -243,6 +270,21 @@ export default function MobileNav({ userId }: MobileNavProps) {
       }
     }
   }, [isMenuOpen, isSearchOpen, searchQuery, handleSearch]);
+
+  // Update meta theme-color when theme changes
+  useEffect(() => {
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    const color = theme === 'dark' ? '#181c21' : '#f6f7f9';
+    
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', color);
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = color;
+      document.getElementsByTagName('head')[0].appendChild(meta);
+    }
+  }, [theme]);
 
   return (
     <>
@@ -479,7 +521,7 @@ export default function MobileNav({ userId }: MobileNavProps) {
       {isMenuOpen && (
         <div
           ref={menuRef}
-          className="overflow-y-scroll md:hidden fixed inset-0 z-50 backdrop-blur-md bg-background dark:bg-background-dark"
+          className="h-screen md:hidden fixed inset-0 z-50 backdrop-blur-md bg-background dark:bg-background-dark flex flex-col"
           style={{
             transform: swipeDistance > 0 ? `translateX(${swipeDistance}px)` : 'translateX(0)',
             transition: swipeDistance === 0 ? 'transform 0.3s ease-out' : 'none',
@@ -489,80 +531,28 @@ export default function MobileNav({ userId }: MobileNavProps) {
           onTouchEnd={() => handleTouchEnd('menu')}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 pt-16">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{tCommon('menu')}</h2>
+          <div className="flex items-start justify-between pb-2 mx-2 border-b border-border dark:border-border-dark pt-6 flex-shrink-0">
+            <div className="flex items-center gap-2 top-0 ">
             <button
-              onClick={() => setIsMenuOpen(false)}
-              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-              aria-label="Close menu"
+              onClick={() => {
+                setIsMenuOpen(false);
+                setIsSearchOpen(true);
+              }}
+              className="p-2 flex flex-col items-center gap-3 text-xs text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"
+              aria-label="Open Search"
             >
-              <Icon name="X" className="w-6 h-6" />
+              <Icon name="search" className="w-5 h-5 md:w-6 md:h-6" />
+              <span>{tCommon('search') || 'Search'}</span>
             </button>
-          </div>
-
-          {/* Search Section */}
-          <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-            <SearchInput
-              ref={searchInputRef}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onClear={() => setSearchQuery('')}
-              placeholder="Search products, events, parks..."
-              className="w-full sm:max-w-none"
-            />
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="flex-1 overflow-y-auto pt-4">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href || 
-                (item.href !== `/${locale}` && pathname.startsWith(item.href));
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center gap-4 px-6 py-4 ${
-                    isActive
-                      ? 'bg-brand-main dark:bg-brand-main/5 text-brand-main/10 dark:text-brand-main border-r-4 border-brand-main'
-                      : 'text-black/80 dark:text-white/90'
-                  }`}
-                >
-                  <Icon name={item.iconName as any} className="w-6 h-6" />
-                  <span className="font-medium">{item.label}</span>
-                  {item.badge && (
-                    <span className="bg-white/10 text-white text-xs px-2 py-1 rounded-full">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Settings Section - Matching HeaderNav style */}
-          <div className={`p-2 border-t border-gray-200 dark:border-gray-800 ${locale === 'he' ? 'flex flex-col-reverse gap-1' : 'space-y-1'}`}>
-            {/* Theme Toggle */}
-            <div className="px-2 py-1.5">
-              <ThemeToggle className={`w-full ${locale === 'he' ? 'justify-end' : 'justify-start'}`} />
-            </div>
-
-            {/* Language Switcher */}
-            <div className="px-2 py-1.5 border-t border-gray-200 dark:border-gray-700">
-              <div className="w-full">
-                <LanguageSwitcher className={`w-full ${locale === 'he' ? 'justify-end' : 'justify-start'}`} />
-              </div>
-            </div>
-
-            {/* Login Button */}
+           
+                              {/* Login Button */}
             {!session && (
               <Link
                 href={`/${locale}/login`}
-                className={`flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                className="p-2 flex flex-col items-center gap-3 text-xs text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
-                <Icon name="account" className="w-4 h-4" />
+                <Icon name="account" className="w-5 h-5 md:w-6 md:h-6" />
                 <span>{tCommon('login') || 'Login'}</span>
               </Link>
             )}
@@ -571,23 +561,56 @@ export default function MobileNav({ userId }: MobileNavProps) {
             {session && (
               <Link
                 href={`/${locale}/account`}
-                className={`flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                className="p-2 flex flex-col items-center gap-3 text-xs text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
-                <Icon name="account" className="w-4 h-4" />
-                <span>{tCommon('profile')}</span>
+                <Icon name="account" className="w-5 h-5 md:w-6 md:h-6" />
+                <span>{tCommon('profile') || 'Profile'}</span>
+
               </Link>
             )}
 
-            {/* Admin Link */}
+            
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={handleThemeToggle}
+              className="p-2 flex flex-col items-center gap-3 text-xs text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"
+              aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
+            >
+              {theme === 'dark' ? (
+                <Icon name="sun" className={`w-5 h-5 md:w-6 md:h-6 ${shouldAnimate ? 'animate-pop' : ''}`} />
+              ) : (
+                <Icon name="moon" className={`w-5 h-5 md:w-6 md:h-6 ${shouldAnimate ? 'animate-pop' : ''}`} />
+              )}
+              <span>{theme === 'dark' ? tCommon('light_mode') || 'Light Mode' : tCommon('dark_mode') || 'Dark Mode'}</span>
+            </button>
+
+            {/* Language Switcher Button */}
+            <button
+              onClick={handleLanguageToggle}
+              className="p-2 flex flex-col items-center gap-3 text-xs text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"
+              aria-label={tCommon('toggle_language') || 'Toggle language'}
+            >
+              {locale === 'en' ? (
+                <Icon name="israelFlag" className="w-5 h-5 md:w-6 md:h-6" />
+              ) : (
+                <Icon name="usaFlag" className="w-5 h-5 md:w-6 md:h-6" />
+              )}
+              <span>{locale === 'en' ? 'עברית' : 'English'}</span>
+            </button>
+
+
+{/* Admin Link */}
             {isAdmin && (
               <Link
                 href={`/${locale}/admin`}
-                className={`flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                className="p-2 flex flex-col text-xs items-center gap-3 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
-                <Icon name="lockBold" className="w-4 h-4" />
-                <span>Admin</span>
+                <Icon name="adminBold" className="w-5 h-5 md:w-6 md:h-6" />
+                <span>{tCommon('admin') || 'Admin'}</span>
+
               </Link>
             )}
 
@@ -598,13 +621,49 @@ export default function MobileNav({ userId }: MobileNavProps) {
                   handleLogout();
                   setIsMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                className={`w-full flex flex-col items-center justify-between gap-3 px-3 py-2 text-xs text-error/70 dark:text-error-dark/70 hover:text-error dark:hover:text-error-dark transition-colors`}
               >
-                <Icon name="X" className="w-4 h-4" />
+                <Icon name="logout" className="w-5 h-5 md:w-6 md:h-6" />
                 <span>{tCommon('logout') || 'Logout'}</span>
               </button>
             )}
+                  </div>
+            <button
+              onClick={() => setIsMenuOpen(false)}
+              className="h-14 p-2 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"
+              aria-label="Close menu"
+            >
+              <Icon name="X" className="w-10 h-10" />
+            </button>
           </div>
+
+          {/* Navigation Links */}
+          <nav className="flex-1 overflow-y-auto pt-4 min-h-0">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href || 
+                (item.href !== `/${locale}` && pathname.startsWith(item.href));
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`flex items-center gap-2 px-6 py-3 text-3xl ${
+                    isActive
+                      ? 'bg-brand-main/20 dark:bg-brand-main/5 text-header-text-dark dark:text-brand-main ltr:border-l-4 rtl:border-r-4 border-brand-main'
+                      : 'text-black/80 dark:text-white/90'
+                  }`}
+                >
+                  <span className="font-medium">{item.label}</span>
+                  {item.badge && (
+                    <span className="bg-white/10 text-white text-m px-2 py-1 rounded-full">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
       )}
 
@@ -622,7 +681,7 @@ export default function MobileNav({ userId }: MobileNavProps) {
           onTouchEnd={() => handleTouchEnd('search')}
         >
           {/* Header */}
-          <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-800 pt-16">
+          <div className="flex items-center gap-4 p-2 border-b border-gray-200 dark:border-gray-800 pt-6">
             <button
               onClick={() => setIsSearchOpen(false)}
               className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"

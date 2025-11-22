@@ -19,8 +19,8 @@
   "closedStatus": "סגור",
   "saturdayAndHolidays": "שבתות וחגים",
   "address": "כתובת",
-  "opened": "נפתח",
-  "closedYear": "נסגר",
+  "opened": "נפתח בשנת",
+  "closedYear": "נסגר בשנת",
   "amenities": {
     "title": "שירותים / חוקים",
     "entryFee": "דמי כניסה",
@@ -45,10 +45,10 @@
     "bikesAllowedDescription": "הכניסה לרוכבי אופניים מותרת",
     "noWax": "שעווה אסורה",
     "noWaxDescription": "אסורה מריחת שעווה בפארק",
-    "nearbyRestaurants": "מסעדות בקרבת מקום",
+    "nearbyRestaurants": "מסעדות קרובות",
     "nearbyRestaurantsDescription": "ישנם מסעדות בקרבת מקום",
     "available": "זמין",
-    "filterBy": "סנן לפי מתקנים"
+    "filterBy": "סנן לפי שירותים / חוקים"
   },
   "getDirections": "ניווט",
   "googleMaps": "גוגל מפות",
@@ -73,9 +73,9 @@
   "closeModal": "סגור חלון",
   "search": {
     "filterStatus": {
-      "showing": "מציג {filtered} מתוך {total} פארקים",
+      "showing": "מציג {filtered} / {total} פארקים",
       "filteredByArea": "מסונן לפי אזור:",
-      "sortedByAmenities": "מסונן לפי מתקנים:",
+      "sortedByAmenities": "מסונן לפי שירותים / חוקים:",
       "sortedByDistance": "ממוין לפי מרחק"
     },
     "area": {
@@ -83,6 +83,82 @@
       "center": "מרכז",
       "south": "דרום",
       "all": "כל האזורים"
+    }
+  },
+  "admin": {
+    "title": "סקייטפארקים",
+    "subtitle": "ניהול רשימת סקייטפארקים",
+    "viewStatistics": "צפה בסטטיסטיקות",
+    "mapView": "תצוגת מפה",
+    "listView": "תצוגת רשימה",
+    "addSkatepark": "הוסף סקייטפארק",
+    "searchPlaceholder": "חפש לפי שם או כתובת...",
+    "allAreas": "כל האזורים",
+    "allStatuses": "כל הסטטוסים",
+    "allAmenities": "כל השירותים",
+    "selected": "{count} סקייטפארק(ים) נבחרו",
+    "setActive": "הגדר כפעיל",
+    "setInactive": "הגדר כלא פעיל",
+    "exportToCSV": "ייצא ל-CSV",
+    "deleteSelected": "מחק נבחרים",
+    "table": {
+      "image": "תמונה",
+      "name": "שם",
+      "area": "אזור",
+      "address": "כתובת",
+      "openingYear": "שנת פתיחה",
+      "featured": "מומלץ",
+      "status": "סטטוס",
+      "actions": "פעולות",
+      "noSkateparksFound": "לא נמצאו סקייטפארקים",
+      "edit": "ערוך",
+      "delete": "מחק",
+      "deleteConfirm": "למחוק את {name}?",
+      "showing": "מציג {from} עד {to} מתוך {total} סקייטפארקים",
+      "previous": "הקודם",
+      "next": "הבא"
+    },
+    "statistics": {
+      "title": "סטטיסטיקות סקייטפארקים",
+      "tabs": {
+        "amenities": "שירותים",
+        "openingYears": "שנות פתיחה",
+        "areas": "אזורים"
+      },
+      "amenities": {
+        "title": "התפלגות שירותים",
+        "paidEntry": "דמי כניסה",
+        "bikesAllowed": "כניסה לאופניים",
+        "parking": "חניה קרובה",
+        "shade": "הצללה",
+        "bathroom": "שירותים",
+        "helmetRequired": "חובת קסדה",
+        "guard": "שומר בכניסה",
+        "seating": "פינות ישיבה",
+        "bombShelter": "מקלט קרוב",
+        "scootersAllowed": "כניסה לקורקינט",
+        "noWax": "שעווה אסורה",
+        "nearbyRestaurants": "מסעדות קרובות",
+        "parks": "פארקים",
+        "park": "פארק",
+        "parksPlural": "פארקים",
+        "andMore": "... ועוד {count}"
+      },
+      "openingYears": {
+        "title": "התפלגות שנות פתיחה",
+        "noData": "אין נתוני שנת פתיחה זמינים",
+        "year": "שנה: {year}",
+        "park": "פארק",
+        "parks": "פארקים"
+      },
+      "areas": {
+        "title": "התפלגות אזורים",
+        "totalParks": "סה\"כ פארקים",
+        "north": "צפון",
+        "center": "מרכז",
+        "south": "דרום",
+        "count": "{count} פארקים"
+      }
     }
   }
 }

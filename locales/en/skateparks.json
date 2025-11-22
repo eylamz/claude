@@ -19,8 +19,8 @@
   "closedStatus": "Closed",
   "saturdayAndHolidays": "Sat and Holidays",
   "address": "Address",
-  "opened": "Opened",
-  "closedYear": "Closed",
+  "opened": "Opene Since ",
+  "closedYear": "Closed At",
   "amenities": {
     "title": "Services / Rules",
     "entryFee": "Entry Fee",
@@ -73,7 +73,7 @@
   "closeModal": "Close modal",
   "search": {
     "filterStatus": {
-      "showing": "Showing {filtered} of {total} parks",
+      "showing": "Showing {filtered} / {total} parks",
       "filteredByArea": "Filtered by area:",
       "sortedByAmenities": "Filtered by amenities:",
       "sortedByDistance": "Sorted by distance"
@@ -83,6 +83,86 @@
       "center": "Center",
       "south": "South",
       "all": "All Areas"
+    }
+  },
+  "admin": {
+    "title": "Skateparks",
+    "subtitle": "Manage skatepark listings",
+    "viewStatistics": "View Statistics",
+    "mapView": "Map View",
+    "listView": "List View",
+    "addSkatepark": "Add Skatepark",
+    "searchPlaceholder": "Search by name or address...",
+    "allAreas": "All Areas",
+    "allStatuses": "All Statuses",
+    "allAmenities": "All Amenities",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "selected": "{count} skatepark(s) selected",
+    "setActive": "Set Active",
+    "setInactive": "Set Inactive",
+    "exportToCSV": "Export to CSV",
+    "deleteSelected": "Delete Selected",
+    "table": {
+      "image": "Image",
+      "name": "Name",
+      "area": "Area",
+      "address": "Address",
+      "openingYear": "Opening Year",
+      "featured": "Featured",
+      "status": "Status",
+      "actions": "Actions",
+      "noSkateparksFound": "No skateparks found",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirm": "Delete {name}?",
+      "showing": "Showing {from} to {to} of {total} skateparks",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "statistics": {
+      "title": "Skatepark Statistics",
+      "tabs": {
+        "amenities": "Amenities",
+        "openingYears": "Opening Years",
+        "areas": "Areas"
+      },
+      "amenities": {
+        "title": "Amenities Distribution",
+        "paidEntry": "Paid Entry",
+        "bikesAllowed": "Bikes Allowed",
+        "parking": "Parking",
+        "shade": "Shade",
+        "bathroom": "Bathroom",
+        "helmetRequired": "Helmet Required",
+        "guard": "Guard",
+        "seating": "Seating",
+        "bombShelter": "Bomb Shelter",
+        "scootersAllowed": "Scooters Allowed",
+        "noWax": "No Wax",
+        "nearbyRestaurants": "Nearby Restaurants",
+        "parks": "Parks",
+        "park": "park",
+        "parksPlural": "parks",
+        "andMore": "... and {count} more"
+      },
+      "openingYears": {
+        "title": "Opening Years Distribution",
+        "noData": "No opening year data available",
+        "year": "Year: {year}",
+        "park": "park",
+        "parks": "parks"
+      },
+      "areas": {
+        "title": "Area Distribution",
+        "totalParks": "Total Parks",
+        "north": "North",
+        "center": "Center",
+        "south": "South",
+        "count": "{count} parks"
+      }
     }
   }
 }

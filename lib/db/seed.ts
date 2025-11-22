@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { connectDB, disconnectDB } from './mongodb';
 import User, { IUser } from '../models/User';
-import Product, { IProduct } from '../models/Product';
+import Product from '../models/Product';
 import Event, { IEvent } from '../models/Event';
 import EventSignup from '../models/EventSignup';
 import Skatepark, { ISkatepark } from '../models/Skatepark';
@@ -157,127 +157,10 @@ export async function seedDatabase() {
 
       const getUserByEmail = (email: string) => createdUsers.find((u) => u.email === email)!;
 
-      console.log('🛹 Seeding products...');
-      const productsData: Array<Partial<IProduct>> = [];
-
-      // 1. ENBOSS Classic Tee
-      productsData.push({
-        slug: slugify('ENBOSS Classic Tee'),
-        name: { en: 'ENBOSS Classic Tee', he: 'ENBOSS Classic Tee (Hebrew)' },
-        description: { en: 'Classic cotton tee for sessions and chill.', he: 'טי שירט כותנה קלאסית לרכיבה וליומיום (Hebrew)' },
-        price: 89,
-        category: 'clothing',
-        subcategory: 't-shirt',
-        relatedSports: ['skateboarding', 'rollerblading'],
-        images: [
-          { url: img('ENBOSS Classic Tee','000000','FFFFFF'), alt: { en: 'ENBOSS Classic Tee', he: 'ENBOSS Classic Tee (Hebrew)' }, order: 0, publicId: 'placeholder:classic-tee' },
-        ],
-        variants: [
-          { color: { name: { en: 'Black', he: 'Black (Hebrew)' }, hex: '#000000' }, sizes: ['S','M','L','XL'].map((s, i) => ({ size: s, stock: 5 + ((i+1)%6), sku: `TEE-BLK-${s}` })) },
-          { color: { name: { en: 'White', he: 'White (Hebrew)' }, hex: '#FFFFFF' }, sizes: ['S','M','L','XL'].map((s, i) => ({ size: s, stock: 7 + ((i+2)%6), sku: `TEE-WHT-${s}` })) },
-          { color: { name: { en: 'Gray', he: 'Gray (Hebrew)' }, hex: '#808080' }, sizes: ['S','M','L','XL'].map((s, i) => ({ size: s, stock: 6 + ((i+3)%6), sku: `TEE-GRY-${s}` })) },
-        ],
-        isFeatured: false,
-        isPreorder: false,
-        status: 'active',
-        metadata: { title: { en: 'Classic Tee', he: 'Classic Tee (Hebrew)' }, description: { en: 'Soft cotton.', he: 'כותנה רכה (Hebrew)' } },
-      });
-
-      // 2. ENBOSS Skate Wax
-      productsData.push({
-        slug: slugify('ENBOSS Skate Wax'),
-        name: { en: 'ENBOSS Skate Wax', he: 'ENBOSS Skate Wax (Hebrew)' },
-        description: { en: 'Keep ledges slick for grinds.', he: 'שומר על מדרכות חלקות לגריינדים (Hebrew)' },
-        price: 35,
-        category: 'accessories',
-        subcategory: 'maintenance',
-        relatedSports: ['skateboarding','rollerblading'],
-        images: [{ url: img('Skate Wax','333333','FFFFFF'), alt: { en: 'Skate Wax', he: 'Skate Wax (Hebrew)' }, order: 0, publicId: 'placeholder:wax' }],
-        variants: [{ color: { name: { en: 'Standard', he: 'Standard (Hebrew)' }, hex: '#CCCCCC' }, sizes: [{ size: 'STD', stock: 50, sku: 'WAX-STD' }] }],
-        status: 'active', isPreorder: false, isFeatured: false, metadata: { title: { en: 'Wax', he: 'Wax (Hebrew)' }, description: { en: 'Session essential.', he: 'חיוני לסשן (Hebrew)' } },
-      });
-
-      // 3. ENBOSS Logo Sticker Pack
-      productsData.push({
-        slug: slugify('ENBOSS Logo Sticker Pack'),
-        name: { en: 'ENBOSS Logo Sticker Pack', he: 'ENBOSS Logo Sticker Pack (Hebrew)' },
-        description: { en: 'Slap these on your deck or helmet.', he: 'מדבקות ללוח או לקסדה (Hebrew)' },
-        price: 25,
-        category: 'accessories', subcategory: 'stickers', relatedSports: ['skateboarding','rollerblading'],
-        images: [{ url: img('Sticker Pack','111111','FFFFFF'), alt: { en: 'Sticker Pack', he: 'Sticker Pack (Hebrew)' }, order: 0, publicId: 'placeholder:sticker-pack' }],
-        variants: [{ color: { name: { en: 'Multi', he: 'Multi (Hebrew)' }, hex: '#00FF00' }, sizes: [{ size: 'PK', stock: 100, sku: 'STICK-PACK' }] }],
-        status: 'active', isPreorder: false, isFeatured: false, metadata: { title: { en: 'Stickers', he: 'Stickers (Hebrew)' }, description: { en: 'Logo stickers.', he: 'מדבקות לוגו (Hebrew)' } },
-      });
-
-      // 4. ENBOSS Hoodie
-      productsData.push({
-        slug: slugify('ENBOSS Hoodie'),
-        name: { en: 'ENBOSS Hoodie', he: 'ENBOSS Hoodie (Hebrew)' },
-        description: { en: 'Cozy heavyweight hoodie for chilly nights.', he: 'הודי חמים לערבים קרים (Hebrew)' },
-        price: 189,
-        discountPrice: 159,
-        category: 'clothing', subcategory: 'hoodie', relatedSports: ['skateboarding','rollerblading'],
-        images: [{ url: img('ENBOSS Hoodie','001F3F','FFFFFF'), alt: { en: 'ENBOSS Hoodie', he: 'ENBOSS Hoodie (Hebrew)' }, order: 0, publicId: 'placeholder:hoodie' }],
-        variants: [
-          { color: { name: { en: 'Black', he: 'Black (Hebrew)' }, hex: '#000000' }, sizes: ['S','M','L','XL'].map((s, i) => ({ size: s, stock: 5 + i, sku: `HD-BLK-${s}` })) },
-          { color: { name: { en: 'Navy', he: 'Navy (Hebrew)' }, hex: '#001F3F' }, sizes: ['S','M','L','XL'].map((s, i) => ({ size: s, stock: 6 + i, sku: `HD-NVY-${s}` })) },
-        ],
-        isFeatured: true, isPreorder: false, status: 'active', metadata: { title: { en: 'Hoodie', he: 'Hoodie (Hebrew)' }, description: { en: 'Warm and durable.', he: 'חם ועמיד (Hebrew)' } },
-      });
-
-      // 5. ENBOSS Skateboard Deck
-      productsData.push({
-        slug: slugify('ENBOSS Skateboard Deck'),
-        name: { en: 'ENBOSS Skateboard Deck', he: 'ENBOSS Skateboard Deck (Hebrew)' },
-        description: { en: 'Premium maple deck in multiple designs.', he: 'דק מייפל איכותי במספר עיצובים (Hebrew)' },
-        price: 280,
-        category: 'parts', subcategory: 'deck', relatedSports: ['skateboarding'],
-        images: [{ url: img('ENBOSS Deck','444444','FFFFFF'), alt: { en: 'Deck', he: 'Deck (Hebrew)' }, order: 0, publicId: 'placeholder:deck' }],
-        variants: [
-          { color: { name: { en: 'Design A', he: 'Design A (Hebrew)' }, hex: '#FF6600' }, sizes: [{ size: '8.0', stock: 10, sku: 'DECK-A-80' }] },
-          { color: { name: { en: 'Design B', he: 'Design B (Hebrew)' }, hex: '#00AAFF' }, sizes: [{ size: '8.25', stock: 10, sku: 'DECK-B-825' }] },
-          { color: { name: { en: 'Design C', he: 'Design C (Hebrew)' }, hex: '#AA00FF' }, sizes: [{ size: '8.5', stock: 10, sku: 'DECK-C-85' }] },
-        ],
-        isFeatured: false, isPreorder: false, status: 'active', metadata: { title: { en: 'Deck', he: 'Deck (Hebrew)' }, description: { en: 'Responsive pop.', he: 'פופ מצוין (Hebrew)' } },
-      });
-
-      // 6. ENBOSS Grip Tape
-      productsData.push({
-        slug: slugify('ENBOSS Grip Tape'),
-        name: { en: 'ENBOSS Grip Tape', he: 'ENBOSS Grip Tape (Hebrew)' },
-        description: { en: 'Medium grit for solid control.', he: 'דרגת חיכוך בינונית לשליטה טובה (Hebrew)' },
-        price: 45, category: 'parts', subcategory: 'grip', relatedSports: ['skateboarding'],
-        images: [{ url: img('Grip Tape','000000','FFFFFF'), alt: { en: 'Grip Tape', he: 'Grip Tape (Hebrew)' }, order: 0, publicId: 'placeholder:grip' }],
-        variants: [{ color: { name: { en: 'Black', he: 'Black (Hebrew)' }, hex: '#000000' }, sizes: [{ size: 'STD', stock: 30, sku: 'GRIP-BLK' }] }],
-        status: 'active', isPreorder: false, isFeatured: false, metadata: { title: { en: 'Grip', he: 'Grip (Hebrew)' }, description: { en: 'Stick your tricks.', he: 'נדבק לטריקים (Hebrew)' } },
-      });
-
-      // 7. ENBOSS Cap
-      productsData.push({
-        slug: slugify('ENBOSS Cap'),
-        name: { en: 'ENBOSS Cap', he: 'ENBOSS Cap (Hebrew)' },
-        description: { en: 'Adjustable cap to keep the sun out.', he: 'כובע מתכוונן לשמש (Hebrew)' },
-        price: 79, category: 'accessories', subcategory: 'headwear', relatedSports: ['skateboarding','rollerblading'],
-        images: [{ url: img('Cap','FF0000','FFFFFF'), alt: { en: 'ENBOSS Cap', he: 'ENBOSS Cap (Hebrew)' }, order: 0, publicId: 'placeholder:cap' }],
-        variants: [
-          { color: { name: { en: 'Black', he: 'Black (Hebrew)' }, hex: '#000000' }, sizes: [{ size: 'ADJ', stock: 20, sku: 'CAP-BLK-ADJ' }] },
-          { color: { name: { en: 'Red', he: 'Red (Hebrew)' }, hex: '#FF0000' }, sizes: [{ size: 'ADJ', stock: 20, sku: 'CAP-RED-ADJ' }] },
-        ],
-        status: 'active', isPreorder: false, isFeatured: false, metadata: { title: { en: 'Cap', he: 'Cap (Hebrew)' }, description: { en: 'Shade in style.', he: 'צל בסטייל (Hebrew)' } },
-      });
-
-      // 8. ENBOSS Bearings Set
-      productsData.push({
-        slug: slugify('ENBOSS Bearings Set'),
-        name: { en: 'ENBOSS Bearings Set', he: 'ENBOSS Bearings Set (Hebrew)' },
-        description: { en: 'Fast and durable bearings for smooth rides.', he: 'מיסבים מהירים ועמידים לרכיבה חלקה (Hebrew)' },
-        price: 120, category: 'parts', subcategory: 'bearings', relatedSports: ['skateboarding','rollerblading'],
-        images: [{ url: img('Bearings','222222','FFFFFF'), alt: { en: 'Bearings Set', he: 'Bearings Set (Hebrew)' }, order: 0, publicId: 'placeholder:bearings' }],
-        variants: [{ color: { name: { en: 'Standard', he: 'Standard (Hebrew)' }, hex: '#999999' }, sizes: [{ size: 'SET', stock: 25, sku: 'BRG-SET' }] }],
-        status: 'active', isPreorder: true, isFeatured: false, metadata: { title: { en: 'Bearings', he: 'Bearings (Hebrew)' }, description: { en: 'Smooth roll.', he: 'גלגול חלק (Hebrew)' } },
-      });
-
-      const createdProducts = await Product.insertMany(productsData, { session });
+      console.log('🛹 Skipping products (use seed-products.ts to seed products separately)...');
+      // Products are now seeded separately via seed-products.ts
+      // Query existing products for use in orders
+      const createdProducts = await Product.find({}).session(session).lean();
       counts.products = createdProducts.length;
 
       console.log('🏞️ Seeding skateparks...');
@@ -520,9 +403,17 @@ export async function seedDatabase() {
       const u1 = getUserByEmail('user1@example.com');
       const u2 = getUserByEmail('user2@example.com');
       const u3 = getUserByEmail('user3@example.com');
-      const pHoodie = createdProducts.find((p) => p.slug === slugify('ENBOSS Hoodie'))!;
-      const pDeck = createdProducts.find((p) => p.slug === slugify('ENBOSS Skateboard Deck'))!;
-      const pWax = createdProducts.find((p) => p.slug === slugify('ENBOSS Skate Wax'))!;
+      
+      // Find products by slug (products should be seeded separately via seed-products.ts)
+      const pHoodie = createdProducts.find((p: any) => p.slug === slugify('ENBOSS Hoodie'));
+      const pDeck = createdProducts.find((p: any) => p.slug === slugify('ENBOSS Skateboard Deck'));
+      const pWax = createdProducts.find((p: any) => p.slug === slugify('ENBOSS Skate Wax'));
+      
+      // Skip orders if products don't exist
+      if (!pHoodie || !pDeck || !pWax) {
+        console.log('⚠️  Skipping orders - products not found. Please run seed-products.ts first.');
+        counts.orders = 0;
+      } else {
 
       const orderFrom = (user: WithId<IUser>, product: typeof pHoodie, colorHex: string, size: string, qty: number, status: any) => {
         const variant = product.variants.find((v) => v.color.hex === colorHex)!;
@@ -538,20 +429,21 @@ export async function seedDatabase() {
         };
       };
 
-      const orderData = [
-        orderFrom(u1, pHoodie, '#000000', 'M', 1, 'pending'),
-        orderFrom(u2, pDeck, '#FF6600', '8.0', 1, 'paid'),
-        orderFrom(u3, pWax, '#CCCCCC', 'STD', 2, 'shipped'),
-      ];
-      const createdOrders = await Promise.all(orderData.map(async (d) => {
-        const doc = new Order(d as any);
-        if (!doc.orderNumber) {
-          await (doc as any).generateOrderNumber();
-        }
-        await doc.save({ session });
-        return doc;
-      }));
-      counts.orders = createdOrders.length;
+        const orderData = [
+          orderFrom(u1, pHoodie, '#000000', 'M', 1, 'pending'),
+          orderFrom(u2, pDeck, '#FF6600', '8.0', 1, 'paid'),
+          orderFrom(u3, pWax, '#CCCCCC', 'STD', 2, 'shipped'),
+        ];
+        const createdOrders = await Promise.all(orderData.map(async (d) => {
+          const doc = new Order(d as any);
+          if (!doc.orderNumber) {
+            await (doc as any).generateOrderNumber();
+          }
+          await doc.save({ session });
+          return doc;
+        }));
+        counts.orders = createdOrders.length;
+      }
 
       console.log('⭐ Seeding reviews...');
       // Skatepark reviews using standalone Review model

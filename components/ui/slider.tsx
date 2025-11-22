@@ -42,9 +42,9 @@ export const Slider = ({ min, max, values, onChange, step = 1 }: SliderProps) =>
 
   return (
     <div className="relative px-2">
-      <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+      <div className="relative h-2 bg-black/10 dark:bg-black/30 rounded-full">
         <div
-          className="absolute h-2 bg-blue-500 rounded-full"
+          className="absolute h-2 bg-brand-main dark:bg-brand-main rounded-full"
           style={{ left: `${minPercent}%`, width: `${maxPercent - minPercent}%` }}
         />
       </div>
@@ -68,7 +68,7 @@ export const Slider = ({ min, max, values, onChange, step = 1 }: SliderProps) =>
           className="absolute w-full h-2 bg-transparent appearance-none cursor-pointer slider-thumb"
         />
       </div>
-      <div className="flex justify-between mt-2 text-xs text-gray-600 dark:text-gray-400">
+      <div className="flex justify-between mt-2 text-xs text-header-text-dark dark:text-header-text">
         <span>₪{localValues[0]}</span>
         <span>₪{localValues[1]}</span>
       </div>
@@ -78,16 +78,19 @@ export const Slider = ({ min, max, values, onChange, step = 1 }: SliderProps) =>
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: var(--brand-main, #3b82f6);
           cursor: pointer;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         .slider-thumb::-moz-range-thumb {
           width: 16px;
           height: 16px;
           border-radius: 50%;
-          background: #3b82f6;
+          background: var(--brand-main, #3b82f6);
           cursor: pointer;
-          border: none;
+          border: 2px solid white;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
       `}</style>
     </div>

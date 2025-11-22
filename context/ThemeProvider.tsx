@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -15,6 +15,37 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
   const [mounted, setMounted] = useState(false);
 
+  const updateMetaThemeColor = useCallback((newTheme: Theme) => {
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    const color = newTheme === 'dark' ? '#181c21' : '#f6f7f9';
+    
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', color);
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = color;
+      document.getElementsByTagName('head')[0].appendChild(meta);
+    }
+  }, []);
+
+  const applyTheme = (newTheme: Theme) => {
+    const root = document.documentElement;
+    if (newTheme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('theme', newTheme);
+    updateMetaThemeColor(newTheme);
+  };
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    applyTheme(newTheme);
+  };
+
   useEffect(() => {
     setMounted(true);
     // Get theme from localStorage or system preference
@@ -26,21 +57,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyTheme(initialTheme);
   }, []);
 
-  const applyTheme = (newTheme: Theme) => {
-    const root = document.documentElement;
-    if (newTheme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
+  // Update meta theme-color when theme changes
+  useEffect(() => {
+    if (mounted) {
+      updateMetaThemeColor(theme);
     }
-    localStorage.setItem('theme', newTheme);
-  };
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    applyTheme(newTheme);
-  };
+  }, [theme, mounted, updateMetaThemeColor]);
 
   // Always provide context, even before mount to prevent errors
   // Use default values during initial render

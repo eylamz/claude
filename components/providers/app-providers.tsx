@@ -2,6 +2,7 @@
 
 import { SessionProvider } from './session-provider';
 import { ThemeProvider } from '@/context/ThemeProvider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { ReactNode } from 'react';
 
 interface AppProvidersProps {
@@ -10,12 +11,16 @@ interface AppProvidersProps {
 
 /**
  * App-level providers wrapper
- * Includes SessionProvider for NextAuth and ThemeProvider for theme management
+ * Includes SessionProvider for NextAuth, ThemeProvider for theme management, and TooltipProvider for tooltips
  */
 export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ThemeProvider>
-      <SessionProvider>{children}</SessionProvider>
+      <SessionProvider>
+        <TooltipProvider>
+          {children}
+        </TooltipProvider>
+      </SessionProvider>
     </ThemeProvider>
   );
 }
