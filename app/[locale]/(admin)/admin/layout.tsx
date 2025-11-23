@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { useLocale } from 'next-intl';
 import { SessionProvider } from '@/components/providers';
+import { useTheme } from '@/context/ThemeProvider';
+import { Icon } from '@/components/icons/Icon';
 
 interface SidebarItem {
   href: string;
@@ -22,9 +24,12 @@ function AdminLayoutContent({
   const { data: session } = useSession();
   const pathname = usePathname();
   const locale = useLocale();
+  const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
   
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
 
   // Load collapsed state from localStorage on mount
   useEffect(() => {
@@ -44,8 +49,41 @@ function AdminLayoutContent({
     setSidebarOpen(false);
   }, [pathname]);
 
+  // Handle theme toggle
+  const handleThemeToggle = () => {
+    setShouldAnimate(true);
+    toggleTheme();
+  };
+
+  // Handle theme toggle animation
+  useEffect(() => {
+    if (shouldAnimate) {
+      const timer = setTimeout(() => {
+        setShouldAnimate(false);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldAnimate]);
+
+  // Handle language toggle
+  const handleLanguageToggle = async () => {
+    const newLang = locale === 'en' ? 'he' : 'en';
+    const segments = pathname.split('/');
+    segments[1] = newLang;
+    await router.push(segments.join('/'));
+  };
+
   // Sidebar navigation items
   const sidebarItems: SidebarItem[] = [
+    {
+      href: `/${locale}/`,
+      label: 'Home',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+      ),
+    },
     {
       href: `/${locale}/admin`,
       label: 'Dashboard',
@@ -176,7 +214,7 @@ function AdminLayoutContent({
   const breadcrumbs = generateBreadcrumbs();
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark">
+    <div className="min-h-screen bg-background dark:bg-background-dark flex">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
@@ -187,7 +225,7 @@ function AdminLayoutContent({
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 bg-black text-white transform transition-all duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        className={`fixed inset-y-0 left-0 z-50 bg-black text-white transform transition-all duration-200 ease-in-out lg:translate-x-0 lg:relative lg:inset-0 lg:flex-shrink-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } ${sidebarCollapsed ? 'lg:w-20' : 'w-64 lg:w-64'}`}
       >
@@ -238,7 +276,7 @@ function AdminLayoutContent({
             ))}
           </nav>
 
-          {/* User info and logout */}
+          {/* User info and actions */}
           <div className={`border-t border-gray-800 dark:border-gray-700 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
             {!sidebarCollapsed && (
               <div className="flex items-center space-x-3 mb-4">
@@ -257,7 +295,36 @@ function AdminLayoutContent({
                 </div>
               </div>
             )}
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={handleThemeToggle}
+              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-2 text-gray-300 dark:text-gray-400 hover:bg-gray-800 dark:hover:bg-gray-700 hover:text-white rounded-lg transition-colors duration-200 mb-2`}
+              title={sidebarCollapsed ? (theme === 'dark' ? 'Light Mode' : 'Dark Mode') : undefined}
+            >
+              {theme === 'dark' ? (
+                <Icon name="sun" className={`w-5 h-5 shrink-0 ${shouldAnimate ? 'animate-pop' : ''}`} />
+              ) : (
+                <Icon name="moon" className={`w-5 h-5 shrink-0 ${shouldAnimate ? 'animate-pop' : ''}`} />
+              )}
+              {!sidebarCollapsed && <span className="font-medium">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>}
+            </button>
+
+            {/* Language Switcher Button */}
+            <button
+              onClick={handleLanguageToggle}
+              className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-2 text-gray-300 dark:text-gray-400 hover:bg-gray-800 dark:hover:bg-gray-700 hover:text-white rounded-lg transition-colors duration-200 mb-2`}
+              title={sidebarCollapsed ? (locale === 'en' ? 'עברית' : 'English') : undefined}
+            >
+              {locale === 'en' ? (
+                <Icon name="israelFlag" className="w-5 h-5 shrink-0" />
+              ) : (
+                <Icon name="usaFlag" className="w-5 h-5 shrink-0" />
+              )}
+              {!sidebarCollapsed && <span className="font-medium">{locale === 'en' ? 'עברית' : 'English'}</span>}
+            </button>
             
+            {/* Logout Button */}
             <button
               onClick={() => signOut()}
               className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'} px-3 py-2 text-gray-300 dark:text-gray-400 hover:bg-gray-800 dark:hover:bg-gray-700 hover:text-white rounded-lg transition-colors duration-200`}
@@ -273,7 +340,7 @@ function AdminLayoutContent({
       </div>
 
       {/* Main content */}
-      <div className={`transition-all duration-200 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
@@ -310,6 +377,31 @@ function AdminLayoutContent({
 
             {/* User profile and theme toggle */}
             <div className="flex items-center space-x-4">
+              {/* Theme Toggle Button - Desktop */}
+              <button
+                onClick={handleThemeToggle}
+                className="hidden lg:flex p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+              >
+                {theme === 'dark' ? (
+                  <Icon name="sun" className={`w-5 h-5 ${shouldAnimate ? 'animate-pop' : ''}`} />
+                ) : (
+                  <Icon name="moon" className={`w-5 h-5 ${shouldAnimate ? 'animate-pop' : ''}`} />
+                )}
+              </button>
+
+              {/* Language Switcher Button - Desktop */}
+              <button
+                onClick={handleLanguageToggle}
+                className="hidden lg:flex p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title={locale === 'en' ? 'עברית' : 'English'}
+              >
+                {locale === 'en' ? (
+                  <Icon name="israelFlag" className="w-5 h-5" />
+                ) : (
+                  <Icon name="usaFlag" className="w-5 h-5" />
+                )}
+              </button>
               
               <div className="hidden sm:block">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">

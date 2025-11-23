@@ -17,6 +17,7 @@ import { useTheme } from '@/context/ThemeProvider';
 import { Button } from '@/components/ui';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { 
   useCartStore, 
   useCartItemCount, 
@@ -60,6 +61,7 @@ export default function MobileNav({ userId }: MobileNavProps) {
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
   const [shouldAnimate, setShouldAnimate] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Gesture state
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
@@ -93,10 +95,6 @@ export default function MobileNav({ userId }: MobileNavProps) {
     router.push(`/${locale}/search?q=${encodeURIComponent(query)}`);
   }, [locale, router, saveSearch]);
 
-  // Handle logout
-  const handleLogout = async () => {
-    await signOut;
-  };
 
   // Handle theme toggle
   const handleThemeToggle = () => {
@@ -295,7 +293,7 @@ export default function MobileNav({ userId }: MobileNavProps) {
             {/* Menu Button */}
             <button
               onClick={() => setIsMenuOpen(true)}
-              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-2 text-text dark:text-text-dark hover:text-black dark:hover:text-white transition-colors"
               aria-label="Open menu"
             >
               <Icon name="menu" className="w-6 h-6" />
@@ -303,7 +301,7 @@ export default function MobileNav({ userId }: MobileNavProps) {
 
             {/* Logo */}
             <Link href={`/${locale}`} className="flex items-center gap-2">
-              <Icon name="logo-hostage3" className="w-24 h-8" />
+              <Icon name="logo-hostage3" className="w-24 h-8 text-header-text dark:text-header-text-dark" />
             </Link>
 
             {/* Cart Button */}
@@ -311,7 +309,7 @@ export default function MobileNav({ userId }: MobileNavProps) {
               <Popover>
                 <PopoverTrigger asChild>
                   <button
-                    className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                    className="relative p-2 text-text dark:text-text-dark hover:text-black dark:hover:text-white transition-colors"
                     aria-label={`Shopping cart with ${itemCount} items`}
                   >
                     <Icon name="cart" className="w-6 h-6" />
@@ -521,7 +519,7 @@ export default function MobileNav({ userId }: MobileNavProps) {
       {isMenuOpen && (
         <div
           ref={menuRef}
-          className="h-screen md:hidden fixed inset-0 z-50 backdrop-blur-md bg-background dark:bg-background-dark flex flex-col"
+          className="h-screen md:hidden fixed inset-0 z-50 backdrop-blur-md bg-background dark:bg-background-dark transition-all duration-100 flex flex-col animate-bounchInDown"
           style={{
             transform: swipeDistance > 0 ? `translateX(${swipeDistance}px)` : 'translateX(0)',
             transition: swipeDistance === 0 ? 'transform 0.3s ease-out' : 'none',
@@ -531,8 +529,15 @@ export default function MobileNav({ userId }: MobileNavProps) {
           onTouchEnd={() => handleTouchEnd('menu')}
         >
           {/* Header */}
-          <div className="flex items-start justify-between pb-2 mx-2 border-b border-border dark:border-border-dark pt-6 flex-shrink-0">
-            <div className="flex items-center gap-2 top-0 ">
+          <div className="flex flex-wrap items-start justify-between pb-2 mx-2 border-b border-border dark:border-border-dark pt-6 flex-shrink-0">
+          <button
+              onClick={() => setIsMenuOpen(false)}
+              className="h-14 p-2 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"
+              aria-label="Close menu"
+            >
+              <Icon name="X" className="w-10 h-10" />
+            </button>
+            <div className="flex flex-wrap items-center gap-2 top-0 ">
             <button
               onClick={() => {
                 setIsMenuOpen(false);
@@ -606,7 +611,6 @@ export default function MobileNav({ userId }: MobileNavProps) {
               <Link
                 href={`/${locale}/admin`}
                 className="p-2 flex flex-col text-xs items-center gap-3 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
               >
                 <Icon name="adminBold" className="w-5 h-5 md:w-6 md:h-6" />
                 <span>{tCommon('admin') || 'Admin'}</span>
@@ -617,24 +621,29 @@ export default function MobileNav({ userId }: MobileNavProps) {
             {/* Logout Button */}
             {session && (
               <button
-                onClick={() => {
-                  handleLogout();
-                  setIsMenuOpen(false);
+                onClick={async () => {
+                  setIsLoggingOut(true);
+                  try {
+                    await signOut();
+                  } catch (error) {
+                    console.error('Failed to sign out:', error);
+                  }
                 }}
-                className={`w-full flex flex-col items-center justify-between gap-3 px-3 py-2 text-xs text-error/70 dark:text-error-dark/70 hover:text-error dark:hover:text-error-dark transition-colors`}
+                disabled={isLoggingOut}
+                className={`flex flex-col items-center justify-between gap-3 px-3 py-2 text-xs text-error/70 dark:text-error-dark/70 hover:text-error dark:hover:text-error-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                <Icon name="logout" className="w-5 h-5 md:w-6 md:h-6" />
-                <span>{tCommon('logout') || 'Logout'}</span>
+                {isLoggingOut ? (
+                  <LoadingSpinner size={28} variant="error" />
+                ) : (
+                  <>
+                    <Icon name="logout" className="w-5 h-5 md:w-6 md:h-6" />
+                    <span>{tCommon('logout') || 'Logout'}</span>
+                  </>
+                )}
               </button>
             )}
                   </div>
-            <button
-              onClick={() => setIsMenuOpen(false)}
-              className="h-14 p-2 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"
-              aria-label="Close menu"
-            >
-              <Icon name="X" className="w-10 h-10" />
-            </button>
+         
           </div>
 
           {/* Navigation Links */}
@@ -681,7 +690,7 @@ export default function MobileNav({ userId }: MobileNavProps) {
           onTouchEnd={() => handleTouchEnd('search')}
         >
           {/* Header */}
-          <div className="flex items-center gap-4 p-2 border-b border-gray-200 dark:border-gray-800 pt-6">
+          <div className="flex items-center gap-4 p-2 border-b border-border dark:border-border-dark pt-6">
             <button
               onClick={() => setIsSearchOpen(false)}
               className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"

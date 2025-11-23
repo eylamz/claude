@@ -76,12 +76,15 @@ export async function GET(
       },
       images: (skatepark.images || []).map((img: any) => ({
         url: img.url,
-        order: img.order || 0,
+        isFeatured: img.isFeatured || false,
+        orderNumber: img.orderNumber ?? img.order ?? 0,
         publicId: img.publicId || '',
       })),
       operatingHours: skatepark.operatingHours || {},
-      is24Hours: skatepark.is24Hours || false,
-      lightingUntil: skatepark.lightingUntil || null,
+      lightingHours: skatepark.is24Hours || skatepark.lightingUntil ? {
+        is24Hours: skatepark.is24Hours || false,
+        endTime: skatepark.lightingUntil || '',
+      } : undefined,
       amenities: skatepark.amenities || {},
       openingYear: skatepark.openingYear || null,
       closingYear: skatepark.closingYear || null,
@@ -162,6 +165,7 @@ export async function PUT(
       location,
       images,
       operatingHours,
+      lightingHours,
       lightingUntil,
       amenities,
       openingYear,
@@ -178,21 +182,56 @@ export async function PUT(
     if (name !== undefined) skatepark.name = name;
     if (address !== undefined) skatepark.address = address;
     if (area !== undefined) skatepark.area = area;
-    if (location?.coordinates) {
-      skatepark.location = {
-        type: 'Point',
-        coordinates: location.coordinates, // [longitude, latitude]
-      };
+    if (location !== undefined) {
+      // Handle location in different formats
+      if (location.coordinates && Array.isArray(location.coordinates) && location.coordinates.length === 2) {
+        // Format: { type: 'Point', coordinates: [lng, lat] }
+        const lng = typeof location.coordinates[0] === 'number' 
+          ? location.coordinates[0] 
+          : parseFloat(location.coordinates[0]);
+        const lat = typeof location.coordinates[1] === 'number' 
+          ? location.coordinates[1] 
+          : parseFloat(location.coordinates[1]);
+        
+        if (!isNaN(lng) && !isNaN(lat)) {
+          skatepark.location = {
+            type: 'Point',
+            coordinates: [lng, lat] as [number, number],
+          };
+          console.log('Updated location coordinates:', skatepark.location.coordinates);
+        }
+      } else if (location.lng !== undefined && location.lat !== undefined) {
+        // Format: { lng: number, lat: number }
+        const lng = typeof location.lng === 'number' ? location.lng : parseFloat(location.lng);
+        const lat = typeof location.lat === 'number' ? location.lat : parseFloat(location.lat);
+        
+        if (!isNaN(lng) && !isNaN(lat)) {
+          skatepark.location = {
+            type: 'Point',
+            coordinates: [lng, lat] as [number, number],
+          };
+          console.log('Updated location coordinates:', skatepark.location.coordinates);
+        }
+      }
     }
     if (images !== undefined) {
-      // Clean up images: convert empty publicId strings to undefined
-      skatepark.images = images.map((img: any) => ({
-        ...img,
+      // Clean up images: convert empty publicId strings to undefined and ensure orderNumber is set
+      skatepark.images = images.map((img: any, index: number) => ({
+        url: img.url || '',
+        isFeatured: img.isFeatured || false,
+        orderNumber: img.orderNumber ?? img.order ?? index,
         publicId: img.publicId && img.publicId.trim() ? img.publicId.trim() : undefined,
       }));
     }
     if (operatingHours !== undefined) skatepark.operatingHours = operatingHours;
+    // Handle lightingHours from frontend (converts to is24Hours and lightingUntil)
+    if (lightingHours !== undefined) {
+      skatepark.is24Hours = lightingHours.is24Hours || false;
+      skatepark.lightingUntil = lightingHours.endTime || null;
+    }
+    // Also support direct lightingUntil and is24Hours for backward compatibility
     if (lightingUntil !== undefined) skatepark.lightingUntil = lightingUntil;
+    if (is24Hours !== undefined) skatepark.is24Hours = is24Hours;
     if (amenities !== undefined) skatepark.amenities = amenities;
     if (openingYear !== undefined) skatepark.openingYear = openingYear;
     if (closingYear !== undefined) skatepark.closingYear = closingYear;

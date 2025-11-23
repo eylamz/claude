@@ -22,6 +22,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { useTheme } from '@/context/ThemeProvider';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { 
   useCartStore, 
   useCartItemCount, 
@@ -58,6 +59,7 @@ export default function HeaderNav() {
   
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -101,6 +103,7 @@ export default function HeaderNav() {
 
   // Handle logout - works like next-auth's internal signOut
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     try {
       // Use callbackUrl like next-auth's signOut does (defaults to window.location.href if not provided)
       const callbackUrl = `/${locale}/login`;
@@ -112,6 +115,7 @@ export default function HeaderNav() {
       });
     } catch (error) {
       console.error('Failed to sign out:', error);
+      setIsLoggingOut(false);
       // Fallback: redirect manually if signOut fails (similar to next-auth's behavior)
       const fallbackUrl = `/${locale}/login`;
       window.location.href = fallbackUrl;
@@ -492,10 +496,17 @@ export default function HeaderNav() {
                     {session && (
                       <button
                         onClick={handleLogout}
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                        disabled={isLoggingOut}
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${locale === 'he' ? 'flex-row-reverse' : ''}`}
                       >
-                        <LogOut className="w-4 h-4" />
-                        <span>{tCommon('logout') || 'Logout'}</span>
+                        {isLoggingOut ? (
+                          <LoadingSpinner size={16} variant="error" />
+                        ) : (
+                          <>
+                            <LogOut className="w-4 h-4" />
+                            <span>{tCommon('logout') || 'Logout'}</span>
+                          </>
+                        )}
                       </button>
                     )}
                   </div>

@@ -1,10 +1,20 @@
+import HeaderNav from "@/components/layout/HeaderNav";
+import MobileNav from "@/components/layout/MobileNav";
+import { Footer } from "@/components/layout";
+
 export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Add authentication check here
-  return <>{children}</>;
+  return (
+    <>
+      <HeaderNav />
+      <main className="pt-20 min-h-screen">{children}</main>
+      <Footer />
+      <MobileNav />
+    </>
+  );
 }
 
 

@@ -100,7 +100,48 @@ export default function SkateparkDetailPage() {
         return;
       }
       const data = await response.json();
-      setSkatepark(data.skatepark);
+      // Ensure location and coordinates are initialized
+      const skateparkData = data.skatepark;
+      
+      // Convert location format from { lat, lng } to { type: 'Point', coordinates: [lng, lat] }
+      if (skateparkData.location) {
+        if (skateparkData.location.lat !== undefined && skateparkData.location.lng !== undefined) {
+          // API returns { lat, lng }, convert to coordinates array
+          skateparkData.location = {
+            type: 'Point',
+            coordinates: [skateparkData.location.lng, skateparkData.location.lat] as [number, number],
+          };
+        } else if (!skateparkData.location.coordinates || !Array.isArray(skateparkData.location.coordinates)) {
+          skateparkData.location = {
+            type: 'Point',
+            coordinates: [0, 0] as [number, number],
+          };
+        }
+      } else {
+        skateparkData.location = {
+          type: 'Point',
+          coordinates: [0, 0] as [number, number],
+        };
+      }
+      
+      // Ensure all images have orderNumber
+      if (skateparkData.images && Array.isArray(skateparkData.images)) {
+        skateparkData.images = skateparkData.images.map((img: any, index: number) => ({
+          url: img.url || '',
+          isFeatured: img.isFeatured || false,
+          orderNumber: img.orderNumber ?? img.order ?? index,
+        }));
+      }
+      
+      // Convert lightingHours format if needed
+      if (!skateparkData.lightingHours && (skateparkData.is24Hours !== undefined || skateparkData.lightingUntil)) {
+        skateparkData.lightingHours = {
+          is24Hours: skateparkData.is24Hours || false,
+          endTime: skateparkData.lightingUntil || '',
+        };
+      }
+      
+      setSkatepark(skateparkData);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch skatepark');
       console.error('Error fetching skatepark:', err);
@@ -119,10 +160,37 @@ export default function SkateparkDetailPage() {
     try {
       setSaving(true);
       setError(null);
+      
+      // Ensure all images have orderNumber before saving
+      // Ensure location coordinates are properly formatted
+      const skateparkToSave = {
+        ...skatepark,
+        location: skatepark.location && skatepark.location.coordinates
+          ? {
+              type: 'Point',
+              coordinates: [
+                typeof skatepark.location.coordinates[0] === 'number' 
+                  ? skatepark.location.coordinates[0] 
+                  : parseFloat(skatepark.location.coordinates[0]) || 0,
+                typeof skatepark.location.coordinates[1] === 'number' 
+                  ? skatepark.location.coordinates[1] 
+                  : parseFloat(skatepark.location.coordinates[1]) || 0,
+              ] as [number, number],
+            }
+          : skatepark.location,
+        images: (skatepark.images || []).map((img, index) => ({
+          url: img.url || '',
+          isFeatured: img.isFeatured || false,
+          orderNumber: img.orderNumber ?? index,
+        })),
+      };
+      
+      console.log('Saving skatepark with location:', skateparkToSave.location);
+      
       const response = await fetch(`/api/admin/skateparks/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(skatepark),
+        body: JSON.stringify(skateparkToSave),
       });
 
       if (!response.ok) {
@@ -466,34 +534,48 @@ export default function SkateparkDetailPage() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Longitude"
-              type="number"
-              step="any"
-              value={skatepark.location.coordinates[0]}
-              onChange={(e) =>
-                setSkatepark({
-                  ...skatepark,
-                  location: {
-                    ...skatepark.location,
-                    coordinates: [parseFloat(e.target.value) || 0, skatepark.location.coordinates[1]],
-                  },
-                })
-              }
-            />
-            <Input
               label="Latitude"
               type="number"
               step="any"
-              value={skatepark.location.coordinates[1]}
-              onChange={(e) =>
-                setSkatepark({
-                  ...skatepark,
-                  location: {
-                    ...skatepark.location,
-                    coordinates: [skatepark.location.coordinates[0], parseFloat(e.target.value) || 0],
-                  },
-                })
-              }
+              value={skatepark.location?.coordinates?.[1] ?? 0}
+              onChange={(e) => {
+                const newValue = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                if (!isNaN(newValue)) {
+                  setSkatepark({
+                    ...skatepark,
+                    location: {
+                      type: 'Point',
+                      ...skatepark.location,
+                      coordinates: [
+                        skatepark.location?.coordinates?.[0] ?? 0,
+                        newValue,
+                      ] as [number, number],
+                    },
+                  });
+                }
+              }}
+            />
+            <Input
+              label="Longitude"
+              type="number"
+              step="any"
+              value={skatepark.location?.coordinates?.[0] ?? 0}
+              onChange={(e) => {
+                const newValue = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                if (!isNaN(newValue)) {
+                  setSkatepark({
+                    ...skatepark,
+                    location: {
+                      type: 'Point',
+                      ...skatepark.location,
+                      coordinates: [
+                        newValue,
+                        skatepark.location?.coordinates?.[1] ?? 0,
+                      ] as [number, number],
+                    },
+                  });
+                }
+              }}
             />
           </div>
         </CardContent>

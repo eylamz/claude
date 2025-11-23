@@ -348,8 +348,8 @@ export default function HeroCarousel({ images, autoSlideInterval = 3000 }: HeroC
                     return (
                       <div 
                         key={`overlay-${viewIndex}-${currentViewIndex}`}
-                        className={`flex items-end justify-center md:justify-start h-1/2 absolute bottom-0 left-0 right-0 px-5 pb-2 pt-8 bg-gradient-to-t from-black/70 via-black/30 to-transparent md:from-black/90 md:via-black/30 md:to-transparent z-[2] ${
-                          isActive ? '' : 'opacity-0'
+                        className={`flex items-end justify-center md:justify-start h-1/2 absolute bottom-0 left-0 right-0 px-5 pb-2 pt-8 bg-gradient-to-t from-black/70 via-black/30 to-transparent md:from-black/90 md:via-black/30 md:to-transparent z-[2] transition-opacity duration-300 ${
+                          isActive ? 'opacity-100' : 'opacity-[0.9]'
                         }`}>
                         {/* Content wrapper with animation */}
                         <div 

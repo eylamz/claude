@@ -33,7 +33,7 @@ export const colors = {
     },
     text: {
       light: 'hsl(162, 48%, 16%)',
-      dark: 'hsl(162, 48%, 46%)',
+      dark: 'hsl(162, 99%, 38%)',
     },
     guide: {
       light: 'hsl(199, 85%, 42%)',

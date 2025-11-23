@@ -308,6 +308,19 @@ const config: Config = {
             transform: 'translateY(0)'
           }
         },
+        'bounchInDown': {
+          '0%': { 
+            transform: 'translateY(-20px)',
+            opacity: '0.2',
+          },
+          '50%': { 
+            opacity: '0.5',
+          },
+          '100%': { 
+            transform: 'translateY(0)',
+            opacity: '1',
+          },
+        },
         'shimmerMove': {
           'from': { right: '-100%' },
           'to': { right: '100%' }
@@ -483,6 +496,7 @@ const config: Config = {
         'infiniteLoader': 'infiniteLoader 1s infinite',
         'fadeUpIn': 'fadeUpIn 0.6s ease-out forwards',
         'fadeInDown': 'fadeInDown 0.2s ease-out forwards',
+        'bounchInDown': 'bounchInDown 0.2s forwards',
       },
     },
   },

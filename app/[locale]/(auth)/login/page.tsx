@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, useEffect, useRef } from 'react';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn, useSession, update } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
@@ -51,6 +51,8 @@ export default function LoginPage() {
         
         if (colorMode === 'system') {
           // Check system preference
+          const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          themeToApply = systemPrefersDark ? 'dark' : 'light';
         } else {
           // Use user's explicit preference (light or dark)
           themeToApply = colorMode;
@@ -88,16 +90,16 @@ export default function LoginPage() {
       preferencesAppliedRef.current = true;
       
       // If we need to redirect due to locale change, do it here
-      // Otherwise, redirect to account page with current locale
+      // Otherwise, redirect to home page with current locale (if still on login page)
       if (shouldRedirect) {
         startTransition(() => {
-          router.push(`/${targetLocale}/account`);
+          router.push(`/${targetLocale}`);
           router.refresh();
         });
-      } else if (!window.location.pathname.includes('/account')) {
-        // Only redirect if not already on account page
+      } else if (window.location.pathname.includes('/login') || window.location.pathname.includes('/register')) {
+        // Only redirect if still on login/register page
         startTransition(() => {
-          router.push(`/${locale}/account`);
+          router.push(`/${locale}`);
           router.refresh();
         });
       }
@@ -150,7 +152,15 @@ export default function LoginPage() {
         return;
       }
 
-      // Success - refresh session to get preferences
+      // Success - try to update session (non-blocking)
+      try {
+        await update();
+      } catch (updateError) {
+        // Ignore update errors - router.refresh() will handle session update
+        console.log('Session update skipped:', updateError);
+      }
+      
+      // Refresh router to ensure session is available
       router.refresh();
       
       // Immediately check for any existing theme in localStorage and apply it
@@ -162,8 +172,21 @@ export default function LoginPage() {
         document.documentElement.classList.add('dark');
       }
       
-      // Wait for session to be available and apply preferences
+      // Wait a moment for session to be available before redirecting
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Redirect to home page immediately after successful login
       // The useEffect will handle applying user preferences from MongoDB
+      try {
+        startTransition(() => {
+          router.push(`/${locale}`);
+        });
+      } catch (redirectError) {
+        // Fallback redirect if startTransition fails
+        console.log('Redirect error, using fallback:', redirectError);
+        window.location.href = `/${locale}`;
+      }
+      
       setIsLoading(false);
     } catch (error) {
       console.error('Login error:', error);
