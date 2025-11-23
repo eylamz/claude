@@ -46,7 +46,7 @@ export const colors = {
   },
   card: {
     light: 'hsl(0, 0%, 100%)',
-    dark: 'hsl(240, 8%, 20%)',
+    dark: 'hsl(218, 19%, 13%)',
     border: {
       light: 'hsl(0, 0%, 85%)',
       dark: 'hsl(203, 38%, 12%)',

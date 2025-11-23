@@ -1,129 +1,81 @@
 'use client';
 
-import React, { useState, useRef, useEffect, ReactNode } from 'react';
+import * as React from "react";
+import * as PopoverPrimitive from "@radix-ui/react-popover";
+import { cn } from "@/lib/utils";
 
-interface PopoverProps {
-  children: ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}
+const Popover = PopoverPrimitive.Root;
 
-interface PopoverTriggerProps {
-  asChild?: boolean;
-  children: ReactNode;
-  onClick?: (e: React.MouseEvent) => void;
-}
+const PopoverTrigger = PopoverPrimitive.Trigger;
 
-interface PopoverContentProps {
-  children: ReactNode;
-  className?: string;
-}
+const PopoverAnchor = PopoverPrimitive.Anchor;
 
-export function Popover({ children, open: controlledOpen, onOpenChange }: PopoverProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const isControlled = controlledOpen !== undefined;
-  const open = isControlled ? controlledOpen : internalOpen;
-
-  const handleOpenChange = (newOpen: boolean) => {
-    if (!isControlled) {
-      setInternalOpen(newOpen);
-    }
-    onOpenChange?.(newOpen);
-  };
-
-  return (
-    <PopoverContext.Provider value={{ open, onOpenChange: handleOpenChange }}>
-      {children}
-    </PopoverContext.Provider>
-  );
-}
-
-const PopoverContext = React.createContext<{ open: boolean; onOpenChange: (open: boolean) => void } | null>(null);
-
-function usePopoverContext() {
-  const context = React.useContext(PopoverContext);
-  if (!context) {
-    throw new Error('Popover components must be used within Popover');
-  }
-  return context;
-}
-
-export function PopoverTrigger({ asChild, children, onClick }: PopoverTriggerProps) {
-  const { open, onOpenChange } = usePopoverContext();
-  const triggerRef = useRef<HTMLDivElement>(null);
-
-  const handleClick = (e: React.MouseEvent) => {
-    onClick?.(e);
-    onOpenChange(!open);
-  };
-
-  useEffect(() => {
-    if (triggerRef.current) {
-      (triggerRef.current as any).__popoverTrigger = triggerRef.current;
-    }
-  }, []);
-
-  if (asChild && React.isValidElement(children)) {
-    const childOnClick = (children.props as any)?.onClick;
-    const mergedOnClick = (e: React.MouseEvent) => {
-      childOnClick?.(e);
-      handleClick(e);
-    };
-
-    return (
-      <div ref={triggerRef} className="inline-block relative" data-popover-trigger>
-        {React.cloneElement(children, {
-          onClick: mergedOnClick,
-          'aria-expanded': open,
-        } as any)}
-      </div>
-    );
-  }
-
-  return (
-    <div ref={triggerRef} onClick={handleClick} className="inline-block relative" data-popover-trigger>
-      {children}
-    </div>
-  );
-}
-
-export function PopoverContent({ children, className = '' }: PopoverContentProps) {
-  const { open, onOpenChange } = usePopoverContext();
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (contentRef.current && !contentRef.current.contains(event.target as Node)) {
-        const target = event.target as HTMLElement;
-        if (!target.closest('[data-popover-trigger]')) {
-          onOpenChange(false);
-        }
+const PopoverContent = React.forwardRef<
+  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
+>(({ className, align = "start", sideOffset = 4, side = "bottom", ...props }, ref) => {
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const combinedRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      if (typeof ref === 'function') {
+        ref(node);
+      } else if (ref) {
+        ref.current = node;
       }
-    };
+      contentRef.current = node;
+    },
+    [ref]
+  );
 
-    if (open) {
-      // Small delay to avoid immediate closing
-      setTimeout(() => {
-        document.addEventListener('mousedown', handleClickOutside);
-      }, 0);
+  // Prevent body scroll when content is rendered (for uncontrolled mode)
+  React.useEffect(() => {
+    const element = contentRef.current;
+    if (!element) return;
+
+    // Check if popover is open by observing data-state attribute
+    const observer = new MutationObserver(() => {
+      const isOpen = element.getAttribute('data-state') === 'open';
+      if (isOpen) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = '';
+      }
+    });
+
+    // Initial check
+    const isOpen = element.getAttribute('data-state') === 'open';
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
     }
+
+    // Observe changes to data-state
+    observer.observe(element, {
+      attributes: true,
+      attributeFilter: ['data-state'],
+    });
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      observer.disconnect();
+      document.body.style.overflow = '';
     };
-  }, [open, onOpenChange]);
-
-  if (!open) return null;
+  }, []);
 
   return (
-    <div className="relative">
-      <div
-        ref={contentRef}
-        className={`w-fit absolute top-full left-0 mt-3 z-50 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-2 min-w-[200px] ${className}`}
-      >
-        {children}
-      </div>
-    </div>
+    <PopoverPrimitive.Portal>
+      <PopoverPrimitive.Content
+        ref={combinedRef}
+        align={align}
+        side={side}
+        sideOffset={sideOffset}
+        className={cn(
+          "z-50 w-fit rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+          className
+        )}
+        {...props}
+      />
+    </PopoverPrimitive.Portal>
   );
-}
+});
+PopoverContent.displayName = PopoverPrimitive.Content.displayName;
 
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor };

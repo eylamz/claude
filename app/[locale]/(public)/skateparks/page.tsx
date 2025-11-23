@@ -2,22 +2,18 @@
 
 import { useEffect, useState, useCallback, useRef, memo } from 'react';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import {
   MapPin,
   Grid3x3,
   Map,
   X,
-  Clock,
-  Star,
   Sparkles,
   XCircle,
   Badge,
   Award,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { Card, CardContent } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import AmenitiesButton from '@/components/common/AmenitiesButton';
 import { SearchInput } from '@/components/common/SearchInput';
@@ -355,11 +351,13 @@ const isNewPark = (createdAt: string | null): boolean => {
 const SkateparkThumbnail = memo(({ 
   photoUrl, 
   parkName, 
-  onLoad
+  onLoad,
+  alwaysSaturated = false
 }: { 
   photoUrl: string, 
   parkName: string,
-  onLoad?: () => void
+  onLoad?: () => void,
+  alwaysSaturated?: boolean
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -441,7 +439,9 @@ const SkateparkThumbnail = memo(({
           ref={imgRef}
           src={optimizedUrl}
           alt={parkName}
-          className={`w-full h-full rounded-t-3xl object-cover transition-all duration-200 saturate-150 group-hover:saturate-[1.75] select-none ${
+          className={`w-full h-full rounded-t-3xl object-cover transition-all duration-200 select-none ${
+            alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
+          } ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
           loading="lazy"
@@ -463,10 +463,12 @@ SkateparkThumbnail.displayName = 'SkateparkThumbnail';
 // Memoized amenities component
 const ParkAmenities = memo(({ 
   amenities, 
-  locale
+  locale,
+  alwaysVisible = false
 }: { 
   amenities: Skatepark['amenities'], 
-  locale: string 
+  locale: string,
+  alwaysVisible?: boolean
 }) => {
   const amenityEntries = Object.entries(amenities)
     .filter(([key, value]) => value && AMENITY_ICON_MAP[key])
@@ -475,7 +477,7 @@ const ParkAmenities = memo(({
   if (amenityEntries.length === 0) return null;
 
   return (
-    <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
+    <div className={`absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 ${alwaysVisible ? 'opacity-100' : 'md:opacity-0 md:group-hover:opacity-100'}`}>
       {amenityEntries.map(([key]) => {
         const iconName = AMENITY_ICON_MAP[key];
         if (!iconName) return null;
@@ -537,7 +539,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0 }: { park: Skatep
   return (
     <div
       onClick={handleCardClick}
-      className={`h-fit hover:shadow-lg dark:hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+      className={`h-fit hover:shadow-lg dark:hover:!scale-[1.02] bord bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
       style={{ animationDelay: `${animationDelay}ms` }}
       aria-label={name}
     >
@@ -951,7 +953,7 @@ export default function SkateparksPage() {
       {/* Content */}
       <div className="max-w-7xl mx-auto p-4 lg:p-6">
         {/* Top Controls Bar - Above Park Cards */}
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-1">
             {/* Search Input */}
             <div className="flex-1 min-w-64 max-w-md">
@@ -1030,7 +1032,7 @@ export default function SkateparksPage() {
           // If only location sorting, show only location indicator
           if (hasLocationSorting && !hasAnyFilter) {
             return (
-              <div className="w-fit mb-2 flex flex-col sm:flex-row gap-2 md:gap-1 items-center justify-start text-sm text-gray-600 dark:text-gray-400">
+              <div className="w-fit mb-4 flex flex-col sm:flex-row gap-2 md:gap-1 items-center justify-start text-sm text-gray-600 dark:text-gray-400">
                 <div className="flex items-center gap-2">
                   <span>{t('search.filterStatus.sortedByDistance')}</span>
                   <Icon 
@@ -1053,7 +1055,7 @@ export default function SkateparksPage() {
           }
 
           return (
-            <div className={`mb-2 flex ${shouldUseColumnLayout ? 'flex-col' : shouldUseRowLayout ? 'flex-col sm:flex-row' : 'flex-col sm:flex-row'} gap-2 md:gap-1 items-start justify-start text-sm text-gray-600 dark:text-gray-400`}>
+            <div className={`mb-4 flex ${shouldUseColumnLayout ? 'flex-col' : shouldUseRowLayout ? 'flex-col sm:flex-row' : 'flex-col sm:flex-row'} gap-2 md:gap-1 items-start justify-start text-sm text-gray-600 dark:text-gray-400`}>
               {/* Showing X of Y parks - Only show when filters are applied */}
               {showParksCount && (
                 <div className="flex items-center gap-2">
@@ -1134,100 +1136,130 @@ export default function SkateparksPage() {
             </div>
             
             {/* Selected Park Detail Panel */}
-            {selectedPark && (
-              <div className="absolute bottom-4 left-4 right-4 lg:right-auto lg:left-4 lg:bottom-4 lg:w-96 z-50">
-                <Card className="shadow-2xl border-2 border-blue-500 relative">
-                  <button
-                    onClick={() => setSelectedPark(null)}
-                    className="absolute top-3 right-3 z-20 p-2 rounded-full bg-white dark:bg-gray-800 shadow-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    aria-label={tr('Close', 'סגור')}
-                  >
-                    <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  </button>
-                  
-                  <Link href={`/${locale}/skateparks/${selectedPark.slug}`}>
-                    <div className="relative h-48 overflow-hidden bg-gray-200 dark:bg-gray-700 cursor-pointer group">
-                      <Image
-                        src={selectedPark.imageUrl}
-                        alt={typeof selectedPark.name === 'string' ? selectedPark.name : (locale === 'he' ? selectedPark.name.he : selectedPark.name.en) || selectedPark.name.en || selectedPark.name.he || 'Skatepark image'}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {selectedPark.is24Hours && (
-                        <div className="absolute top-2 left-2 px-2 py-1 bg-green-500 text-white text-xs font-semibold rounded">
-                          <Clock className="w-3 h-3 inline mr-1" />
-                          24/7
+            {selectedPark && (() => {
+              const name = typeof selectedPark.name === 'string' 
+                ? selectedPark.name 
+                : (locale === 'he' ? selectedPark.name.he : selectedPark.name.en) || selectedPark.name.en || selectedPark.name.he;
+              
+              const photoUrl = selectedPark.images && selectedPark.images.length > 0 
+                ? selectedPark.images.find(img => img.isFeatured)?.url || selectedPark.images[0]?.url 
+                : selectedPark.imageUrl;
+
+              const currentYear = new Date().getFullYear();
+              const recentYears = [currentYear, currentYear - 1, currentYear - 2];
+              const hasOpeningYear = selectedPark.openingYear && recentYears.includes(selectedPark.openingYear);
+              const isClosed = selectedPark.closingYear && selectedPark.closingYear <= currentYear;
+              const isNew = selectedPark.createdAt && isNewPark(selectedPark.createdAt);
+              const isFeatured = selectedPark.isFeatured;
+
+              const distanceText = selectedPark.distance !== null && selectedPark.distance !== undefined
+                ? `(${selectedPark.distance.toFixed(1)} ${tr('km', 'ק\"מ')})`
+                : null;
+
+              const areaLabels: Record<'north' | 'center' | 'south', { en: string; he: string }> = {
+                north: { en: 'North', he: 'צפון' },
+                center: { en: 'Center', he: 'מרכז' },
+                south: { en: 'South', he: 'דרום' },
+              };
+              const areaLabel = locale === 'he' ? areaLabels[selectedPark.area]?.he : areaLabels[selectedPark.area]?.en || selectedPark.area;
+
+              return (
+                <div className="absolute bottom-4 left-4 right-4 w-1/2 max-w-[300px] z-50">
+                  <div className="h-fit bg-card dark:bg-card-dark rounded-3xl overflow-hidden relative group select-none transform-gpu">
+                    {/* Close Button */}
+                    <button
+                      onClick={() => setSelectedPark(null)}
+                      className="absolute top-3 right-3 z-30 p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
+                      aria-label={tr('Close', 'סגור')}
+                    >
+                      <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                    </button>
+
+                    {selectedPark.amenities && Object.values(selectedPark.amenities).some(Boolean) && (
+                      <ParkAmenities amenities={selectedPark.amenities} locale={locale} alwaysVisible={true} />
+                    )}
+
+                    <div className="relative bg-black/25 h-[10.5rem] overflow-hidden">
+                      {/* Opening Year Badge */}
+                      {hasOpeningYear && (
+                        <div className="absolute bottom-2 left-0 z-10">
+                          <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-r-full shadow-lg">
+                            {selectedPark.openingYear}
+                            <Sparkles className="w-3 h-3" />
+                          </div>
                         </div>
                       )}
-                      <div className="absolute top-2 right-10">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-600 text-white">
-                          {selectedPark.area.charAt(0).toUpperCase() + selectedPark.area.slice(1)}
-                        </span>
+
+                      {/* Closed Badge */}
+                      {isClosed && (
+                        <div className={`absolute bottom-2 z-10 ${
+                          hasOpeningYear ? 'right-0' : 'left-0'
+                        }`}>
+                          <div className={`flex gap-1 justify-center items-center bg-red-500 dark:bg-red-600 text-white text-xs px-2 py-1 shadow-lg ${
+                            hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
+                          }`}>
+                            {tr('Closed', 'סגור')}
+                            <XCircle className="w-3 h-3" />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* New Badge */}
+                      {isNew && (
+                        <div className={`absolute bottom-2 z-10 ${
+                          hasOpeningYear || isClosed ? 'right-0' : 'left-0'
+                        }`}>
+                          <div className={`flex gap-1 justify-center items-center bg-blue-500 dark:bg-blue-600 text-white text-xs md:text-sm px-2 py-1 shadow-lg ${
+                            hasOpeningYear || isClosed ? 'rounded-l-3xl' : 'rounded-r-3xl'
+                          }`}>
+                            {tr('New', 'חדש')}
+                            <Badge className="w-4 h-4" />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Featured Badge */}
+                      {isFeatured && (
+                        <div className={`absolute bottom-2 z-10 ${
+                          hasOpeningYear || isClosed || isNew ? 'right-0' : 'left-0'
+                        }`}>
+                          <div className={`flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs font-bold px-2 py-1 shadow-lg ${
+                            hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
+                          }`}>
+                            {tr('Featured', 'מומלץ')}
+                            <Award className="w-3 h-3" />
+                          </div>
+                        </div>
+                      )}
+
+                      <Link href={`/${locale}/skateparks/${selectedPark.slug}`}>
+                        <SkateparkThumbnail
+                          photoUrl={photoUrl}
+                          parkName={name}
+                          alwaysSaturated={true}
+                        />
+                      </Link>
+                    </div>
+                    
+                    <div className="px-4 py-3 space-y-1">
+                      <Link href={`/${locale}/skateparks/${selectedPark.slug}`}>
+                        <h3 className="text-lg font-semibold truncate">
+                          {name}
+                        </h3>
+                      </Link>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
+                          <MapPin className="w-3.5 h-3.5 shrink-0" />
+                          <span className="text-sm truncate">
+                            {distanceText ? `${areaLabel} ${distanceText}` : areaLabel}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </Link>
-                  
-                  <CardContent className="p-4">
-                    <Link href={`/${locale}/skateparks/${selectedPark.slug}`}>
-                      <h3 className="font-semibold text-xl text-gray-900 dark:text-white mb-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                        {typeof selectedPark.name === 'string' 
-                          ? selectedPark.name 
-                          : (locale === 'he' ? selectedPark.name.he : selectedPark.name.en) || selectedPark.name.en || selectedPark.name.he}
-                      </h3>
-                    </Link>
-                    
-                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-3">
-                      <MapPin className="w-4 h-4 flex-shrink-0" />
-                      <span>
-                        {typeof selectedPark.address === 'string' 
-                          ? selectedPark.address 
-                          : (locale === 'he' ? selectedPark.address.he : selectedPark.address.en) || selectedPark.address.en || selectedPark.address.he}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mb-4">
-                      {selectedPark.rating > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                          <span className="text-base font-semibold">{selectedPark.rating.toFixed(1)}</span>
-                          <span className="text-xs text-gray-500">({selectedPark.totalReviews})</span>
-                        </div>
-                      )}
-                      {selectedPark.distance !== null && selectedPark.distance !== undefined && (
-                        <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
-                          {selectedPark.distance.toFixed(1)} km
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200">
-                      {Object.entries(selectedPark.amenities)
-                        .filter(([key, value]) => value && AMENITY_ICON_MAP[key])
-                        .map(([key]) => {
-                          const iconName = AMENITY_ICON_MAP[key];
-                          const label = getAmenityLabel(key, locale);
-                          return (
-                            <span
-                              key={key}
-                              className="bg-black/45 backdrop-blur-sm p-1.5 rounded-lg"
-                            >
-                              <Icon name={iconName as any} className="w-4 h-4 text-white" />
-                              {label}
-                            </span>
-                          );
-                        })}
-                    </div>
-                    
-                    <Link href={`/${locale}/skateparks/${selectedPark.slug}`}>
-                      <Button variant="primary" className="w-full">
-                        {tr('View Details', 'צפה בפרטים')}
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         ) : (
           <>
