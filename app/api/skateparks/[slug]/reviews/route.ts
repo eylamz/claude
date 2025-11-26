@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';
 import Review from '@/lib/db/models/Review';
+import Settings from '@/lib/models/Settings';
 
 // GET reviews for a skatepark
 export async function GET(
@@ -123,6 +124,17 @@ export async function POST(
     }
 
     await Review.create(reviewData);
+
+    // Increment skateparks version to invalidate client caches
+    try {
+      const settings = await Settings.findOrCreate();
+      const currentVersion = settings.skateparksVersion || 1;
+      settings.skateparksVersion = currentVersion + 0.00001;
+      await settings.save();
+    } catch (versionError) {
+      // Log error but don't fail the review submission
+      console.error('Failed to increment skateparks version:', versionError);
+    }
 
     return NextResponse.json({ success: true, message: 'Review submitted for moderation' }, { status: 201 });
   } catch (err) {

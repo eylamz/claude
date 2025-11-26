@@ -457,6 +457,13 @@ export default function SkateparkPage() {
   const fetchSkatepark = async () => {
     setLoading(true);
     try {
+      // Check localStorage for cached data
+      const cacheKey = `skatepark_${slug}_cache`;
+      const versionKey = 'skateparks_version';
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedVersion = localStorage.getItem(versionKey);
+
+      // Fetch from API to get current version
       const response = await fetch(`/api/skateparks/${slug}`);
       if (!response.ok) {
         if (response.status === 404) {
@@ -467,8 +474,33 @@ export default function SkateparkPage() {
       }
 
       const data = await response.json();
+      const currentVersion = data.version || 1;
+
+      // Use cache if version matches
+      if (cachedData && cachedVersion && parseInt(cachedVersion) === currentVersion) {
+        try {
+          const parsedData = JSON.parse(cachedData);
+          setSkatepark(parsedData.skatepark);
+          setNearbyParks(parsedData.nearbyParks || []);
+          setLoading(false);
+          await fetchReviews();
+          return;
+        } catch (e) {
+          // If cache is corrupted, continue to fetch fresh data
+          console.warn('Failed to parse cached skatepark data', e);
+        }
+      }
+
+      // Cache is invalid or doesn't exist, use fresh data
       setSkatepark(data.skatepark);
       setNearbyParks(data.nearbyParks || []);
+      
+      // Update cache
+      localStorage.setItem(cacheKey, JSON.stringify({
+        skatepark: data.skatepark,
+        nearbyParks: data.nearbyParks || [],
+      }));
+      localStorage.setItem(versionKey, currentVersion.toString());
       
       // Log operating hours for debugging
       console.log('Operating Hours:', data.skatepark.operatingHours);
@@ -476,6 +508,19 @@ export default function SkateparkPage() {
       await fetchReviews();
     } catch (error) {
       console.error('Error fetching skatepark:', error);
+      
+      // Try to use cache as fallback even if version doesn't match
+      const cacheKey = `skatepark_${slug}_cache`;
+      const cachedData = localStorage.getItem(cacheKey);
+      if (cachedData) {
+        try {
+          const parsedData = JSON.parse(cachedData);
+          setSkatepark(parsedData.skatepark);
+          setNearbyParks(parsedData.nearbyParks || []);
+        } catch (e) {
+          console.error('Failed to use cached data as fallback', e);
+        }
+      }
     } finally {
       setLoading(false);
     }

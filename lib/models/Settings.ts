@@ -81,6 +81,7 @@ export interface ISettings extends Document {
   email: IEmailSettings;
   seo: ISEOSettings;
   maintenance: IMaintenanceSettings;
+  skateparksVersion: number;
   createdAt: Date;
   updatedAt: Date;
   
@@ -227,6 +228,11 @@ const SettingsSchema: Schema<ISettings> = new Schema<ISettings>(
         trim: true,
       },
     },
+    skateparksVersion: {
+      type: Number,
+      default: 1,
+      min: [1, 'Version must be at least 1'],
+    },
   },
   {
     timestamps: true,
@@ -269,6 +275,7 @@ SettingsSchema.statics.findOrCreate = async function (): Promise<ISettings> {
         maintenanceEnabled: false,
         maintenanceMessage: '',
       },
+      skateparksVersion: 1,
     });
   }
   return settings;

@@ -88,32 +88,65 @@ export default function HomePage() {
 
   const fetchHomepageData = async () => {
     try {
-      // Fetch homepage data (products, trainers, guides, settings) and skateparks separately
-      const [homepageResponse, skateparksResponse] = await Promise.all([
-        fetch(`/api/homepage?locale=${locale}`),
-        fetch('/api/skateparks')
-      ]);
+      const cacheKey = 'skateparks_cache';
+      const versionKey = 'skateparks_version';
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedVersion = localStorage.getItem(versionKey);
+      
+      let allSkateparks: any[] = [];
+      let shouldFetchSkateparks = true;
+
+      // If cache exists, use it immediately without fetching
+      if (cachedData) {
+        try {
+          const parsedData = JSON.parse(cachedData);
+          allSkateparks = parsedData || [];
+          shouldFetchSkateparks = false; // Don't fetch if we have cache
+          // No version checking or fetching when cache exists
+        } catch (e) {
+          // If cache is corrupted, continue to fetch fresh data
+          console.warn('Failed to parse cached skateparks data', e);
+          localStorage.removeItem(cacheKey);
+          localStorage.removeItem(versionKey);
+          shouldFetchSkateparks = true;
+        }
+      }
+
+      // Fetch homepage data and skateparks (if needed) in parallel
+      const fetchPromises = [fetch(`/api/homepage?locale=${locale}`)];
+      
+      if (shouldFetchSkateparks) {
+        fetchPromises.push(fetch('/api/skateparks'));
+      }
+      
+      const responses = await Promise.all(fetchPromises);
 
       // Process homepage data
-      if (homepageResponse.ok) {
-        const data = await homepageResponse.json();
+      if (responses[0].ok) {
+        const data = await responses[0].json();
         setHomepageSettings(data.homepage);
         setProducts(data.products || []);
         setTrainers(data.trainers || []);
         setGuides(data.guides || []);
       }
 
-      // Process skateparks data - filter and sort like the skateparks page
-      if (skateparksResponse.ok) {
-        const skateparksData = await skateparksResponse.json();
-        const allSkateparks = skateparksData.skateparks || [];
+      // Process skateparks data - fetch if cache didn't exist
+      if (shouldFetchSkateparks && responses[1]?.ok) {
+        const skateparksData = await responses[1].json();
+        const currentVersion = skateparksData.version || 1;
+        allSkateparks = skateparksData.skateparks || [];
         
-        // Filter and sort parks from the last 3 years (same logic as skateparks page)
-        const currentYear = new Date().getFullYear();
-        const recentYearThreshold = currentYear - 2; // Last 3 years (current and previous 2)
-        
-        // Sort all parks by opening year (newest first)
-        const sortedParks = [...allSkateparks].sort((a: any, b: any) => 
+        // Store in cache
+        localStorage.setItem(cacheKey, JSON.stringify(allSkateparks));
+        localStorage.setItem(versionKey, currentVersion.toString());
+      }
+      
+      // Filter and sort parks from the last 3 years (same logic as skateparks page)
+      const currentYear = new Date().getFullYear();
+      const recentYearThreshold = currentYear - 2; // Last 3 years (current and previous 2)
+      
+      // Sort all parks by opening year (newest first)
+      const sortedParks = [...allSkateparks].sort((a: any, b: any) => 
           (b.openingYear || 0) - (a.openingYear || 0)
         );
         
@@ -149,7 +182,6 @@ export default function HomePage() {
         });
         
         setSkateparks(transformedParks);
-      }
     } catch (error) {
       console.error('Error fetching homepage data:', error);
     } finally {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';
+import Settings from '@/lib/models/Settings';
 import { isBlocked, record404, recordSuccess } from '@/lib/utils/circuitBreaker';
 
 const ENDPOINT = '/api/skateparks/[slug]';
@@ -108,9 +109,14 @@ export async function GET(
       updatedAt: skatepark.updatedAt,
     };
 
+    // Get cache version
+    const settings = await Settings.findOrCreate();
+    const version = settings.skateparksVersion || 1;
+
     return NextResponse.json({
       skatepark: formattedSkatepark,
       nearbyParks: formattedNearby,
+      version,
     });
   } catch (error) {
     console.error('Error fetching skatepark:', error);

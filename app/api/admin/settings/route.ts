@@ -56,6 +56,9 @@ export async function PUT(request: NextRequest) {
     if (body.maintenance) {
       settings.maintenance = { ...settings.maintenance, ...body.maintenance };
     }
+    if (body.skateparksVersion !== undefined) {
+      settings.skateparksVersion = body.skateparksVersion;
+    }
     
     await settings.save();
     

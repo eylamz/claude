@@ -798,14 +798,78 @@ export default function SkateparksPage() {
 
   // Fetch all skateparks once on mount (no filters, no pagination)
   const fetchAllSkateparks = useCallback(async () => {
-    setLoading(true);
+    const cacheKey = 'skateparks_cache';
+    const versionKey = 'skateparks_version';
+    const cachedData = localStorage.getItem(cacheKey);
+    const cachedVersion = localStorage.getItem(versionKey);
 
+    // If cache exists, use it immediately without fetching
+    if (cachedData) {
+      try {
+        const parsedData = JSON.parse(cachedData);
+        setAllSkateparks(parsedData || []);
+        setLoading(false);
+        
+        // Check version asynchronously after using cache
+        // If version doesn't match, refetch and update both cache and version
+        if (cachedVersion) {
+          // Check version in background (fire and forget)
+          (async () => {
+            try {
+              // Fetch only version (lightweight request)
+              const versionResponse = await fetch('/api/skateparks?versionOnly=true');
+              if (versionResponse.ok) {
+                const versionData = await versionResponse.json();
+                const currentVersion = versionData.version || 1;
+                const storedVersion = parseInt(cachedVersion);
+
+                // If versions don't match, refetch skateparks data and update both cache and version
+                if (storedVersion !== currentVersion) {
+                  const response = await fetch('/api/skateparks');
+                  if (response.ok) {
+                    const data = await response.json();
+                    const newVersion = data.version || 1;
+                    
+                    // Update both cache and version in localStorage
+                    localStorage.setItem(cacheKey, JSON.stringify(data.skateparks || []));
+                    localStorage.setItem(versionKey, newVersion.toString());
+                    
+                    // Update state with new data
+                    setAllSkateparks(data.skateparks || []);
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('Failed to check version', e);
+              // Continue with cached data if version check fails
+            }
+          })();
+        }
+        
+        return; // Exit early since we used cache
+      } catch (e) {
+        // If cache is corrupted, continue to fetch fresh data
+        console.warn('Failed to parse cached skateparks data', e);
+        localStorage.removeItem(cacheKey);
+        localStorage.removeItem(versionKey);
+      }
+    }
+
+    // No cache exists or cache was corrupted, fetch fresh data and store both cache and version
+    setLoading(true);
     try {
       const response = await fetch('/api/skateparks');
       if (!response.ok) throw new Error('Failed to fetch skateparks');
 
       const data = await response.json();
+      const currentVersion = data.version || 1;
+
+      // Use fresh data
       setAllSkateparks(data.skateparks || []);
+      
+      // Store both cache and version in localStorage
+      localStorage.setItem(cacheKey, JSON.stringify(data.skateparks || []));
+      localStorage.setItem(versionKey, currentVersion.toString());
     } catch (error) {
       console.error('Error fetching skateparks:', error);
     } finally {

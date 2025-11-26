@@ -90,6 +90,113 @@ export default function SkateparkDetailPage() {
     try {
       setLoading(true);
       setError(null);
+      
+      // Check localStorage for cached data first
+      const cacheKey = 'skateparks_cache';
+      const cachedData = localStorage.getItem(cacheKey);
+      
+      let skateparkData: any = null;
+      
+      // Try to find skatepark in cache
+      if (cachedData) {
+        try {
+          const parsedData = JSON.parse(cachedData);
+          // Find the skatepark by id (could be _id or id field)
+          skateparkData = parsedData.find((park: any) => 
+            park._id === id || park.id === id
+          );
+          
+          if (skateparkData) {
+            // Convert cached data format to admin format
+            // Cached data has location as { lat, lng }, convert to coordinates array
+            if (skateparkData.location) {
+              if (skateparkData.location.lat !== undefined && skateparkData.location.lng !== undefined) {
+                skateparkData.location = {
+                  type: 'Point',
+                  coordinates: [skateparkData.location.lng, skateparkData.location.lat] as [number, number],
+                };
+              } else if (!skateparkData.location.coordinates || !Array.isArray(skateparkData.location.coordinates)) {
+                skateparkData.location = {
+                  type: 'Point',
+                  coordinates: [0, 0] as [number, number],
+                };
+              }
+            } else {
+              skateparkData.location = {
+                type: 'Point',
+                coordinates: [0, 0] as [number, number],
+              };
+            }
+            
+            // Ensure all images have orderNumber
+            if (skateparkData.images && Array.isArray(skateparkData.images)) {
+              skateparkData.images = skateparkData.images.map((img: any, index: number) => ({
+                url: img.url || '',
+                isFeatured: img.isFeatured || false,
+                orderNumber: img.orderNumber ?? img.order ?? index,
+              }));
+            }
+            
+            // Convert lightingHours format if needed
+            if (!skateparkData.lightingHours) {
+              if (skateparkData.is24Hours !== undefined) {
+                skateparkData.lightingHours = {
+                  is24Hours: skateparkData.is24Hours || false,
+                  endTime: skateparkData.lightingUntil || '',
+                };
+              }
+            }
+            
+            // Set default values for admin-specific fields if missing
+            if (!skateparkData.status) {
+              skateparkData.status = 'active';
+            }
+            if (!skateparkData.operatingHours) {
+              skateparkData.operatingHours = {
+                sunday: { openingTime: '', closingTime: '', isOpen: false },
+                monday: { openingTime: '', closingTime: '', isOpen: false },
+                tuesday: { openingTime: '', closingTime: '', isOpen: false },
+                wednesday: { openingTime: '', closingTime: '', isOpen: false },
+                thursday: { openingTime: '', closingTime: '', isOpen: false },
+                friday: { openingTime: '', closingTime: '', isOpen: false },
+                saturday: { openingTime: '', closingTime: '', isOpen: false },
+                holidays: { openingTime: '', closingTime: '', isOpen: false },
+              };
+            }
+            if (!skateparkData.amenities) {
+              skateparkData.amenities = {
+                entryFee: false,
+                parking: false,
+                shade: false,
+                bathroom: false,
+                helmetRequired: false,
+                guard: false,
+                seating: false,
+                bombShelter: false,
+                scootersAllowed: false,
+                bikesAllowed: false,
+                noWax: false,
+                nearbyRestaurants: false,
+              };
+            }
+            if (!skateparkData.notes) {
+              skateparkData.notes = { en: [], he: [] };
+            }
+            if (!skateparkData.mediaLinks) {
+              skateparkData.mediaLinks = { youtube: '', googleMapsFrame: '' };
+            }
+            
+            setSkatepark(skateparkData);
+            setLoading(false);
+            return; // Exit early since we used cache
+          }
+        } catch (e) {
+          console.warn('Failed to parse cached data or find skatepark in cache', e);
+          // Continue to fetch from API
+        }
+      }
+      
+      // If not found in cache, fetch from API
       const response = await fetch(`/api/admin/skateparks/${id}`);
       if (!response.ok) {
         if (response.status === 404) {
@@ -101,7 +208,7 @@ export default function SkateparkDetailPage() {
       }
       const data = await response.json();
       // Ensure location and coordinates are initialized
-      const skateparkData = data.skatepark;
+      skateparkData = data.skatepark;
       
       // Convert location format from { lat, lng } to { type: 'Point', coordinates: [lng, lat] }
       if (skateparkData.location) {

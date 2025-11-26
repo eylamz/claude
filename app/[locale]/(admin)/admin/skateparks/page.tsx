@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button, Card, CardContent, Input, Select, Dropdown, Skeleton } from '@/components/ui';
+import { NumberInput } from '@/components/ui/number-input';
 import {
   BarChart,
   Bar,
@@ -161,7 +162,6 @@ export default function SkateparksPage() {
   const [amenities, setAmenities] = useState('');
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   
   // Statistics modal
   const [showStatistics, setShowStatistics] = useState(false);
@@ -173,6 +173,45 @@ export default function SkateparksPage() {
     totalParks: number;
   } | null>(null);
   const [activeTab, setActiveTab] = useState<'amenities' | 'openingYears' | 'areas'>('amenities');
+  
+  // Cache version control
+  const [skateparksVersion, setSkateparksVersion] = useState<number>(1);
+  const [savingVersion, setSavingVersion] = useState(false);
+
+  // Fetch settings on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/admin/settings');
+        if (response.ok) {
+          const data = await response.json();
+          setSkateparksVersion(data.settings?.skateparksVersion || 1);
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  // Save version
+  const handleSaveVersion = async () => {
+    try {
+      setSavingVersion(true);
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ skateparksVersion }),
+      });
+      if (!response.ok) throw new Error('Failed to save version');
+      alert('Version saved successfully!');
+    } catch (error) {
+      console.error('Error saving version:', error);
+      alert('Failed to save version');
+    } finally {
+      setSavingVersion(false);
+    }
+  };
 
   // Debounce search input
   useEffect(() => {
@@ -191,8 +230,138 @@ export default function SkateparksPage() {
   }, [area, status, amenities, sortBy, sortOrder]);
 
   const fetchSkateparks = useCallback(async () => {
+    const cacheKey = 'skateparks_cache';
+    const versionKey = 'skateparks_version';
+    const cachedData = localStorage.getItem(cacheKey);
+    const cachedVersion = localStorage.getItem(versionKey);
+
+    // If cache exists, use it and apply filters/pagination on client side
+    if (cachedData) {
+      try {
+        const parsedData = JSON.parse(cachedData);
+        let filteredParks = [...parsedData];
+
+        // Apply filters
+        if (debouncedSearch) {
+          const searchLower = debouncedSearch.toLowerCase();
+          filteredParks = filteredParks.filter((park: any) => {
+            const nameEn = park.name?.en || '';
+            const nameHe = park.name?.he || '';
+            return nameEn.toLowerCase().includes(searchLower) || 
+                   nameHe.toLowerCase().includes(searchLower);
+          });
+        }
+
+        if (area) {
+          filteredParks = filteredParks.filter((park: any) => park.area === area);
+        }
+
+        if (status) {
+          filteredParks = filteredParks.filter((park: any) => park.status === status);
+        }
+
+        if (amenities) {
+          filteredParks = filteredParks.filter((park: any) => 
+            park.amenities?.[amenities] === true
+          );
+        }
+
+        // Apply sorting
+        filteredParks.sort((a: any, b: any) => {
+          let aValue: any;
+          let bValue: any;
+
+          switch (sortBy) {
+            case 'name':
+              aValue = a.name?.en || '';
+              bValue = b.name?.en || '';
+              return sortOrder === 'asc' 
+                ? aValue.localeCompare(bValue)
+                : bValue.localeCompare(aValue);
+            case 'area':
+              aValue = a.area || '';
+              bValue = b.area || '';
+              return sortOrder === 'asc'
+                ? aValue.localeCompare(bValue)
+                : bValue.localeCompare(aValue);
+            case 'status':
+              aValue = a.status || '';
+              bValue = b.status || '';
+              return sortOrder === 'asc'
+                ? aValue.localeCompare(bValue)
+                : bValue.localeCompare(aValue);
+            case 'createdAt':
+            default:
+              aValue = new Date(a.createdAt || 0).getTime();
+              bValue = new Date(b.createdAt || 0).getTime();
+              return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+          }
+        });
+
+        // Apply pagination
+        const totalCount = filteredParks.length;
+        const totalPages = Math.ceil(totalCount / pagination.limit);
+        const startIndex = (pagination.currentPage - 1) * pagination.limit;
+        const paginatedParks = filteredParks.slice(startIndex, startIndex + pagination.limit);
+
+        setSkateparks(paginatedParks);
+        setPagination({
+          currentPage: pagination.currentPage,
+          totalPages,
+          totalCount,
+          limit: pagination.limit,
+        });
+        setLoading(false);
+
+        // Check version asynchronously after using cache
+        // If version doesn't match, refetch and update both cache and version
+        if (cachedVersion) {
+          // Check version in background (fire and forget)
+          (async () => {
+            try {
+              // Fetch only version (lightweight request)
+              const versionResponse = await fetch('/api/skateparks?versionOnly=true');
+              if (versionResponse.ok) {
+                const versionData = await versionResponse.json();
+                const currentVersion = versionData.version || 1;
+                const storedVersion = parseInt(cachedVersion);
+
+                // If versions don't match, refetch skateparks data and update both cache and version
+                if (storedVersion !== currentVersion) {
+                  // Fetch from public API to update the cache
+                  const publicResponse = await fetch('/api/skateparks');
+                  if (publicResponse.ok) {
+                    const publicData = await publicResponse.json();
+                    const newVersion = publicData.version || 1;
+                    
+                    // Update both cache and version in localStorage
+                    localStorage.setItem(cacheKey, JSON.stringify(publicData.skateparks || []));
+                    localStorage.setItem(versionKey, newVersion.toString());
+                    
+                    // Refetch to update the displayed data
+                    fetchSkateparks();
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('Failed to check version', e);
+              // Continue with cached data if version check fails
+            }
+          })();
+        }
+
+        return; // Exit early since we used cache
+      } catch (e) {
+        // If cache is corrupted, continue to fetch fresh data
+        console.warn('Failed to parse cached skateparks data', e);
+        localStorage.removeItem(cacheKey);
+        localStorage.removeItem(versionKey);
+      }
+    }
+
+    // No cache exists or cache was corrupted, fetch fresh data
+    setLoading(true);
     try {
-      setLoading(true);
       const params = new URLSearchParams({
         page: pagination.currentPage.toString(),
         limit: pagination.limit.toString(),
@@ -210,6 +379,21 @@ export default function SkateparksPage() {
       const data = await response.json();
       setSkateparks(data.skateparks);
       setPagination(data.pagination);
+
+      // Also fetch from public API to update cache if needed
+      try {
+        const publicResponse = await fetch('/api/skateparks');
+        if (publicResponse.ok) {
+          const publicData = await publicResponse.json();
+          const currentVersion = publicData.version || 1;
+          
+          // Store both cache and version in localStorage
+          localStorage.setItem(cacheKey, JSON.stringify(publicData.skateparks || []));
+          localStorage.setItem(versionKey, currentVersion.toString());
+        }
+      } catch (e) {
+        console.warn('Failed to update cache', e);
+      }
     } catch (error) {
       console.error('Error fetching skateparks:', error);
     } finally {
@@ -350,12 +534,81 @@ export default function SkateparksPage() {
   const fetchStatistics = useCallback(async () => {
     try {
       setStatisticsLoading(true);
-      // Fetch all parks without pagination
-      const response = await fetch('/api/admin/skateparks?all=true&limit=10000');
-      if (!response.ok) throw new Error('Failed to fetch parks');
-      const data = await response.json();
+      const cacheKey = 'skateparks_cache';
+      const versionKey = 'skateparks_version';
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedVersion = localStorage.getItem(versionKey);
+
+      let parksToUse: any[] = [];
+
+      // If cache exists, use it instead of fetching
+      if (cachedData) {
+        try {
+          const parsedData = JSON.parse(cachedData);
+          parksToUse = parsedData || [];
+          
+          // Check version asynchronously after using cache
+          if (cachedVersion) {
+            // Check version in background (fire and forget)
+            (async () => {
+              try {
+                const versionResponse = await fetch('/api/skateparks?versionOnly=true');
+                if (versionResponse.ok) {
+                  const versionData = await versionResponse.json();
+                  const currentVersion = versionData.version || 1;
+                  const storedVersion = parseInt(cachedVersion);
+
+                  // If versions don't match, refetch and update cache
+                  if (storedVersion !== currentVersion) {
+                    const response = await fetch('/api/skateparks');
+                    if (response.ok) {
+                      const data = await response.json();
+                      const newVersion = data.version || 1;
+                      
+                      // Update both cache and version
+                      localStorage.setItem(cacheKey, JSON.stringify(data.skateparks || []));
+                      localStorage.setItem(versionKey, newVersion.toString());
+                      
+                      // Recalculate statistics with new data
+                      const stats = calculateStatistics(data.skateparks || []);
+                      setStatisticsData(stats);
+                    }
+                  }
+                }
+              } catch (e) {
+                console.warn('Failed to check version for statistics', e);
+              }
+            })();
+          }
+        } catch (e) {
+          console.warn('Failed to parse cached data for statistics', e);
+          // Fall through to fetch from API
+        }
+      }
+
+      // If no cache or cache parsing failed, fetch from API
+      if (parksToUse.length === 0) {
+        const response = await fetch('/api/admin/skateparks?all=true&limit=10000');
+        if (!response.ok) throw new Error('Failed to fetch parks');
+        const data = await response.json();
+        parksToUse = data.skateparks || [];
+        
+        // Also update cache if we fetched from API
+        try {
+          const publicResponse = await fetch('/api/skateparks');
+          if (publicResponse.ok) {
+            const publicData = await publicResponse.json();
+            const currentVersion = publicData.version || 1;
+            localStorage.setItem(cacheKey, JSON.stringify(publicData.skateparks || []));
+            localStorage.setItem(versionKey, currentVersion.toString());
+          }
+        } catch (e) {
+          console.warn('Failed to update cache after statistics fetch', e);
+        }
+      }
+
       // Calculate statistics from the parks data
-      const stats = calculateStatistics(data.skateparks);
+      const stats = calculateStatistics(parksToUse);
       setStatisticsData(stats);
     } catch (error) {
       console.error('Error fetching statistics:', error);
@@ -438,17 +691,41 @@ export default function SkateparksPage() {
           >
             {t('admin.viewStatistics')}
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => setViewMode(viewMode === 'list' ? 'map' : 'list')}
-          >
-            {viewMode === 'list' ? t('admin.mapView') : t('admin.listView')}
-          </Button>
           <Button variant="primary" onClick={() => router.push(`/${locale}/admin/skateparks/new`)}>
             {t('admin.addSkatepark')}
           </Button>
         </div>
       </div>
+
+      {/* Cache Version Control */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Skateparks Cache Version
+              </label>
+              <NumberInput
+                value={skateparksVersion}
+                onChange={(e) => setSkateparksVersion(parseInt(e.target.value) || 1)}
+                min={1}
+                className="w-32"
+                showSpinner={true}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Increment this version to invalidate all client caches
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              onClick={handleSaveVersion}
+              disabled={savingVersion}
+            >
+              {savingVersion ? 'Saving...' : 'Save Version'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card>

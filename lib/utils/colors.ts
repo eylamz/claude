@@ -1,9 +1,10 @@
 export const colors = {
   brand: {
-    main: 'hsl(162, 99%, 44%)',
-    dark: 'hsl(162, 99%, 44%)',
-    text: 'hsl(162, 100%, 23%)',
+    main: 'hsl(182, 80%, 26%)',
+    dark: 'hsl(182, 78%, 37%)',
+    text: '#005F60',
     color: 'hsl(162, 56%, 45%)',
+    
     50: 'hsl(171, 100%, 95%)',
     100: 'hsl(171, 100%, 85%)',
     200: 'hsl(171, 100%, 75%)d',
@@ -57,20 +58,20 @@ export const colors = {
     }
   },
   background: {
-    light: 'hsl(220, 18%, 97%)',
-    dark: 'hsl(207, 16%, 11%)',
+    light: '#ffffff',
+    dark: '#121212',
   },
   backgroundSecondary: {
-    light: 'hsl(0, 0%, 95%)',
-    dark: 'hsl(207, 16%, 15%)',
+    light: '#F5F5F5',
+    dark: '#1E1E1E',
   },
   backgroundAccent: {
     light: 'hsl(0, 0%, 94%)',
     dark: 'hsl(0, 0%, 9%)',
   },
   text: {
-    light: 'hsl(206, 14%, 10%)',
-    dark: 'hsl(210, 100%, 100%)',
+    light: '#1A1A1A',
+    dark: '#E0E0E0',
     hover: {
       light: '#1e293b',
       dark: '#e5e7eb',
@@ -80,8 +81,8 @@ export const colors = {
       dark: 'hsl(220, 2%, 100%)',
     },
     secondary: {
-      light: 'hsl(220, 1%, 54%)',
-      dark: 'hsl(240, 6%, 75%)',
+      light: '#5C5C5C',
+      dark: 'A0A0A0',
     },
     guide: {
       light: '#535355',

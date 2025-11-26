@@ -19,6 +19,7 @@ interface ConnectionState {
 let isConnected = false;
 let connectionPromise: Promise<typeof mongoose> | null = null;
 let retryAttempts = 0;
+let eventListenersSetup = false;
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY = 1000; // 1 second
 
@@ -148,15 +149,30 @@ async function connectWithRetry(
  * Uses connection caching for serverless environments
  */
 export async function connectDB(): Promise<typeof mongoose> {
-  // Return existing connection promise if available
+  // Check if already connected first (fastest check)
+  if (mongoose.connection.readyState === 1) {
+    // Ensure event listeners are set up even if connection already exists
+    if (!eventListenersSetup) {
+      setupEventListeners();
+    }
+    return mongoose;
+  }
+
+  // Return existing connection promise if available (prevents multiple simultaneous connections)
   if (connectionPromise) {
     return connectionPromise;
   }
 
-  // Return cached connection if already connected
-  if (isConnected && mongoose.connection.readyState === 1) {
-    console.log('✅ Using existing MongoDB connection');
-    return mongoose;
+  // If connecting, wait for it
+  if (mongoose.connection.readyState === 2) {
+    // Wait a bit and check again
+    await new Promise(resolve => setTimeout(resolve, 100));
+    if (mongoose.connection.readyState === 1) {
+      if (!eventListenersSetup) {
+        setupEventListeners();
+      }
+      return mongoose;
+    }
   }
 
   try {
@@ -170,8 +186,11 @@ export async function connectDB(): Promise<typeof mongoose> {
 
     const connection = await connectionPromise;
 
-    // Set up event listeners
+    // Set up event listeners (only once)
     setupEventListeners();
+
+    // Clear promise after successful connection
+    connectionPromise = null;
 
     return connection;
   } catch (error) {
@@ -192,6 +211,7 @@ export async function disconnectDB(): Promise<void> {
       console.log('✅ MongoDB disconnected successfully');
       isConnected = false;
       connectionPromise = null;
+      eventListenersSetup = false; // Reset flag on disconnect
     } else {
       console.log('ℹ️  MongoDB already disconnected');
     }
@@ -252,8 +272,23 @@ export function isDBConnected(): boolean {
 
 /**
  * Setup MongoDB event listeners
+ * Only sets up listeners once to prevent memory leaks
  */
 function setupEventListeners(): void {
+  // Prevent duplicate event listeners
+  if (eventListenersSetup) {
+    return;
+  }
+
+  // Increase max listeners to prevent warnings in development
+  mongoose.connection.setMaxListeners(20);
+
+  // Remove existing listeners before adding new ones (safety check)
+  mongoose.connection.removeAllListeners('connected');
+  mongoose.connection.removeAllListeners('error');
+  mongoose.connection.removeAllListeners('disconnected');
+  mongoose.connection.removeAllListeners('reconnected');
+
   mongoose.connection.on('connected', () => {
     console.log('📡 MongoDB connected');
   });
@@ -273,16 +308,22 @@ function setupEventListeners(): void {
     isConnected = true;
   });
 
-  // Handle application termination
-  process.on('SIGINT', async () => {
-    await disconnectDB();
-    process.exit(0);
-  });
+  // Handle application termination (only set up once)
+  if (!process.listenerCount('SIGINT')) {
+    process.on('SIGINT', async () => {
+      await disconnectDB();
+      process.exit(0);
+    });
+  }
 
-  process.on('SIGTERM', async () => {
-    await disconnectDB();
-    process.exit(0);
-  });
+  if (!process.listenerCount('SIGTERM')) {
+    process.on('SIGTERM', async () => {
+      await disconnectDB();
+      process.exit(0);
+    });
+  }
+
+  eventListenersSetup = true;
 }
 
 /**

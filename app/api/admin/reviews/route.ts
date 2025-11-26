@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import Review from '@/lib/db/models/Review';
 import Skatepark from '@/lib/models/Skatepark';
+import Settings from '@/lib/models/Settings';
 
 // List reviews with filtering (admin only)
 export async function GET(request: NextRequest) {
@@ -89,6 +90,16 @@ export async function PATCH(request: NextRequest) {
           park.rating = newAvg;
           park.totalReviews = newTotal;
           await park.save();
+          
+          // Increment skateparks version to invalidate client caches
+          try {
+            const settings = await Settings.findOrCreate();
+            const currentVersion = settings.skateparksVersion || 1;
+            settings.skateparksVersion = currentVersion + 0.00001;
+            await settings.save();
+          } catch (versionError) {
+            console.error('Failed to increment skateparks version:', versionError);
+          }
         }
       }
     } else if (action === 'reject') {
@@ -115,6 +126,16 @@ export async function PATCH(request: NextRequest) {
           }
           park.totalReviews = newTotal;
           await park.save();
+          
+          // Increment skateparks version to invalidate client caches
+          try {
+            const settings = await Settings.findOrCreate();
+            const currentVersion = settings.skateparksVersion || 1;
+            settings.skateparksVersion = currentVersion + 0.00001;
+            await settings.save();
+          } catch (versionError) {
+            console.error('Failed to increment skateparks version:', versionError);
+          }
         }
       }
     }

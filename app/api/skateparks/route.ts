@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';
+import Settings from '@/lib/models/Settings';
 
 /**
  * Skateparks API Route
@@ -15,6 +16,15 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     const searchParams = request.nextUrl.searchParams;
+    const versionOnly = searchParams.get('versionOnly') === 'true';
+    
+    // If only version is requested, return it without fetching skateparks
+    if (versionOnly) {
+      const settings = await Settings.findOrCreate();
+      const version = settings.skateparksVersion || 1;
+      return NextResponse.json({ version });
+    }
+
     const area = searchParams.get('area'); // 'north' | 'center' | 'south'
     const search = searchParams.get('search')?.trim();
     const amenities = searchParams.getAll('amenities'); // array of amenity keys
@@ -117,8 +127,13 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // Get cache version
+    const settings = await Settings.findOrCreate();
+    const version = settings.skateparksVersion || 1;
+
     return NextResponse.json({
       skateparks: formattedSkateparks,
+      version,
     });
   } catch (error) {
     console.error('Error fetching skateparks:', error);
