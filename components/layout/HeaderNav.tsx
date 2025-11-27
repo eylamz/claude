@@ -168,75 +168,147 @@ export default function HeaderNav() {
     router.push(`/${locale}/checkout`);
   };
 
-  // Navigation items
-  const navItems: NavItem[] = [
-    { href: `/${locale}/trainers`, label: tAdmin('trainers') },
-    { href: `/${locale}/skateparks`, label: tAdmin('skateparks') },
-    { href: `/${locale}/events`, label: tEvents('title') },
-    { href: `/${locale}/guides`, label: tAdmin('guides') },
-    { href: `/${locale}/shop`, label: tShop('title') },
-  ];
-
   const isActive = (href: string) => {
     return pathname.startsWith(href);
   };
 
   const isAdmin = session?.user?.role === 'admin';
+  const tHomepage = useTranslations('common.homepage');
 
   return (
     <>
       {/* Desktop Header Navigation */}
       <header className="hidden md:block fixed top-0 left-0 right-0 z-[50] px-3 select-none transition-all duration-200 ease text-white backdrop-blur-sm shadow-lg bg-[linear-gradient(to_right,transparent_0%,#ffffffd4_10%,#ffffff_50%,#ffffffd4_90%,transparent_100%)] dark:bg-[linear-gradient(to_right,transparent_0%,#101317b3_10%,#101317_50%,#101317b3_90%,transparent_100%)]">
-        <div className="mx-auto  border-b border-border/50 dark:border-border-dark w-full max-w-7xl px-2 overflow-visible text-header-text-dark dark:text-header-text">
-          <div className=" flex items-center justify-between h-14">
-            {/* Logo */}
-            <Link href={`/${locale}`} className="flex items-center gap-2">
-              <Icon name="logo" className="text-brand-main w-[124px] h-[39px] sm:w-[128px] sm:h-[24px]" />
-            </Link>
+        <div className="mx-auto border-b border-border/50 dark:border-border-dark w-full max-w-7xl px-2 overflow-visible text-header-text-dark dark:text-header-text">
+          <div className="flex items-center justify-between h-16">
+            {/* LEFT: Logo + Tagline + Social Proof */}
+            <div className="flex items-center gap-4">
+              <Link href={`/${locale}`} className="flex flex-col items-start gap-0.5">
+                {/* Logo */}
+                <Icon name="logo" className="text-brand-main w-[124px] h-[39px] sm:w-[128px] sm:h-[24px]" />
+                {/* Tagline */}
+                <span className="text-[10px] font-medium text-brand-main/70 dark:text-brand-main/60 tracking-wide">
+                  Feel the Joy. Find Your Park.
+                </span>
+              </Link>
 
-            {/* Navigation Links */}
-            <nav className="hidden md:flex items-center gap-2">
-              {navItems.map((item) => {
-                const active = isActive(item.href);
+              {/* Social Proof Badge */}
+              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-main/10 dark:bg-brand-main/20 border border-brand-main/20 dark:border-brand-main/30">
+                <svg className="w-3.5 h-3.5 text-brand-main" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9.00002 15.3802H13.92C15.62 15.3802 17 14.0002 17 12.3002C17 10.6002 15.62 9.22021 13.92 9.22021H7.15002" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M8.57 10.7701L7 9.19012L8.57 7.62012" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span className="text-[11px] font-semibold text-brand-main">
+                  {locale === 'he' ? '10K+ רוכבים פעילים' : '10K+ Active Riders'}
+                </span>
+              </div>
+            </div>
 
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`px-2 py-2 rounded-lg transition-all duration-200 font-medium ${
-                      active
-                        ? 'underline-offset-4 decoration-[1px] underline scale-105 text-black dark:text-white'
-                        : 'text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white'
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
+            {/* CENTER: Main Navigation (Action-Oriented) */}
+            <nav className="hidden md:flex items-center gap-1">
+              {/* Find a Park (Primary action) */}
+              <Link
+                href={`/${locale}/skateparks`}
+                className={`group px-3 py-2 rounded-lg transition-all duration-200 font-semibold text-black/80 dark:text-white/80 hover:scale-105 hover:bg-brand-main/10 dark:hover:bg-brand-main/20 hover:text-brand-main dark:hover:text-brand-main relative ${
+                  isActive(`/${locale}/skateparks`) ? 'bg-brand-main/10 dark:bg-brand-main/20 text-brand-main dark:text-brand-main' : ''
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Icon name="location" className="w-4 h-4" />
+                  {tAdmin('skateparks')}
+                </span>
+              </Link>
+
+              {/* Find a Trainer (Revenue driver - elevated) */}
+              <Link
+                href={`/${locale}/trainers`}
+                className={`group px-3 py-2 rounded-lg transition-all duration-200 font-semibold text-black/80 dark:text-white/80 hover:scale-105 hover:bg-accent/10 dark:hover:bg-accent/20 hover:text-accent dark:hover:text-accent relative ${
+                  isActive(`/${locale}/trainers`) ? 'bg-accent/10 dark:bg-accent/20 text-accent dark:text-accent' : ''
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Icon name="gymWeight" className="w-4 h-4" />
+                  {tAdmin('trainers')}
+                </span>
+                {/* "Featured" badge for premium trainers */}
+                <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+                </span>
+              </Link>
+
+              {/* Events */}
+              <Link
+                href={`/${locale}/events`}
+                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                  isActive(`/${locale}/events`) ? 'text-black dark:text-white' : ''
+                }`}
+              >
+                {tEvents('title')}
+              </Link>
+
+              {/* Guides */}
+              <Link
+                href={`/${locale}/guides`}
+                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                  isActive(`/${locale}/guides`) ? 'text-black dark:text-white' : ''
+                }`}
+              >
+                {tAdmin('guides')}
+              </Link>
+
+              {/* Join Community (drive registration) */}
+              <Link
+                href={`/${locale}/community`}
+                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                  isActive(`/${locale}/community`) ? 'text-black dark:text-white' : ''
+                }`}
+              >
+                {tHomepage('community')}
+              </Link>
             </nav>
 
-            {/* Right Side Actions */}
-            <div className="flex items-center gap-1">
-              {/* Search Button */}
+            {/* RIGHT: Actions (Search, Shop CTA, Cart, Settings) */}
+            <div className="flex items-center gap-2">
+              {/* Search (more prominent) */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="p-2 h-9 text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white transition-all duration-200"
-                aria-label="Open search"
+                className="group flex items-center gap-2 px-3 py-2 rounded-lg text-black/70 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
+                aria-label={locale === 'he' ? 'חיפוש פארקים' : 'Search parks'}
               >
-                <Icon name="search" className="w-5 h-5" />
+                <span className="inline-flex items-center justify-center w-4 h-4">
+                  <Icon name="search" className="w-4 h-4" />
+                </span>
+                <span className="hidden xl:inline text-sm font-medium">
+                  {tCommon('search')}
+                </span>
               </button>
 
-              {/* Cart Menu */}
+              {/* Shop CTA Button (Revenue driver - prominent) */}
+              <Link
+                href={`/${locale}/shop`}
+                className="group flex items-center gap-2 px-4 py-2 rounded-full bg-accent hover:bg-accent/90 text-white font-semibold transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg"
+              >
+                <Icon name="shop" className="w-4 h-4" />
+                <span>{tShop('title')}</span>
+              </Link>
+
+              {/* Cart with badge */}
               <div className="relative">
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className="relative h-9 p-2 text-black/80 hover:text-black dark:text-white/80 hover:scale-105 dark:hover:text-white transition-all duration-200"
-                      aria-label={`Shopping cart with ${itemCount} items`}
+                      className="relative h-9 w-9 flex items-center justify-center rounded-lg text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
+                      aria-label={locale === 'he' ? 'עגלת קניות' : 'Shopping cart'}
+                      type="button"
                     >
-                      <Icon name="cart" className="w-5 h-5" />
+                      <span className="inline-flex items-center justify-center w-5 h-5">
+                        <Icon name="cart" className="w-5 h-5" />
+                      </span>
+                      {/* Cart badge (show when items > 0) */}
                       {itemCount > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-accent text-white text-[10px] font-bold flex items-center justify-center">
                           {itemCount > 9 ? '9+' : itemCount}
                         </span>
                       )}
@@ -434,15 +506,18 @@ export default function HeaderNav() {
                 </Popover>
               </div>
 
-              {/* Settings Menu */}
+              {/* Settings */}
               <div className="relative">
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className="h-9 p-2 text-black/80 dark:text-white/70 hover:scale-105 hover:rotate-[270deg] hover:text-black dark:hover:text-white transition-all duration-200"
-                      aria-label="Settings"
+                      className="h-9 w-9 flex items-center justify-center rounded-lg text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/5 hover:rotate-[270deg] hover:text-black dark:hover:text-white transition-all duration-200"
+                      aria-label={locale === 'he' ? 'הגדרות' : 'Settings'}
+                      type="button"
                     >
-                      <Icon name="settings" className="w-5 h-5" />
+                      <span className="inline-flex items-center justify-center w-5 h-5">
+                        <Icon name="settings" className="w-5 h-5" />
+                      </span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className={`w-56 p-2 ${locale === 'he' ? '!left-0 !right-auto' : '!right-0 !left-auto'}`}>
