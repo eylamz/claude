@@ -10,7 +10,7 @@ const buttonVariants = cva(
       variant: {
         default: "bg-black/5 text-brand-900 hover:bg-btn-secondary dark:bg-btn-dark/50 dark:hover:bg-btnHover-dark/50",
         primaryBtn: "bg-header-dark text-header-text dark:text-header-text-dark hover:bg-brand-main/80 dark:bg-brand-main dark:hover:bg-brand-main/80",
-        primary: "bg-brand-main text-header-text hover:bg-brand-main/80 dark:bg-brand-main dark:hover:bg-brand-main/80",
+        primary: "bg-brand-main text-white dark:text-text hover:bg-brand-main/80 dark:bg-brand-dark dark:hover:bg-brand-dark/80",
         success: "rounded-xl bg-success/10 dark:bg-success-dark/15 text-success dark:text-success-dark   hover:bg-success/15 dark:hover:bg-success-dark/20",
         brand: "rounded-xl bg-brand-main/25 dark:bg-brand-dark/15 text-brand-text dark:text-brand-main   hover:bg-brand-main/35 dark:hover:bg-brand-dark/20",
         header: "rounded-xl bg-header-dark/15 dark:bg-header-dark/15 text-header-text dark:text-header-main   hover:bg-header-main/35 dark:hover:bg-header-dark/20",

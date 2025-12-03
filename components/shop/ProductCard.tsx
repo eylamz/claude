@@ -1,3 +1,4 @@
+// nextjs-app/components/shop/ProductCard.tsx
 'use client';
 
 import { FC, useState, useEffect } from 'react';

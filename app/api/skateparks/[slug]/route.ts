@@ -59,15 +59,22 @@ export async function GET(
       .lean();
 
     // Format nearby parks
-    const formattedNearby = nearbyParks.map((park: any) => ({
-      _id: park._id.toString(),
-      slug: park.slug,
-      name: park.name,
-      imageUrl: park.images?.[0]?.url || '/placeholder-skatepark.jpg',
-      area: park.area,
-      rating: park.rating || 0,
-      totalReviews: park.totalReviews || 0,
-    }));
+    const formattedNearby = nearbyParks.map((park: any) => {
+      const [parkLng, parkLat] = park.location?.coordinates || [0, 0];
+      return {
+        _id: park._id.toString(),
+        slug: park.slug,
+        name: park.name,
+        imageUrl: park.images?.[0]?.url || '/placeholder-skatepark.jpg',
+        area: park.area,
+        rating: park.rating || 0,
+        totalReviews: park.totalReviews || 0,
+        location: park.location?.coordinates ? {
+          lat: parkLat,
+          lng: parkLng,
+        } : undefined,
+      };
+    });
 
     // Check if open now
     const now = new Date();
@@ -83,7 +90,7 @@ export async function GET(
       isOpen = currentTime >= dayHours.open && currentTime <= dayHours.close;
     }
 
-    // Format response
+    // Format response with all fields including mediaLinks, isFeatured, status, etc.
     const formattedSkatepark = {
       _id: skatepark._id.toString(),
       slug: skatepark.slug,
@@ -104,6 +111,8 @@ export async function GET(
       rating: skatepark.rating || 0,
       totalReviews: skatepark.totalReviews || 0,
       mediaLinks: skatepark.mediaLinks || {},
+      isFeatured: skatepark.isFeatured || false,
+      status: skatepark.status || 'active',
       isOpen,
       createdAt: skatepark.createdAt,
       updatedAt: skatepark.updatedAt,

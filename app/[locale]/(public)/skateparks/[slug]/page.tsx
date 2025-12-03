@@ -7,10 +7,10 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
+import { MapPin, Plus, Minus } from 'lucide-react';
 import { Icon } from '@/components/icons';
 import { Button } from '@/components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
-import { Select } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -83,11 +83,10 @@ interface Skatepark {
     is24Hours: boolean;
   };
   amenities: Amenities;
-  rating: number;
-  totalReviews: number;
   mediaLinks: {
     youtube?: string;
     googleMapsFrame?: string;
+    googleMapsUrl?: string;
   };
   notes: {
     en?: string[];
@@ -107,9 +106,12 @@ interface NearbyPark {
   area: 'north' | 'center' | 'south';
   rating: number;
   totalReviews: number;
+  location?: {
+    lat: number;
+    lng: number;
+  };
 }
 
-type ReviewSort = 'newest' | 'oldest' | 'highest' | 'lowest';
 
 const AMENITY_ICONS: Record<string, string> = {
   parking: 'parking',
@@ -206,9 +208,9 @@ function FormattedHours({
     return (
       <div className="space-y-2">
         {/* Header with closed badge */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5" />
-          <span className="font-semibold">{t('openingHours')}: </span>
+          <span className=" text-lg font-medium">{t('openingHours')}: </span>
           <span className="inline-flex items-center px-2 py-1 rounded text-sm font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border border-red-300 dark:border-red-700">
             {t('permanentlyClosed')}
           </span>
@@ -235,9 +237,9 @@ function FormattedHours({
     return (
       <div className="space-y-2">
         {/* 24/7 Header */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5" />
-          <span className="font-semibold">{t('openingHours')}: </span>
+          <span className="text-lg font-medium">{t('openingHours')}: </span>
           <span className="inline-flex items-center px-2 py-1 rounded text-sm font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-300 dark:border-green-700">
             {t('open247')}
           </span>
@@ -286,9 +288,9 @@ function FormattedHours({
     return (
       <div className="space-y-2">
         {/* Header */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5 " />
-          <span className="font-semibold">{t('openingHours')}</span>
+          <span className="text-lg font-medium">{t('openingHours')}</span>
         </div>
         
         {/* All week hours */}
@@ -319,9 +321,9 @@ function FormattedHours({
     return (
       <div className="space-y-3">
         {/* Header */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2  text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5 " />
-          <span className="font-semibold">{t('openingHours')}</span>
+          <span className="text-lg font-medium">{t('openingHours')}</span>
         </div>
         
         {/* All week hours */}
@@ -358,13 +360,13 @@ function FormattedHours({
   return (
     <div className="space-y-3">
       {/* Header */}
-      <div className="flex items-center gap-2">
-        <Icon name="clockBold" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-        <span className="font-semibold">{t('openingHours')}</span>
+      <div className="flex items-center gap-2 text-text dark:text-text-dark">
+        <Icon name="clockBold" className="w-5 h-5" />
+        <span className="text-lg font-medium">{t('openingHours')}</span>
       </div>
       
       {/* Hours by group */}
-      <div className="ml-6 space-y-2">
+      <div className="ml-6 space-y-2 text-text/80 dark:text-text-dark/80">
         {sortScheduleKeys(Object.keys(groupedDays)).map(scheduleKey => {
           const days = groupedDays[scheduleKey];
           const schedule = hoursByGroup[scheduleKey];
@@ -379,7 +381,7 @@ function FormattedHours({
           
           return (
             <div key={scheduleKey} className="flex items-start gap-1">
-              <span className="font-semibold text-gray-700 dark:text-gray-300 mr-2">
+              <span className="font-semibold text-text/80 dark:text-text-dark/80 mr-2">
                 {daysDisplay} :
               </span>
               
@@ -417,13 +419,15 @@ export default function SkateparkPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [addressCopied, setAddressCopied] = useState(false);
-  const [reviewSort, setReviewSort] = useState<ReviewSort>('newest');
   const [showAddReview, setShowAddReview] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [isMapLoading, setIsMapLoading] = useState(true);
+  const [reviewsExpanded, setReviewsExpanded] = useState(false);
 
   useEffect(() => {
     fetchSkatepark();
   }, [slug]);
+
 
   useEffect(() => {
     // Detect theme from document class or localStorage
@@ -458,65 +462,163 @@ export default function SkateparkPage() {
     setLoading(true);
     try {
       // Check localStorage for cached data
-      const cacheKey = `skatepark_${slug}_cache`;
+      const cacheKey = 'skateparks_cache';
       const versionKey = 'skateparks_version';
       const cachedData = localStorage.getItem(cacheKey);
       const cachedVersion = localStorage.getItem(versionKey);
 
-      // Fetch from API to get current version
-      const response = await fetch(`/api/skateparks/${slug}`);
-      if (!response.ok) {
-        if (response.status === 404) {
+      // Always fetch all skateparks to get the complete list and version
+      const allSkateparksResponse = await fetch('/api/skateparks');
+      if (!allSkateparksResponse.ok) {
+        throw new Error('Failed to fetch all skateparks');
+      }
+      const allSkateparksData = await allSkateparksResponse.json();
+      const currentVersion = allSkateparksData.version || 1;
+
+      // Fetch current skatepark detail to get all fields (mediaLinks, operatingHours, etc.)
+      const detailResponse = await fetch(`/api/skateparks/${slug}`);
+      if (!detailResponse.ok) {
+        if (detailResponse.status === 404) {
           // Handle 404
           return;
         }
-        throw new Error('Failed to fetch skatepark');
+        throw new Error('Failed to fetch skatepark detail');
       }
-
-      const data = await response.json();
-      const currentVersion = data.version || 1;
+      const detailData = await detailResponse.json();
 
       // Use cache if version matches
       if (cachedData && cachedVersion && parseInt(cachedVersion) === currentVersion) {
         try {
-          const parsedData = JSON.parse(cachedData);
-          setSkatepark(parsedData.skatepark);
-          setNearbyParks(parsedData.nearbyParks || []);
-          setLoading(false);
-          await fetchReviews();
-          return;
+          const cachedSkateparks = JSON.parse(cachedData);
+          if (Array.isArray(cachedSkateparks)) {
+            const cachedSkatepark = cachedSkateparks.find((park: Skatepark) => park.slug === slug);
+            if (cachedSkatepark) {
+              setSkatepark(cachedSkatepark);
+              setNearbyParks(detailData.nearbyParks || []);
+              setLoading(false);
+              await fetchReviews();
+              return;
+            }
+          }
         } catch (e) {
           // If cache is corrupted, continue to fetch fresh data
-          console.warn('Failed to parse cached skatepark data', e);
+          console.warn('Failed to parse cached skateparks data', e);
         }
       }
 
       // Cache is invalid or doesn't exist, use fresh data
-      setSkatepark(data.skatepark);
-      setNearbyParks(data.nearbyParks || []);
+      // Store the complete skatepark object with all fields including:
+      // - mediaLinks (youtube, googleMapsFrame, googleMapsUrl)
+      // - images, operatingHours, lightingHours, amenities
+      // - notes, openingYear, closingYear, isFeatured, status
+      setSkatepark(detailData.skatepark);
+      setNearbyParks(detailData.nearbyParks || []);
       
-      // Update cache
-      localStorage.setItem(cacheKey, JSON.stringify({
-        skatepark: data.skatepark,
-        nearbyParks: data.nearbyParks || [],
-      }));
+      // Build complete skateparks array with all data
+      // Start with the list from all skateparks API
+      const allSkateparksMap = new Map<string, Skatepark>();
+      
+      // Helper to convert location format
+      const convertLocation = (loc: any): { type: 'Point'; coordinates: [number, number] } => {
+        if (loc?.coordinates && Array.isArray(loc.coordinates)) {
+          return { type: 'Point', coordinates: loc.coordinates as [number, number] };
+        }
+        if (loc?.lat !== undefined && loc?.lng !== undefined) {
+          return { type: 'Point', coordinates: [loc.lng, loc.lat] };
+        }
+        return { type: 'Point', coordinates: [0, 0] };
+      };
+      
+      // Add all skateparks from the list (now they have complete fields including operatingHours, lightingHours, mediaLinks, notes)
+      allSkateparksData.skateparks.forEach((park: any) => {
+        // Convert list format to match Skatepark interface
+        const skatepark: Skatepark = {
+          _id: park._id,
+          slug: park.slug,
+          name: park.name,
+          address: park.address,
+          area: park.area,
+          location: convertLocation(park.location),
+          images: park.images || [],
+          operatingHours: park.operatingHours || {} as OperatingHours,
+          lightingHours: park.lightingHours,
+          amenities: park.amenities || {},
+          mediaLinks: park.mediaLinks || {},
+          notes: park.notes || {},
+          isFeatured: park.isFeatured || false,
+          status: park.status || 'active',
+          openingYear: park.openingYear,
+          closingYear: park.closingYear,
+        };
+        allSkateparksMap.set(park.slug, skatepark);
+      });
+      
+      // Merge existing cache if available (to preserve any additional detail data for other parks)
+      // Note: Since the API now returns complete data, we primarily use API data as the source of truth
+      if (cachedData) {
+        try {
+          const cachedSkateparks = JSON.parse(cachedData);
+          if (Array.isArray(cachedSkateparks)) {
+            cachedSkateparks.forEach((cachedPark: Skatepark) => {
+              // Only keep cached parks that are still in the current list
+              if (allSkateparksMap.has(cachedPark.slug)) {
+                // Merge cached detail data with current list data (prefer API data, use cache as fallback)
+                const listPark = allSkateparksMap.get(cachedPark.slug)!;
+                allSkateparksMap.set(cachedPark.slug, {
+                  ...listPark,
+                  // Use API data first, fallback to cache only if API data is missing
+                  operatingHours: listPark.operatingHours && Object.keys(listPark.operatingHours).length > 0 
+                    ? listPark.operatingHours 
+                    : (cachedPark.operatingHours || listPark.operatingHours),
+                  lightingHours: listPark.lightingHours || cachedPark.lightingHours,
+                  mediaLinks: listPark.mediaLinks && Object.keys(listPark.mediaLinks).length > 0
+                    ? listPark.mediaLinks
+                    : (cachedPark.mediaLinks || listPark.mediaLinks),
+                  notes: listPark.notes && (Object.keys(listPark.notes).length > 0 || (Array.isArray(listPark.notes.en) && listPark.notes.en.length > 0))
+                    ? listPark.notes
+                    : (cachedPark.notes || listPark.notes),
+                  location: listPark.location || cachedPark.location, // Preserve location format
+                });
+              }
+            });
+          }
+        } catch (e) {
+          console.warn('Failed to parse existing cache for merge', e);
+        }
+      }
+      
+      // Update/add current skatepark with full detail data
+      allSkateparksMap.set(slug, {
+        ...detailData.skatepark,
+        // Ensure location format matches interface
+        location: convertLocation(detailData.skatepark.location),
+      });
+      
+      // Convert map to array and cache
+      const allSkateparksArray = Array.from(allSkateparksMap.values());
+      localStorage.setItem(cacheKey, JSON.stringify(allSkateparksArray));
       localStorage.setItem(versionKey, currentVersion.toString());
       
       // Log operating hours for debugging
-      console.log('Operating Hours:', data.skatepark.operatingHours);
+      console.log('Operating Hours:', detailData.skatepark.operatingHours);
       
       await fetchReviews();
     } catch (error) {
       console.error('Error fetching skatepark:', error);
       
       // Try to use cache as fallback even if version doesn't match
-      const cacheKey = `skatepark_${slug}_cache`;
+      const cacheKey = 'skateparks_cache';
       const cachedData = localStorage.getItem(cacheKey);
       if (cachedData) {
         try {
-          const parsedData = JSON.parse(cachedData);
-          setSkatepark(parsedData.skatepark);
-          setNearbyParks(parsedData.nearbyParks || []);
+          const allSkateparks = JSON.parse(cachedData);
+          if (Array.isArray(allSkateparks)) {
+            const cachedSkatepark = allSkateparks.find((park: Skatepark) => park.slug === slug);
+            if (cachedSkatepark) {
+              setSkatepark(cachedSkatepark);
+              setNearbyParks([]); // Nearby parks not available from cache
+            }
+          }
         } catch (e) {
           console.error('Failed to use cached data as fallback', e);
         }
@@ -541,14 +643,6 @@ export default function SkateparkPage() {
   const handleReviewSubmitted = async () => {
     setShowAddReview(false);
     await fetchReviews();
-    if (skatepark) {
-      // Refresh skatepark data to get updated rating
-      const response = await fetch(`/api/skateparks/${slug}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSkatepark(data.skatepark);
-      }
-    }
   };
 
   const getLocalizedText = (text: { en: string; he: string } | string): string => {
@@ -588,6 +682,29 @@ export default function SkateparkPage() {
     return { lng: 0, lat: 0 };
   };
 
+  // Calculate distance between two coordinates (Haversine formula)
+  const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371; // Earth's radius in km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLng = ((lng2 - lng1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  const areaLabels: Record<'north' | 'center' | 'south', { en: string; he: string }> = {
+    north: { en: 'North', he: 'צפון' },
+    center: { en: 'Center', he: 'מרכז' },
+    south: { en: 'South', he: 'דרום' },
+  };
+
+  const tr = (enText: string, heText: string) => (locale === 'he' ? heText : enText);
+
   const generateMoovitUrl = (): string => {
     if (!skatepark) return '#';
     const { lng, lat } = getLocationCoords();
@@ -621,19 +738,51 @@ export default function SkateparkPage() {
     return `${baseUrl}?api=1&destination=${destination}`;
   };
 
-  const sortedReviews = [...reviews].sort((a, b) => {
-    switch (reviewSort) {
-      case 'newest':
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      case 'oldest':
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      case 'highest':
-        return b.rating - a.rating;
-      case 'lowest':
-        return a.rating - b.rating;
-      default:
-        return 0;
+  const getGoogleMapsIframeSrc = (): string | null => {
+    if (!skatepark?.mediaLinks?.googleMapsFrame) {
+      return null;
     }
+    
+    const googleMapsFrame = skatepark.mediaLinks.googleMapsFrame;
+    
+    // Try multiple extraction methods
+    // Method 1: Extract src from iframe HTML string with double quotes
+    let srcMatch = googleMapsFrame.match(/src=["]([^"]+)["]/i);
+    
+    // Method 2: Extract src from iframe HTML string with single quotes
+    if (!srcMatch) {
+      srcMatch = googleMapsFrame.match(/src=[']([^']+)[']/i);
+    }
+    
+    // Method 3: Extract src with escaped quotes
+    if (!srcMatch) {
+      srcMatch = googleMapsFrame.match(/src=["']([^"']+)["']/i);
+    }
+    
+    // Method 4: If it's already a URL (not wrapped in iframe), use it directly
+    if (!srcMatch) {
+      // Check if it looks like a URL
+      const urlPattern = /^https?:\/\//i;
+      if (urlPattern.test(googleMapsFrame.trim())) {
+        return googleMapsFrame.trim();
+      }
+    }
+    
+    // Method 5: Try to find src attribute with more flexible regex
+    if (!srcMatch) {
+      srcMatch = googleMapsFrame.match(/src\s*=\s*["']?([^"'\s>]+)["']?/i);
+    }
+    
+    if (srcMatch && srcMatch[1]) {
+      return srcMatch[1].trim();
+    }
+    
+    return null;
+  };
+
+  // Sort reviews by newest first
+  const sortedReviews = [...reviews].sort((a, b) => {
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   const ratingDistribution = [5, 4, 3, 2, 1].map((rating) => {
@@ -713,11 +862,6 @@ export default function SkateparkPage() {
       latitude: lat,
       longitude: lng,
     },
-    aggregateRating: skatepark.totalReviews > 0 ? {
-      '@type': 'AggregateRating',
-      ratingValue: skatepark.rating,
-      reviewCount: skatepark.totalReviews,
-    } : undefined,
   };
 
   return (
@@ -748,7 +892,7 @@ export default function SkateparkPage() {
 
         <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
           {/* Header */}
-          <div className=" rounded-lg shadow-sm p-6 border border-border-dark/20 dark:border-text-secondary-dark/70 backdrop-blur-sm bg-white/80 dark:bg-gray-800/70">
+          <div className=" rounded-lg shadow-sm p-6 border border-border-dark/20 dark:border-text-secondary-dark/70 backdrop-blur-custom bg-white/80 dark:bg-gray-800/70">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div>
                 <div className="flex items-center gap-3 mb-2">
@@ -776,29 +920,6 @@ export default function SkateparkPage() {
                     );
                   })()}
                 </div>
-                {skatepark.rating > 0 && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Icon
-                          key={star}
-                          name="star"
-                          className={`w-5 h-5 ${
-                            star <= Math.round(skatepark.rating)
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-gray-300 dark:text-gray-600'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {skatepark.rating.toFixed(1)}
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-400">
-                      ({skatepark.totalReviews} {skatepark.totalReviews === 1 ? t('review') : t('reviews')})
-                    </span>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -813,7 +934,7 @@ export default function SkateparkPage() {
           {/* Info Cards */}
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Hours Card - Now using FormattedHours component */}
-            <Card className="text-text dark:text-[#7991a0] p-4 backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/80">
+            <Card className="text-text/80 dark:text-text-dark/80 p-4 backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/80">
               <div className="flex gap-4 mb-4 justify-between">
                 <div className={locale === 'he' ? '-ml-10' : ''}>
                   <FormattedHours
@@ -842,7 +963,7 @@ export default function SkateparkPage() {
                     className={`p-2 h-[35px] flex items-center justify-center rounded-lg ${
                       skatepark.closingYear
                         ? 'text-red-600 dark:text-red-400 shadow-md active:shadow-none border border-b-[4px] border-red-600 dark:border-red-400/20 active:border-b-[1px] active:translate-y-[2px] transition-all duration-200'
-                        : 'text-blue-600 dark:text-blue-400 shadow-md active:shadow-none border border-b-[4px] border-blue-600 dark:border-blue-400/20 active:border-b-[1px] active:translate-y-[2px] transition-all duration-200'
+                        : 'text-brand-main dark:text-brand-dark shadow-md active:shadow-none border border-b-[4px] border-brand-main dark:border-brand-dark/30 active:border-b-[1px] active:translate-y-[2px] transition-all duration-200'
                     }`}
                     aria-label="Share"
                   >
@@ -852,9 +973,9 @@ export default function SkateparkPage() {
               </div>
 
               {/* Address Section */}
-              <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-secondary-dark/70 dark:text-gray-400">
+              <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
                 <div className="flex items-center mb-3">
-                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <h2 className="text-lg font-medium flex items-center gap-2 text-text dark:text-text-dark">
                     <Icon name="locationBold" className={`w-5 h-5`} />
                     {t('address')}
                   </h2>
@@ -866,7 +987,7 @@ export default function SkateparkPage() {
               </div>
 
               {/* Opening/Closing Year Section */}
-              <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-secondary-dark/70 dark:text-gray-400">
+              <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
                 <div className="flex flex-col flex-wrap gap-2 mb-2">
                   {skatepark.openingYear && (
                     <span>{t('opened')} {skatepark.openingYear}.</span>
@@ -879,10 +1000,10 @@ export default function SkateparkPage() {
             </Card>
 
             {/* Amenities Card */}
-            <Card className="p-4 overflow-visible backdrop-blur-sm bg-background/80 dark:bg-background-secondary-dark/70">
-              <div className="flex items-center justify-between mb-3 text-text dark:text-[#7991a0]">
-                <h2 className="text-lg font-semibold flex items-center">
-                  <Icon name="notesBold" className={`w-5 h-5 me-1.5`} />
+            <Card className="p-4 overflow-visible backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70">
+              <div className="flex items-center justify-between mb-3 text-text dark:text-text-dark">
+                <h2 className="text-lg font-medium flex items-center gap-2">
+                  <Icon name="notesBold" className={`w-5 h-5`} />
                   {t('amenities.title')}
                 </h2>
               </div>
@@ -915,7 +1036,7 @@ export default function SkateparkPage() {
                                     className={`w-5 h-5 mx-auto ${
                                       isParkClosed
                                         ? 'text-error dark:text-error/80' 
-                                        : 'text-brand-color dark:text-brand-main/80' 
+                                        : 'text-brand-main dark:text-brand-dark/80' 
                                     }`} 
                                   />
                                 </div>
@@ -952,31 +1073,35 @@ export default function SkateparkPage() {
                   );
                 })}
               </div>
-
-              {/* Notes Section */}
-              {notes && notes.trim() !== '' && (
-                <div className="mt-3 pt-3 border-t border-border-dark/20 dark:border-text-secondary-dark/70 text-gray-900 dark:text-gray-400">
-                  <div className="flex items-center mb-2">
-                    <Icon name="infoBold" className={`w-5 h-5 ${locale === 'he' ? 'ml-1.5 mr-0' : 'mr-1.5 ml-0'}`} />
-                    <h3 className="text-lg font-semibold">{t('notes')}</h3>
-                  </div>
-
-                  <div className="space-y-2">
-                    {notes.split('\n').filter(note => note.trim()).map((note, index) => (
-                      <div key={index} className="bg-gray-50/40 dark:bg-gray-400/10 w-fit px-2.5 py-1.5 rounded-md text-gray-900 dark:text-gray-300">
-                        <div className="text-sm">
-                          • {note.trim()}.
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </Card>
           </div>
 
+          {/* Notes Card */}
+          {notes && notes.trim() !== '' && (
+            <div className="max-w-6xl mx-auto mb-8">
+              <Card className="p-4 backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70">
+                <div className="flex items-center mb-3 text-text dark:text-text-dark">
+                  <h2 className="text-lg font-medium flex items-center gap-2">
+                    <Icon name="infoBold" className={`w-5 h-5`} />
+                    {t('notes')}
+                  </h2>
+                </div>
+
+                <div className="space-y-2">
+                  {notes.split('\n').filter(note => note.trim()).map((note, index) => (
+                    <div key={index} className="bg-gray-50/40 dark:bg-gray-400/10 w-fit px-2.5 py-1.5 rounded-md text-gray-900 dark:text-gray-300">
+                      <div className="text-sm">
+                        • {note.trim()}.
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          )}
+
           {/* Get Directions Section */}
-          <Card className="w-full p-4 backdrop-blur-sm bg-white/80 dark:bg-gray-800/70 transform-gpu">
+          <Card className="w-full !max-w-6xl mx-auto p-4 backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70 transition-all duration-200 transform-gpu">
             <Suspense fallback={
               <div className="w-full h-32 flex items-center justify-center">
                 <LoadingSpinner className="h-32" />
@@ -988,15 +1113,15 @@ export default function SkateparkPage() {
                 className="space-y-4"
               >
                 <h2 id="directions-heading" className="sr-only">{t('getDirections')}</h2>
-                <div className="flex flex-col space-y-4">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col space-y-4 !mt-0">
+                  <div className="flex items-center gap-2 ">
                     <Icon name="map" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
                     <h3 className="font-semibold text-lg text-gray-900 dark:text-[#f2f2f2]">
                       {t('getDirections')}
                     </h3>
                   </div>
 
-                  <div className="mx-auto max-w-[350px] flex flex-wrap justify-center gap-6 items-center">
+                  <div className="mx-auto w-full max-w-[220px] xsm:max-w-none flex flex-wrap justify-center gap-6 items-center">
                     {/* Waze Map Link with Tooltip */}
                     <div className="group relative">
                       <a 
@@ -1028,7 +1153,7 @@ export default function SkateparkPage() {
                       >
                         <Icon 
                           name={theme === 'dark' ? "moovitDark" : "moovit"} 
-                          className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-gray-900 dark:text-gray-100 drop-shadow-md dark:drop-shadow-lg overflow-visible"
+                          className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-text-dark dark:text-text drop-shadow-md dark:drop-shadow-lg overflow-visible"
                         />
                       </a>
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
@@ -1068,7 +1193,7 @@ export default function SkateparkPage() {
                       >
                         <Icon 
                           name="newGoogleMaps" 
-                          className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-gray-900 dark:text-gray-100 drop-shadow-md dark:drop-shadow-lg overflow-visible"
+                          className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-text-dark dark:text-text drop-shadow-md dark:drop-shadow-lg overflow-visible"
                         />
                       </a>
                       <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
@@ -1082,29 +1207,11 @@ export default function SkateparkPage() {
             </Suspense>
           </Card>
 
-          {/* Description */}
-          {notes && notes.trim() !== '' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('about')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-gray-700 dark:text-gray-300 leading-relaxed space-y-2">
-                  {notes.split('\n').filter(note => note.trim()).map((note, index) => (
-                    <p key={index} className="whitespace-pre-line">
-                      {note.trim()}
-                    </p>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* YouTube Embed */}
           {skatepark.mediaLinks.youtube && (
-            <Card>
+            <Card className="w-full max-w-6xl mx-auto backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70 transition-all duration-200 transform-gpu">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <Icon name="youtube" className="w-5 h-5" />
                   {t('video')}
                 </CardTitle>
@@ -1115,52 +1222,84 @@ export default function SkateparkPage() {
             </Card>
           )}
 
-          {/* Google Maps Embed */}
-          {skatepark.mediaLinks.googleMapsFrame && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('location')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div
-                  dangerouslySetInnerHTML={{ __html: skatepark.mediaLinks.googleMapsFrame }}
-                  className="rounded-lg overflow-hidden"
-                />
-              </CardContent>
-            </Card>
+          {/* Map Section - Always render if skatepark exists */}
+          {skatepark && (
+            <section aria-labelledby="location-heading" className="w-full max-w-6xl mx-auto">
+              <h2 id="location-heading" className="sr-only">{parkName} {tCommon('location')}</h2>
+
+              <div className="backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70 h-32 sm:h-60 rounded-3xl mb-8 overflow-hidden relative">
+                {/* Shadow Overlay */}
+                <div className="absolute inset-0 pointer-events-none rounded-lg shadow-container z-10 dark:bg-background-dark/15"></div>
+                
+                {/* Border */}
+                <div className="absolute inset-0 pointer-events-none rounded-3xl bord"></div>
+                
+                {(() => {
+                  const iframeSrc = getGoogleMapsIframeSrc();
+                  
+                  if (iframeSrc) {
+                    return (
+                      <>
+                        {isMapLoading && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-gray-100/50 dark:bg-gray-800/50 backdrop-blur-custom z-10">
+                            <LoadingSpinner />
+                          </div>
+                        )}
+                        <iframe
+                          src={iframeSrc}
+                          width="100%"
+                          height="100%"
+                          style={{ border: 0 }}
+                          allowFullScreen
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          title={`${parkName} ${tCommon('location')} ${tCommon('map')}`}
+                          className="rounded-lg"
+                          onLoad={() => setIsMapLoading(false)}
+                          onError={() => setIsMapLoading(false)}
+                        />
+                      </>
+                    );
+                  } else {
+                    return (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <p className="text-muted-foreground">
+                          {tCommon('mapNotAvailable')}
+                        </p>
+                      </div>
+                    );
+                  }
+                })()}
+              </div>
+            </section>
           )}
 
           {/* Reviews Section */}
-          <Card>
+          <Card className="w-full max-w-6xl mx-auto backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70 transition-all duration-200 transform-gpu">
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <Icon name="messages" className="w-5 h-5" />
-                  {t('reviewsCount')} ({reviews.length})
+                  {t('reviewsCount')}
                 </CardTitle>
-                {reviews.length > 0 && (
-                  <Select
-                    value={reviewSort}
-                    onChange={(e) => setReviewSort(e.target.value as ReviewSort)}
-                    options={[
-                      { value: 'newest', label: t('newestFirst') },
-                      { value: 'oldest', label: t('oldestFirst') },
-                      { value: 'highest', label: t('highestRated') },
-                      { value: 'lowest', label: t('lowestRated') },
-                    ]}
-                  />
+                {status === 'loading' ? (
+                  <div className="flex items-center justify-center">
+                    <LoadingSpinner className="h-5" />
+                  </div>
+                ) : session?.user ? (
+                  <Button variant="primary" onClick={() => setShowAddReview(true)}>
+                    {t('addReview')}
+                  </Button>
+                ) : (
+                  <Link href={`/${locale}/login`}>
+                    <Button variant="primary">
+                      {tCommon('signIn')}
+                    </Button>
+                  </Link>
                 )}
               </div>
             </CardHeader>
             <CardContent>
-              {skatepark.totalReviews > 0 && reviews.length === 0 && (
-                <div className="py-8 text-center">
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {t('reviewsLoading')}
-                  </p>
-                </div>
-              )}
-
               {reviews.length > 0 && (
                 <>
                   {/* Rating Distribution */}
@@ -1183,7 +1322,7 @@ export default function SkateparkPage() {
 
                   {/* Review Cards */}
                   <div className="space-y-4">
-                    {sortedReviews.map((review) => (
+                    {(reviewsExpanded ? sortedReviews : sortedReviews.slice(0, 3)).map((review) => (
                       <div
                         key={review._id}
                         className="border border-border-dark/20 dark:border-text-secondary-dark/70 rounded-lg p-4"
@@ -1217,79 +1356,102 @@ export default function SkateparkPage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Expand/Collapse Button */}
+                  {sortedReviews.length > 3 && (
+                    <div className="mt-4 flex justify-center">
+                      <button
+                        onClick={() => setReviewsExpanded(!reviewsExpanded)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border-dark/20 dark:border-text-secondary-dark/70 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
+                        aria-label={reviewsExpanded ? t('showLessReviews') : t('showMoreReviews')}
+                      >
+                        {reviewsExpanded ? (
+                          <Minus className="w-5 h-5" />
+                        ) : (
+                          <Plus className="w-5 h-5" />
+                        )}
+                        <span className="font-medium">
+                          {reviewsExpanded 
+                            ? t('showLessReviews') || 'Show Less'
+                            : t('showMoreReviews') || `Show ${sortedReviews.length - 3} More Reviews`}
+                        </span>
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
 
-              {reviews.length === 0 && skatepark.totalReviews === 0 && (
-                <div className="py-8 text-center">
-                  <Icon name="messages" className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+              {reviews.length === 0 && (
+                <div className="py-8 text-center text-text/70 dark:text-text-dark/70 transition-colors duration-200">
+                  <Icon name="messages" className="w-12 h-12 mx-auto mb-3" />
+                  <p className=" mb-4">
                     {t('noReviewsYet')}
                   </p>
                 </div>
               )}
-
-              {/* Add Review Button - Only show if logged in */}
-              <div className="mt-6">
-                {status === 'loading' ? (
-                  <div className="flex items-center justify-center py-4">
-                    <LoadingSpinner className="h-6" />
-                  </div>
-                ) : session?.user ? (
-                  <Button variant="primary" onClick={() => setShowAddReview(true)}>
-                    <Icon name="messages" className="w-4 h-4 mr-2" />
-                    {t('addReview')}
-                  </Button>
-                ) : (
-                  <div className="text-center py-4 border border-border-dark/20 dark:border-text-secondary-dark/70 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                    <p className="text-gray-600 dark:text-gray-400 mb-3">
-                      {t('loginToReview')}
-                    </p>
-                    <Link href={`/${locale}/login`}>
-                      <Button variant="primary">
-                        {tCommon('signIn')}
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-              </div>
             </CardContent>
           </Card>
 
           {/* Nearby Parks */}
           {nearbyParks.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('nearbySkateparks')}</CardTitle>
+            <Card className="w-full max-w-6xl mx-auto backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70 transition-all duration-200 transform-gpu">
+              <CardHeader className="flex flex-row items-center justify-start gap-2  text-text dark:text-text-dark">
+              <Icon name="map" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
+                <CardTitle className="!mt-0 text-lg font-medium">{t('nearbySkateparks')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {nearbyParks.map((park) => {
                     const nearbyName = park.name[locale] || park.name.en || park.name.he;
+                    const currentCoords = getLocationCoords();
+                    const distance = park.location 
+                      ? calculateDistance(
+                          currentCoords.lat,
+                          currentCoords.lng,
+                          park.location.lat,
+                          park.location.lng
+                        )
+                      : null;
+                    const distanceText = distance !== null
+                      ? `(${distance.toFixed(1)} ${tr('km', 'ק"מ')})`
+                      : null;
+                    const areaLabel = locale === 'he' ? areaLabels[park.area]?.he : areaLabels[park.area]?.en || park.area;
+                    
                     return (
                       <Link
                         key={park._id}
                         href={`/${locale}/skateparks/${park.slug}`}
-                        className="group"
+                        className="h-fit hover:shadow-lg dark:hover:!scale-[1.02] bord bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200"
                       >
-                        <div className="relative h-48 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
+                        <div className="relative bg-black/25 h-[10.5rem] overflow-hidden">
                           <Image
                             src={park.imageUrl}
                             alt={nearbyName}
                             fill
-                            className="object-cover group-hover:scale-105 transition-transform"
+                            className="object-cover saturate-150 group-hover:saturate-[1.75] transition-all duration-200 rounded-t-3xl"
                           />
                         </div>
-                        <div className="mt-2">
-                          <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        
+                        <div className="px-4 py-3 space-y-1">
+                          <h3 className="text-lg font-semibold truncate">
                             {nearbyName}
                           </h3>
-                          {park.rating > 0 && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <Icon name="star" className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                              <span className="text-sm font-medium">{park.rating.toFixed(1)}</span>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
+                              <MapPin className="w-3.5 h-3.5 shrink-0" />
+                              <span className="text-sm truncate">
+                                {distanceText ? `${areaLabel} ${distanceText}` : areaLabel}
+                              </span>
                             </div>
-                          )}
+                            {park.rating > 0 && (
+                              <div className="flex items-center gap-1">
+                                <Icon name="star" className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {park.rating.toFixed(1)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </Link>
                     );
@@ -1306,13 +1468,13 @@ export default function SkateparkPage() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/50 backdrop-blur-custom"
             onClick={() => setShowAddReview(false)}
           />
 
           {/* Modal */}
           <div className="fixed inset-0 flex items-center justify-center p-4">
-            <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10 rounded-lg shadow-sm border border-border-dark/20 dark:border-text-secondary-dark/70 p-4 backdrop-blur-sm bg-white/80 dark:bg-gray-800/70">
+            <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10 rounded-lg shadow-sm border border-border-dark/20 dark:border-text-secondary-dark/70 p-4 backdrop-blur-custom bg-white/80 dark:bg-gray-800/70">
               {/* Header */}
               <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-6 flex items-center justify-between z-10">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t('writeReview')}</h2>

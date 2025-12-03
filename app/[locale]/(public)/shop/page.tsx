@@ -1,3 +1,4 @@
+// nextjs-app/app/[locale]/(public)/shop/page.tsx
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -5,6 +6,17 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { ProductCard } from '@/components/shop';
 import { Accordion, Checkbox, Slider, Drawer, Button, Select, Skeleton } from '@/components/ui';
+import { 
+  Filter, 
+  X, 
+  ShoppingBag, 
+  Tag,
+  Sparkles,
+  Grid3x3,
+  List,
+} from 'lucide-react';
+import { Icon } from '@/components/icons';
+import { cn } from '@/lib/utils/cn';
 
 interface Product {
   id: string;
@@ -47,12 +59,27 @@ export default function ShopPage() {
     searchParams.get('sizes')?.split(',').filter(Boolean) || []
   );
   
+  // View mode
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  
   // Sort
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'new');
   const [page, setPage] = useState(1);
   
   // Mobile drawer
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  
+  // Scroll state for sticky header
+  const [isScrolled, setIsScrolled] = useState(false);
+  
+  // Track scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   
   // Fetch categories
   useEffect(() => {
@@ -70,7 +97,6 @@ export default function ShopPage() {
       if (response.ok) {
         const data = await response.json();
         setCategories(data);
-        // Set max price based on products (simplified)
         setPriceRange([0, 1000]);
       }
     } catch (error) {
@@ -143,7 +169,7 @@ export default function ShopPage() {
     setPage(1);
   };
   
-  // Translation helper for categories and sports
+  // Translation helper
   const getTranslatedCategory = (category: string) => {
     return t(`categoryLabels.${category}`, { defaultValue: category });
   };
@@ -160,6 +186,15 @@ export default function ShopPage() {
   };
   
   const sizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  
+  // Check if any filters are active
+  const hasActiveFilters = selectedCategories.length > 0 || 
+    selectedSports.length > 0 || 
+    selectedSizes.length > 0 ||
+    (priceRange[0] !== 0 || priceRange[1] !== 1000);
+  
+  // Count active filters
+  const activeFiltersCount = selectedCategories.length + selectedSports.length + selectedSizes.length;
   
   const sidebarContent = (
     <div className="space-y-4 pt-4">
@@ -217,7 +252,7 @@ export default function ShopPage() {
               onClick={() => handleSizeToggle(size)}
               className={`p-3 border rounded-lg text-sm font-medium transition-all ${
                 selectedSizes.includes(size)
-                  ? 'border-brand-main bg-brand-main/10 dark:bg-brand-main/20 text-brand-main dark:text-brand-main'
+                  ? 'border-brand-main bg-brand-main/10 dark:bg-brand-main/20 text-brand-main'
                   : 'border-border dark:border-border-dark bg-black/5 dark:bg-black/30 text-header-text-dark dark:text-header-text hover:border-brand-main/50'
               }`}
             >
@@ -228,56 +263,255 @@ export default function ShopPage() {
       </Accordion>
       
       {/* Clear Filters */}
-      <div className="pt-2">
-        <Button onClick={handleClearFilters} variant="outline" className="w-full">
-          {t('clearFilters')}
-        </Button>
-      </div>
+      {hasActiveFilters && (
+        <div className="pt-2">
+          <Button onClick={handleClearFilters} variant="outline" className="w-full">
+            <X className="w-4 h-4 mr-2" />
+            {t('clearFilters')}
+          </Button>
+        </div>
+      )}
     </div>
   );
   
   return (
-    <div className="min-h-screen ">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('title')}</h1>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {totalResults} {totalResults === 1 ? t('product') : t('products')}
-              </span>
-            </div>
-            <div className="flex items-center gap-4">
-              {/* Mobile Filter Button */}
-              <Button
-                onClick={() => setIsDrawerOpen(true)}
-                variant="outline"
-                className="md:hidden"
-              >
-                {t('filters')}
-              </Button>
-              {/* Sort */}
-              <Select
-                value={sortBy}
-                onChange={handleSortChange}
-                options={[
-                  { value: 'popular', label: t('popular') },
-                  { value: 'new', label: t('new') },
-                  { value: 'price-asc', label: t('sort.priceLow') },
-                  { value: 'price-desc', label: t('sort.priceHigh') },
-                ]}
-              />
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+      
+      {/* ========================================
+          HERO SECTION - Brand Messaging
+      ======================================== */}
+      <div className="relative bg-gradient-to-br from-green-500/10 via-transparent to-brand-main/10 dark:from-green-500/5 dark:to-brand-main/5 border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
+              {t('title') || 'Shop'}
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              {locale === 'he' 
+                ? 'ציוד, אופנה וכל מה שאתה צריך לרכיבה'
+                : 'Gear up for your next session. Quality products for riders.'
+              }
+            </p>
+            
+            {/* Stats Bar */}
+            <div className="flex items-center justify-center gap-6 pt-4">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-gray-600 dark:text-gray-400">
+                  {totalResults} {totalResults === 1 ? t('product') : t('products')}
+                </span>
+              </div>
+              <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
+              <div className="flex items-center gap-2 text-sm">
+                <Tag className="w-4 h-4 text-green-500" />
+                <span className="text-gray-600 dark:text-gray-400">
+                  {locale === 'he' ? 'מבצעים חמים' : 'Hot Deals'}
+                </span>
+              </div>
+              <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
+              <div className="flex items-center gap-2 text-sm">
+                <Sparkles className="w-4 h-4 text-green-500" />
+                <span className="text-gray-600 dark:text-gray-400">
+                  {locale === 'he' ? 'משלוח חינם מעל ₪200' : 'Free Shipping'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      {/* ========================================
+          STICKY FILTER BAR
+      ======================================== */}
+      <div 
+        className={cn(
+          'sticky top-16 md:top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-all duration-300',
+          isScrolled ? 'shadow-md py-3' : 'py-4'
+        )}
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Main Controls Row */}
+          <div className="flex items-center justify-between gap-4">
+            
+            {/* Left: Filter Button (Mobile) + View Toggle */}
+            <div className="flex items-center gap-2">
+              {/* Mobile Filter Button */}
+              <Button
+                onClick={() => setIsDrawerOpen(true)}
+                variant="outline"
+                size="xl"
+                className="md:hidden rounded-full"
+              >
+                <Filter className="w-5 h-5" />
+                {activeFiltersCount > 0 && (
+                  <span className="ml-2 px-2 py-0.5 bg-brand-main text-white text-xs font-bold rounded-full">
+                    {activeFiltersCount}
+                  </span>
+                )}
+              </Button>
+
+              {/* View Mode Toggle (Desktop) */}
+              <div className="hidden md:flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={cn(
+                    'p-2 rounded-full transition-colors',
+                    viewMode === 'grid'
+                      ? 'bg-white dark:bg-gray-700 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  )}
+                  aria-label="Grid view"
+                >
+                  <Grid3x3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={cn(
+                    'p-2 rounded-full transition-colors',
+                    viewMode === 'list'
+                      ? 'bg-white dark:bg-gray-700 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  )}
+                  aria-label="List view"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Right: Sort */}
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:inline text-sm text-gray-600 dark:text-gray-400">
+                {locale === 'he' ? 'מיין לפי:' : 'Sort by:'}
+              </span>
+              <Select
+                value={sortBy}
+                onChange={handleSortChange}
+                options={[
+                  { value: 'popular', label: t('popular') || 'Popular' },
+                  { value: 'new', label: t('new') || 'Newest' },
+                  { value: 'price-asc', label: t('sort.priceLow') || 'Price: Low to High' },
+                  { value: 'price-desc', label: t('sort.priceHigh') || 'Price: High to Low' },
+                ]}
+                className="min-w-[150px]"
+              />
+            </div>
+          </div>
+
+          {/* ========================================
+              ACTIVE FILTERS BADGES
+          ======================================== */}
+          {hasActiveFilters && (
+            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Results Count Badge */}
+                {!loading && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-green-500/10 to-brand-main/10 dark:from-green-500/20 dark:to-brand-main/20 rounded-full border border-green-500/20 dark:border-green-500/30">
+                    <ShoppingBag className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {products.length}
+                    </span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {locale === 'he' ? 'מתוך' : 'of'} {totalResults}
+                    </span>
+                  </div>
+                )}
+
+                {/* Category Badges */}
+                {selectedCategories.map((cat) => (
+                  <div
+                    key={cat}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/20 rounded-full border border-purple-200 dark:border-purple-800"
+                  >
+                    <Icon name="shop" className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {getTranslatedCategory(cat)}
+                    </span>
+                    <button
+                      onClick={() => handleCategoryToggle(cat)}
+                      className="p-0.5 hover:bg-purple-100 dark:hover:bg-purple-800 rounded-full transition-colors"
+                    >
+                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Sport Badges */}
+                {selectedSports.map((sport) => (
+                  <div
+                    key={sport}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-200 dark:border-blue-800"
+                  >
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {getTranslatedSport(sport)}
+                    </span>
+                    <button
+                      onClick={() => handleSportToggle(sport)}
+                      className="p-0.5 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-full transition-colors"
+                    >
+                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Size Badges */}
+                {selectedSizes.map((size) => (
+                  <div
+                    key={size}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 dark:bg-teal-900/20 rounded-full border border-teal-200 dark:border-teal-800"
+                  >
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {locale === 'he' ? `מידה ${size}` : `Size ${size}`}
+                    </span>
+                    <button
+                      onClick={() => handleSizeToggle(size)}
+                      className="p-0.5 hover:bg-teal-100 dark:hover:bg-teal-800 rounded-full transition-colors"
+                    >
+                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                    </button>
+                  </div>
+                ))}
+
+                {/* Price Range Badge */}
+                {(priceRange[0] !== 0 || priceRange[1] !== 1000) && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      ₪{priceRange[0]} - ₪{priceRange[1]}
+                    </span>
+                    <button
+                      onClick={() => setPriceRange([0, 1000])}
+                      className="p-0.5 hover:bg-green-100 dark:hover:bg-green-800 rounded-full transition-colors"
+                    >
+                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Clear All Button */}
+                <button
+                  onClick={handleClearFilters}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  {locale === 'he' ? 'נקה הכל' : 'Clear All'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ========================================
+          MAIN CONTENT
+      ======================================== */}
+      <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
         <div className="flex gap-8">
+          
           {/* Desktop Sidebar */}
           <aside className="hidden md:block w-64 shrink-0">
-            {sidebarContent}
+            <div className="sticky top-32">
+              {sidebarContent}
+            </div>
           </aside>
           
           {/* Mobile Drawer */}
@@ -288,20 +522,48 @@ export default function ShopPage() {
           {/* Products */}
           <main className="flex-1">
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className={cn(
+                'grid gap-6',
+                viewMode === 'grid'
+                  ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+                  : 'grid-cols-1'
+              )}>
                 {[...Array(8)].map((_, i) => (
                   <Skeleton key={i} className="aspect-square rounded-lg" />
                 ))}
               </div>
             ) : products.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              <div className={cn(
+                'grid gap-6',
+                viewMode === 'grid'
+                  ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+                  : 'grid-cols-1'
+              )}>
                 {products.map((product) => (
-                  <ProductCard key={product.id} {...product} />
+                  <ProductCard key={product.id} {...product} view={viewMode} />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-600 dark:text-gray-400">{t('noProductsFound')}</p>
+              /* Empty State */
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-green-500/10 to-brand-main/10 dark:from-green-500/20 dark:to-brand-main/20 mb-4">
+                  <ShoppingBag className="w-8 h-8 text-green-600 dark:text-green-400" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  {locale === 'he' ? 'לא נמצאו מוצרים' : 'No products found'}
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  {locale === 'he' 
+                    ? 'נסה לשנות את הפילטרים או המיון'
+                    : 'Try adjusting your filters or sort options'
+                  }
+                </p>
+                {hasActiveFilters && (
+                  <Button variant="brand" onClick={handleClearFilters}>
+                    <X className="w-4 h-4 mr-2" />
+                    {locale === 'he' ? 'נקה את כל הפילטרים' : 'Clear All Filters'}
+                  </Button>
+                )}
               </div>
             )}
             
@@ -313,17 +575,17 @@ export default function ShopPage() {
                   disabled={page === 1}
                   variant="outline"
                 >
-                  {t('previous')}
+                  {t('previous') || (locale === 'he' ? 'הקודם' : 'Previous')}
                 </Button>
-                <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
-                  {t('page')} {page}
+                <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 flex items-center">
+                  {t('page') || (locale === 'he' ? 'עמוד' : 'Page')} {page}
                 </span>
                 <Button
                   onClick={() => setPage((p) => p + 1)}
                   disabled={products.length < 12}
                   variant="outline"
                 >
-                  {t('next')}
+                  {t('next') || (locale === 'he' ? 'הבא' : 'Next')}
                 </Button>
               </div>
             )}

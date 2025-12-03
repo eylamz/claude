@@ -50,7 +50,39 @@
     "enterYourEmail": "הזן את כתובת האימייל שלך",
     "subscribe": "הירשם",
     "subscribing": "נרשם...",
-    "newsletterPrivacy": "אנו מכבדים את הפרטיות שלך. תוכל לבטל את המנוי בכל עת."
+    "newsletterPrivacy": "אנו מכבדים את הפרטיות שלך. תוכל לבטל את המנוי בכל עת.",
+    "heroTitle": "תרגיש את האושר.<br/>מצא את הפארק שלך.",
+    "heroSubtitle": "הצטרף לאלפים שגילוי את ההתרגשות של סקייטפארקים. התחבר לקהילה שלך, שתף את התשוקה שלך, והשראה את הדור הבא של רוכבים.",
+    "heroTagline": "כאן המקום שלך.",
+    "scrollToExplore": "גלול כדי לחקור",
+    "whyEnboss": "למה ENBOSS?",
+    "whyEnbossSubtitle": "אנחנו בונים יותר מאפליקציה. אנחנו בונים תנועה סביב השמחה והקהילה של סקייטפארקים.",
+    "featureDiscoverTitle": "גלה אוצרות חבויים",
+    "featureDiscoverDesc": "מצא סקייטפארקים שלא ידעת שקיימים. מספוטים ברחוב ועד פארקים מקצועיים, חקור את עולם הסקייטבורדינג כמו שלא היה מעולם.",
+    "featureBuildTitle": "בנה קהילה",
+    "featureBuildDesc": "התחבר עם רוכבים שחולקים את התשוקה שלך. שתף טיפים, ארגן סשנים, וגדל את קהילת הסקייטבורדינג יחד.",
+    "featureRateTitle": "דרג וכתוב ביקורות",
+    "featureRateDesc": "עזור לאחרים למצוא את המקום המושלם שלהם. שתף את החוויות, התמונות והתובנות שלך על כל פארק שאתה מבקר בו.",
+    "featureTrackTitle": "עקוב אחר התקדמות",
+    "featureTrackDesc": "תעד את המסע שלך. שמור על מעקב אחר פארקים שביקרת, טריקים שלמדת, וזיכרונות שנוצרו בדרך.",
+    "featurePlanTitle": "תכנן סשנים",
+    "featurePlanDesc": "דע לפני שאתה הולך. בדוק שעות פתיחה, שירותים, רמות קושי, ומה רוכבים אחרים אומרים.",
+    "featureSpreadTitle": "הפץ את האהבה",
+    "featureSpreadDesc": "הכר לאנשים את עולם הסקייטפארקים. שתף את התשוקה שלך ועזור לגדל את הספורט שאתה אוהב.",
+    "togetherWeRide": "ביחד אנחנו רוכבים",
+    "togetherWeRideSubtitle": "רוכבים אמיתיים. פארקים אמיתיים. קהילה אמיתית.",
+    "communityStreetSessions": "סשנים ברחוב",
+    "communityProParks": "פארקים מקצועיים",
+    "communityLocalSpots": "מקומות מקומיים",
+    "communityEvents": "אירועי קהילה",
+    "statsActiveRiders": "רוכבים פעילים",
+    "statsParksMapped": "סקייטפארקים ממופים",
+    "statsReviewsShared": "ביקורות משותפות",
+    "statsPassionJoy": "תשוקה ושמחה",
+    "nextSessionAwaits": "הסשן הבא שלך<br/>מחכה.",
+    "getStartedFree": "התחל בחינם",
+    "builtByRiders": "נבנה על ידי רוכבים. עבור רוכבים.",
+    "footerTagline": "מפיצים את השמחה של סקייטפארקים ברחבי העולם."
   },
   "account": {
     "welcomeBack": "ברוך שובך!",
@@ -175,5 +207,110 @@
     "infoSupport": "מידע ותמיכה",
     "faq": "שאלות נפוצות",
     "startTypingToSearch": "התחל להקליד כדי לחפש..."
+  },
+  "community": {
+    "hero": {
+      "activeRiders": "רוכבים פעילים",
+      "title": "ביחד אנחנו רוכבים",
+      "subtitle": "הצטרף לקהילה של רוכבים שמשתפים ספוטים, סשנים וסיפורים. כאן המקום שלך.",
+      "joinButton": "הצטרף לקהילה",
+      "watchButton": "צפה בסרטון"
+    },
+    "stats": {
+      "riders": "רוכבים",
+      "parks": "פארקים",
+      "photos": "תמונות",
+      "events": "אירועים"
+    },
+    "featured": {
+      "badge": "חברים מומלצים",
+      "title": "הכירו את הקהילה",
+      "subtitle": "רוכבים פעילים שמעוררים השראה, משתפים ומגדילים את הקהילה",
+      "stats": {
+        "parks": "פארקים",
+        "photos": "תמונות",
+        "followers": "עוקבים"
+      },
+      "followButton": "עקוב"
+    },
+    "featuredUsers": {
+      "user1": {
+        "name": "יוסי כהן",
+        "bio": "רוכב מנוסה, אוהב ספוט חדש"
+      },
+      "user2": {
+        "name": "מיה לוי",
+        "bio": "מאמנת BMX, מארגנת אירועים"
+      },
+      "user3": {
+        "name": "דני אברהם",
+        "bio": "צלם, אוהב לתעד רגעים"
+      }
+    },
+    "badges": {
+      "veteran": "veteran",
+      "photographer": "photographer",
+      "explorer": "explorer",
+      "coach": "coach",
+      "organizer": "organizer",
+      "influencer": "influencer",
+      "contentCreator": "content-creator"
+    },
+    "posts": {
+      "post1": {
+        "content": "סשן מטורף הבוקר בפארק הרצליה! מי בא מחר?",
+        "location": "הרצליה",
+        "timestamp": "לפני שעתיים"
+      },
+      "post2": {
+        "content": "אירוע BMX הבא שבת! רישום פתוח",
+        "location": "תל אביב",
+        "timestamp": "לפני 5 שעות"
+      },
+      "post3": {
+        "content": "הצילום הכי טוב שלי השנה 📸",
+        "location": "ירושלים",
+        "timestamp": "לפני יום"
+      }
+    },
+    "feed": {
+      "badge": "פיד הקהילה",
+      "title": "מה קורה",
+      "tabs": {
+        "feed": "פיד",
+        "stories": "סטוריז",
+        "events": "אירועים"
+      },
+      "loadMore": "טען עוד"
+    },
+    "whyJoin": {
+      "title": "למה להצטרף לEnboss?",
+      "subtitle": "יותר מפלטפורמה. תנועה.",
+      "benefits": {
+        "discover": {
+          "title": "גלה פארקים",
+          "description": "מצא אוצרות חבויים וספוטים חדשים"
+        },
+        "connect": {
+          "title": "התחבר",
+          "description": "פגוש רוכבים שחולקים את התשוקה שלך"
+        },
+        "share": {
+          "title": "שתף רגעים",
+          "description": "צלם ושתף את הסשנים הכי טובים"
+        },
+        "grow": {
+          "title": "התפתח",
+          "description": "למד מהטובים, שפר את הכישורים"
+        }
+      }
+    },
+    "cta": {
+      "badge": "הצטרף ל-12,500+ רוכבים",
+      "title": "הסשן הבא שלך מחכה",
+      "subtitle": "הצטרף לקהילה. שתף את התשוקה. הרגש את השמחה.",
+      "getStarted": "התחל עכשיו",
+      "learnMore": "למד עוד"
+    }
   }
 }

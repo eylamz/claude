@@ -30,7 +30,7 @@ const config: Config = {
         ltr: ['var(--font-poppins)', 'system-ui', 'sans-serif'],
       },
       backdropBlur: {
-        custom: '20px'
+        custom: '12px'
       },
       boxShadow: {
         headerShadow: '0 1px 28px 0 rgba(0, 0, 0, 0.2)',

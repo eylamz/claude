@@ -6,12 +6,13 @@ import Link from 'next/link';
 import {
   MapPin,
   Grid3x3,
-  Map,
+  Map as MapIcon,
   X,
   Sparkles,
   XCircle,
   Badge,
   Award,
+  TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -286,7 +287,7 @@ function GoogleMapView({
     initMap();
   }, [skateparks, userLocation, onMarkerClick]);
 
-  return <div ref={mapRef} className="w-full h-full min-h-[600px] rounded-lg" />;
+  return <div ref={mapRef} className="w-full h-full min-h-[600px]" />;
 }
 
 // Utility function to optimize image URLs
@@ -663,6 +664,7 @@ export default function SkateparksPage() {
   const [userCity, setUserCity] = useState<string | null>(null);
   const [animatingIcons, setAnimatingIcons] = useState<Set<string>>(new Set());
   const [shouldAnimateLocation, setShouldAnimateLocation] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const prevSelectedAmenitiesRef = useRef<string[]>([]);
   const prevUserLocationRef = useRef<UserLocation | null>(null);
 
@@ -711,6 +713,15 @@ export default function SkateparksPage() {
       prevUserLocationRef.current = currentLocation;
     }
   }, [userLocation, sortBy]);
+
+  // Track scroll position for sticky header
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Reverse geocode coordinates to get city name
   const getCityFromCoordinates = useCallback(async (lat: number, lng: number) => {
@@ -807,7 +818,24 @@ export default function SkateparksPage() {
     if (cachedData) {
       try {
         const parsedData = JSON.parse(cachedData);
-        setAllSkateparks(parsedData || []);
+        // Normalize location format in cached data (handle both old and new formats)
+        const normalizedCachedData = (parsedData || []).map((park: any) => {
+          let location = park.location;
+          
+          // Convert from { type: 'Point', coordinates: [lng, lat] } to { lat, lng }
+          if (location?.coordinates && Array.isArray(location.coordinates)) {
+            const [lng, lat] = location.coordinates;
+            location = { lat, lng };
+          }
+          // If already in { lat, lng } format, keep it as is
+          
+          return {
+            ...park,
+            location,
+          };
+        });
+        
+        setAllSkateparks(normalizedCachedData);
         setLoading(false);
         
         // Check version asynchronously after using cache
@@ -830,12 +858,29 @@ export default function SkateparksPage() {
                     const data = await response.json();
                     const newVersion = data.version || 1;
                     
-                    // Update both cache and version in localStorage
-                    localStorage.setItem(cacheKey, JSON.stringify(data.skateparks || []));
+                    // Convert location format from API (coordinates array) to expected format (lat/lng object)
+                    const normalizedSkateparks = (data.skateparks || []).map((park: any) => {
+                      let location = park.location;
+                      
+                      // Convert from { type: 'Point', coordinates: [lng, lat] } to { lat, lng }
+                      if (location?.coordinates && Array.isArray(location.coordinates)) {
+                        const [lng, lat] = location.coordinates;
+                        location = { lat, lng };
+                      }
+                      // If already in { lat, lng } format, keep it as is
+                      
+                      return {
+                        ...park,
+                        location,
+                      };
+                    });
+                    
+                    // Update both cache and version in localStorage (store normalized format)
+                    localStorage.setItem(cacheKey, JSON.stringify(normalizedSkateparks));
                     localStorage.setItem(versionKey, newVersion.toString());
                     
                     // Update state with new data
-                    setAllSkateparks(data.skateparks || []);
+                    setAllSkateparks(normalizedSkateparks);
                   }
                 }
               }
@@ -864,11 +909,28 @@ export default function SkateparksPage() {
       const data = await response.json();
       const currentVersion = data.version || 1;
 
+      // Convert location format from API (coordinates array) to expected format (lat/lng object)
+      const normalizedSkateparks = (data.skateparks || []).map((park: any) => {
+        let location = park.location;
+        
+        // Convert from { type: 'Point', coordinates: [lng, lat] } to { lat, lng }
+        if (location?.coordinates && Array.isArray(location.coordinates)) {
+          const [lng, lat] = location.coordinates;
+          location = { lat, lng };
+        }
+        // If already in { lat, lng } format, keep it as is
+        
+        return {
+          ...park,
+          location,
+        };
+      });
+
       // Use fresh data
-      setAllSkateparks(data.skateparks || []);
+      setAllSkateparks(normalizedSkateparks);
       
-      // Store both cache and version in localStorage
-      localStorage.setItem(cacheKey, JSON.stringify(data.skateparks || []));
+      // Store both cache and version in localStorage (store normalized format)
+      localStorage.setItem(cacheKey, JSON.stringify(normalizedSkateparks));
       localStorage.setItem(versionKey, currentVersion.toString());
     } catch (error) {
       console.error('Error fetching skateparks:', error);
@@ -1013,185 +1075,280 @@ export default function SkateparksPage() {
   };
 
   return (
-    <div className="min-h-screen " dir={locale === 'he' ? 'rtl' : 'ltr'}>
-      {/* Content */}
-      <div className="max-w-7xl mx-auto p-4 lg:p-6">
-        {/* Top Controls Bar - Above Park Cards */}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-1">
-            {/* Search Input */}
-            <div className="flex-1 min-w-64 max-w-md">
-              <SearchInput
-                placeholder={tr('Search skateparks...', 'חיפוש סקייטפארקים...')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onClear={() => setSearchQuery('')}
-                className="w-full"
-              />
-            </div>
-
-            {/* Amenities Filter Button */}
-            <AmenitiesButton
-              selectedAmenities={selectedAmenities}
-              onAmenitiesChange={setSelectedAmenities}
-              locale={locale}
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Location Icon Button */}
-            <Button
-              variant={userLocation ? "brand" : "outline"}
-              size="xl"
-              onClick={requestLocation}
-              className={userLocation ? 'rounded-full' : ''}
-              aria-label={tr('Use My Location', 'השתמש במיקומי')}
-              aria-pressed={!!userLocation}
-            >
-              <Icon 
-                name={userLocation ? "locationOff" : "location"}
-                className="w-5 h-5"
-              />
-            </Button>
-
-            {/* View Toggle Switch */}
-            <Button
-              variant={viewMode === 'map' ? "success" : "outline"}
-              size="xl"
-              onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
-              className="active:scale-95 transition-all duration-200 rounded-full"
-              aria-label={viewMode === 'grid' ? tr('Switch to Map View', 'החלף לתצוגת מפה') : tr('Switch to Grid View', 'החלף לתצוגת רשת')}
-            >
-              {viewMode === 'grid' ? (
-                <Map className="w-5 h-5" />
-              ) : (
-                <Grid3x3 className="w-5 h-5" />
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-background-secondary-dark dark:to-background-dark" dir={locale === 'he' ? 'rtl' : 'ltr'}>
+      
+      {/* ========================================
+          HERO SECTION - Brand Messaging
+      ======================================== */}
+      <div className="relative bg-gradient-to-br from-brand-main/10 via-transparent to-green-500/10 dark:from-brand-dark/5 dark:to-green-500/5 border-b border-gray-200 dark:border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
+              {tr('Find Your Park', 'מצא את הפארק שלך')}
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              {tr(
+                'Discover skateparks near you. Join the community. Feel the joy.',
+                'גלה סקייטפארקים קרובים. הצטרף לקהילה. הרגש את השמחה.'
               )}
-            </Button>
+            </p>
+            
+            {/* Stats Bar */}
+            <div className="flex items-center justify-center gap-6 pt-4">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 rounded-full bg-brand-main animate-pulse" />
+                <span className="text-gray-600 dark:text-gray-400">
+                  {allSkateparks.length} {tr('Parks', 'פארקים')}
+                </span>
+              </div>
+              <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
+              <div className="flex items-center gap-2 text-sm">
+                <TrendingUp className="w-4 h-4 text-green-500" />
+                <span className="text-gray-600 dark:text-gray-400">
+                  {tr('Updated Daily', 'מתעדכן יומי')}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Status Indicators */}
-        {(() => {
-          // Count active filters (area or amenities)
-          const hasAreaFilter = !!areaFilter;
-          const hasAmenitiesFilter = selectedAmenities.length > 0;
-          const hasOpenNowFilter = openNowOnly;
-          const activeFiltersCount = (hasAreaFilter ? 1 : 0) + (hasAmenitiesFilter ? 1 : 0) + (hasOpenNowFilter ? 1 : 0);
-          const hasAnyFilter = activeFiltersCount > 0;
-          
-          // Location sorting status
-          const hasLocationSorting = userLocation && sortBy === 'nearest';
-          
-          // Show parks count only when there are filters (area or amenities)
-          const showParksCount = hasAnyFilter && !loading;
-          
-          // Determine layout
-          // If only location sorting (no filters): show only location
-          // If 1 filter (no location sorting): row layout
-          // If 2+ filters OR (filters + location sorting): column layout
-          const shouldUseColumnLayout = activeFiltersCount > 1 || (hasAnyFilter && hasLocationSorting);
-          const shouldUseRowLayout = activeFiltersCount === 1 && !hasLocationSorting;
-          
-          // If only location sorting, show only location indicator
-          if (hasLocationSorting && !hasAnyFilter) {
+      {/* ========================================
+          STICKY FILTER BAR - Modern & Clean
+      ======================================== */}
+      <div 
+        className={`sticky top-16 md:16 z-40  backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-all duration-300 ${
+          isScrolled ? 'shadow-md py-3' : 'py-4'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Main Filter Row */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+            
+            {/* Left: Search + Amenities */}
+            <div className="flex items-center gap-3 flex-1">
+              {/* Search Input */}
+              <div className="flex-1 min-w-0">
+                <SearchInput
+                  placeholder={tr('Search parks...', 'חפש פארקים...')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onClear={() => setSearchQuery('')}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Amenities Button */}
+              <div className="flex-shrink-0">
+                <AmenitiesButton
+                  selectedAmenities={selectedAmenities}
+                  onAmenitiesChange={setSelectedAmenities}
+                  locale={locale}
+                />
+              </div>
+            </div>
+
+            {/* Right: Location + View Toggle */}
+            <div className="flex items-center gap-2">
+              {/* Location Button */}
+              <Button
+                variant={userLocation ? "brand" : "outline"}
+                size="xl"
+                onClick={requestLocation}
+                className={`rounded-full ${userLocation ? 'shadow-lg shadow-brand-main/20' : ''}`}
+                aria-label={tr('Use My Location', 'השתמש במיקומי')}
+              >
+                <Icon 
+                  name={userLocation ? "locationBold" : "location"}
+                  className="w-5 h-5"
+                />
+                {userLocation && userCity && (
+                  <span className="hidden lg:inline ml-2 font-medium">
+                    {userCity}
+                  </span>
+                )}
+              </Button>
+
+              {/* View Toggle - Enhanced Animation */}
+              <div className="relative">
+                <Button
+                  variant={viewMode === 'map' ? "success" : "outline"}
+                  size="xl"
+                  onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
+                  className={`rounded-full transition-all duration-300 ${
+                    viewMode === 'map' ? 'shadow-lg shadow-green-500/20' : ''
+                  }`}
+                  aria-label={viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
+                >
+                  {viewMode === 'grid' ? (
+                    <MapIcon className="w-5 h-5" />
+                  ) : (
+                    <Grid3x3 className="w-5 h-5" />
+                  )}
+                  <span className="hidden lg:inline ml-2 font-medium">
+                    {viewMode === 'grid' 
+                      ? tr('Map View', 'תצוגת מפה')
+                      : tr('Grid View', 'תצוגת רשת')
+                    }
+                  </span>
+                </Button>
+                
+                {/* Pulsing indicator when map is active */}
+                {viewMode === 'map' && (
+                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ========================================
+              ACTIVE FILTERS STATUS - Improved Layout
+          ======================================== */}
+          {(() => {
+            const hasAreaFilter = !!areaFilter;
+            const hasAmenitiesFilter = selectedAmenities.length > 0;
+            const hasOpenNowFilter = openNowOnly;
+            const hasSearchQuery = !!searchQuery.trim();
+            const activeFiltersCount = (hasAreaFilter ? 1 : 0) + (hasAmenitiesFilter ? 1 : 0) + (hasOpenNowFilter ? 1 : 0) + (hasSearchQuery ? 1 : 0);
+            const hasAnyFilter = activeFiltersCount > 0;
+            const hasLocationSorting = userLocation && sortBy === 'nearest';
+            const showStatus = hasAnyFilter || hasLocationSorting;
+
+            if (!showStatus) return null;
+
             return (
-              <div className="w-fit mb-4 flex flex-col sm:flex-row gap-2 md:gap-1 items-center justify-start text-sm text-gray-600 dark:text-gray-400">
-                <div className="flex items-center gap-2">
-                  <span>{t('search.filterStatus.sortedByDistance')}</span>
-                  <Icon 
-                    name="locationBold" 
-                    className={`w-4 h-4 text-brand-main ${shouldAnimateLocation ? 'animate-pop' : ''}`} 
-                  />
-                  {userCity && (
-                    <span className="text-sm text-brand-text dark:text-brand-main">
-                      ({userCity})
-                    </span>
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Results Count Badge */}
+                  {hasAnyFilter && !loading && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-brand-main/10 to-green-500/10 dark:from-brand-main/20 dark:to-green-500/20 rounded-full border border-brand-main/20 dark:border-brand-main/30">
+                      <Icon name="map" className="w-4 h-4 text-brand-main" />
+                      <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {skateparks.length}
+                      </span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {tr('of', 'מתוך')} {allSkateparks.length}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Search Query Badge */}
+                  {hasSearchQuery && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-200 dark:border-blue-800">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        "{searchQuery}"
+                      </span>
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="p-0.5 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-full transition-colors"
+                      >
+                        <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Area Filter Badge */}
+                  {hasAreaFilter && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/20 rounded-full border border-purple-200 dark:border-purple-800">
+                      <MapPin className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {t(`search.area.${areaFilter}`)}
+                      </span>
+                      <button
+                        onClick={() => setAreaFilter('')}
+                        className="p-0.5 hover:bg-purple-100 dark:hover:bg-purple-800 rounded-full transition-colors"
+                      >
+                        <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Amenities Badges */}
+                  {selectedAmenities.map((amenity) => {
+                    const amenityOption = AMENITY_OPTIONS.find(a => a.key === amenity);
+                    const iconName = amenityOption?.iconName;
+                    const shouldAnimate = animatingIcons.has(amenity);
+                    
+                    return (
+                      <div
+                        key={amenity}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 dark:bg-teal-900/20 rounded-full border border-teal-200 dark:border-teal-800 ${
+                          shouldAnimate ? 'animate-pop' : ''
+                        }`}
+                      >
+                        {iconName && (
+                          <Icon
+                            name={iconName as any}
+                            className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400"
+                          />
+                        )}
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {amenityOption?.label}
+                        </span>
+                        <button
+                          onClick={() => setSelectedAmenities(prev => prev.filter(a => a !== amenity))}
+                          className="p-0.5 hover:bg-teal-100 dark:hover:bg-teal-800 rounded-full transition-colors"
+                        >
+                          <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  {/* Location Sorting Badge */}
+                  {hasLocationSorting && (
+                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-brand-main/10 to-brand-main/20 dark:from-brand-main/20 dark:to-brand-main/30 rounded-full border border-brand-main/30 ${
+                      shouldAnimateLocation ? 'animate-pop' : ''
+                    }`}>
+                      <Icon
+                        name="locationBold"
+                        className="w-3.5 h-3.5 text-brand-main"
+                      />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {tr('Nearest First', 'הקרובים ביותר')}
+                      </span>
+                      {userCity && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          ({userCity})
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Clear All Filters Button */}
+                  {hasAnyFilter && (
+                    <button
+                      onClick={clearFilters}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      {tr('Clear All', 'נקה הכל')}
+                    </button>
                   )}
                 </div>
               </div>
             );
-          }
-          
-          // If no filters and no location sorting, don't show anything
-          if (!hasAnyFilter && !hasLocationSorting) {
-            return null;
-          }
+          })()}
+        </div>
+      </div>
 
-          return (
-            <div className={`mb-4 flex ${shouldUseColumnLayout ? 'flex-col' : shouldUseRowLayout ? 'flex-col sm:flex-row' : 'flex-col sm:flex-row'} gap-2 md:gap-1 items-start justify-start text-sm text-gray-600 dark:text-gray-400`}>
-              {/* Showing X of Y parks - Only show when filters are applied */}
-              {showParksCount && (
-                <div className="flex items-center gap-2">
-                  <span>
-                    {t('search.filterStatus.showing', { 
-                      filtered: skateparks.length,
-                      total: allSkateparks.length
-                    })}
-                  </span>
-                  <Icon name="map" className="w-4 h-4 text-success dark:text-success-dark" />
-                </div>
-              )}
-
-              {/* Filtered by Area Status */}
-              {hasAreaFilter && (
-                <div className="flex items-center gap-1">
-                  <span>{t('search.filterStatus.filteredByArea')}</span>
-                  <span className="font-semibold">
-                    {t(`search.area.${areaFilter}`)}
-                  </span>
-                </div>
-              )}
-
-              {/* Sorted by Amenities Status */}
-              {hasAmenitiesFilter && (
-                <div className="flex items-center gap-2">
-                  <span>{t('search.filterStatus.sortedByAmenities')}</span>
-                  <div className="flex items-center gap-2">
-                    {selectedAmenities.map((amenity) => {
-                      const amenityOption = AMENITY_OPTIONS.find(a => a.key === amenity);
-                      const iconName = amenityOption?.iconName;
-                      const shouldAnimate = animatingIcons.has(amenity);
-                      return iconName ? (
-                        <Icon 
-                          key={amenity}
-                          name={iconName as any}
-                          className={`w-4 h-4 text-info dark:text-info-dark ${shouldAnimate ? 'animate-pop' : ''}`}
-                        />
-                      ) : null;
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Sorted by Location Status */}
-              {hasLocationSorting && (
-                <div className="w-fit flex items-center gap-2 justify-start">
-                  <span>{t('search.filterStatus.sortedByDistance')}</span>
-                  <Icon 
-                    name="locationBold" 
-                    className={`w-4 h-4 text-brand-main ${shouldAnimateLocation ? 'animate-pop' : ''}`} 
-                  />
-                  {userCity && (
-                    <span className="text-sm text-brand-text dark:text-brand-main">
-                      ({userCity})
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })()}
-
+      {/* ========================================
+          MAIN CONTENT AREA
+      ======================================== */}
+      <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <ParkCardSkeleton key={i} />
             ))}
           </div>
         ) : viewMode === 'map' ? (
-          <div className="relative h-[calc(100vh-200px)]">
-            <div className="h-full rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+          /* MAP VIEW */
+          <div className="relative h-[calc(100vh-280px)] min-h-[600px]">
+            <div className="h-full rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 shadow-xl">
               <GoogleMapView
                 skateparks={skateparks}
                 userLocation={userLocation}
@@ -1199,7 +1356,17 @@ export default function SkateparksPage() {
               />
             </div>
             
-            {/* Selected Park Detail Panel */}
+            {/* Map Controls Overlay - Top Right */}
+            <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
+              {/* Parks Count Badge */}
+              <div className="px-4 py-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+                <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {skateparks.length} {tr('parks shown', 'פארקים מוצגים')}
+                </span>
+              </div>
+            </div>
+            
+            {/* Selected Park Detail Panel - Bottom */}
             {selectedPark && (() => {
               const name = typeof selectedPark.name === 'string' 
                 ? selectedPark.name 
@@ -1228,8 +1395,8 @@ export default function SkateparksPage() {
               const areaLabel = locale === 'he' ? areaLabels[selectedPark.area]?.he : areaLabels[selectedPark.area]?.en || selectedPark.area;
 
               return (
-                <div className="absolute bottom-4 left-4 right-4 w-1/2 max-w-[300px] z-50">
-                  <div className="h-fit bg-card dark:bg-card-dark rounded-3xl overflow-hidden relative group select-none transform-gpu">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-40">
+                  <div className="h-fit bg-card dark:bg-card-dark rounded-2xl overflow-hidden relative group select-none transform-gpu shadow-2xl">
                     {/* Close Button */}
                     <button
                       onClick={() => setSelectedPark(null)}
@@ -1326,49 +1493,44 @@ export default function SkateparksPage() {
             })()}
           </div>
         ) : (
+          /* GRID VIEW */
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {skateparks.map((park, index) => (
-                <SkateparkCard key={park._id} park={park} locale={locale} animationDelay={index * 50} />
+                <SkateparkCard 
+                  key={park._id} 
+                  park={park} 
+                  locale={locale} 
+                  animationDelay={index * 50} 
+                />
               ))}
             </div>
 
+            {/* Empty State */}
             {skateparks.length === 0 && !loading && (
-              <div 
-                className="text-center py-12 col-span-full"
-                role="status"
-                aria-live="polite"
-              >
-                <Icon name="searchQuest" className="mx-auto h-12 w-12 text-brand-main" aria-hidden="true" />
-                <h2 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                  {(() => {
-                    const hasFilters = searchQuery || areaFilter || selectedAmenities.length > 0 || openNowOnly || (userLocation && sortBy === 'nearest');
-                    
-                    if (searchQuery && !areaFilter && selectedAmenities.length === 0 && !openNowOnly && !(userLocation && sortBy === 'nearest')) {
-                      // Only search query, no active filters/sorts
-                      return t('search.noResults');
-                    } else if (hasFilters) {
-                      // Any actual filter/sort is active
-                      return t('search.noFilteredResults');
-                    } else {
-                      // No filters, just no data
-                      return t('search.noSkateparks');
-                    }
-                  })()}
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-brand-main/10 to-green-500/10 dark:from-brand-main/20 dark:to-green-500/20 mb-4">
+                  <Icon name="searchQuest" className="w-8 h-8 text-brand-main" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  {searchQuery 
+                    ? tr('No parks match your search', 'לא נמצאו פארקים') 
+                    : tr('No parks found', 'לא נמצאו פארקים')
+                  }
                 </h2>
-                {(searchQuery || areaFilter || selectedAmenities.length > 0 || openNowOnly) && (
-                  <div className="mt-4">
-                    <Button variant="primary" onClick={clearFilters}>
-                      {tr('Clear Filters', 'נקה מסננים')}
-                    </Button>
-                  </div>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  {tr('Try adjusting your filters or search terms', 'נסה לשנות את הפילטרים או החיפוש')}
+                </p>
+                {(searchQuery || selectedAmenities.length > 0 || areaFilter) && (
+                  <Button variant="brand" onClick={clearFilters}>
+                    {tr('Clear All Filters', 'נקה את כל הפילטרים')}
+                  </Button>
                 )}
               </div>
             )}
           </>
         )}
       </div>
-
     </div>
   );
 }

@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
       return R * c;
     };
 
-    // Format response with all data
+    // Format response with all data including complete fields
     const formattedSkateparks = skateparks.map((park: any) => {
       const [parkLng, parkLat] = park.location.coordinates;
       
@@ -110,18 +110,23 @@ export async function GET(request: NextRequest) {
         address: park.address,
         area: park.area,
         location: {
-          lat: parkLat,
-          lng: parkLng,
+          type: 'Point',
+          coordinates: [parkLng, parkLat], // [longitude, latitude] format to match detail page
         },
         imageUrl: park.images?.[0]?.url || '/placeholder-skatepark.jpg',
         images: park.images || [],
-        amenities: park.amenities,
+        operatingHours: park.operatingHours || {},
+        lightingHours: park.lightingHours || undefined,
+        amenities: park.amenities || {},
         rating: park.rating || 0,
         totalReviews: park.totalReviews || 0,
         is24Hours: park.is24Hours || false,
         isFeatured: park.isFeatured || false,
         openingYear: park.openingYear || null,
         closingYear: park.closingYear || null,
+        notes: park.notes || {},
+        mediaLinks: park.mediaLinks || {},
+        status: park.status || 'active',
         createdAt: park.createdAt || null,
         distance,
       };

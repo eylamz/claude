@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { HeroCarousel, FixedBanner, SkeletonSection, ProductSection, ParkSection, GuideSection, TrainerSection, ArrowRight } from '@/components/home';
+import { HeroCarousel, FixedBanner, SkeletonSection, ProductSection, ParkSection, GuideSection, ArrowRight } from '@/components/home';
 import { Button } from '@/components/ui';
 import { Locale } from '@/i18n';
 
@@ -48,15 +48,6 @@ interface Skatepark {
   openingYear?: number;
 }
 
-interface Trainer {
-  id: string;
-  slug: string;
-  name: string;
-  image: string;
-  area: 'north' | 'center' | 'south';
-  sports?: string[];
-}
-
 interface Guide {
   id: string;
   slug: string;
@@ -77,10 +68,7 @@ export default function HomePage() {
   const [homepageSettings, setHomepageSettings] = useState<HomepageSettings | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [skateparks, setSkateparks] = useState<Skatepark[]>([]);
-  const [trainers, setTrainers] = useState<Trainer[]>([]);
   const [guides, setGuides] = useState<Guide[]>([]);
-  const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
 
   useEffect(() => {
     fetchHomepageData();
@@ -126,7 +114,6 @@ export default function HomePage() {
         const data = await responses[0].json();
         setHomepageSettings(data.homepage);
         setProducts(data.products || []);
-        setTrainers(data.trainers || []);
         setGuides(data.guides || []);
       }
 
@@ -189,20 +176,6 @@ export default function HomePage() {
     }
   };
 
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setNewsletterSubmitting(true);
-    
-    // TODO: Implement newsletter subscription
-    console.log('Newsletter subscription:', newsletterEmail);
-    
-    setTimeout(() => {
-      setNewsletterSubmitting(false);
-      setNewsletterEmail('');
-      // Translation for alert - using a simple approach since alert doesn't support translations well
-      alert(locale === 'he' ? 'תודה שנרשמת!' : 'Thank you for subscribing!');
-    }, 1000);
-  };
 
   if (loading) {
     return (
@@ -311,82 +284,220 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Trainers Section */}
-      {trainers.length > 0 && (
-        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-2 px-4 xl:px-0 select-none">
-              <h2
-                className="text-text dark:text-text-dark text-lg font-bold opacity-0 animate-fadeIn"
-                style={{ animationDelay: '1300ms' }}
-              >
-                {t('featuredTrainers')}
-              </h2>
-              <Link href={`/${locale}/trainers`}>
-                <Button 
-                  variant="secondary" 
-                  className="opacity-0 !px-0 animate-popFadeIn group"
-                  style={{ animationDelay: '1600ms' }}
-                >
-                  {t('viewAllTrainers') || t('explore')}
-                  <ArrowRight className="ltr:ml-2 rtl:mr-2 h-4 w-4 rtl:rotate-180 transition-all duration-300 group-hover:w-[1.25rem] group-hover:h-[1.25rem] group-hover:ltr:translate-x-[10px] group-hover:rtl:translate-x-[-10px]" />
-                </Button>
-              </Link>
-            </div>
-            {loading || !trainers || trainers.length === 0 ? (
-              <SkeletonSection />
-            ) : (
-              <TrainerSection trainers={trainers} t={t} />
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Brand Story Section */}
-      <section className="relative py-24 px-4 sm:px-6 lg:px-8 bg-gray-900 dark:bg-black text-white">
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-900 to-black opacity-80"></div>
-        <div className="relative max-w-7xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            {t('welcomeToEnboss')}
-          </h2>
-          <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-8">
-            {t('brandStory')}
+      {/* Hero Section */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-[#FAFAFA] dark:bg-[#1A1A1A]">
+        {/* Animated gradient overlay */}
+        <div 
+          className="absolute inset-0 hero-gradient z-[1]"
+          style={{
+            background: 'radial-gradient(circle at 30% 50%, rgba(13, 115, 119, 0.15) 0%, transparent 50%), radial-gradient(circle at 70% 50%, rgba(50, 205, 50, 0.1) 0%, transparent 50%)'
+          }}
+        ></div>
+        
+        {/* Hero content */}
+        <div className="relative z-10 text-center px-5 max-w-[1000px]">
+          {/* Main title */}
+          <h1 
+            className="hero-title-gradient font-extrabold mb-6 leading-[1.1] tracking-[-0.02em]"
+            style={{
+              fontSize: 'clamp(2.5rem, 8vw, 6rem)',
+              animation: 'fadeInUp 1s ease-out'
+            }}
+          >
+            {t('heroTitle').split('<br/>').map((line, i, arr) => (
+              <span key={i}>
+                {line}
+                {i < arr.length - 1 && <br />}
+              </span>
+            ))}
+          </h1>
+          
+          {/* Subtitle */}
+          <p 
+            className="font-normal mb-8 max-w-3xl mx-auto leading-relaxed text-[#5C5C5C] dark:text-[#A0A0A0]"
+            style={{
+              fontSize: 'clamp(1.1rem, 2.5vw, 1.5rem)',
+              lineHeight: '1.6',
+              animation: 'fadeInUp 1s ease-out 0.2s backwards'
+            }}
+          >
+            {t('heroSubtitle')}
           </p>
-          <Link href={`/${locale}/about`}>
-            <Button size="lg">
-              {t('learnMoreAboutUs')}
+          
+          {/* Tagline */}
+          <div 
+            className="font-bold mb-12 text-[#0D7377] dark:text-[#14A3A8]"
+            style={{
+              fontSize: 'clamp(1.3rem, 3vw, 2rem)',
+              letterSpacing: '-0.01em',
+              animation: 'fadeInUp 1s ease-out 0.3s backwards'
+            }}
+          >
+            {t('heroTagline')}
+          </div>
+          
+          {/* CTA Button */}
+          <Link href={`/${locale}/skateparks`}>
+            <button
+              className="inline-block px-12 py-[18px] text-lg font-semibold text-white rounded-full transition-all duration-300"
+              style={{
+                background: '#0D7377',
+                boxShadow: '0 10px 40px rgba(13, 115, 119, 0.3)',
+                animation: 'fadeInUp 1s ease-out 0.4s backwards'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = '0 15px 50px rgba(13, 115, 119, 0.5)';
+                e.currentTarget.style.background = '#005F60';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 10px 40px rgba(13, 115, 119, 0.3)';
+                e.currentTarget.style.background = '#0D7377';
+              }}
+            >
+              {t('discoverSkateparks')}
+            </button>
+          </Link>
+        </div>
+        
+        {/* Scroll indicator */}
+        <div 
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 text-[#5C5C5C] dark:text-[#A0A0A0]"
+          style={{
+            fontSize: '0.85rem',
+            animation: 'bounce 2s infinite'
+          }}
+        >
+          <div className="text-center">
+            <div>↓</div>
+            <div style={{ marginTop: '4px' }}>{t('scrollToExplore')}</div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-4 text-text dark:text-text-dark">
+            {t('whyEnboss')}
+          </h2>
+          <p className="text-lg sm:text-xl text-center text-text-secondary dark:text-text-secondary-dark mb-16 max-w-2xl mx-auto">
+            {t('whyEnbossSubtitle')}
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+            {[
+              { icon: '🗺️', title: t('featureDiscoverTitle'), description: t('featureDiscoverDesc') },
+              { icon: '👥', title: t('featureBuildTitle'), description: t('featureBuildDesc') },
+              { icon: '⭐', title: t('featureRateTitle'), description: t('featureRateDesc') },
+              { icon: '📈', title: t('featureTrackTitle'), description: t('featureTrackDesc') },
+              { icon: '🎯', title: t('featurePlanTitle'), description: t('featurePlanDesc') },
+              { icon: '🌍', title: t('featureSpreadTitle'), description: t('featureSpreadDesc') },
+            ].map((feature, index) => (
+              <div
+                key={index}
+                className="bg-[rgba(13,115,119,0.05)] dark:bg-[rgba(20,163,168,0.08)] border border-[rgba(13,115,119,0.15)] dark:border-[rgba(20,163,168,0.2)] rounded-3xl p-8 lg:p-10 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#0D7377] dark:hover:border-[#14A3A8]"
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-[#0D7377] to-[#32CD32] rounded-2xl flex items-center justify-center text-3xl mb-6">
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-bold mb-3 text-text dark:text-text-dark">
+                  {feature.title}
+                </h3>
+                <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Community Section */}
+      <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-4 text-text dark:text-text-dark">
+            {t('togetherWeRide')}
+          </h2>
+          <p className="text-lg sm:text-xl text-center text-text-secondary dark:text-text-secondary-dark mb-16 max-w-2xl mx-auto">
+            {t('togetherWeRideSubtitle')}
+          </p>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
+            {[
+              { label: t('communityStreetSessions'), gradient: 'from-[#0D7377] to-[#14A3A8]' },
+              { label: t('communityProParks'), gradient: 'from-[#32CD32] to-[#2ECC71]' },
+              { label: t('communityLocalSpots'), gradient: 'from-[#14A3A8] to-[#32CD32]' },
+              { label: t('communityEvents'), gradient: 'from-[#2ECC71] to-[#39FF14]' },
+            ].map((item, index) => (
+              <div
+                key={index}
+                className={`relative aspect-square rounded-2xl bg-gradient-to-br ${item.gradient} overflow-hidden border border-[rgba(13,115,119,0.15)] dark:border-[rgba(20,163,168,0.2)] transition-transform duration-300 hover:scale-105`}
+              >
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                <div className="absolute bottom-5 left-5 z-10 font-semibold text-white">
+                  {item.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[#0D7377] to-[#32CD32] text-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
+            {[
+              { number: '10K+', label: t('statsActiveRiders') },
+              { number: '500+', label: t('statsParksMapped') },
+              { number: '25K+', label: t('statsReviewsShared') },
+              { number: '∞', label: t('statsPassionJoy') },
+            ].map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-4xl sm:text-5xl lg:text-6xl font-black mb-2">
+                  {stat.number}
+                </div>
+                <div className="text-lg sm:text-xl font-medium opacity-90">
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="py-32 sm:py-40 px-4 sm:px-6 lg:px-8 bg-background dark:bg-background-dark text-center">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-8 leading-tight text-text dark:text-text-dark">
+            {t('nextSessionAwaits').split('<br/>').map((line, i, arr) => (
+              <span key={i}>
+                {line}
+                {i < arr.length - 1 && <br />}
+              </span>
+            ))}
+          </h2>
+          <Link href={`/${locale}/skateparks`}>
+            <Button size="lg" className="px-12 py-6 text-lg font-semibold bg-[#32CD32] hover:bg-[#2ECC71] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              {t('getStartedFree')}
             </Button>
           </Link>
         </div>
       </section>
 
-      {/* Newsletter Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            {t('stayUpdated')}
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-            {t('newsletterDescription')}
-          </p>
-          <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4">
-            <input
-              type="email"
-              placeholder={t('enterYourEmail')}
-              value={newsletterEmail}
-              onChange={(e) => setNewsletterEmail(e.target.value)}
-              required
-              className="flex-1 px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <Button type="submit" disabled={newsletterSubmitting} size="lg">
-              {newsletterSubmitting ? t('subscribing') : t('subscribe')}
-            </Button>
-          </form>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-            {t('newsletterPrivacy')}
+      {/* Footer Section */}
+      <footer className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 text-center">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-xl font-semibold text-[#0D7377] dark:text-[#14A3A8] mb-5">
+            {t('builtByRiders')}
+          </div>
+          <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
+            © {new Date().getFullYear()} Enboss. {t('footerTagline')}
           </p>
         </div>
-      </section>
+      </footer>
     </main>
   );
 }

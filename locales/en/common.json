@@ -34,7 +34,7 @@
   "homepage": {
     "newArrivals": "New Arrivals",
     "seeAllProducts": "Shop",
-    "discoverSkateparks": "New Skateparks",
+    "discoverSkateparks": "Discover Skateparks",
     "viewAllSkateparks": "More Skateparks",
     "viewAllTrainers": "More Trainers",
     "viewAllGuides": "Guides",
@@ -50,7 +50,39 @@
     "enterYourEmail": "Enter your email",
     "subscribe": "Subscribe",
     "subscribing": "Subscribing...",
-    "newsletterPrivacy": "We respect your privacy. Unsubscribe at any time."
+    "newsletterPrivacy": "We respect your privacy. Unsubscribe at any time.",
+    "heroTitle": "Feel the Joy.<br/>Find Your Park.",
+    "heroSubtitle": "Join thousands discovering the thrill of skateparks. Connect with your community, share your passion, and inspire the next generation of riders.",
+    "heroTagline": "Find Your Spot.",
+    "scrollToExplore": "Scroll to explore",
+    "whyEnboss": "Why ENBOSS?",
+    "whyEnbossSubtitle": "We're building more than an app. We're building a movement around the joy and community of skateparks.",
+    "featureDiscoverTitle": "Discover Hidden Gems",
+    "featureDiscoverDesc": "Find skateparks you never knew existed. From street spots to professional parks, explore the world of skating like never before.",
+    "featureBuildTitle": "Build Community",
+    "featureBuildDesc": "Connect with riders who share your passion. Share tips, organize sessions, and grow the skating community together.",
+    "featureRateTitle": "Rate & Review",
+    "featureRateDesc": "Help others find their perfect spot. Share your experiences, photos, and insights about every park you visit.",
+    "featureTrackTitle": "Track Progress",
+    "featureTrackDesc": "Document your journey. Keep track of parks visited, tricks learned, and memories made along the way.",
+    "featurePlanTitle": "Plan Sessions",
+    "featurePlanDesc": "Know before you go. Check opening hours, amenities, difficulty levels, and what other riders are saying.",
+    "featureSpreadTitle": "Spread the Love",
+    "featureSpreadDesc": "Introduce people to the world of skateparks. Share your passion and help grow the sport you love.",
+    "togetherWeRide": "Together We Ride",
+    "togetherWeRideSubtitle": "Real riders. Real parks. Real community.",
+    "communityStreetSessions": "Street Sessions",
+    "communityProParks": "Pro Parks",
+    "communityLocalSpots": "Local Spots",
+    "communityEvents": "Community Events",
+    "statsActiveRiders": "Active Riders",
+    "statsParksMapped": "Skateparks Mapped",
+    "statsReviewsShared": "Reviews Shared",
+    "statsPassionJoy": "Passion & Joy",
+    "nextSessionAwaits": "Your Next Session<br/>Awaits.",
+    "getStartedFree": "Get Started Free",
+    "builtByRiders": "Built By Riders. For Riders.",
+    "footerTagline": "Spreading the joy of skateparks worldwide."
   },
   "account": {
     "welcomeBack": "Welcome Back!",
@@ -174,5 +206,110 @@
     "infoSupport": "Info & Support",
     "faq": "FAQ",
     "startTypingToSearch": "Start typing to search..."
+  },
+  "community": {
+    "hero": {
+      "activeRiders": "Active Riders",
+      "title": "Together We Ride",
+      "subtitle": "Join a community of riders sharing spots, sessions, and stories. This is where you belong.",
+      "joinButton": "Join Community",
+      "watchButton": "Watch Video"
+    },
+    "stats": {
+      "riders": "Riders",
+      "parks": "Parks",
+      "photos": "Photos",
+      "events": "Events"
+    },
+    "featured": {
+      "badge": "Featured Members",
+      "title": "Meet the Community",
+      "subtitle": "Active riders who inspire, share, and grow the community",
+      "stats": {
+        "parks": "Parks",
+        "photos": "Photos",
+        "followers": "Followers"
+      },
+      "followButton": "Follow"
+    },
+    "featuredUsers": {
+      "user1": {
+        "name": "Yossi Cohen",
+        "bio": "Veteran rider, loves finding new spots"
+      },
+      "user2": {
+        "name": "Maya Levi",
+        "bio": "BMX coach, event organizer"
+      },
+      "user3": {
+        "name": "Danny Abraham",
+        "bio": "Photographer, loves capturing moments"
+      }
+    },
+    "badges": {
+      "veteran": "veteran",
+      "photographer": "photographer",
+      "explorer": "explorer",
+      "coach": "coach",
+      "organizer": "organizer",
+      "influencer": "influencer",
+      "contentCreator": "content-creator"
+    },
+    "posts": {
+      "post1": {
+        "content": "Insane session this morning at Herzliya Park! Who's coming tomorrow?",
+        "location": "Herzliya",
+        "timestamp": "2h ago"
+      },
+      "post2": {
+        "content": "Next BMX event this Saturday! Registration open",
+        "location": "Tel Aviv",
+        "timestamp": "5h ago"
+      },
+      "post3": {
+        "content": "My best shot of the year 📸",
+        "location": "Jerusalem",
+        "timestamp": "1d ago"
+      }
+    },
+    "feed": {
+      "badge": "Community Feed",
+      "title": "What's Happening",
+      "tabs": {
+        "feed": "Feed",
+        "stories": "Stories",
+        "events": "Events"
+      },
+      "loadMore": "Load More"
+    },
+    "whyJoin": {
+      "title": "Why Join Enboss?",
+      "subtitle": "More than a platform. A movement.",
+      "benefits": {
+        "discover": {
+          "title": "Discover Parks",
+          "description": "Find hidden gems and new spots"
+        },
+        "connect": {
+          "title": "Connect",
+          "description": "Meet riders who share your passion"
+        },
+        "share": {
+          "title": "Share Moments",
+          "description": "Capture and share your best sessions"
+        },
+        "grow": {
+          "title": "Grow",
+          "description": "Learn from the best, improve your skills"
+        }
+      }
+    },
+    "cta": {
+      "badge": "Join 12,500+ Riders",
+      "title": "Your Next Session Awaits",
+      "subtitle": "Join the community. Share your passion. Feel the joy.",
+      "getStarted": "Get Started",
+      "learnMore": "Learn More"
+    }
   }
 }
