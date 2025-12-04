@@ -63,6 +63,8 @@
   "reviewsLoading": "Reviews are being loaded...",
   "noReviewsYet": "No reviews yet. Be the first to review this skatepark!",
   "addReview": "Add Review",
+  "showMoreReviews": "Show {count} More Reviews",
+  "showLessReviews": "Show Less Reviews",
   "writeReview": "Write a Review",
   "loginToReview": "You must be logged in to write a review",
   "newestFirst": "Newest First",

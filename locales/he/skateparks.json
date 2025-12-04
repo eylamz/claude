@@ -63,6 +63,8 @@
   "reviewsLoading": "טוען ביקורות...",
   "noReviewsYet": "עדיין אין ביקורות. היה הראשון לכתוב ביקורת על הסקייטפארק הזה!",
   "addReview": "הוסף ביקורת",
+  "showMoreReviews": "הצג עוד {count} ביקורות",
+  "showLessReviews": "הצג פחות ביקורות",
   "writeReview": "כתוב ביקורת",
   "loginToReview": "עליך להתחבר כדי לכתוב ביקורת",
   "newestFirst": "החדש ביותר",

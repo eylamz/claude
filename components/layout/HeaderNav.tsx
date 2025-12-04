@@ -191,18 +191,6 @@ export default function HeaderNav() {
                   Feel the Joy. Find Your Park.
                 </span>
               </Link>
-
-              {/* Social Proof Badge */}
-              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-brand-main/10 dark:bg-brand-dark/20 border border-brand-main/20 dark:border-brand-dark/30">
-                <svg className="w-3.5 h-3.5 text-brand-main" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M9.00002 15.3802H13.92C15.62 15.3802 17 14.0002 17 12.3002C17 10.6002 15.62 9.22021 13.92 9.22021H7.15002" stroke="currentColor" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M8.57 10.7701L7 9.19012L8.57 7.62012" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="text-[11px] font-semibold text-brand-main">
-                  {locale === 'he' ? '10K+ רוכבים פעילים' : '10K+ Active Riders'}
-                </span>
-              </div>
             </div>
 
             {/* CENTER: Main Navigation (Action-Oriented) */}
@@ -288,7 +276,7 @@ export default function HeaderNav() {
               {/* Shop CTA Button (Revenue driver - prominent) */}
               <Link
                 href={`/${locale}/shop`}
-                className="group flex items-center gap-2 px-4 py-2 rounded-full bg-accent hover:bg-accent/90 text-white font-semibold transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg"
+                className="group flex items-center gap-2 px-4 py-2 rounded-full bg-brand-dark hover:bg-brand-dark/80 dark:bg-brand-dark dark:hover:bg-brand-dark/80 text-white font-semibold transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg"
               >
                 <Icon name="shop" className="w-4 h-4" />
                 <span>{tShop('title')}</span>

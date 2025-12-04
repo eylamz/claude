@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, Fragment } from 'react';
 import { usePathname, useParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSession } from 'next-auth/react';
@@ -12,7 +12,7 @@ import { Icon } from '@/components/icons';
 import { Button } from '@/components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import ReviewForm from '@/components/reviews/ReviewForm';
 import ImageSlider from '@/components/skateparks/ImageSlider';
@@ -248,7 +248,7 @@ function FormattedHours({
         {/* ALWAYS show lighting hours for 24/7 parks when is24Hours is true */}
         <div className="flex items-start gap-2">
           <div className="flex items-center gap-2">
-            <Icon name="sunBold" className={`w-5 h-5 ${lightingHours?.endTime ? 'text-yellow-600/90' : 'text-gray-500'}`} />
+            <Icon name="sunBold" className={`w-5 h-5 ${lightingHours?.endTime ? 'text-yellow-500 dark:text-yellow-300' : 'text-gray-500'}`} />
             <span className="font-semibold">{t('lightingHours')}: </span>
           </div>
           <div>
@@ -467,7 +467,90 @@ export default function SkateparkPage() {
       const cachedData = localStorage.getItem(cacheKey);
       const cachedVersion = localStorage.getItem(versionKey);
 
-      // Always fetch all skateparks to get the complete list and version
+      // Check cache first - if it exists and has the skatepark, use it immediately
+      if (cachedData && cachedVersion) {
+        try {
+          const cachedSkateparks = JSON.parse(cachedData);
+          if (Array.isArray(cachedSkateparks)) {
+            const cachedSkatepark = cachedSkateparks.find((park: Skatepark) => park.slug === slug);
+            if (cachedSkatepark) {
+              // Use cached data immediately
+              setSkatepark(cachedSkatepark);
+              
+              // Helper function to calculate distance (Haversine formula)
+              const calcDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+                const R = 6371; // Earth's radius in km
+                const dLat = ((lat2 - lat1) * Math.PI) / 180;
+                const dLng = ((lng2 - lng1) * Math.PI) / 180;
+                const a =
+                  Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos((lat1 * Math.PI) / 180) *
+                    Math.cos((lat2 * Math.PI) / 180) *
+                    Math.sin(dLng / 2) *
+                    Math.sin(dLng / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                return R * c;
+              };
+              
+              // Calculate nearby parks from cache (same area, limit 4, excluding current)
+              const currentCoords = cachedSkatepark.location.coordinates 
+                ? { lat: cachedSkatepark.location.coordinates[1], lng: cachedSkatepark.location.coordinates[0] }
+                : { lat: 0, lng: 0 };
+              
+              const nearbyFromCache = cachedSkateparks
+                .filter((park: Skatepark) => 
+                  park.slug !== slug && 
+                  park.area === cachedSkatepark.area && 
+                  park.status === 'active'
+                )
+                .map((park: Skatepark) => {
+                  const parkCoords = park.location.coordinates
+                    ? { lat: park.location.coordinates[1], lng: park.location.coordinates[0] }
+                    : { lat: 0, lng: 0 };
+                  
+                  const distance = calcDistance(
+                    currentCoords.lat,
+                    currentCoords.lng,
+                    parkCoords.lat,
+                    parkCoords.lng
+                  );
+                  
+                  return {
+                    _id: park._id,
+                    slug: park.slug,
+                    name: park.name,
+                    imageUrl: park.images?.[0]?.url || '/placeholder-skatepark.jpg',
+                    area: park.area,
+                    rating: (park as any).rating || 0, // Use rating from cache if available
+                    totalReviews: (park as any).totalReviews || 0, // Use totalReviews from cache if available
+                    location: {
+                      lat: parkCoords.lat,
+                      lng: parkCoords.lng,
+                    },
+                    distance,
+                  };
+                })
+                .sort((a, b) => a.distance - b.distance)
+                .slice(0, 4)
+                .map(({ distance, ...park }) => park); // Remove distance from final result
+              
+              setNearbyParks(nearbyFromCache);
+              setLoading(false);
+              
+              // Only fetch reviews (not cached)
+              await fetchReviews();
+              
+              return;
+            }
+          }
+        } catch (e) {
+          // If cache is corrupted, continue to fetch fresh data
+          console.warn('Failed to parse cached skateparks data', e);
+        }
+      }
+
+      // Cache doesn't exist, is invalid, or version changed - fetch fresh data
+      // Fetch all skateparks to get the complete list and version
       const allSkateparksResponse = await fetch('/api/skateparks');
       if (!allSkateparksResponse.ok) {
         throw new Error('Failed to fetch all skateparks');
@@ -485,26 +568,6 @@ export default function SkateparkPage() {
         throw new Error('Failed to fetch skatepark detail');
       }
       const detailData = await detailResponse.json();
-
-      // Use cache if version matches
-      if (cachedData && cachedVersion && parseInt(cachedVersion) === currentVersion) {
-        try {
-          const cachedSkateparks = JSON.parse(cachedData);
-          if (Array.isArray(cachedSkateparks)) {
-            const cachedSkatepark = cachedSkateparks.find((park: Skatepark) => park.slug === slug);
-            if (cachedSkatepark) {
-              setSkatepark(cachedSkatepark);
-              setNearbyParks(detailData.nearbyParks || []);
-              setLoading(false);
-              await fetchReviews();
-              return;
-            }
-          }
-        } catch (e) {
-          // If cache is corrupted, continue to fetch fresh data
-          console.warn('Failed to parse cached skateparks data', e);
-        }
-      }
 
       // Cache is invalid or doesn't exist, use fresh data
       // Store the complete skatepark object with all fields including:
@@ -865,7 +928,7 @@ export default function SkateparkPage() {
   };
 
   return (
-    <>
+    <TooltipProvider>
       <Script
         id="skatepark-structured-data"
         type="application/ld+json"
@@ -892,37 +955,24 @@ export default function SkateparkPage() {
 
         <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
           {/* Header */}
-          <div className=" rounded-lg shadow-sm p-6 border border-border-dark/20 dark:border-text-secondary-dark/70 backdrop-blur-custom bg-white/80 dark:bg-gray-800/70">
-            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    {parkName}
+          <h1 className="-mb-5 mt-5 text-4xl font-bold text-center text-white/90">
+                    {/* Mobile version - splits on hyphens */}
+                    <span className="sm:hidden">
+                      {parkName.includes('-') ? 
+                        parkName.split('-').map((part, index, array) => (
+                          <Fragment key={index}>
+                            {part.trim()}
+                            {index < array.length - 1 && <br />}
+                          </Fragment>
+                        ))
+                        : parkName
+                      }
+                    </span>
+                    {/* Desktop version - no splitting */}
+                    <span className="hidden sm:inline">
+                      {parkName}
+                    </span>
                   </h1>
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                    {skatepark.area.charAt(0).toUpperCase() + skatepark.area.slice(1)}
-                  </span>
-                  {(() => {
-                    // Check if park is currently open using the model's isOpenNow method
-                    // For now, we'll check if it's 24/7 or if current time is within hours
-                    const isCurrentlyOpen = skatepark.lightingHours?.is24Hours || 
-                      (skatepark.operatingHours && Object.values(skatepark.operatingHours).some(day => day.isOpen));
-                    return (
-                      <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                          isCurrentlyOpen
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                        }`}
-                      >
-                        {isCurrentlyOpen ? t('openNow') : t('closed')}
-                      </span>
-                    );
-                  })()}
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Image Gallery */}
         <div className="">
@@ -1050,7 +1100,7 @@ export default function SkateparkPage() {
                               </div>
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-[200px]">
+                          <TooltipContent side="top" className="max-w-[200px] whitespace-normal">
                             <div>{t(`amenities.${key}Description`)}</div>
                           </TooltipContent>
                         </Tooltip>
@@ -1123,84 +1173,88 @@ export default function SkateparkPage() {
 
                   <div className="mx-auto w-full max-w-[220px] xsm:max-w-none flex flex-wrap justify-center gap-6 items-center">
                     {/* Waze Map Link with Tooltip */}
-                    <div className="group relative">
-                      <a 
-                        href={generateWazeUrl()} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        aria-label={`${t('waze')} ${parkName}`}
-                        className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
-                      >
-                        <Icon 
-                          name={theme === 'dark' ? "wazeDark" : "wazeBold"} 
-                          className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-[#1acdff] dark:text-gray-100 drop-shadow-md dark:drop-shadow-lg overflow-visible"
-                        />
-                      </a>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a 
+                          href={generateWazeUrl()} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          aria-label={`${t('waze')} ${parkName}`}
+                          className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
+                        >
+                          <Icon 
+                            name={theme === 'dark' ? "wazeDark" : "wazeBold"} 
+                            className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-[#1acdff] dark:text-gray-100 drop-shadow-md dark:drop-shadow-lg overflow-visible"
+                          />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
                         {t('waze')}
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900 dark:border-t-gray-800" />
-                      </div>
-                    </div>
+                      </TooltipContent>
+                    </Tooltip>
 
                     {/* Moovit Link with Tooltip */}
-                    <div className="group relative">
-                      <a 
-                        href={generateMoovitUrl()} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        aria-label={`${t('moovit')} ${parkName}`}
-                        className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
-                      >
-                        <Icon 
-                          name={theme === 'dark' ? "moovitDark" : "moovit"} 
-                          className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-text-dark dark:text-text drop-shadow-md dark:drop-shadow-lg overflow-visible"
-                        />
-                      </a>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a 
+                          href={generateMoovitUrl()} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          aria-label={`${t('moovit')} ${parkName}`}
+                          className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
+                        >
+                          <Icon 
+                            name={theme === 'dark' ? "moovitDark" : "moovit"} 
+                            className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-white dark:text-text drop-shadow-md dark:drop-shadow-lg overflow-visible"
+                          />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
                         {t('moovit')}
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900 dark:border-t-gray-800" />
-                      </div>
-                    </div>
+                      </TooltipContent>
+                    </Tooltip>
 
                     {/* Apple Maps Link with Tooltip */}
-                    <div className="group relative">
-                      <a 
-                        href={generateAppleMapsUrl()} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        aria-label={`${t('appleMaps')} ${parkName}`}
-                        className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
-                      >
-                        <Icon 
-                          name={theme === 'dark' ? "newAppleMapsDark" : "newAppleMaps"} 
-                          className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-[#3a3a3a] dark:text-gray-300 drop-shadow-md dark:drop-shadow-lg overflow-visible"
-                        />
-                      </a>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a 
+                          href={generateAppleMapsUrl()} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          aria-label={`${t('appleMaps')} ${parkName}`}
+                          className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
+                        >
+                          <Icon 
+                            name={theme === 'dark' ? "newAppleMapsDark" : "newAppleMaps"} 
+                            className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-[#3a3a3a] dark:text-gray-300 drop-shadow-md dark:drop-shadow-lg overflow-visible"
+                          />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
                         {t('appleMaps')}
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900 dark:border-t-gray-800" />
-                      </div>
-                    </div>
+                      </TooltipContent>
+                    </Tooltip>
 
                     {/* Google Maps Link with Tooltip */}
-                    <div className="group relative">
-                      <a 
-                        href={generateGoogleMapsUrl()} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        aria-label={`${t('googleMaps')} ${parkName}`}
-                        className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
-                      >
-                        <Icon 
-                          name="newGoogleMaps" 
-                          className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-text-dark dark:text-text drop-shadow-md dark:drop-shadow-lg overflow-visible"
-                        />
-                      </a>
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <a 
+                          href={generateGoogleMapsUrl()} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          aria-label={`${t('googleMaps')} ${parkName}`}
+                          className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
+                        >
+                          <Icon 
+                            name="newGoogleMaps" 
+                            className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-white dark:text-text drop-shadow-md dark:drop-shadow-lg overflow-visible"
+                          />
+                        </a>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
                         {t('googleMaps')}
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900 dark:border-t-gray-800" />
-                      </div>
-                    </div>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               </section>
@@ -1363,7 +1417,7 @@ export default function SkateparkPage() {
                       <button
                         onClick={() => setReviewsExpanded(!reviewsExpanded)}
                         className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border-dark/20 dark:border-text-secondary-dark/70 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
-                        aria-label={reviewsExpanded ? t('showLessReviews') : t('showMoreReviews')}
+                        aria-label={reviewsExpanded ? t('showLessReviews') : t('showMoreReviews', { count: sortedReviews.length - 3 })}
                       >
                         {reviewsExpanded ? (
                           <Minus className="w-5 h-5" />
@@ -1372,8 +1426,8 @@ export default function SkateparkPage() {
                         )}
                         <span className="font-medium">
                           {reviewsExpanded 
-                            ? t('showLessReviews') || 'Show Less'
-                            : t('showMoreReviews') || `Show ${sortedReviews.length - 3} More Reviews`}
+                            ? t('showLessReviews')
+                            : t('showMoreReviews', { count: sortedReviews.length - 3 })}
                         </span>
                       </button>
                     </div>
@@ -1400,8 +1454,8 @@ export default function SkateparkPage() {
                 <CardTitle className="!mt-0 text-lg font-medium">{t('nearbySkateparks')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {nearbyParks.map((park) => {
+                <div className="flex flex-col sm:grid sm-grid-cols-2 md:grid-cols-3 gap-4">
+                  {nearbyParks.map((park, index) => {
                     const nearbyName = park.name[locale] || park.name.en || park.name.he;
                     const currentCoords = getLocationCoords();
                     const distance = park.location 
@@ -1417,11 +1471,24 @@ export default function SkateparkPage() {
                       : null;
                     const areaLabel = locale === 'he' ? areaLabels[park.area]?.he : areaLabels[park.area]?.en || park.area;
                     
+                    // Hide items based on breakpoint:
+                    // - Mobile: show only first 2 (index 0, 1)
+                    // - Tablet: show first 3 (index 0, 1, 2)
+                    // - Desktop: show first 4 (index 0, 1, 2, 3)
+                    let hideClass = '';
+                    if (index >= 4) {
+                      hideClass = 'hidden'; // Always hide items beyond index 3
+                    } else if (index >= 3) {
+                      hideClass = 'hidden lg:block'; // Hide on mobile/tablet, show on desktop
+                    } else if (index >= 2) {
+                      hideClass = 'hidden md:block'; // Hide on mobile, show on tablet+
+                    }
+                    
                     return (
                       <Link
                         key={park._id}
                         href={`/${locale}/skateparks/${park.slug}`}
-                        className="h-fit hover:shadow-lg dark:hover:!scale-[1.02] bord bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200"
+                        className={`h-fit hover:shadow-lg dark:hover:!scale-[1.02] bord bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 ${hideClass}`}
                       >
                         <div className="relative bg-black/25 h-[10.5rem] overflow-hidden">
                           <Image
@@ -1500,7 +1567,7 @@ export default function SkateparkPage() {
           </div>
         </div>
       )}
-    </>
+    </TooltipProvider>
   );
 }
 
