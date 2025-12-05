@@ -717,7 +717,7 @@ export default function SkateparksPage() {
   // Track scroll position for sticky header
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > 200);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -1080,7 +1080,7 @@ export default function SkateparksPage() {
       {/* ========================================
           HERO SECTION - Brand Messaging
       ======================================== */}
-      <div className="relative bg-gradient-to-br from-brand-main/10 via-transparent to-green-500/10 dark:from-brand-dark/5 dark:to-green-500/5 border-b border-gray-200 dark:border-gray-800">
+      <div className="relative bg-gradient-to-br from-brand-main/10 via-transparent to-brand-purple/10 dark:from-brand-dark/5 dark:to-brand-purple/5 border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
@@ -1117,8 +1117,10 @@ export default function SkateparksPage() {
           STICKY FILTER BAR - Modern & Clean
       ======================================== */}
       <div 
-        className={`sticky top-16 md:16 z-40  backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-all duration-300 ${
-          isScrolled ? 'shadow-md py-3' : 'py-4'
+        className={`sticky top-16 md:16 z-40 backdrop-blur-sm transition-all duration-300 ${
+          isScrolled 
+            ? 'border-b border-border/50 dark:border-border-dark shadow-md bg-[linear-gradient(to_right,transparent_0%,#ffffffd4_10%,#ffffff_50%,#ffffffd4_90%,transparent_100%)] dark:bg-[linear-gradient(to_right,transparent_0%,#101317b3_10%,#101317_50%,#101317b3_90%,transparent_100%)] py-3' 
+            : 'py-4'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4">
@@ -1159,14 +1161,9 @@ export default function SkateparksPage() {
                 aria-label={tr('Use My Location', 'השתמש במיקומי')}
               >
                 <Icon 
-                  name={userLocation ? "locationBold" : "location"}
+                  name={userLocation ? "locationOff" : "location"}
                   className="w-5 h-5"
                 />
-                {userLocation && userCity && (
-                  <span className="hidden lg:inline ml-2 font-medium">
-                    {userCity}
-                  </span>
-                )}
               </Button>
 
               {/* View Toggle - Enhanced Animation */}
@@ -1181,20 +1178,14 @@ export default function SkateparksPage() {
                   aria-label={viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
                 >
                   {viewMode === 'grid' ? (
-                    <MapIcon className="w-5 h-5" />
+                    <Icon name="map" className="w-5 h-5" />
                   ) : (
-                    <Grid3x3 className="w-5 h-5" />
+                    <Icon name="category" className="w-5 h-5" />
                   )}
-                  <span className="hidden lg:inline ml-2 font-medium">
-                    {viewMode === 'grid' 
-                      ? tr('Map View', 'תצוגת מפה')
-                      : tr('Grid View', 'תצוגת רשת')
-                    }
-                  </span>
                 </Button>
                 
                 {/* Pulsing indicator when map is active */}
-                {viewMode === 'map' && (
+                {viewMode === 'grid' && (
                   <span className="absolute -top-1 -right-1 flex h-3 w-3">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>

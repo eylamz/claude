@@ -228,24 +228,24 @@ export default function SearchPage() {
   const getTabColorClasses = (color: string) => {
     const colors: Record<string, { bg: string; text: string; border: string }> = {
       purple: { 
-        bg: 'bg-purple-500 dark:bg-purple-600', 
-        text: 'text-purple-600 dark:text-purple-400', 
-        border: 'border-purple-500 dark:border-purple-600' 
+        bg: 'bg-brand-purple dark:bg-brand-purple', 
+        text: 'text-brand-purple dark:text-brand-purple', 
+        border: 'border-brand-purple dark:border-brand-purple' 
       },
       green: { 
-        bg: 'bg-green-500 dark:bg-green-600', 
-        text: 'text-green-600 dark:text-green-400', 
-        border: 'border-green-500 dark:border-green-600' 
+        bg: 'bg-brand-green dark:bg-brand-green', 
+        text: 'text-brand-green dark:text-brand-green', 
+        border: 'border-brand-green dark:border-brand-green' 
       },
       blue: { 
-        bg: 'bg-blue-500 dark:bg-blue-600', 
-        text: 'text-blue-600 dark:text-blue-400', 
-        border: 'border-blue-500 dark:border-blue-600' 
+        bg: 'bg-brand-blue dark:bg-brand-blue', 
+        text: 'text-brand-blue dark:text-brand-blue', 
+        border: 'border-brand-blue dark:border-blue' 
       },
       orange: { 
-        bg: 'bg-orange-500 dark:bg-orange-600', 
-        text: 'text-orange-600 dark:text-orange-400', 
-        border: 'border-orange-500 dark:border-orange-600' 
+        bg: 'bg-brand-yellow dark:bg-brand-yellow', 
+        text: 'text-brand-yellow dark:text-brand-yellow', 
+        border: 'border-brand-yellow dark:border-brand-yellow' 
       },
       teal: { 
         bg: 'bg-brand-main dark:bg-brand-main', 
@@ -253,9 +253,9 @@ export default function SearchPage() {
         border: 'border-brand-main' 
       },
       pink: { 
-        bg: 'bg-pink-500 dark:bg-pink-600', 
-        text: 'text-pink-600 dark:text-pink-400', 
-        border: 'border-pink-500 dark:border-pink-600' 
+        bg: 'bg-brand-pink dark:bg-brand-pink', 
+        text: 'text-brand-pink dark:text-brand-pink', 
+        border: 'border-brand-pink dark:border-brand-pink' 
       },
     };
     return colors[color] || colors.purple;

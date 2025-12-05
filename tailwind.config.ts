@@ -65,6 +65,12 @@ const config: Config = {
           dark: colors.brand.dark,
           text: colors.brand.text,
           color: colors.brand.color,
+          red: colors.brand.red,
+          yellow: colors.brand.yellow,
+          purple: colors.brand.purple,
+          pink: colors.brand.pink,
+          blue: colors.brand.blue,
+          green: colors.brand.green,
         },
         background: {
           DEFAULT: colors.background.light,

@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import Breadcrumb from '@/components/common/Breadcrumb';
 import ReviewForm from '@/components/reviews/ReviewForm';
 import ImageSlider from '@/components/skateparks/ImageSlider';
 import {
@@ -856,10 +857,161 @@ export default function SkateparkPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen  p-4">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <Skeleton className="h-64 md:h-96 w-full rounded-lg" />
-          <Skeleton className="h-32 w-full" />
+      <div className="min-h-screen">
+        <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
+          {/* Header Skeleton */}
+          <div className="flex justify-center -mb-5 mt-5">
+            <Skeleton className="h-10 w-64 sm:w-96" />
+          </div>
+
+          {/* Image Gallery Skeleton */}
+          <div className="max-w-7xl mx-auto p-4 lg:p-6">
+            <Skeleton className="h-64 md:h-96 w-full rounded-lg" />
+          </div>
+
+          {/* Info Cards Skeleton */}
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            {/* Hours Card Skeleton */}
+            <Card className="p-4 backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/80">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="w-5 h-5 rounded" />
+                  <Skeleton className="h-6 w-32" />
+                </div>
+                <div className="ml-6 space-y-2">
+                  <Skeleton className="h-5 w-48" />
+                  <Skeleton className="h-5 w-40" />
+                </div>
+                <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Skeleton className="w-5 h-5 rounded" />
+                    <Skeleton className="h-5 w-20" />
+                  </div>
+                  <Skeleton className="h-4 w-full" />
+                </div>
+                <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
+                  <Skeleton className="h-4 w-32" />
+                </div>
+              </div>
+            </Card>
+
+            {/* Amenities Card Skeleton */}
+            <Card className="p-4 backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70">
+              <div className="flex items-center gap-2 mb-3">
+                <Skeleton className="w-5 h-5 rounded" />
+                <Skeleton className="h-6 w-24" />
+              </div>
+              <div className="flex flex-wrap -mx-1">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="w-1/4 px-1 mb-2">
+                    <Skeleton className="h-20 w-full rounded-lg" />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+
+          {/* Notes Card Skeleton */}
+          <div className="max-w-6xl mx-auto mb-8">
+            <Card className="p-4 backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70">
+              <div className="flex items-center gap-2 mb-3">
+                <Skeleton className="w-5 h-5 rounded" />
+                <Skeleton className="h-6 w-20" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-12 w-full rounded-md" />
+                <Skeleton className="h-12 w-3/4 rounded-md" />
+              </div>
+            </Card>
+          </div>
+
+          {/* Get Directions Skeleton */}
+          <Card className="w-full !max-w-6xl mx-auto p-4 backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70">
+            <div className="flex items-center gap-2 mb-4">
+              <Skeleton className="w-5 h-5 rounded" />
+              <Skeleton className="h-6 w-32" />
+            </div>
+            <div className="flex flex-wrap justify-center gap-6">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="w-16 h-16 rounded-xl" />
+              ))}
+            </div>
+          </Card>
+
+          {/* Map Skeleton */}
+          <div className="w-full max-w-6xl mx-auto">
+            <Skeleton className="h-32 sm:h-60 w-full rounded-3xl mb-8" />
+          </div>
+
+          {/* Reviews Section Skeleton */}
+          <Card className="w-full max-w-6xl mx-auto backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="w-5 h-5 rounded" />
+                  <Skeleton className="h-6 w-32" />
+                </div>
+                <Skeleton className="h-10 w-24 rounded-lg" />
+              </div>
+              
+              {/* Rating Distribution Skeleton */}
+              <div className="mb-6 space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-4 w-12" />
+                    <div className="flex-1">
+                      <Skeleton className="h-2 w-full rounded-full" />
+                    </div>
+                    <Skeleton className="h-4 w-8" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Review Cards Skeleton */}
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="border border-border-dark/20 dark:border-text-secondary-dark/70 rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <Skeleton className="h-5 w-32 mb-2" />
+                        <div className="flex gap-1">
+                          {[...Array(5)].map((_, j) => (
+                            <Skeleton key={j} className="w-4 h-4 rounded" />
+                          ))}
+                        </div>
+                      </div>
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                    <Skeleton className="h-16 w-full mt-2" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          {/* Nearby Parks Skeleton */}
+          <Card className="w-full max-w-6xl mx-auto backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70">
+            <div className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Skeleton className="w-5 h-5 rounded" />
+                <Skeleton className="h-6 w-40" />
+              </div>
+              <div className="flex flex-col sm:grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-card dark:bg-card-dark rounded-3xl overflow-hidden">
+                    <Skeleton className="h-[10.5rem] w-full" />
+                    <div className="px-4 py-3 space-y-2">
+                      <Skeleton className="h-6 w-3/4" />
+                      <div className="flex items-center justify-between">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-12" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     );
@@ -951,11 +1103,17 @@ export default function SkateparkPage() {
       )}
 
       <div className="min-h-screen">
-        
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: tCommon('skateparks'), href: '/skateparks' },
+            { label: parkName },
+          ]}
+        />
 
         <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
           {/* Header */}
-          <h1 className="-mb-5 mt-5 text-4xl font-bold text-center text-white/90">
+          <h1 className="-mb-5 mt-5 text-4xl font-bold text-center text-white">
                     {/* Mobile version - splits on hyphens */}
                     <span className="sm:hidden">
                       {parkName.includes('-') ? 

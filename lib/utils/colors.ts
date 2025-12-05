@@ -5,6 +5,13 @@ export const colors = {
     text: '#005F60',
     color: 'hsl(162, 56%, 45%)',
     
+    red: '#FF006E',
+    yellow: '#FFB700',
+    purple: '#8B00FF',
+    blue: '#007BFF',
+    green: '#00FF00',
+    pink: '#FF00FF',
+
     50: 'hsl(171, 100%, 95%)',
     100: 'hsl(171, 100%, 85%)',
     200: 'hsl(171, 100%, 75%)d',

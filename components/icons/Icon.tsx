@@ -127,6 +127,8 @@ import Settings from './settings.svg';
 import Admin from './admin.svg';
 import AdminBold from './adminBold.svg';
 import Logout from './logout.svg';
+import Category from './category.svg';
+import CategoryBold from './categoryBold.svg';
 
 // Type for SVG components (Next.js imports SVGs as URLs by default)
 type SvgComponent = React.ComponentType<React.SVGProps<SVGSVGElement>> | string;
@@ -261,6 +263,8 @@ const iconMap: Record<string, SvgComponent> = {
   maximizeBold: MaximizeBold,
   monitor: Monitor,
   monitorBold: MonitorBold,
+  category: Category,
+  categoryBold: CategoryBold,
   
   // Guide Icons
   Roller: Roller,
@@ -440,6 +444,8 @@ export type IconName =
   | 'admin'
   | 'adminBold'
   | 'logout'
+  | 'category'
+  | 'categoryBold'
   | 'clock'; // Alias for clockBold if needed
 
 interface IconProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'size'> {

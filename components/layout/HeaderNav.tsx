@@ -60,6 +60,7 @@ export default function HeaderNav() {
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -68,6 +69,28 @@ export default function HeaderNav() {
       setRecentSearches(JSON.parse(stored));
     }
   }, []);
+
+  // Scroll detection for skateparks page
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    // Check if we're on skateparks page
+    const isSkateparksPage = pathname.includes('/skateparks');
+    
+    if (isSkateparksPage) {
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      // Set initial scroll position
+      setScrollY(window.scrollY);
+    }
+
+    return () => {
+      if (isSkateparksPage) {
+        window.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [pathname]);
 
   // Update meta theme-color when theme changes
   useEffect(() => {
@@ -175,10 +198,55 @@ export default function HeaderNav() {
   const isAdmin = session?.user?.role === 'admin';
   const tHomepage = useTranslations('common.homepage');
 
+  // Calculate background opacity for skateparks page
+  const isSkateparksPage = pathname.includes('/skateparks');
+  const scrollThreshold = 200;
+  const solidOpacity = isSkateparksPage 
+    ? Math.min(1, Math.max(0, scrollY / scrollThreshold))
+    : 0;
+
+  // Calculate background - blend between gradient and solid
+  const getBackground = () => {
+    if (!isSkateparksPage) {
+      // Default gradient for non-skateparks pages
+      return theme === 'dark'
+        ? 'linear-gradient(to right, transparent 0%, rgba(16, 19, 23, 0.7) 10%, rgba(16, 19, 23, 1) 50%, rgba(16, 19, 23, 0.7) 90%, transparent 100%)'
+        : 'linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.83) 10%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0.83) 90%, transparent 100%)';
+    }
+
+    // On skateparks page: blend between gradient and solid based on scroll
+    if (solidOpacity === 0) {
+      // Full gradient
+      return theme === 'dark'
+        ? 'linear-gradient(to right, transparent 0%, rgba(16, 19, 23, 0.7) 10%, rgba(16, 19, 23, 1) 50%, rgba(16, 19, 23, 0.7) 90%, transparent 100%)'
+        : 'linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.83) 10%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0.83) 90%, transparent 100%)';
+    } else if (solidOpacity === 1) {
+      // Full solid
+      return theme === 'dark'
+        ? 'rgba(16, 19, 23, 1)'
+        : 'rgba(255, 255, 255, 1)';
+    } else {
+      // Blend: interpolate between gradient stops and solid
+      const gradientOpacity = 1 - solidOpacity;
+      const centerOpacity = gradientOpacity + (solidOpacity * 1);
+      const sideOpacity = (gradientOpacity * 0.7) + (solidOpacity * 1);
+      const edgeOpacity = (gradientOpacity * 0) + (solidOpacity * 1);
+      
+      return theme === 'dark'
+        ? `linear-gradient(to right, rgba(16, 19, 23, ${edgeOpacity}) 0%, rgba(16, 19, 23, ${sideOpacity}) 10%, rgba(16, 19, 23, ${centerOpacity}) 50%, rgba(16, 19, 23, ${sideOpacity}) 90%, rgba(16, 19, 23, ${edgeOpacity}) 100%)`
+        : `linear-gradient(to right, rgba(255, 255, 255, ${edgeOpacity}) 0%, rgba(255, 255, 255, ${sideOpacity}) 10%, rgba(255, 255, 255, ${centerOpacity}) 50%, rgba(255, 255, 255, ${sideOpacity}) 90%, rgba(255, 255, 255, ${edgeOpacity}) 100%)`;
+    }
+  };
+
   return (
     <>
       {/* Desktop Header Navigation */}
-      <header className="hidden md:block fixed top-0 left-0 right-0 z-[50] px-3 select-none transition-all duration-200 ease text-white backdrop-blur-sm shadow-lg bg-[linear-gradient(to_right,transparent_0%,#ffffffd4_10%,#ffffff_50%,#ffffffd4_90%,transparent_100%)] dark:bg-[linear-gradient(to_right,transparent_0%,#101317b3_10%,#101317_50%,#101317b3_90%,transparent_100%)]">
+      <header 
+        className={`hidden md:block fixed top-0 left-0 right-0 z-[50] px-3 select-none transition-all duration-200 ease text-white backdrop-blur-sm ${solidOpacity >= 1 ? '' : 'shadow-lg'}`}
+        style={{
+          background: getBackground()
+        }}
+      >
         <div className="mx-auto border-b border-border/50 dark:border-border-dark w-full max-w-7xl px-2 overflow-visible text-header-text-dark dark:text-header-text">
           <div className="flex items-center justify-between h-16">
             {/* LEFT: Logo + Tagline + Social Proof */}
