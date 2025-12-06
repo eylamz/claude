@@ -424,6 +424,7 @@ export default function SkateparkPage() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
+  const [amenitiesActive, setAmenitiesActive] = useState(false);
 
   useEffect(() => {
     fetchSkatepark();
@@ -458,6 +459,15 @@ export default function SkateparkPage() {
       window.removeEventListener('storage', detectTheme);
     };
   }, []);
+
+  useEffect(() => {
+    // Reset and activate amenities after 1s delay when skatepark loads
+    setAmenitiesActive(false);
+    const timer = setTimeout(() => {
+      setAmenitiesActive(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [skatepark]);
 
   const fetchSkatepark = async () => {
     setLoading(true);
@@ -1167,27 +1177,31 @@ export default function SkateparkPage() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div
-                              className={`rounded-lg p-2 h-full cursor-pointer ${
-                                isParkClosed
-                                  ? 'bg-error/[8%] dark:bg-error-bg-dark/[15%]'
-                                  : 'bg-brand-main/[8%] dark:bg-white/[2%]'
+                              className={`rounded-lg p-2 h-full cursor-pointer transition-all duration-300 ease-out ${
+                                amenitiesActive
+                                  ? isParkClosed
+                                    ? 'bg-error/[8%] dark:bg-error-bg-dark/[15%]'
+                                    : 'bg-brand-main/[8%] dark:bg-white/[2%]'
+                                  : 'bg-black/[3%] dark:bg-black/[5%] dark:shadow-inner'
                               }`}
                             >
-                              <div className="text-center">
+                              <div className={`text-center ${amenitiesActive ? 'animate-pop' : ''}`}>
                                 <div className="mb-1.5">
                                   <Icon
                                     name={iconName as any}
-                                    className={`w-5 h-5 mx-auto ${
-                                      isParkClosed
-                                        ? 'text-error dark:text-error/80' 
-                                        : 'text-brand-main dark:text-brand-dark/80' 
-                                    }`} 
+                                    className={`w-5 h-5 mx-auto transition-colors duration-300 ease-out overflow-visible ${
+                                      amenitiesActive
+                                        ? isParkClosed
+                                          ? 'text-error dark:text-error/80'
+                                          : 'text-brand-main dark:text-brand-dark/80'
+                                        : 'text-gray-400 dark:text-[#40535e]'
+                                    }`}
                                   />
                                 </div>
-                                <div className={`text-xs font-thin ${
-                                  isParkClosed
-                                    ? 'text-text dark:text-text-dark' 
-                                  : 'text-text dark:text-text-dark' 
+                                <div className={`text-xs font-thin transition-all duration-300 ${
+                                  amenitiesActive
+                                    ? 'text-text dark:text-text-dark'
+                                    : 'text-gray-400 dark:text-text-dark/50 line-through'
                                 }`}>
                                   {t(`amenities.${key}`) || key.replace(/([A-Z])/g, ' $1').trim()}
                                 </div>

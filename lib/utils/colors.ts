@@ -1,7 +1,7 @@
 export const colors = {
   brand: {
-    main: 'hsl(182, 80%, 26%)',
-    dark: 'hsl(182, 78%, 37%)',
+    main: 'hsl(147, 68%, 55%)',
+    dark: 'hsl(147, 68%, 55%)',
     text: '#005F60',
     color: 'hsl(162, 56%, 45%)',
     
@@ -66,7 +66,7 @@ export const colors = {
   },
   background: {
     light: '#ffffff',
-    dark: '#121212',
+    dark: 'hsl(228, 8%, 12%)',
   },
   backgroundSecondary: {
     light: '#F5F5F5',
