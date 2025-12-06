@@ -16,6 +16,8 @@ export function Badge({ children, variant = 'default', className = '' }: BadgePr
     secondary: 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100',
     outline: 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300',
     destructive: 'bg-red-600 text-white',
+    primary: 'bg-brand-main dark:bg-brand-dark text-white',
+    ghost: 'bg-transparent text-text dark:text-text-dark text-brand-main dark:text-brand-dark',
   };
 
   return (

@@ -79,7 +79,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
           <TooltipTrigger asChild>
             <PopoverTrigger asChild>
               <Button
-                variant={isActive ? "info" : "outline"}
+                variant={isActive ? "primary" : "outline"}
                 size="xl"
                 className={`relative active:scale-95 transition-all duration-200 ${className || ''}`}
                 aria-label={tSkateparks('amenities.filterBy') || 'Filter by amenities'}
@@ -93,8 +93,8 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                 />
                 {isActive && (
                   <Badge 
-                    variant="secondary" 
-                    className="absolute -top-2 -right-2 min-w-[18px] h-[18px] p-0 flex items-center justify-center text-[10px]"
+                    variant="ghost" 
+                    className="text-brand-main dark:text-brand-dark poppins absolute -top-2 -right-2 min-w-[18px] h-[18px] p-0 flex items-center justify-center text-[10px]"
                   >
                     {selectedAmenities.length}
                   </Badge>

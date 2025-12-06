@@ -1075,13 +1075,13 @@ export default function SkateparksPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-background-secondary-dark dark:to-background-dark" dir={locale === 'he' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950" dir={locale === 'he' ? 'rtl' : 'ltr'}>
       
       {/* ========================================
-          HERO SECTION - Brand Messaging
+          HERO SECTION - Brand Messaging  
       ======================================== */}
-      <div className="relative bg-gradient-to-br from-brand-main/10 via-transparent to-brand-purple/10 dark:from-brand-dark/5 dark:to-brand-purple/5 border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12">
+      <div className="relative  border-b border-gray-200 dark:border-gray-800 bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5">
+        <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
               {tr('Find Your Park', 'מצא את הפארק שלך')}
@@ -1154,10 +1154,10 @@ export default function SkateparksPage() {
             <div className="flex items-center gap-2">
               {/* Location Button */}
               <Button
-                variant={userLocation ? "brand" : "outline"}
+                variant={userLocation ? "primary" : "outline"}
                 size="xl"
                 onClick={requestLocation}
-                className={`rounded-full ${userLocation ? 'shadow-lg shadow-brand-main/20' : ''}`}
+                className='rounded-full'
                 aria-label={tr('Use My Location', 'השתמש במיקומי')}
               >
                 <Icon 
@@ -1169,12 +1169,10 @@ export default function SkateparksPage() {
               {/* View Toggle - Enhanced Animation */}
               <div className="relative">
                 <Button
-                  variant={viewMode === 'map' ? "success" : "outline"}
+                  variant={viewMode === 'map' ? "primary" : "outline"}
                   size="xl"
                   onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
-                  className={`rounded-full transition-all duration-300 ${
-                    viewMode === 'map' ? 'shadow-lg shadow-green-500/20' : ''
-                  }`}
+                  className=''
                   aria-label={viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
                 >
                   {viewMode === 'grid' ? (
@@ -1187,8 +1185,8 @@ export default function SkateparksPage() {
                 {/* Pulsing indicator when map is active */}
                 {viewMode === 'grid' && (
                   <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-main dark:bg-brand-dark opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-main dark:bg-brand-dark"></span>
                   </span>
                 )}
               </div>

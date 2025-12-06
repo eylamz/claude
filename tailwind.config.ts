@@ -475,8 +475,14 @@ const config: Config = {
             '0%': { transform: 'translateY(0)' },
             '100%': { transform: 'translateY(100%)' }
           },
+          skeleton: {
+            '0%': { opacity: '0.5' },
+            '50%': { opacity: '1' },
+            '100%': { opacity: '0.5' },
+          },
       },
       animation: {
+        'skeleton': 'skeleton 4s ease-in-out infinite',
         slideIn: 'slideIn 0.4s ease-out forwards',
         scaleDownFade: 'scaleDownFade 0.25s ease-in forwards',
         scaleFadeUp: 'scaleFadeUp 0.15s ease-in forwards',

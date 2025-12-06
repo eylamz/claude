@@ -4,6 +4,8 @@
 
 
 :root {
+  --font-poppins: 'Poppins', sans-serif;
+  --font-arimo: 'Arimo', sans-serif;
   --background: #ffffff;
   --foreground: #171717;
   --text-primary: #1A1A1A;
@@ -245,6 +247,15 @@ html {
 [dir="ltr"],
 [lang="en"] {
   font-family: var(--font-poppins), sans-serif;
+}
+
+/* Font utility classes */
+.poppins {
+  font-family: var(--font-poppins), sans-serif;
+}
+
+.arimo {
+  font-family: var(--font-arimo), sans-serif;
 }
 
 

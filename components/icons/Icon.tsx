@@ -30,7 +30,8 @@ import Moon from './moon.svg';
 import MoonBold from './moonBold.svg';
 import Menu from './menu.svg';
 import Hours24 from './hours24.svg';
-import MapBold from './map.svg';
+import MapIcon from './map.svg';
+import MapIconBold from './mapBold.svg';
 import LocationOff from './locationOff.svg';
 import LocationOffBold from './locationOffBold.svg';
 import HeartLiked from './heartLike.svg';
@@ -156,6 +157,8 @@ const iconMap: Record<string, SvgComponent> = {
   // Navigation Icons
   location: MapPin,
   locationBold: MapPinBold,
+  map: MapIcon,
+  mapBold: MapIconBold,
   locationOff: LocationOff,
   locationOffBold: LocationOffBold,
   search: Search,
@@ -227,7 +230,7 @@ const iconMap: Record<string, SvgComponent> = {
   sunset: Sunset,
   lightbulbBold: LightbulbBold,
   hours24: Hours24,
-  map: MapBold,
+  map: MapIcon,
   imageBold: ImageBold,
   bulkImage: BulkImage,
   sparks: Sparks,
@@ -336,6 +339,7 @@ export type IconName =
   | 'locationOff'
   | 'locationOffBold'
   | 'map'
+  | 'mapBold'
   | 'filter'
   | 'filterBold'
   | 'star'
