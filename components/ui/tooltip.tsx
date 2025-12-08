@@ -100,7 +100,7 @@ const TooltipContent = React.forwardRef<
         sideOffset={sideOffset}
         dir={dir}
         className={cn(
-          "z-50 overflow-hidden rounded-lg bg-background-secondary dark:bg-background-secondary text-text dark:text-text-dark text-xs px-3 py-1.5 whitespace-nowrap shadow-md animate-popUp data-[state=closed]:animate-popOut",
+          "z-50 overflow-hidden rounded-lg bg-tooltip dark:bg-tooltip-dark text-text-dark dark:text-white text-xs px-3 py-1.5 whitespace-nowrap animate-popUp data-[state=closed]:animate-popOut",
           className
         )}
         {...props}

@@ -79,8 +79,8 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
           <TooltipTrigger asChild>
             <PopoverTrigger asChild>
               <Button
-                variant={isActive ? "primary" : "outline"}
-                size="xl"
+                variant={isActive ? "infoIcon" : "none"}
+                size="sm"
                 className={`relative active:scale-95 transition-all duration-200 ${className || ''}`}
                 aria-label={tSkateparks('amenities.filterBy') || 'Filter by amenities'}
                 aria-expanded={isOpen}
@@ -93,8 +93,8 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                 />
                 {isActive && (
                   <Badge 
-                    variant="ghost" 
-                    className="text-brand-main dark:text-brand-dark poppins absolute -top-2 -right-2 min-w-[18px] h-[18px] p-0 flex items-center justify-center text-[10px]"
+                    variant="info" 
+                    className="rounded-full text-info dark:text-info-dark poppins absolute -top-2 -right-2 shadow-badge min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]"
                   >
                     {selectedAmenities.length}
                   </Badge>
@@ -126,28 +126,59 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
               </Button>
             )}
           </div>
-          <Separator className="bg-text-secondary dark:bg-white/20" />
-          <div className="grid grid-cols-2 gap-2">
-            {amenityOptions.map((amenity) => {
-              const iconName = AMENITY_ICON_MAP[amenity.key] || 'filter';
-              const isSelected = selectedAmenities.includes(amenity.key);
-              return (
-                <Button
-                  key={amenity.key}
-                  variant={isSelected ? "info" : "ghost2"}
-                  size="sm"
-                  className={`min-w-[100px] justify-start text-nowrap ${isSelected ? '' : 'text-text dark:text-text-dark/90'}`}
-                  onClick={() => toggleAmenity(amenity.key)}
-                >
-                  <Icon 
-                    name={iconName as any}
-                    className={`w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0 transition-all duration-200 ${isSelected ? 'text-info dark:text-info-dark' : 'text-text-secondary dark:text-text-secondary-dark'}`}
-                  />
-                  {tSkateparks(amenity.label)}
-                </Button>
-              );
-            })}
-          </div>
+          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+          <table className="w-full">
+            <tbody>
+              {Array.from({ length: Math.ceil(amenityOptions.length / 2) }).map((_, rowIndex) => {
+                const leftAmenity = amenityOptions[rowIndex * 2];
+                const rightAmenity = amenityOptions[rowIndex * 2 + 1];
+                return (
+                  <tr key={rowIndex}>
+                    <td className="p-1 border-r border-popover-border dark:border-popover-border-dark">
+                      {leftAmenity && (() => {
+                        const iconName = AMENITY_ICON_MAP[leftAmenity.key] || 'filter';
+                        const isSelected = selectedAmenities.includes(leftAmenity.key);
+                        return (
+                          <Button
+                            variant={isSelected ? "info" : "popover"}
+                            size="sm"
+                            className={`w-full justify-start text-nowrap ${isSelected ? '' : 'text-text dark:text-text-dark/90'}`}
+                            onClick={() => toggleAmenity(leftAmenity.key)}
+                          >
+                            <Icon 
+                              name={iconName as any}
+                              className={`w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0 transition-all duration-200 ${isSelected ? 'text-info dark:text-info-dark' : 'text-text-secondary dark:text-text-secondary-dark'}`}
+                            />
+                            {tSkateparks(leftAmenity.label)}
+                          </Button>
+                        );
+                      })()}
+                    </td>
+                    <td className="p-1">
+                      {rightAmenity && (() => {
+                        const iconName = AMENITY_ICON_MAP[rightAmenity.key] || 'filter';
+                        const isSelected = selectedAmenities.includes(rightAmenity.key);
+                        return (
+                          <Button
+                            variant={isSelected ? "info" : "ghost2"}
+                            size="sm"
+                            className={`w-full justify-start text-nowrap ${isSelected ? '' : 'text-text dark:text-text-dark/90'}`}
+                            onClick={() => toggleAmenity(rightAmenity.key)}
+                          >
+                            <Icon 
+                              name={iconName as any}
+                              className={`w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0 transition-all duration-200 ${isSelected ? 'text-info dark:text-info-dark' : 'text-text-secondary dark:text-text-secondary-dark'}`}
+                            />
+                            {tSkateparks(rightAmenity.label)}
+                          </Button>
+                        );
+                      })()}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </PopoverContent>
     </Popover>

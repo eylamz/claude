@@ -14,6 +14,7 @@ const config: Config = {
   theme: {
     extend: {
       screens: {
+        'xxs': '360px',
         'xsm': '480px',
         'sm': '640px',
         'md': '768px',
@@ -65,6 +66,7 @@ const config: Config = {
           dark: colors.brand.dark,
           text: colors.brand.text,
           color: colors.brand.color,
+          accent: colors.brand.accent,
           red: colors.brand.red,
           yellow: colors.brand.yellow,
           purple: colors.brand.purple,
@@ -79,6 +81,11 @@ const config: Config = {
           card: {
             DEFAULT: colors.card.light,
             dark: colors.card.dark,
+            muted: {
+               DEFAULT: colors.card.muted.light,
+              dark: colors.card.muted.dark
+            },
+
             border: {
               DEFAULT: colors.card.border.light,
               dark: colors.card.border.dark,
@@ -100,6 +107,14 @@ const config: Config = {
           DEFAULT: colors.text.secondary.light,
           dark: colors.text.secondary.dark,
         },
+        icons: {
+          DEFAULT: colors.icons.light,
+          dark: colors.icons.dark,
+        },
+        tooltip: {
+          DEFAULT: colors.tooltip.light,
+          dark: colors.tooltip.dark,
+        },
           header: {
             DEFAULT: colors.header.light,
             dark: colors.header.dark,
@@ -110,6 +125,10 @@ const config: Config = {
             text: {
               DEFAULT: colors.header.text.light,
               dark: colors.header.text.dark,
+            },
+            icon: {
+              DEFAULT: colors.header.icon.light,
+              dark: colors.header.icon.dark,
             },
             guide: {
               DEFAULT: colors.header.guide.light,
@@ -161,6 +180,14 @@ const config: Config = {
             DEFAULT: colors.border.inner.light,
             dark: colors.border.inner.dark,  
           }
+        },
+        popover: {
+          DEFAULT: colors.popover.light,
+          dark: colors.popover.dark,
+          border: {
+            DEFAULT: colors.popover.border.light,
+            dark: colors.popover.border.dark,
+          },
         },
         input: {
           DEFAULT: colors.input.light,
@@ -481,7 +508,8 @@ const config: Config = {
             '100%': { opacity: '0.5' },
           },
           'popUp': {
-            '0%': { opacity: '0.2', transform: 'scale(0.9) translateY(15px)' },
+            '0%': { opacity: '0.2', transform: 'scale(1) translateY(35px)' },
+            '30%': { opacity: '0.3', transform: 'scale(1) translateY(25px)' },
             '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
           },
           'popOut': {

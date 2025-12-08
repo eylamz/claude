@@ -1,9 +1,10 @@
 export const colors = {
   brand: {
-    main: 'hsl(147, 68%, 55%)',
-    dark: 'hsl(147, 68%, 55%)',
-    text: '#005F60',
+    main: 'hsl(157, 99%, 40%)',
+    dark: 'hsl(157, 99%, 40%)',
+    text: 'hsl(148, 61%, 46%)',
     color: 'hsl(162, 56%, 45%)',
+    accent: 'hsl(355, 84%, 65%)',
     
     red: '#FF006E',
     yellow: '#FFB700',
@@ -32,16 +33,28 @@ export const colors = {
   backdropBlur: {
     'custom': '5px',
   },
+  icons: {
+    light: 'hsl(0, 0%, 0%)',
+    dark: 'hsl(0, 0%, 100%)',
+  },
+  tooltip: {
+    light: 'hsl(0, 0%, 43%)',
+    dark: 'hsl(0, 0%, 42%)',
+  },
   header: {
-    light: 'hsl(162, 99%, 48%)',
-    dark: 'hsl(162, 99%, 40%)',
+    light: 'hsl(0, 0%, 97%)',
+    dark: 'hsl(0, 0%, 11%)',
     border: {
-      light: 'hsla(166, 94.70%, 29.60%, 1)',
-      dark: 'hsl(166 98% 28% / 1)',
+      light: 'hsl(0, 0%, 90%)',
+      dark: 'hsl(240, 6%, 20%)',
     },
     text: {
       light: 'hsl(162, 48%, 16%)',
       dark: 'hsl(162, 99%, 38%)',
+    },
+    icon: {
+      light: 'hsl(0, 0%, 17%)',
+      dark: 'hsl(0, 0%, 94%)',
     },
     guide: {
       light: 'hsl(199, 85%, 42%)',
@@ -53,11 +66,15 @@ export const colors = {
     },
   },
   card: {
-    light: 'hsl(0, 0%, 100%)',
-    dark: 'hsl(218, 19%, 13%)',
+    light: 'hsl(0, 0%, 96%)',
+    dark: 'hsl(0, 0%, 13%)',
+    muted: {
+      light: 'hsl(0, 0%, 88%)',
+      dark: 'hsl(0, 0%, 20%)',
+    },
     border: {
       light: 'hsl(0, 0%, 85%)',
-      dark: 'hsl(203, 38%, 12%)',
+      dark: 'hsl(0, 0%, 20%)',
     },
     icon: {
       light: 'hsl(0, 0%, 85%)',
@@ -65,8 +82,8 @@ export const colors = {
     }
   },
   background: {
-    light: '#ffffff',
-    dark: 'hsl(228, 8%, 12%)',
+    light: 'hsl(0, 0%, 100%)',
+    dark: 'hsl(0, 0%, 7%)',
   },
   backgroundSecondary: {
     light: '#F5F5F5',
@@ -105,9 +122,21 @@ export const colors = {
       dark: 'hsl(201, 18%, 19%)',
     },
   },
+  popover: {
+    light: 'hsl(0, 0%, 100%)',
+    dark: 'hsl(0, 0%, 3%)',
+    border: {
+      light: 'hsl(0, 0%, 94%)',
+      dark: 'hsl(0, 0%, 29%)',
+    },
+  },
   input: {
-    light: 'hsl(220, 6%, 97%)',
-    dark: 'hsl(214, 16%, 9%)',
+    light: 'hsl(0, 0%, 100%)',
+    dark: 'hsl(0, 0%, 7%)',
+    border: {
+      light: 'hsl(0, 0%, 88%)',
+      dark: 'hsl(0, 0%, 29%)',
+    },
     hover: {
       light: 'hsl(220, 6%, 99%)',
       dark: 'hsl(214, 16%, 7%)',

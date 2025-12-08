@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
@@ -31,6 +31,8 @@ export default function MobileNavMinimal() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const prevScrollYRef = useRef(0);
   const itemCount = useCartItemCount();
 
   // MINIMAL PALETTE - Only green + neutrals
@@ -103,18 +105,18 @@ export default function MobileNavMinimal() {
 
   const isAdmin = session?.user?.role === 'admin';
 
-  // Calculate background opacity for skateparks page
+  // Check if on skateparks page
   const isSkateparksPage = pathname.includes('/skateparks');
-  const scrollThreshold = 200;
-  const solidOpacity = isSkateparksPage 
-    ? Math.min(1, Math.max(0, scrollY / scrollThreshold))
-    : 0;
-
-  const getBackgroundOpacity = () => {
-    if (!isSkateparksPage) {
-      return theme === 'dark' ? 0.95 : 0.98;
+  
+  // Determine border class based on page and scroll
+  const getBorderClass = () => {
+    if (isSkateparksPage) {
+      // On skateparks page: border-b when not scrolled, border-b-2 when scrolled
+      return scrollY > 0 ? 'border-b-2' : 'border-b';
+    } else {
+      // On all other pages: always border-b-2
+      return 'border-b-2';
     }
-    return 0.8 + (0.2 * solidOpacity);
   };
 
   // Close menu when route changes
@@ -135,23 +137,35 @@ export default function MobileNavMinimal() {
     };
   }, [isMenuOpen]);
 
-  // Scroll detection
+  // Scroll detection for header visibility
   useEffect(() => {
     const handleScroll = () => {
-      setScrollY(window.scrollY);
+      const currentScrollY = window.scrollY;
+      const prevScrollY = prevScrollYRef.current;
+      
+      // Determine scroll direction
+      if (currentScrollY < prevScrollY || currentScrollY < 10) {
+        // Scrolling up or at top - show header
+        setIsHeaderVisible(true);
+      } else if (currentScrollY > prevScrollY) {
+        // Scrolling down - hide header
+        setIsHeaderVisible(false);
+      }
+      
+      prevScrollYRef.current = currentScrollY;
+      setScrollY(currentScrollY);
     };
 
-    const isSkateparksPage = pathname.includes('/skateparks');
-    
-    if (isSkateparksPage) {
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      setScrollY(window.scrollY);
-    }
+    // Set initial scroll position
+    const initialScrollY = window.scrollY;
+    setScrollY(initialScrollY);
+    prevScrollYRef.current = initialScrollY;
+    setIsHeaderVisible(initialScrollY < 10);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      if (isSkateparksPage) {
-        window.removeEventListener('scroll', handleScroll);
-      }
+      window.removeEventListener('scroll', handleScroll);
     };
   }, [pathname]);
 
@@ -162,43 +176,33 @@ export default function MobileNavMinimal() {
           Green accent only on active/hover states
       ======================================== */}
       <header 
-        className={`md:hidden fixed top-0 left-0 right-0 z-[50] backdrop-blur-xl border-b transition-all duration-300 ${
-          scrollY > 10 
-            ? 'border-gray-200 dark:border-gray-800 shadow-sm' 
-            : 'border-transparent'
+        className={`md:hidden fixed top-0 left-0 right-0 z-[50] bg-header dark:bg-header-dark ${getBorderClass()} border-header-border dark:border-header-border-dark shadow-sm transition-all duration-300 ${
+          isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
-        style={{
-          backgroundColor: theme === 'dark'
-            ? `rgba(10, 14, 20, ${getBackgroundOpacity()})`  // Deep blue-black
-            : `rgba(255, 255, 255, ${getBackgroundOpacity()})`
-        }}
       >
         <div className="flex items-center justify-between h-16 px-4">
           
           {/* Left: Menu Button - Clean & Simple */}
           <button
             onClick={() => setIsMenuOpen(true)}
-            className="p-2.5 -ml-2 text-gray-700 dark:text-gray-300 hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95"
+            className="p-2.5 -ml-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95"
             aria-label="Open menu"
           >
             <Menu className="w-6 h-6" strokeWidth={2} />
           </button>
 
-          {/* Center: Logo + Tagline - Refined Typography */}
+          {/* Center: Logo */}
           <Link href={`/${locale}`} className="flex flex-col items-center group">
             <Icon 
               name="logo-hostage3" 
-              className="w-20 h-6 text-brand-main transition-opacity group-hover:opacity-80" 
+              className="w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] text-brand-main transition-opacity group-hover:opacity-80" 
             />
-            <span className="text-[8px] font-semibold text-brand-main/60 dark:text-brand-main/50 tracking-[0.15em] uppercase mt-1">
-              Feel the Joy
-            </span>
           </Link>
 
           {/* Right: Cart Button - Minimal Badge */}
           <Link
             href={`/${locale}/cart`}
-            className="relative p-2.5 -mr-2 text-gray-700 dark:text-gray-300 hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95 group"
+            className="relative p-2.5 -mr-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95 group"
             aria-label={`Cart with ${itemCount} items`}
           >
             <ShoppingBag className="w-6 h-6" strokeWidth={2} />

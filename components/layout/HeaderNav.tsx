@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import {
-  Settings,
   User,
   LogIn,
   LogOut,
@@ -32,11 +31,6 @@ import {
 } from '@/stores/cartStore';
 import { Input } from '@/components/ui';
 
-interface NavItem {
-  href: string;
-  label: string;
-}
-
 export default function HeaderNav() {
   const pathname = usePathname();
   const router = useRouter();
@@ -61,6 +55,8 @@ export default function HeaderNav() {
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [scrollY, setScrollY] = useState(0);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const prevScrollYRef = useRef(0);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -70,25 +66,35 @@ export default function HeaderNav() {
     }
   }, []);
 
-  // Scroll detection for skateparks page
+  // Scroll detection for header visibility and skateparks page
   useEffect(() => {
     const handleScroll = () => {
-      setScrollY(window.scrollY);
+      const currentScrollY = window.scrollY;
+      const prevScrollY = prevScrollYRef.current;
+      
+      // Determine scroll direction
+      if (currentScrollY < prevScrollY || currentScrollY < 10) {
+        // Scrolling up or at top - show header
+        setIsHeaderVisible(true);
+      } else if (currentScrollY > prevScrollY) {
+        // Scrolling down - hide header
+        setIsHeaderVisible(false);
+      }
+      
+      prevScrollYRef.current = currentScrollY;
+      setScrollY(currentScrollY);
     };
 
-    // Check if we're on skateparks page
-    const isSkateparksPage = pathname.includes('/skateparks');
-    
-    if (isSkateparksPage) {
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      // Set initial scroll position
-      setScrollY(window.scrollY);
-    }
+    // Set initial scroll position
+    const initialScrollY = window.scrollY;
+    setScrollY(initialScrollY);
+    prevScrollYRef.current = initialScrollY;
+    setIsHeaderVisible(initialScrollY < 10);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      if (isSkateparksPage) {
-        window.removeEventListener('scroll', handleScroll);
-      }
+      window.removeEventListener('scroll', handleScroll);
     };
   }, [pathname]);
 
@@ -198,43 +204,17 @@ export default function HeaderNav() {
   const isAdmin = session?.user?.role === 'admin';
   const tHomepage = useTranslations('common.homepage');
 
-  // Calculate background opacity for skateparks page
+  // Check if on skateparks page
   const isSkateparksPage = pathname.includes('/skateparks');
-  const scrollThreshold = 200;
-  const solidOpacity = isSkateparksPage 
-    ? Math.min(1, Math.max(0, scrollY / scrollThreshold))
-    : 0;
-
-  // Calculate background - blend between gradient and solid
-  const getBackground = () => {
-    if (!isSkateparksPage) {
-      // Default gradient for non-skateparks pages
-      return theme === 'dark'
-        ? 'linear-gradient(to right, transparent 0%, rgba(16, 19, 23, 0.7) 10%, rgba(16, 19, 23, 1) 50%, rgba(16, 19, 23, 0.7) 90%, transparent 100%)'
-        : 'linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.83) 10%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0.83) 90%, transparent 100%)';
-    }
-
-    // On skateparks page: blend between gradient and solid based on scroll
-    if (solidOpacity === 0) {
-      // Full gradient
-      return theme === 'dark'
-        ? 'linear-gradient(to right, transparent 0%, rgba(16, 19, 23, 0.7) 10%, rgba(16, 19, 23, 1) 50%, rgba(16, 19, 23, 0.7) 90%, transparent 100%)'
-        : 'linear-gradient(to right, transparent 0%, rgba(255, 255, 255, 0.83) 10%, rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0.83) 90%, transparent 100%)';
-    } else if (solidOpacity === 1) {
-      // Full solid
-      return theme === 'dark'
-        ? 'rgba(16, 19, 23, 1)'
-        : 'rgba(255, 255, 255, 1)';
+  
+  // Determine border class based on page and scroll
+  const getBorderClass = () => {
+    if (isSkateparksPage) {
+      // On skateparks page: border-b when not scrolled, border-b-2 when scrolled
+      return scrollY > 0 ? 'border-b-2' : 'border-b';
     } else {
-      // Blend: interpolate between gradient stops and solid
-      const gradientOpacity = 1 - solidOpacity;
-      const centerOpacity = gradientOpacity + (solidOpacity * 1);
-      const sideOpacity = (gradientOpacity * 0.7) + (solidOpacity * 1);
-      const edgeOpacity = (gradientOpacity * 0) + (solidOpacity * 1);
-      
-      return theme === 'dark'
-        ? `linear-gradient(to right, rgba(16, 19, 23, ${edgeOpacity}) 0%, rgba(16, 19, 23, ${sideOpacity}) 10%, rgba(16, 19, 23, ${centerOpacity}) 50%, rgba(16, 19, 23, ${sideOpacity}) 90%, rgba(16, 19, 23, ${edgeOpacity}) 100%)`
-        : `linear-gradient(to right, rgba(255, 255, 255, ${edgeOpacity}) 0%, rgba(255, 255, 255, ${sideOpacity}) 10%, rgba(255, 255, 255, ${centerOpacity}) 50%, rgba(255, 255, 255, ${sideOpacity}) 90%, rgba(255, 255, 255, ${edgeOpacity}) 100%)`;
+      // On all other pages: always border-b-2
+      return 'border-b-2';
     }
   };
 
@@ -242,55 +222,43 @@ export default function HeaderNav() {
     <>
       {/* Desktop Header Navigation */}
       <header 
-        className={`hidden md:block fixed top-0 left-0 right-0 z-[50] px-3 select-none transition-all duration-200 ease text-white backdrop-blur-sm ${solidOpacity >= 1 ? '' : 'shadow-lg'}`}
-        style={{
-          background: getBackground()
-        }}
+        className={`hidden md:block fixed top-0 left-0 right-0 z-[50] px-3 select-none transition-transform duration-300 ease-in-out text-white bg-header dark:bg-header-dark ${
+          isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
+        }`}
       >
-        <div className="mx-auto border-b border-border/50 dark:border-border-dark w-full max-w-7xl px-2 overflow-visible text-header-text-dark dark:text-header-text">
+        <div className={`mx-auto ${getBorderClass()} border-header-border dark:border-header-border-dark w-full max-w-7xl px-2 overflow-visible text-header-text-dark dark:text-header-text`}>
           <div className="flex items-center justify-between h-16">
-            {/* LEFT: Logo + Tagline + Social Proof */}
+            {/* LEFT: Logo*/}
             <div className="flex items-center gap-4">
               <Link href={`/${locale}`} className="flex flex-col items-start gap-0.5">
                 {/* Logo */}
                 <Icon name="logo" className="text-brand-main dark:text-brand-dark w-[124px] h-[39px] sm:w-[128px] sm:h-[24px]" />
-                {/* Tagline */}
-                <span className="text-[10px] font-medium text-brand-main/70 dark:text-brand-dark/70 tracking-wide">
-                  Feel the Joy. Find Your Park.
-                </span>
+
               </Link>
             </div>
 
             {/* CENTER: Main Navigation (Action-Oriented) */}
             <nav className="hidden md:flex items-center gap-1">
-              {/* Find a Park (Primary action) */}
+              {/* Skateparks */}
               <Link
                 href={`/${locale}/skateparks`}
-                className={`group px-3 py-2 rounded-lg transition-all duration-200 font-semibold text-black/80 dark:text-white/80 hover:scale-105 hover:bg-brand-main/10 dark:hover:bg-brand-main/20 hover:text-brand-main dark:hover:text-brand-main relative ${
-                  isActive(`/${locale}/skateparks`) ? 'bg-brand-main/10 dark:bg-brand-main/20 text-brand-main dark:text-brand-main' : ''
+                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                  isActive(`/${locale}/skateparks`) ? 'text-black dark:text-white' : ''
                 }`}
               >
-                <span className="flex items-center gap-1.5">
-                  <Icon name="location" className="w-4 h-4" />
-                  {tAdmin('skateparks')}
-                </span>
+                {tAdmin('skateparks')}
               </Link>
 
-              {/* Find a Trainer (Revenue driver - elevated) */}
+              {/* Trainers */}
               <Link
                 href={`/${locale}/trainers`}
-                className={`group px-3 py-2 rounded-lg transition-all duration-200 font-semibold text-black/80 dark:text-white/80 hover:scale-105 hover:bg-accent/10 dark:hover:bg-accent/20 hover:text-accent dark:hover:text-accent relative ${
-                  isActive(`/${locale}/trainers`) ? 'bg-accent/10 dark:bg-accent/20 text-accent dark:text-accent' : ''
+                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
+                  isActive(`/${locale}/trainers`) ? 'text-black dark:text-white' : ''
                 }`}
               >
-                <span className="flex items-center gap-1.5">
-                  <Icon name="gymWeight" className="w-4 h-4" />
-                  {tAdmin('trainers')}
-                </span>
+                {tAdmin('trainers')}
                 {/* "Featured" badge for premium trainers */}
                 <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
                 </span>
               </Link>
 
@@ -323,9 +291,24 @@ export default function HeaderNav() {
               >
                 {tHomepage('community')}
               </Link>
+
+              {/* Shop */}
+              <Link
+                href={`/${locale}/shop`}
+                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
+                  isActive(`/${locale}/shop`) ? 'text-black dark:text-white' : ''
+                }`}
+              >
+                {tShop('title')}
+                {/* "Featured" badge for shop */}
+                <span className="absolute top-2 right-1 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-accent"></span>
+                </span>
+              </Link>
             </nav>
 
-            {/* RIGHT: Actions (Search, Shop CTA, Cart, Settings) */}
+            {/* RIGHT: Actions (Search, Cart, Settings) */}
             <div className="flex items-center gap-2">
               {/* Search (more prominent) */}
               <button
@@ -340,15 +323,6 @@ export default function HeaderNav() {
                   {tCommon('search')}
                 </span>
               </button>
-
-              {/* Shop CTA Button (Revenue driver - prominent) */}
-              <Link
-                href={`/${locale}/shop`}
-                className="group flex items-center gap-2 px-4 py-2 rounded-full bg-brand-dark hover:bg-brand-dark/80 dark:bg-brand-dark dark:hover:bg-brand-dark/80 text-white font-semibold transition-all duration-200 hover:scale-105 shadow-md hover:shadow-lg"
-              >
-                <Icon name="shop" className="w-4 h-4" />
-                <span>{tShop('title')}</span>
-              </Link>
 
               {/* Cart with badge */}
               <div className="relative">

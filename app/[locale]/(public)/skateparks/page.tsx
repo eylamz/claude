@@ -453,7 +453,7 @@ const SkateparkThumbnail = memo(({
         />
       ) : (
         <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-          <div className="w-16 h-16 opacity-50 bg-gray-300 dark:bg-gray-600 rounded" />
+        <div className="w-16 h-16 opacity-50 bg-card-muted dark:bg-card-muted-dark rounded" />
         </div>
       )}
     </>
@@ -665,8 +665,10 @@ export default function SkateparksPage() {
   const [animatingIcons, setAnimatingIcons] = useState<Set<string>>(new Set());
   const [shouldAnimateLocation, setShouldAnimateLocation] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevSelectedAmenitiesRef = useRef<string[]>([]);
   const prevUserLocationRef = useRef<UserLocation | null>(null);
+  const prevScrollYRef = useRef(0);
 
   // Track newly added amenities for pop animation
   useEffect(() => {
@@ -714,12 +716,32 @@ export default function SkateparksPage() {
     }
   }, [userLocation, sortBy]);
 
-  // Track scroll position for sticky header
+  // Track scroll position for sticky header and header visibility
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 200);
+      const currentScrollY = window.scrollY;
+      const prevScrollY = prevScrollYRef.current;
+      
+      // Determine header visibility (matches HeaderNav/MobileNav logic)
+      if (currentScrollY < prevScrollY || currentScrollY < 10) {
+        // Scrolling up or at top - show header
+        setIsHeaderVisible(true);
+      } else if (currentScrollY > prevScrollY) {
+        // Scrolling down - hide header
+        setIsHeaderVisible(false);
+      }
+      
+      prevScrollYRef.current = currentScrollY;
+      setIsScrolled(currentScrollY > 260);
     };
-    window.addEventListener('scroll', handleScroll);
+
+    // Set initial scroll position
+    const initialScrollY = window.scrollY;
+    prevScrollYRef.current = initialScrollY;
+    setIsHeaderVisible(initialScrollY < 10);
+    setIsScrolled(initialScrollY > 200);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -1075,12 +1097,12 @@ export default function SkateparksPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950" dir={locale === 'he' ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-background dark:bg-background-dark" dir={locale === 'he' ? 'rtl' : 'ltr'}>
       
       {/* ========================================
           HERO SECTION - Brand Messaging  
       ======================================== */}
-      <div className="relative  border-b border-gray-200 dark:border-gray-800 bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5">
+      <div className="relative   bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5">
         <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
@@ -1117,18 +1139,20 @@ export default function SkateparksPage() {
           STICKY FILTER BAR - Modern & Clean
       ======================================== */}
       <div 
-        className={`sticky top-16 md:16 z-40 backdrop-blur-sm transition-all duration-300 ${
+        className={`sticky z-40 transition-all duration-300 ${
+          isHeaderVisible ? 'top-16 md:top-16' : 'top-0'
+        } ${
           isScrolled 
-            ? 'border-b border-border/50 dark:border-border-dark shadow-md bg-[linear-gradient(to_right,transparent_0%,#ffffffd4_10%,#ffffff_50%,#ffffffd4_90%,transparent_100%)] dark:bg-[linear-gradient(to_right,transparent_0%,#101317b3_10%,#101317_50%,#101317b3_90%,transparent_100%)] py-3' 
+            ? 'bg-header dark:bg-header-dark border-b-2 border-header-border dark:border-header-border-dark py-3' 
             : 'py-4'
         }`}
       >
         <div className="max-w-7xl mx-auto px-4">
           {/* Main Filter Row */}
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+          <div className="flex flex-col xxs:flex-row items-stretch md:items-center gap-3">
             
             {/* Left: Search + Amenities */}
-            <div className="flex items-center gap-3 flex-1">
+            <div className="flex items-center gap-1 flex-1">
               {/* Search Input */}
               <div className="flex-1 min-w-0">
                 <SearchInput
@@ -1136,28 +1160,30 @@ export default function SkateparksPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onClear={() => setSearchQuery('')}
-                  className="w-full"
+                  className="w-full "
                 />
               </div>
 
-              {/* Amenities Button */}
-              <div className="flex-shrink-0">
+         
+            </div>
+
+            {/* Right: Location + View Toggle */}
+            <div className="flex items-center gap-0 xsm:gap-1">
+                   {/* Amenities Button */}
+                   <div className="flex-shrink-0">
                 <AmenitiesButton
                   selectedAmenities={selectedAmenities}
                   onAmenitiesChange={setSelectedAmenities}
                   locale={locale}
                 />
               </div>
-            </div>
-
-            {/* Right: Location + View Toggle */}
-            <div className="flex items-center gap-2">
+              
               {/* Location Button */}
               <Button
-                variant={userLocation ? "primary" : "outline"}
-                size="xl"
+                variant={userLocation ? "brandIcon" : "none"}
+                size="sm"
                 onClick={requestLocation}
-                className='rounded-full'
+                className=''
                 aria-label={tr('Use My Location', 'השתמש במיקומי')}
               >
                 <Icon 
@@ -1169,8 +1195,8 @@ export default function SkateparksPage() {
               {/* View Toggle - Enhanced Animation */}
               <div className="relative">
                 <Button
-                  variant={viewMode === 'map' ? "primary" : "outline"}
-                  size="xl"
+                  variant={viewMode === 'map' ? "warningIcon" : "none"}
+                  size="sm"
                   onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
                   className=''
                   aria-label={viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
