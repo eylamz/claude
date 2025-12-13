@@ -87,10 +87,14 @@ const TooltipContent = React.forwardRef<
 
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
 
->(({ className, sideOffset = 8, ...props }, ref) => {
+>(({ className, sideOffset = 8, side, ...props }, ref) => {
   const locale = useLocale();
   const isRTL = locale === 'he';
   const dir = isRTL ? 'rtl' : 'ltr';
+
+  // Use popDown animations when side is "bottom", otherwise use popUp
+  const openAnimation = side === 'bottom' ? 'animate-popDown' : 'animate-popUp';
+  const closeAnimation = side === 'bottom' ? 'data-[state=closed]:animate-popOutDown' : 'data-[state=closed]:animate-popOut';
 
   return (
     // Ensure it's using Portal
@@ -98,9 +102,12 @@ const TooltipContent = React.forwardRef<
       <TooltipPrimitive.Content
         ref={ref}
         sideOffset={sideOffset}
+        side={side}
         dir={dir}
         className={cn(
-          "z-50 overflow-hidden rounded-lg bg-tooltip dark:bg-tooltip-dark text-text-dark dark:text-white text-xs px-3 py-1.5 whitespace-nowrap animate-popUp data-[state=closed]:animate-popOut",
+          "z-50 overflow-hidden rounded-lg bg-tooltip dark:bg-tooltip-dark text-text-dark dark:text-white bord text-xs px-3 py-1.5 whitespace-nowrap",
+          openAnimation,
+          closeAnimation,
           className
         )}
         {...props}

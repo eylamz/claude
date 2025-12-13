@@ -222,7 +222,7 @@ export default function HeaderNav() {
     <>
       {/* Desktop Header Navigation */}
       <header 
-        className={`hidden md:block fixed top-0 left-0 right-0 z-[50] px-3 select-none transition-transform duration-300 ease-in-out text-white bg-header dark:bg-header-dark ${
+        className={`hidden [@media_(min-width:820px)]:block fixed top-0 left-0 right-0 z-[50] px-3 select-none transition-transform duration-300 ease-in-out text-white bg-header dark:bg-header-dark ${
           isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
@@ -242,7 +242,7 @@ export default function HeaderNav() {
               {/* Skateparks */}
               <Link
                 href={`/${locale}/skateparks`}
-                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
                   isActive(`/${locale}/skateparks`) ? 'text-black dark:text-white' : ''
                 }`}
               >
@@ -252,7 +252,7 @@ export default function HeaderNav() {
               {/* Trainers */}
               <Link
                 href={`/${locale}/trainers`}
-                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
+                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
                   isActive(`/${locale}/trainers`) ? 'text-black dark:text-white' : ''
                 }`}
               >
@@ -265,7 +265,7 @@ export default function HeaderNav() {
               {/* Events */}
               <Link
                 href={`/${locale}/events`}
-                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
                   isActive(`/${locale}/events`) ? 'text-black dark:text-white' : ''
                 }`}
               >
@@ -275,7 +275,7 @@ export default function HeaderNav() {
               {/* Guides */}
               <Link
                 href={`/${locale}/guides`}
-                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
                   isActive(`/${locale}/guides`) ? 'text-black dark:text-white' : ''
                 }`}
               >
@@ -285,7 +285,7 @@ export default function HeaderNav() {
               {/* Join Community (drive registration) */}
               <Link
                 href={`/${locale}/community`}
-                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
                   isActive(`/${locale}/community`) ? 'text-black dark:text-white' : ''
                 }`}
               >
@@ -295,7 +295,7 @@ export default function HeaderNav() {
               {/* Shop */}
               <Link
                 href={`/${locale}/shop`}
-                className={`px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
+                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
                   isActive(`/${locale}/shop`) ? 'text-black dark:text-white' : ''
                 }`}
               >
@@ -309,7 +309,7 @@ export default function HeaderNav() {
             </nav>
 
             {/* RIGHT: Actions (Search, Cart, Settings) */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0">
               {/* Search (more prominent) */}
               <button
                 onClick={() => setIsSearchOpen(true)}

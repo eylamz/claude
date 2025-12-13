@@ -67,6 +67,9 @@ const config: Config = {
           text: colors.brand.text,
           color: colors.brand.color,
           accent: colors.brand.accent,
+
+
+          orange: colors.brand.orange,
           red: colors.brand.red,
           yellow: colors.brand.yellow,
           purple: colors.brand.purple,
@@ -139,6 +142,42 @@ const config: Config = {
               },
             },
           },
+        sidebar: {
+          DEFAULT: colors.sidebar.light,
+          dark: colors.sidebar.dark,
+          text: {
+            DEFAULT: colors.sidebar.text.light,
+            dark: colors.sidebar.text.dark,
+            brand: {
+              DEFAULT: colors.sidebar.text.brand.light,
+              dark: colors.sidebar.text.brand.dark,
+            },
+          },
+          hover: {
+            DEFAULT: colors.sidebar.hover.light,
+            dark: colors.sidebar.hover.dark,
+            brand: {
+              DEFAULT: colors.sidebar.hover.brand.light,
+              dark: colors.sidebar.hover.brand.dark,
+            },
+          },
+          border: {
+            DEFAULT: colors.sidebar.border.light,
+            dark: colors.sidebar.border.dark,
+            brand: {
+              DEFAULT: colors.sidebar.border.brand.light,
+              dark: colors.sidebar.border.brand.dark,
+            },
+          },
+          icon: {
+            DEFAULT: colors.sidebar.icon.light,
+            dark: colors.sidebar.icon.dark,
+            brand: {
+              DEFAULT: colors.sidebar.icon.brand.light,
+              dark: colors.sidebar.icon.brand.dark,
+            },
+          },
+        },
         primary: {
           DEFAULT: colors.brand.main,
           dark: colors.brand[400]
@@ -199,6 +238,10 @@ const config: Config = {
           text: {
             DEFAULT: colors.input.text.light,
             dark: colors.input.text.dark,
+          },
+          border: {
+            DEFAULT: colors.input.border.light,
+            dark: colors.input.border.dark,
           },
         },
         btn: {
@@ -509,8 +552,15 @@ const config: Config = {
           },
           'popUp': {
             '0%': { opacity: '0.2', transform: 'scale(1) translateY(35px)' },
-            '30%': { opacity: '0.3', transform: 'scale(1) translateY(25px)' },
             '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+          },
+          popDown: {
+            '0%': { opacity: '0.2', transform: 'scale(1) translateY(-20px)' },
+            '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+          },
+          popOutDown: {
+            '0%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+            '100%': { opacity: '0', transform: 'scale(0.9) translateY(-15px)' },
           },
           'popOut': {
             '0%': { opacity: '1', transform: 'scale(1) translateY(0)' },
@@ -520,6 +570,8 @@ const config: Config = {
       animation: {
         'popUp': 'popUp 0.2s',
         'popOut': 'popOut 0.2s',
+        'popDown': 'popDown 0.2s',
+        'popOutDown': 'popOutDown 0.2s',
         'skeleton': 'skeleton 4s ease-in-out infinite',
         slideIn: 'slideIn 0.4s ease-out forwards',
         scaleDownFade: 'scaleDownFade 0.25s ease-in forwards',

@@ -1,3 +1,4 @@
+// nextjs-app/components/layout/MobileNav.tsx
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -5,10 +6,11 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
-import { X, Search, ShoppingBag, User, Settings, LogOut, Heart, Menu } from 'lucide-react';
+import { X, Search, ShoppingBag, User, Settings, LogOut, Heart, Menu, PanelLeft } from 'lucide-react';
 import { Icon, type IconName } from '@/components/icons/Icon';
 import { useTheme } from '@/context/ThemeProvider';
 import { useCartItemCount } from '@/stores/cartStore';
+import MobileSidebar from './MobileSidebar';
 
 interface NavCard {
   href: string;
@@ -30,6 +32,7 @@ export default function MobileNavMinimal() {
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevScrollYRef = useRef(0);
@@ -176,26 +179,35 @@ export default function MobileNavMinimal() {
           Green accent only on active/hover states
       ======================================== */}
       <header 
-        className={`md:hidden fixed top-0 left-0 right-0 z-[50] bg-header dark:bg-header-dark ${getBorderClass()} border-header-border dark:border-header-border-dark shadow-sm transition-all duration-300 ${
+        className={`[@media_(min-width:820px)]:hidden fixed top-0 left-0 right-0 z-[50] bg-header dark:bg-header-dark ${getBorderClass()} border-header-border dark:border-header-border-dark shadow-sm transition-all duration-300 ${
           isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
         <div className="flex items-center justify-between h-16 px-4">
           
-          {/* Left: Menu Button - Clean & Simple */}
-          <button
-            onClick={() => setIsMenuOpen(true)}
-            className="p-2.5 -ml-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95"
-            aria-label="Open menu"
-          >
-            <Menu className="w-6 h-6" strokeWidth={2} />
-          </button>
+          {/* Left: Menu Button and Sidebar Button */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="p-2.5 -ml-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95"
+              aria-label="Open menu"
+            >
+              <Menu className="w-6 h-6" strokeWidth={2} />
+            </button>
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2.5 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95"
+              aria-label="Open sidebar"
+            >
+              <PanelLeft className="w-6 h-6" strokeWidth={2} />
+            </button>
+          </div>
 
           {/* Center: Logo */}
           <Link href={`/${locale}`} className="flex flex-col items-center group">
             <Icon 
               name="logo-hostage3" 
-              className="w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] text-brand-main transition-opacity group-hover:opacity-80" 
+              className="w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] text-brand-main dark:text-brand-dark transition-opacity group-hover:opacity-80" 
             />
           </Link>
 
@@ -221,7 +233,7 @@ export default function MobileNavMinimal() {
           No multi-color gradients, only green accents
       ======================================== */}
       {isMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-[60] bg-white dark:bg-gray-950 animate-in fade-in duration-200">
+        <div className="[@media_(min-width:820px)]:hidden fixed inset-0 z-[60] bg-white dark:bg-gray-950 animate-in fade-in duration-200">
           
           {/* Header Section - Clean & Minimal */}
           <div className="relative border-b border-gray-200 dark:border-gray-800">
@@ -542,7 +554,7 @@ export default function MobileNavMinimal() {
           SEARCH MODAL - Minimal & Clean
       ======================================== */}
       {isSearchOpen && (
-        <div className="md:hidden fixed inset-0 z-[60] bg-white dark:bg-gray-950 animate-in fade-in duration-200">
+        <div className="[@media_(min-width:820px)]:hidden fixed inset-0 z-[60] bg-white dark:bg-gray-950 animate-in fade-in duration-200">
           <div className="flex flex-col h-full">
             {/* Search Header */}
             <div className="flex items-center gap-3 p-4 border-b border-gray-200 dark:border-gray-800">
@@ -569,6 +581,12 @@ export default function MobileNavMinimal() {
           </div>
         </div>
       )}
+
+      {/* Mobile Sidebar */}
+      <MobileSidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+      />
     </>
   );
 }

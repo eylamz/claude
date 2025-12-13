@@ -82,7 +82,10 @@ import TrashBold from './trashBold.svg';
 import Link from './link.svg';
 import Share from './share.svg';
 import ShareBold from './shareBold.svg';
-import User from './account.svg';
+import Account from './account.svg';
+import AccountBold from './accountBold.svg';
+import Trainers from './trainers.svg';
+import TrainersBold from './trainersBold.svg';
 import Moovit from './moovit.svg';
 import MoovitDark from './moovitDark.svg';
 import Park from './trees.svg';
@@ -130,6 +133,8 @@ import AdminBold from './adminBold.svg';
 import Logout from './logout.svg';
 import Category from './category.svg';
 import CategoryBold from './categoryBold.svg';
+import Drag from './drag.svg';
+import DragBold from './dragBold.svg';
 
 // Type for SVG components (Next.js imports SVGs as URLs by default)
 type SvgComponent = React.ComponentType<React.SVGProps<SVGSVGElement>> | string;
@@ -204,6 +209,8 @@ const iconMap: Record<string, SvgComponent> = {
   shopCartBold: ShopCartBold,
   edit: Edit,
   editBold: EditBold,
+  drag: Drag,
+  dragBold: DragBold,
   
   // Rating Icons
   wrench: WrenchBold,
@@ -222,7 +229,10 @@ const iconMap: Record<string, SvgComponent> = {
   info: Info,
   infoBold: InfoBold,
   questionMark: QuestionMark,
-  account: User,
+  account: Account,
+  accountBold: AccountBold,
+  trainers: Trainers,
+  trainersBold: TrainersBold,
   sun: Sun,
   sunBold: SunBold,
   moon: Moon,
@@ -389,6 +399,9 @@ export type IconName =
   | 'gymWeight'
   | 'gymWeightBold'
   | 'account'
+  | 'accountBold'
+  | 'trainers'
+  | 'trainersBold'
   | 'language'
   | 'logo'
   | 'logo-hostage'
@@ -450,6 +463,8 @@ export type IconName =
   | 'logout'
   | 'category'
   | 'categoryBold'
+  | 'drag'
+  | 'dragBold'
   | 'clock'; // Alias for clockBold if needed
 
 interface IconProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'size'> {

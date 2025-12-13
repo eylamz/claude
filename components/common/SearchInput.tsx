@@ -90,7 +90,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
 
     ? 'md:focus-visible:outline-[#3c0101]/20' 
 
-    : 'md:focus-visible:outline-brand-main/35';
+    : 'md:focus-visible:outline-none';
 
 
 

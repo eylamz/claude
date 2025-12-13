@@ -1,11 +1,13 @@
 export const colors = {
   brand: {
-    main: 'hsl(157, 99%, 40%)',
-    dark: 'hsl(157, 99%, 40%)',
+    main: 'hsl(123, 100%, 40%)',
+    dark: 'hsl(123, 60%, 48%)',
     text: 'hsl(148, 61%, 46%)',
     color: 'hsl(162, 56%, 45%)',
     accent: 'hsl(355, 84%, 65%)',
-    
+    hover: 'hsl(186, 57%, 41%)',
+
+    orange: '#FF5528',
     red: '#FF006E',
     yellow: '#FFB700',
     purple: '#8B00FF',
@@ -39,11 +41,47 @@ export const colors = {
   },
   tooltip: {
     light: 'hsl(0, 0%, 43%)',
-    dark: 'hsl(0, 0%, 42%)',
+    dark: 'hsl(180, 2%, 10%)',
+  },
+  sidebar: {
+    light: 'hsl(0, 0%, 100%)',
+    dark: 'hsl(180, 2%, 10%)',
+    text: {
+      light: 'hsl(60, 3%, 38%)',
+      dark: 'hsl(180, 2%, 56%)',
+      brand: {
+        light: 'hsl(123, 74%, 46%)',
+        dark: 'hsl(123, 74%, 46%)',
+      },
+    },
+    border: {
+      light: 'hsl(60, 10%, 90%)',
+      dark: 'hsl(180, 2%, 18%)',
+      brand: {
+        light: 'hsla(123, 74%, 46%, 20%)',
+        dark: 'hsl(123, 74%, 46%)',
+      },
+    },
+    icon:{
+      light: 'hsl(187, 63%, 34%)',
+      dark: 'hsl(123, 74%, 46%)',
+      brand: {
+        light: 'hsl(123, 63%, 34%)',
+        dark: 'hsl(123, 63%, 34%)',
+      },
+    },
+    hover: {
+      light: 'hsl(60, 10%, 90%)',
+      dark: 'hsl(180, 2%, 18%)',
+      brand: {
+        light: 'hsla(123, 74%, 46%, 10%)',
+        dark: 'hsla(123, 74%, 46%, 10%)',
+      },
+    },
   },
   header: {
-    light: 'hsl(0, 0%, 97%)',
-    dark: 'hsl(0, 0%, 11%)',
+    light: 'hsl(45, 50%, 98%)',
+    dark: 'hsl(180, 3%, 13%)',
     border: {
       light: 'hsl(0, 0%, 90%)',
       dark: 'hsl(240, 6%, 20%)',
@@ -66,8 +104,8 @@ export const colors = {
     },
   },
   card: {
-    light: 'hsl(0, 0%, 96%)',
-    dark: 'hsl(0, 0%, 13%)',
+    light: 'hsl(60, 17%, 94%)',
+    dark: 'hsl(180, 3%, 13%)',
     muted: {
       light: 'hsl(0, 0%, 88%)',
       dark: 'hsl(0, 0%, 20%)',
@@ -82,8 +120,8 @@ export const colors = {
     }
   },
   background: {
-    light: 'hsl(0, 0%, 100%)',
-    dark: 'hsl(0, 0%, 7%)',
+    light: 'hsl(60, 33%, 98%)',
+    dark: 'hsl(180, 2%, 10%)',
   },
   backgroundSecondary: {
     light: '#F5F5F5',
@@ -115,7 +153,7 @@ export const colors = {
   },
   border: {
     light: 'hsl(0, 0%, 85%)',
-    dark: 'hsl(240, 6%, 27%)',
+    dark: 'hsl(180, 1%, 18%)',
     primary: 'hsl(166, 98%, 33%)',
     inner: {
       light: '',
@@ -124,15 +162,15 @@ export const colors = {
   },
   popover: {
     light: 'hsl(0, 0%, 100%)',
-    dark: 'hsl(0, 0%, 3%)',
+    dark: 'hsl(180, 2%, 10%)',
     border: {
       light: 'hsl(0, 0%, 94%)',
       dark: 'hsl(0, 0%, 29%)',
     },
   },
   input: {
-    light: 'hsl(0, 0%, 100%)',
-    dark: 'hsl(0, 0%, 7%)',
+    light: 'hsl(60, 60%, 99%)',
+    dark: 'hsl(180, 3%, 13%)',
     border: {
       light: 'hsl(0, 0%, 88%)',
       dark: 'hsl(0, 0%, 29%)',

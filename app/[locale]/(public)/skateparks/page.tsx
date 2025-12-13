@@ -5,8 +5,6 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   MapPin,
-  Grid3x3,
-  Map as MapIcon,
   X,
   Sparkles,
   XCircle,
@@ -15,6 +13,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import AmenitiesButton from '@/components/common/AmenitiesButton';
 import { SearchInput } from '@/components/common/SearchInput';
@@ -136,7 +135,7 @@ function GoogleMapView({
   const createSkateparkPin = (color: string = '#DC2626') => {
     const pinElement = document.createElement('div');
     pinElement.innerHTML = `
-      <svg width="40" height="50" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg">
+      <svg width="40" height="50" overflow="visible" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg">
         <path d="M20 0 C9.4 0 0 9.4 0 20 C0 35 20 50 20 50 C20 50 40 35 40 20 C40 9.4 30.6 0 20 0 Z" fill="${color}" stroke="#FFFFFF" stroke-width="2"/>
         <circle cx="20" cy="20" r="8" fill="#FFFFFF"/>
       </svg>
@@ -214,7 +213,7 @@ function GoogleMapView({
 
           if (useAdvancedMarkers) {
             // Use new AdvancedMarkerElement API with custom pin
-            const pinContent = createSkateparkPin('#00b881');
+            const pinContent = createSkateparkPin('#31c438');
             pinContent.setAttribute('data-marker-id', park._id);
             
             marker = new google.maps.marker.AdvancedMarkerElement({
@@ -666,6 +665,12 @@ export default function SkateparksPage() {
   const [shouldAnimateLocation, setShouldAnimateLocation] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [cardPosition, setCardPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [wasDragging, setWasDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const prevSelectedAmenitiesRef = useRef<string[]>([]);
   const prevUserLocationRef = useRef<UserLocation | null>(null);
   const prevScrollYRef = useRef(0);
@@ -1088,6 +1093,81 @@ export default function SkateparksPage() {
     fetchAllSkateparks();
   }, [fetchAllSkateparks]);
 
+  // Reset card position when selected park changes
+  useEffect(() => {
+    if (selectedPark && mapContainerRef.current) {
+      // Calculate initial position (bottom left)
+      const mapRect = mapContainerRef.current.getBoundingClientRect();
+      const cardHeight = 200; // Approximate height
+      setCardPosition({
+        x: 16, // 16px from left edge
+        y: mapRect.height - cardHeight - 96, // 16px from bottom
+      });
+    } else {
+      setCardPosition(null);
+    }
+  }, [selectedPark]);
+
+  // Drag handlers for park card - only from drag handle button
+  const handleDragHandleMouseDown = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+    
+    if (cardRef.current) {
+      const cardRect = cardRef.current.getBoundingClientRect();
+      
+      // Calculate offset from mouse to card top-left
+      const offsetX = e.clientX - cardRect.left;
+      const offsetY = e.clientY - cardRect.top;
+      setDragOffset({ x: offsetX, y: offsetY });
+    }
+  }, []);
+
+  // Global mouse move handler for dragging
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!cardRef.current || !mapContainerRef.current) return;
+
+      const mapRect = mapContainerRef.current.getBoundingClientRect();
+      const cardRect = cardRef.current.getBoundingClientRect();
+      
+      // Calculate new position relative to map container
+      let newX = e.clientX - mapRect.left - dragOffset.x;
+      let newY = e.clientY - mapRect.top - dragOffset.y;
+      
+      // Constrain to map bounds
+      const minX = 0;
+      const minY = 0;
+      const maxX = mapRect.width - cardRect.width;
+      const maxY = mapRect.height - cardRect.height;
+      
+      newX = Math.max(minX, Math.min(maxX, newX));
+      newY = Math.max(minY, Math.min(maxY, newY));
+      
+      setCardPosition({ x: newX, y: newY });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      setWasDragging(true);
+      // Clear wasDragging flag after a short delay to prevent accidental navigation
+      setTimeout(() => {
+        setWasDragging(false);
+      }, 100);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragOffset]);
+
   const clearFilters = () => {
     setAreaFilter('');
     setSearchQuery('');
@@ -1139,11 +1219,11 @@ export default function SkateparksPage() {
           STICKY FILTER BAR - Modern & Clean
       ======================================== */}
       <div 
-        className={`sticky z-40 transition-all duration-300 ${
+        className={`sticky z-40 transition-all duration-300 border-b-2 border-transparent ${
           isHeaderVisible ? 'top-16 md:top-16' : 'top-0'
         } ${
           isScrolled 
-            ? 'bg-header dark:bg-header-dark border-b-2 border-header-border dark:border-header-border-dark py-3' 
+            ? 'shadow-xl bg-header dark:bg-header-dark border-header-border dark:border-header-border-dark py-3' 
             : 'py-4'
         }`}
       >
@@ -1178,44 +1258,60 @@ export default function SkateparksPage() {
                 />
               </div>
               
-              {/* Location Button */}
-              <Button
-                variant={userLocation ? "brandIcon" : "none"}
-                size="sm"
-                onClick={requestLocation}
-                className=''
-                aria-label={tr('Use My Location', 'השתמש במיקומי')}
-              >
-                <Icon 
-                  name={userLocation ? "locationOff" : "location"}
-                  className="w-5 h-5"
-                />
-              </Button>
+              <TooltipProvider delayDuration={50}>
+                {/* Location Button */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={userLocation ? "brandIcon" : "none"}
+                      size="sm"
+                      onClick={requestLocation}
+                      className=''
+                      aria-label={tr('Use My Location', 'השתמש במיקומי')}
+                    >
+                      <Icon 
+                        name={userLocation ? "locationOff" : "location"}
+                        className="w-5 h-5"
+                      />
+                    </Button>
+                  </TooltipTrigger> 
+                  <TooltipContent side="bottom" className="text-center">
+                    {tr('Use My Location', 'השתמש במיקומי')}
+                  </TooltipContent>
+                </Tooltip>
 
-              {/* View Toggle - Enhanced Animation */}
-              <div className="relative">
-                <Button
-                  variant={viewMode === 'map' ? "warningIcon" : "none"}
-                  size="sm"
-                  onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
-                  className=''
-                  aria-label={viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
-                >
-                  {viewMode === 'grid' ? (
-                    <Icon name="map" className="w-5 h-5" />
-                  ) : (
-                    <Icon name="category" className="w-5 h-5" />
-                  )}
-                </Button>
-                
-                {/* Pulsing indicator when map is active */}
-                {viewMode === 'grid' && (
-                  <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-main dark:bg-brand-dark opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-main dark:bg-brand-dark"></span>
-                  </span>
-                )}
-              </div>
+                {/* View Toggle - Enhanced Animation */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="relative">
+                      <Button
+                        variant={viewMode === 'map' ? "warningIcon" : "none"}
+                        size="sm"
+                        onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
+                        className=''
+                        aria-label={viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
+                      >
+                        {viewMode === 'grid' ? (
+                          <Icon name="map" className="w-5 h-5" />
+                        ) : (
+                          <Icon name="category" className="w-5 h-5" />
+                        )}
+                      </Button>
+                      
+                      {/* Pulsing indicator when map is active */}
+                      {viewMode === 'grid' && (
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-main dark:bg-brand-dark opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-main dark:bg-brand-dark"></span>
+                        </span>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="text-center">
+                    {viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
 
@@ -1362,7 +1458,7 @@ export default function SkateparksPage() {
           </div>
         ) : viewMode === 'map' ? (
           /* MAP VIEW */
-          <div className="relative h-[calc(100vh-280px)] min-h-[600px]">
+          <div className="relative h-[calc(100vh-280px)] min-h-[600px]" ref={mapContainerRef}>
             <div className="h-full rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 shadow-xl">
               <GoogleMapView
                 skateparks={skateparks}
@@ -1409,98 +1505,140 @@ export default function SkateparksPage() {
               };
               const areaLabel = locale === 'he' ? areaLabels[selectedPark.area]?.he : areaLabels[selectedPark.area]?.en || selectedPark.area;
 
+              // Use cardPosition if available, otherwise don't render yet (will be set by useEffect)
+              if (!cardPosition) {
+                return null;
+              }
+
               return (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-md z-40">
-                  <div className="h-fit bg-card dark:bg-card-dark rounded-2xl overflow-hidden relative group select-none transform-gpu shadow-2xl">
+                <div
+                  ref={cardRef}
+                  className="absolute w-[calc(100%-2rem)] max-w-[20rem] z-40"
+                  style={{
+                    left: `${cardPosition.x}px`,
+                    top: `${cardPosition.y}px`,
+                    transform: 'none',
+                    userSelect: isDragging ? 'none' : 'auto',
+                  }}
+                >
+                  <div className={`h-fit bg-card dark:bg-card-dark rounded-2xl overflow-hidden relative group select-none transform-gpu shadow-2xl ${isDragging ? 'opacity-90' : ''}`}>
                     {/* Close Button */}
                     <button
-                      onClick={() => setSelectedPark(null)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedPark(null);
+                      }}
                       className="absolute top-3 right-3 z-30 p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
                       aria-label={tr('Close', 'סגור')}
                     >
                       <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                     </button>
 
-                    {selectedPark.amenities && Object.values(selectedPark.amenities).some(Boolean) && (
-                      <ParkAmenities amenities={selectedPark.amenities} locale={locale} alwaysVisible={true} />
-                    )}
-
-                    <div className="relative bg-black/25 h-[10.5rem] overflow-hidden">
-                      {/* Opening Year Badge */}
-                      {hasOpeningYear && (
-                        <div className="absolute bottom-2 left-0 z-10">
-                          <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-r-full shadow-lg">
-                            {selectedPark.openingYear}
-                            <Sparkles className="w-3 h-3" />
-                          </div>
-                        </div>
+                    <Link 
+                      href={`/${locale}/skateparks/${selectedPark.slug}`}
+                      className="block"
+                      onClick={(e) => {
+                        // Don't navigate if dragging or just finished dragging
+                        if (isDragging || wasDragging) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      {selectedPark.amenities && Object.values(selectedPark.amenities).some(Boolean) && (
+                        <ParkAmenities amenities={selectedPark.amenities} locale={locale} alwaysVisible={true} />
                       )}
 
-                      {/* Closed Badge */}
-                      {isClosed && (
-                        <div className={`absolute bottom-2 z-10 ${
-                          hasOpeningYear ? 'right-0' : 'left-0'
-                        }`}>
-                          <div className={`flex gap-1 justify-center items-center bg-red-500 dark:bg-red-600 text-white text-xs px-2 py-1 shadow-lg ${
-                            hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
+                      <div className="relative bg-black/25 h-[10.5rem] overflow-hidden">
+                        {/* Opening Year Badge */}
+                        {hasOpeningYear && (
+                          <div className="absolute bottom-2 left-0 z-10">
+                            <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-r-full shadow-lg">
+                              {selectedPark.openingYear}
+                              <Sparkles className="w-3 h-3" />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Closed Badge */}
+                        {isClosed && (
+                          <div className={`absolute bottom-2 z-10 ${
+                            hasOpeningYear ? 'right-0' : 'left-0'
                           }`}>
-                            {tr('Closed', 'סגור')}
-                            <XCircle className="w-3 h-3" />
+                            <div className={`flex gap-1 justify-center items-center bg-red-500 dark:bg-red-600 text-white text-xs px-2 py-1 shadow-lg ${
+                              hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
+                            }`}>
+                              {tr('Closed', 'סגור')}
+                              <XCircle className="w-3 h-3" />
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* New Badge */}
-                      {isNew && (
-                        <div className={`absolute bottom-2 z-10 ${
-                          hasOpeningYear || isClosed ? 'right-0' : 'left-0'
-                        }`}>
-                          <div className={`flex gap-1 justify-center items-center bg-blue-500 dark:bg-blue-600 text-white text-xs md:text-sm px-2 py-1 shadow-lg ${
-                            hasOpeningYear || isClosed ? 'rounded-l-3xl' : 'rounded-r-3xl'
+                        {/* New Badge */}
+                        {isNew && (
+                          <div className={`absolute bottom-2 z-10 ${
+                            hasOpeningYear || isClosed ? 'right-0' : 'left-0'
                           }`}>
-                            {tr('New', 'חדש')}
-                            <Badge className="w-4 h-4" />
+                            <div className={`flex gap-1 justify-center items-center bg-blue-500 dark:bg-blue-600 text-white text-xs md:text-sm px-2 py-1 shadow-lg ${
+                              hasOpeningYear || isClosed ? 'rounded-l-3xl' : 'rounded-r-3xl'
+                            }`}>
+                              {tr('New', 'חדש')}
+                              <Badge className="w-4 h-4" />
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {/* Featured Badge */}
-                      {isFeatured && (
-                        <div className={`absolute bottom-2 z-10 ${
-                          hasOpeningYear || isClosed || isNew ? 'right-0' : 'left-0'
-                        }`}>
-                          <div className={`flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs font-bold px-2 py-1 shadow-lg ${
-                            hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
+                        {/* Featured Badge */}
+                        {isFeatured && (
+                          <div className={`absolute bottom-2 z-10 ${
+                            hasOpeningYear || isClosed || isNew ? 'right-0' : 'left-0'
                           }`}>
-                            {tr('Featured', 'מומלץ')}
-                            <Award className="w-3 h-3" />
+                            <div className={`flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs font-bold px-2 py-1 shadow-lg ${
+                              hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
+                            }`}>
+                              {tr('Featured', 'מומלץ')}
+                              <Award className="w-3 h-3" />
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      <Link href={`/${locale}/skateparks/${selectedPark.slug}`}>
                         <SkateparkThumbnail
                           photoUrl={photoUrl}
                           parkName={name}
                           alwaysSaturated={true}
                         />
-                      </Link>
-                    </div>
-                    
-                    <div className="px-4 py-3 space-y-1">
-                      <Link href={`/${locale}/skateparks/${selectedPark.slug}`}>
+                      </div>
+                      
+                      <div className="px-4 py-3 space-y-1">
                         <h3 className="text-lg font-semibold truncate">
                           {name}
                         </h3>
-                      </Link>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
-                          <MapPin className="w-3.5 h-3.5 shrink-0" />
-                          <span className="text-sm truncate">
-                            {distanceText ? `${areaLabel} ${distanceText}` : areaLabel}
-                          </span>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
+                            <MapPin className="w-3.5 h-3.5 shrink-0" />
+                            <span className="text-sm truncate">
+                              {distanceText ? `${areaLabel} ${distanceText}` : areaLabel}
+                            </span>
+                          </div>
                         </div>
                       </div>
+                    </Link>
+                    
+                    {/* Drag Handle Button - Next to Location Info */}
+                    <div className="absolute bottom-3 end-3 z-30 flex items-center gap-2">
+                      <button
+                        onMouseDown={handleDragHandleMouseDown}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        variant="brand"
+                        className="flex items-center justify-center p-1.5 rounded-ful transition-colors cursor-move"
+                        aria-label={tr('Drag to move card', 'גרור כדי להזיז את הכרטיס')}
+                        title={tr('Drag to move card', 'גרור כדי להזיז את הכרטיס')}
+                      >
+                        <Icon name="drag" className="w-5 h-5" />
+                      </button>
                     </div>
                   </div>
                 </div>

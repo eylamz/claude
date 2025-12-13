@@ -94,7 +94,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                 {isActive && (
                   <Badge 
                     variant="info" 
-                    className="rounded-full text-info dark:text-info-dark poppins absolute -top-2 -right-2 shadow-badge min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]"
+                    className="rounded-full text-info dark:text-info-dark poppins absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]"
                   >
                     {selectedAmenities.length}
                   </Badge>
