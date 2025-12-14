@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
-import { X, LogOut, User, Settings, ChevronRight } from 'lucide-react';
+import { LogOut, User, Settings, ChevronRight } from 'lucide-react';
 import { Icon, type IconName } from '@/components/icons/Icon';
 import { useTheme } from '@/context/ThemeProvider';
 import { SearchInput } from '@/components/common/SearchInput';
@@ -75,7 +75,10 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [shouldAnimate, setShouldAnimate] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = session?.user?.role === 'admin';
 
@@ -101,7 +104,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     },
     {
       href: `/${locale}/guides`,
-      icon: 'books',
+      icon: 'bookBold',
       label: tMobileNav('guides'),
       description: tMobileNav('guidesDesc'),
     },
@@ -118,8 +121,8 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const miniCards: MiniCard[] = [
     { href: `/${locale}/contact`, icon: 'messages', label: tCommon('contact') },
     { href: `/${locale}/about`, icon: 'infoBold', label: tCommon('about') },
-    { href: `/${locale}/terms`, icon: 'info', label: tMobileNav('termsAndConditions'), comingSoon: true },
-    { href: `/${locale}/accessibility`, icon: 'info', label: tMobileNav('accessibility'), comingSoon: true },
+    { href: `/${locale}/terms`, icon: 'termsBold', label: tMobileNav('termsAndConditions'), comingSoon: true },
+    { href: `/${locale}/accessibility`, icon: 'accessibilityBold', label: tMobileNav('accessibility'), comingSoon: true },
 ];
 
   // Prevent body scroll when open
@@ -138,8 +141,20 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       setSearchQuery('');
       setSearchResults([]);
       setIsSearching(false);
+      setIsSearchOpen(false);
     }
   }, [isOpen]);
+
+  // Auto-focus search input when search opens
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      // Small delay to ensure the input is visible before focusing
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 350); // Increased delay to match transition duration
+      return () => clearTimeout(timer);
+    }
+  }, [isSearchOpen]);
 
   // Fetch search results
   useEffect(() => {
@@ -222,21 +237,44 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     setSwipeDistance(0);
   };
 
+  // Theme toggle handler with animation
+  const handleThemeToggle = () => {
+    setShouldAnimate(true);
+    toggleTheme();
+    setTimeout(() => setShouldAnimate(false), 300);
+  };
+
+  // Language toggle handler
+  const handleLanguageToggle = async () => {
+    const newLang = locale === 'en' ? 'he' : 'en';
+    const segments = pathname.split('/');
+    segments[1] = newLang;
+    await router.push(segments.join('/'));
+  };
+
+  // Logout handler
+  const handleLogout = () => {
+    signOut();
+  };
+
+  
   return (
     <>
       {/* Backdrop */}
       <div 
-        className={`fixed inset-0 z-[60] bg-black/40 transition-opacity duration-300 ${
+        className={`fixed inset-0 z-[60] bg-sidebar dark:bg-sidebar-dark transition-colors duration-200 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
+        style={{ height: '150vh' }}
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Sidebar Drawer */}
       <div 
-        className={`sidebar fixed top-0 left-0 bottom-0 z-[61] w-full max-w-[500px] bg-sidebar dark:bg-sidebar-dark shadow-2xl transition-transform duration-300 ease-out border-r border-header-border dark:border-header-border-dark flex flex-col`}
+        className={`sidebar h-full fixed inset-0 z-[61] w-full max-w-[500px] bg-sidebar dark:bg-sidebar-dark shadow-2xl  ease-out transition-all duration-200 flex flex-col`}
         style={{ 
+          height: '100dvh',
           transform: isOpen ? `translateX(${swipeDistance}px)` : 'translateX(-100%)' 
         }}
         onTouchStart={handleTouchStart}
@@ -245,49 +283,169 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       >
         
         {/* === HEADER === */}
-        <div className="flex-none px-5 pt-6 pb-4 border-b border-header-border dark:border-header-border-dark bg-header dark:bg-header-dark">
-          <div className="flex items-center justify-between mb-6">
-            <Link href={`/${locale}`} onClick={onClose}>
-                <Icon name="logo-hostage3" className="w-28 h-auto text-brand-main" />
-            </Link>
-            <button 
+        <div className="flex-none border-b border-border dark:border-border-dark bg-header dark:bg-header-dark transition-colors duration-200">
+          {/* Header */}
+          <div className="flex items-start justify-between pb-2 mx-2 pt-6 flex-shrink-0">
+            <div className="flex flex-wrap items-center gap-1 top-0">
+              <button
+                onClick={() => {
+                  if (isSearchOpen) {
+                    // Close search and clear results
+                    setIsSearchOpen(false);
+                    setSearchQuery('');
+                    setSearchResults([]);
+                    setIsSearching(false);
+                  } else {
+                    // Open search and focus input
+                    setIsSearchOpen(true);
+                    // Immediately attempt to focus for mobile keyboard
+                     searchInputRef.current?.focus();
+                  }
+                }}
+                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                aria-label={isSearchOpen ? "Close Search" : "Open Search"}
+              >
+                <Icon name={isSearchOpen ? "searchClose" : "searchBold"} className="w-4 h-4" />
+                <span>{tCommon('search') || 'Search'}</span>
+              </button>
+
+              {/* Login Button */}
+              {!session && (
+                <Link
+                  href={`/${locale}/login`}
+                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                  onClick={onClose}
+                >
+                  <Icon name="accountBold" className="w-4 h-4" />
+                  <span>{tCommon('login') || 'Login'}</span>
+                </Link>
+              )}
+
+              {/* User Profile Link */}
+              {session && (
+                <Link
+                  href={`/${locale}/account`}
+                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                  onClick={onClose}
+                >
+                  <Icon name="accountBold" className="w-4 h-4" />
+                  <span>{tCommon('profile') || 'Profile'}</span>
+                </Link>
+              )}
+
+              {/* Theme Toggle Button */}
+              <button
+                onClick={handleThemeToggle}
+                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
+              >
+                {theme === 'dark' ? (
+                  <Icon name="sunBold" className={`w-4 h-4 ${shouldAnimate ? 'animate-pop' : ''}`} />
+                ) : (
+                  <Icon name="moonBold" className={`w-4 h-4 ${shouldAnimate ? 'animate-pop' : ''}`} />
+                )}
+                <span>{theme === 'dark' ? tCommon('light_mode') || 'Light Mode' : tCommon('dark_mode') || 'Dark Mode'}</span>
+              </button>
+
+              {/* Language Switcher Button */}
+              <button
+                onClick={handleLanguageToggle}
+                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                aria-label={tCommon('toggle_language') || 'Toggle language'}
+              >
+                {locale === 'en' ? (
+                  <Icon name="hebrewBold" className="w-4 h-4" />
+                ) : (
+                  <Icon name="englishBold" className="w-4 h-4" />
+                )}
+                <span>{locale === 'en' ? 'עברית' : 'English'}</span>
+              </button>
+
+              {/* Admin Link */}
+              {isAdmin && (
+                <Link
+                  href={`/${locale}/admin`}
+                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                  onClick={onClose}
+                >
+                  <Icon name="adminBold" className="w-5 h-5" />
+                  <span>{tCommon('admin') || 'Admin'}</span>
+                </Link>
+              )}
+
+              {/* Logout Button */}
+              {session && (
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    onClose();
+                  }}
+                  className="w-full flex flex-col items-center justify-between gap-3 px-3 py-2 text-xs text-error/70 dark:text-error-dark/70 hover:text-error dark:hover:text-error-dark transition-colors duration-200"
+                >
+                  <Icon name="logoutBold" className="w-4 h-4" />
+                  <span>{tCommon('logout') || 'Logout'}</span>
+                </button>
+              )}
+            </div>
+            <button
               onClick={onClose}
-              className="p-2 -mr-2 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              className="h-14 p-2 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"
+              aria-label="Close menu"
             >
-              <X className="w-6 h-6" />
+              <Icon name="X" className="w-6 h-6" />
             </button>
           </div>
 
-          {/* Search Bar */}
-          <div className="w-full">
-            <SearchInput
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onClear={() => setSearchQuery('')}
-              placeholder={tMobileNav('searchPlaceholder') || "Search..."}
-              className="w-full !max-w-full focus-within:!outline-transparent focus-visible:!outline-red-500"
-              variant="default"
-            />
+          {/* Search Bar - shown when search icon is clicked */}
+          <div 
+            className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${
+              isSearchOpen 
+                ? 'max-h-20 opacity-100 pb-4' 
+                : 'max-h-0 opacity-0 pb-0'
+            }`}
+          >
+            <div className="px-4">
+              <SearchInput
+                ref={searchInputRef}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onClear={() => {
+                  setSearchQuery('');
+                  setSearchResults([]);
+                  setIsSearching(false);
+                }}
+                placeholder={tMobileNav('searchPlaceholder') || "Search..."}
+                className="w-full !max-w-full focus-within:!outline-transparent focus-visible:!outline-red-500"
+                variant="default"
+              />
+            </div>
           </div>
+
+          {/* Loading Bar Animation - shown when searching */}
+          {searchLoading && (
+            <div className="w-full h-[1px] -mt-1 bg-sidebar-hover dark:bg-sidebar-hover-dark overflow-hidden">
+              <div className="h-full bg-sidebar-text-brand dark:bg-sidebar-text-brand-dark animate-loading-bar" />
+            </div>
+          )}
         </div>
 
         {/* === SCROLLABLE CONTENT === */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 bg-sidebar dark:bg-sidebar-dark">
+        <div className="flex-1 overflow-y-auto px-4 py-6 bg-sidebar dark:bg-sidebar-dark transition-colors duration-200">
           {isSearching ? (
             // Search Results
             <div className="space-y-6">
               {searchLoading ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400 transition-colors duration-200">
                   {tCommon('loading') || 'Loading...'}
                 </div>
               ) : Object.keys(groupedResults).length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400 transition-colors duration-200">
                   {tCommon('noResults') || 'No results found'}
                 </div>
               ) : (
                 Object.entries(groupedResults).map(([category, results]) => (
                   <div key={category} className="space-y-3">
-                    <h3 className="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                    <h3 className="text-sm font-bold text-text dark:text-text-dark uppercase tracking-wider transition-colors duration-200">
                       {categoryLabels[category] || category}
                     </h3>
                     <div className="space-y-1">
@@ -330,17 +488,18 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                             key={result.id}
                             href={href}
                             onClick={onClose}
-                            className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors group"
+                            className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors duration-200 group"
                           >
                             {/* Thumbnail */}
-                            <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                            <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center transition-colors duration-200">
                               {imageUrl ? (
                                 <Image
                                   src={imageUrl}
                                   alt={name}
-                                  width={48}
-                                  height={48}
-                                  className="w-full h-full object-cover"
+                                  width={180}
+                                  height={180}
+                                  quality={50}
+                                  className="w-full h-full object-cover saturate-125"
                                   loading="lazy"
                                 />
                               ) : (
@@ -352,18 +511,18 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                                     result.type === 'trainers' ? 'trainersBold' :
                                     'calendarBold'
                                   }
-                                  className="w-6 h-6 text-gray-400 dark:text-gray-500"
+                                  className="w-6 h-6 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-text dark:group-hover:text-text-dark transition-colors duration-200"
                                 />
                               )}
                             </div>
                             {/* Name */}
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1 group-hover:text-brand-main dark:group-hover:text-brand-main transition-colors">
+                              <p className="text-sm font-medium text-sidebar-text dark:text-sidebar-text-dark line-clamp-1 group-hover:text-text dark:group-hover:text-text-dark transition-colors duration-200">
                                 {name}
                               </p>
                             </div>
                             {/* Arrow */}
-                            <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                            <ChevronRight className="w-4 h-4 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-text dark:group-hover:text-text-dark flex-shrink-0 transition-colors duration-200" />
                           </Link>
                         );
                       })}
@@ -377,7 +536,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             <>
           
           {/* Main Navigation - GRID LAYOUT */}
-          <div className="grid grid-cols-2 gap-3 mb-8">
+          <div className="grid grid-cols-2 gap-2 mb-6">
              {navCards.map((card) => {
                 const isActive = pathname === card.href || (card.href !== `/${locale}` && pathname.startsWith(card.href));
                 
@@ -389,48 +548,53 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                       if (card.comingSoon) e.preventDefault();
                       else onClose();
                     }}
-                    className={`block relative group h-full ${card.comingSoon ? 'cursor-not-allowed opacity-40 ' : ''}`}
+                    className={`block relative group h-full ${card.comingSoon ? 'cursor-not-allowed' : ''}`}
                   >
                     <div className={` 
-                      relative overflow-hidden rounded-2xl bg-card dark:bg-card-dark border border-card-border dark:border-sidebar-border-brand
-                       transition-all duration-200 p-4 h-full flex flex-col items-start
+                      relative overflow-hidden rounded-xl bg-card dark:bg-card-dark border
+                       transition-colors duration-200 p-3 h-full flex flex-col gap-2 items-start
                       ${isActive 
                         ? 'border-sidebar-border-brand dark:border-sidebar-border-brand-dark bg-sidebar-hover-brand dark:bg-sidebar-hover-brand-dark' 
                         : card.comingSoon
-                          ? 'border-transparent'
+                          ? 'border-transparent bg-card/60 dark:bg-card-dark/40'
                           : 'border-transparent hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark'
                       }
                     `}>
 
                       {/* Icon Box */}
-                      <div className={`
-                        mb-3 w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-200
-                        ${isActive 
-                          ? 'bg-sidebar-icon-brand dark:bg-sidebar-icon-brand-dark text-[#e8fae9] dark:text-black/85 shadow-sm border border-sidebar-hover-brand dark:border-sidebar-hover-brand-dark' 
-                          : 'bg-sidebar-hover dark:bg-black/20 text-sidebar-text dark:text-sidebar-text-dark'
-                        }
-                      `}>
-                         <Icon name={card.icon} className="w-5 h-5" />
+                      <div className="w-full flex justify-between items-start relative">
+                        <div className={`${card.comingSoon ? 'opacity-50' : ''}
+                          w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200
+                          ${isActive 
+                            ? 'bg-sidebar-icon-brand dark:bg-sidebar-icon-brand-dark text-[#e8fae9] dark:text-black/85 shadow-sm border border-sidebar-hover-brand dark:border-sidebar-hover-brand-dark' 
+                            : 'bg-sidebar-hover dark:bg-black/20 text-sidebar-text dark:text-sidebar-text-dark group-hover:bg-sidebar/50 dark:group-hover:bg-sidebar-dark/50'
+                          }
+                        `}>
+                          <Icon name={card.icon} className="w-4 h-4" />
+                        </div>
+                        <div className="h-full flex items-start justify-end">
+                      {card.comingSoon && (
+                          <span className="inline-block text-[8px] font-bold px-1 py-0.5 bg-brand-accent rounded text-white">
+                            SOON
+                          </span>
+                        )}
+                        </div>
+                        
                       </div>
 
                       {/* Text Content */}
-                      <div className="w-full">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className={`font-bold text-sm leading-tight ${isActive ? ' text-sidebar-text-brand dark:text-sidebar-text-brand-dark' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
+                      <div className={`w-full ${card.comingSoon ? 'opacity-50' : ''}`}>
+                        <div className="flex items-center justify-between mb-0.5">
+                          <h3 className={`font-bold text-xs leading-tight transition-colors duration-200 ${isActive ? ' text-sidebar-text-brand dark:text-sidebar-text-brand-dark' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
                             {card.label}
                           </h3>
                         </div>
                         
-                        {card.comingSoon ? (
-                             <span className="inline-block text-[9px] font-bold px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-gray-500 mt-1">
-                              SOON
-                            </span>
-                        ) : (
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400 line-clamp-2 leading-tight">
+                          <p className="text-[10px] text-sidebar-text/80 dark:text-sidebar-text-dark/80 line-clamp-2 leading-tight transition-colors duration-200">
                             {card.description}
-                            </p>
-                        )}
+                          </p>
                       </div>
+                      
                     </div>
                   </Link>
                 );
@@ -448,12 +612,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   key={card.href}
                   href={card.comingSoon ? '#' : card.href}
                   onClick={card.comingSoon ? (e) => e.preventDefault() : onClose}
-                  className="flex items-center gap-2.5 p-3 rounded-xl bg-sidebar dark:bg-sidebar-dark hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-all group"
+                  className="flex items-center gap-1 p-3 rounded-xl bg-card dark:bg-card-dark hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors duration-200 group"
                 >
-                  <div className="flex-none flex items-center justify-center w-6 h-6 rounded-full  transition-colors">
-                     <Icon name={card.icon} className="w-3 h-3 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-sidebar-brand dark:group-hover:text-sidebar-brand-dark" />
+                  <div className=" flex-none flex items-center justify-center w-5 h-5 rounded-full transition-colors duration-200">
+                     <Icon name={card.icon} className="w-4 h-4 overflow-visible text-sidebar-text dark:text-sidebar-text-dark group-hover:text-sidebar-brand dark:group-hover:text-sidebar-brand-dark transition-colors duration-200" />
                   </div>
-                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  <span className="overflow-visible  text-xs font-semibold text-gray-700 dark:text-gray-300 transition-colors duration-200">
                     {card.label}
                   </span>
                 </Link>
@@ -464,73 +628,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           )}
         </div>
 
-        {/* === FOOTER === */}
-        <div className="flex-none p-4 bg-header dark:bg-header-dark border-t border-header-border dark:border-header-border-dark">
-          
-          {/* User Profile */}
-          {session ? (
-            <div className="flex items-center gap-2 mb-3">
-              <Link href={`/${locale}/account`} onClick={onClose} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors group flex-1">
-                 <div className="w-9 h-9 rounded-full bg-brand-main text-white flex items-center justify-center shadow-sm">
-                   <User className="w-5 h-5" />
-                 </div>
-                 <div className="flex-1 min-w-0">
-                   <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{session.user?.name || "My Account"}</p>
-                   <p className="text-[10px] text-gray-500">View profile settings</p>
-                 </div>
-                 <Settings className="w-4 h-4 text-gray-400 group-hover:text-brand-main transition-colors" />
-              </Link>
-              {isAdmin && (
-                <Link 
-                  href={`/${locale}/admin`} 
-                  onClick={onClose} 
-                  className="flex items-center justify-center p-2.5 rounded-xl hover:bg-white dark:hover:bg-header-hover-dark transition-colors group border border-gray-200 dark:border-gray-700"
-                  aria-label="Admin Panel"
-                >
-                  <Icon name="adminBold" className="w-4 h-4 text-gray-400 group-hover:text-brand-main transition-colors" />
-                </Link>
-              )}
-            </div>
-          ) : (
-             <Link href={`/${locale}/login`} onClick={onClose} className="flex items-center gap-3 p-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:opacity-90 transition-opacity mb-4 shadow-md">
-               <User className="w-4 h-4" />
-               <span className="text-sm font-bold flex-1 text-center">{tMobileNav('signIn')}</span>
-            </Link>
-          )}
-
-          {/* Bottom Controls */}
-          <div className="flex items-center gap-2">
-            <button onClick={toggleTheme} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-400 hover:border-brand-main/30 transition-all">
-              <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="w-3.5 h-3.5" />
-              <span>{theme === 'dark' ? tMobileNav('lightMode') : tMobileNav('darkMode')}</span>
-            </button>
-            
-            <button 
-              onClick={async () => {
-                const newLang = locale === 'en' ? 'he' : 'en';
-                const segments = pathname.split('/');
-                segments[1] = newLang;
-                await router.push(segments.join('/'));
-                onClose();
-              }} 
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-xs font-medium text-gray-600 dark:text-gray-400 hover:border-brand-main/30 transition-all"
-            >
-              <Icon name={locale === 'en' ? 'israelFlag' : 'usaFlag'} className="w-3.5 h-3.5" />
-              <span>{locale === 'en' ? 'Hebrew' : 'English'}</span>
-            </button>
-
-            {session && (
-              <button 
-                onClick={() => { signOut(); onClose(); }} 
-                className="flex-none p-2.5 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-500 hover:bg-red-100 transition-colors"
-                aria-label={tMobileNav('signOut')}
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
-
+       
       </div>
     </>
   );

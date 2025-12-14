@@ -127,17 +127,17 @@ function GoogleMapView({
     pinElement.style.height = '16px';
     pinElement.style.borderRadius = '50%';
     pinElement.style.backgroundColor = '#4285F4';
-    pinElement.style.border = '2px solid #FFFFFF';
+    pinElement.style.border = '2px solid #104413';
     return pinElement;
   };
 
   // Helper function to create skatepark marker pin
-  const createSkateparkPin = (color: string = '#DC2626') => {
+  const createSkateparkPin = (color: string = '#00cc0a') => {
     const pinElement = document.createElement('div');
     pinElement.innerHTML = `
       <svg width="40" height="50" overflow="visible" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 0 C9.4 0 0 9.4 0 20 C0 35 20 50 20 50 C20 50 40 35 40 20 C40 9.4 30.6 0 20 0 Z" fill="${color}" stroke="#FFFFFF" stroke-width="2"/>
-        <circle cx="20" cy="20" r="8" fill="#FFFFFF"/>
+        <path d="M20 0 C9.4 0 0 9.4 0 20 C0 35 20 50 20 50 C20 50 40 35 40 20 C40 9.4 30.6 0 20 0 Z" fill="${color}" stroke="#18671c" stroke-width="2"/>
+        <circle cx="20" cy="20" r="8" fill="#18671c"/>
       </svg>
     `;
     pinElement.style.cursor = 'pointer';
@@ -233,7 +233,7 @@ function GoogleMapView({
                 scale: 6,
                 fillColor: '#00b881',
                 fillOpacity: 1,
-                strokeColor: '#FFFFFF',
+                strokeColor: '#104413',
                 strokeWeight: 2,
               },
             });
@@ -270,7 +270,7 @@ function GoogleMapView({
                 scale: 8,
                 fillColor: '#4285F4',
                 fillOpacity: 1,
-                strokeColor: '#FFFFFF',
+                strokeColor: '#104413',
                 strokeWeight: 2,
               },
               title: 'Your Location',

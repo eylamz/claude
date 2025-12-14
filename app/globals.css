@@ -456,6 +456,24 @@ border-top-left-radius: 12px;
   }
 }
 
+@keyframes loading-bar {
+  0% {
+    transform: translateX(-100%);
+    width: 25%;
+  }
+  50% {
+    width: 50%;
+  }
+  100% {
+    transform: translateX(400%);
+    width: 25%;
+  }
+}
+
+.animate-loading-bar {
+  animation: loading-bar 1.5s ease-in-out infinite;
+}
+
 .hero-gradient {
   animation: gradientShift 8s ease-in-out infinite;
 }

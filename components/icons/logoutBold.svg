@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21.04">
+  <defs>
+    <style>
+      .logoutBold-1 {
+        fill: none;
+        stroke: CurrentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2px;
+      }
+
+	.logoutBold-2 {
+	   fill:CurrentColor;
+	}
+    </style>
+  </defs>
+  <g>
+    <path class="logoutBold-2" d="M13.74,0h-.13c-4.56,0-6.85,1.9-7.21,5.98,0,.03,0,.06,0,.09v1.44h7.1c1.65,0,3,1.35,3,3s-1.35,3-3,3h-7.09v1.63c.38,4.02,2.66,5.9,7.2,5.9h.13c5.02,0,7.26-2.24,7.26-7.26v-6.52c0-5.02-2.24-7.26-7.26-7.26Z"/>
+    <path class="logoutBold-1" d="M13.5,10.51H2.12"/>
+    <path class="logoutBold-1" d="M4.35,7.16l-3.35,3.35,3.35,3.35"/>
+  </g>
+</svg>

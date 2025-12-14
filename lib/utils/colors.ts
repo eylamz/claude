@@ -4,7 +4,7 @@ export const colors = {
     dark: 'hsl(123, 60%, 48%)',
     text: 'hsl(148, 61%, 46%)',
     color: 'hsl(162, 56%, 45%)',
-    accent: 'hsl(355, 84%, 65%)',
+    accent: 'hsl(249, 60%, 57%)',
     hover: 'hsl(186, 57%, 41%)',
 
     orange: '#FF5528',

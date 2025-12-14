@@ -64,7 +64,9 @@ import NearbyRestaurants from './nearbyResturants.svg';
 import Roller from './Roller.svg';
 import Skate from './Skate.svg';
 import Search from './search.svg';
+import SearchBold from './SearchBold.svg';
 import SearchQuest from './searchQuest.svg';
+import SearchClose from './searchClose.svg';
 import Sparks from './sparks.svg';
 import New from './new.svg';
 import Featured from './featured.svg';
@@ -131,10 +133,23 @@ import Settings from './settings.svg';
 import Admin from './admin.svg';
 import AdminBold from './adminBold.svg';
 import Logout from './logout.svg';
+import LogoutBold from './logoutBold.svg';
 import Category from './category.svg';
 import CategoryBold from './categoryBold.svg';
 import Drag from './drag.svg';
 import DragBold from './dragBold.svg';
+import Global from './global.svg';
+import GlobalBold from './globalBold.svg';
+import Hebrew from './hebrew.svg';
+import HebrewBold from './hebrewBold.svg';
+import English from './english.svg';
+import EnglishBold from './englishBold.svg';
+import Book from './book.svg';
+import BookBold from './bookBold.svg';
+import Accessibility from './accessibility.svg';
+import AccessibilityBold from './accessibilityBold.svg';
+import Terms from './terms.svg';
+import TermsBold from './termsBold.svg';
 
 // Type for SVG components (Next.js imports SVGs as URLs by default)
 type SvgComponent = React.ComponentType<React.SVGProps<SVGSVGElement>> | string;
@@ -167,7 +182,9 @@ const iconMap: Record<string, SvgComponent> = {
   locationOff: LocationOff,
   locationOffBold: LocationOffBold,
   search: Search,
+  searchBold: SearchBold,
   searchQuest: SearchQuest,
+  searchClose: SearchClose,
   filter: Filter,
   filterBold: FilterBold,
   close: Close,
@@ -180,7 +197,17 @@ const iconMap: Record<string, SvgComponent> = {
   admin: Admin,
   adminBold: AdminBold,
   logout: Logout,
-  
+  logoutBold: LogoutBold,
+  global: Global,
+  globalBold: GlobalBold,
+  hebrew: Hebrew,
+  hebrewBold: HebrewBold,
+  english: English,
+  englishBold: EnglishBold,
+  book: Book,
+  bookBold: BookBold,
+
+
   // Action Icons
   heart: Heart,
   heartBold: HeartBold,
@@ -228,6 +255,10 @@ const iconMap: Record<string, SvgComponent> = {
   notesBold: AmenitiesBold,
   info: Info,
   infoBold: InfoBold,
+  accessibility: Accessibility,
+  accessibilityBold: AccessibilityBold,
+  terms: Terms,
+  termsBold: TermsBold,
   questionMark: QuestionMark,
   account: Account,
   accountBold: AccountBold,
@@ -333,6 +364,8 @@ if (typeof window !== 'undefined') {
 // You can add more icon names here as you add SVG files
 export type IconName =
   | 'search'
+  | 'searchBold'
+  | 'searchClose'
   | 'menu'
   | 'close'
   | 'X'
@@ -461,10 +494,23 @@ export type IconName =
   | 'admin'
   | 'adminBold'
   | 'logout'
+  | 'logoutBold'
   | 'category'
   | 'categoryBold'
   | 'drag'
   | 'dragBold'
+  | 'global'
+  | 'globalBold'
+  | 'hebrew'
+  | 'hebrewBold'
+  | 'english'
+  | 'englishBold'
+  | 'book'
+  | 'bookBold'
+  | 'accessibility'
+  | 'accessibilityBold'
+  | 'terms'
+  | 'termsBold'
   | 'clock'; // Alias for clockBold if needed
 
 interface IconProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'size'> {

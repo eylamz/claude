@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22">
+  <defs>
+    <style>
+      .searchBold-1 {
+        fill: none;
+      }
+
+.searchBold-2 {
+        fill: CurrentColor;
+      }
+
+      .searchBold-1, .searchBold-2 {
+        stroke: CurrentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2px;
+      }
+    </style>
+  </defs>
+  <g>
+    <path class="searchBold-2" d="M10.5,20c5.25,0,9.5-4.25,9.5-9.5S15.75,1,10.5,1,1,5.25,1,10.5s4.25,9.5,9.5,9.5Z"/>
+    <path class="searchBold-1" d="M21,21l-2-2"/>
+  </g>
+</svg>
