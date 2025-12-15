@@ -41,7 +41,7 @@ export const colors = {
   },
   tooltip: {
     light: 'hsl(0, 0%, 43%)',
-    dark: 'hsl(180, 2%, 10%)',
+    dark: 'hsl(180, 4%, 15%)',
   },
   sidebar: {
     light: 'hsl(0, 0%, 100%)',
@@ -162,7 +162,7 @@ export const colors = {
   },
   popover: {
     light: 'hsl(0, 0%, 100%)',
-    dark: 'hsl(180, 2%, 10%)',
+    dark: 'hsl(180, 4%, 15%)',
     border: {
       light: 'hsl(0, 0%, 94%)',
       dark: 'hsl(0, 0%, 29%)',

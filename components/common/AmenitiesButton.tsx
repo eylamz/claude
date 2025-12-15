@@ -109,14 +109,14 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
       </TooltipProvider>
       <PopoverContent className="w-fit min-w-[330px] p-2">
         <div className="space-y-2">
-          <div className="flex items-center justify-between h-[32px]">
+          <div className="flex rtl:flex-row-reverse items-center justify-between h-[32px]">
             <h4 className="font-medium">{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
             {selectedAmenities.length > 0 && (
               <Button
                 variant="error"
                 size="sm"
                 onClick={clearAll}
-                className="h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
+                className=" h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
               >
                 {tCommon('clear') || 'Clear'}
                 <Icon 
@@ -140,9 +140,9 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                         const isSelected = selectedAmenities.includes(leftAmenity.key);
                         return (
                           <Button
-                            variant={isSelected ? "info" : "popover"}
+                            variant={isSelected ? "info" : "none"}
                             size="sm"
-                            className={`w-full justify-start text-nowrap ${isSelected ? '' : 'text-text dark:text-text-dark/90'}`}
+                            className={`font-medium w-full justify-start text-nowrap ${isSelected ? '' : 'text-text dark:text-text-dark/90'}`}
                             onClick={() => toggleAmenity(leftAmenity.key)}
                           >
                             <Icon 
@@ -160,7 +160,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                         const isSelected = selectedAmenities.includes(rightAmenity.key);
                         return (
                           <Button
-                            variant={isSelected ? "info" : "ghost2"}
+                            variant={isSelected ? "info" : "none"}
                             size="sm"
                             className={`w-full justify-start text-nowrap ${isSelected ? '' : 'text-text dark:text-text-dark/90'}`}
                             onClick={() => toggleAmenity(rightAmenity.key)}

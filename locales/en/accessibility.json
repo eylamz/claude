@@ -1,0 +1,30 @@
+{
+  "metaDescription": "Accessibility Statement for ENBOSS - Read our complete accessibility statement detailing our commitment to digital accessibility.",
+  "metaKeywords": "accessibility statement, ENBOSS, skateboarding, skateparks, Israel, digital accessibility",
+  "title": "Accessibility Statement - ENBOSS",
+  "intro": "ENBOSS is committed to ensuring digital accessibility for people with disabilities. We are continually improving the user experience for everyone and applying the relevant accessibility standards.",
+  "complianceStatus": {
+    "title": "Compliance Status",
+    "description": "ENBOSS strives to conform to the Israeli Standard 5568 and Web Content Accessibility Guidelines (WCAG) 2.0 Level AA. These guidelines explain how to make web content more accessible for people with disabilities and more user-friendly for all."
+  },
+  "measures": {
+    "title": "Measures Taken by ENBOSS",
+    "description": "To ensure accessibility, ENBOSS has taken the following measures:",
+    "items": [
+      "Including accessibility as part of our mission statement",
+      "Developing our website in accordance with accessibility standards and guidelines",
+      "Training our staff on accessibility issues",
+      "Conducting periodic accessibility audits"
+    ]
+  },
+  "improvement": {
+    "title": "Continuous Improvement",
+    "description": "ENBOSS is committed to ongoing efforts to enhance the accessibility and usability of our website. If you encounter any accessibility barriers on our website, please contact us at enbossblading@gmail.com."
+  },
+  "contact": {
+    "title": "Contact Information",
+    "description": "If you have any questions, concerns, or feedback about the accessibility of the ENBOSS website, please contact us:",
+    "email": "Email: enbossblading@gmail.com"
+  },
+  "lastUpdated": "This statement was last updated on 4/13/2025."
+}

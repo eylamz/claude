@@ -1048,7 +1048,7 @@ export default function SkateparkPage() {
         </div>
       )}
 
-      <div className="min-h-screen">
+      <div className="pt-14 min-h-screen">
         {/* Breadcrumb */}
         <Breadcrumb
           items={[

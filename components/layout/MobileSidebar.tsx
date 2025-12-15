@@ -121,8 +121,8 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const miniCards: MiniCard[] = [
     { href: `/${locale}/contact`, icon: 'messages', label: tCommon('contact') },
     { href: `/${locale}/about`, icon: 'infoBold', label: tCommon('about') },
-    { href: `/${locale}/terms`, icon: 'termsBold', label: tMobileNav('termsAndConditions'), comingSoon: true },
-    { href: `/${locale}/accessibility`, icon: 'accessibilityBold', label: tMobileNav('accessibility'), comingSoon: true },
+    { href: `/${locale}/terms`, icon: 'termsBold', label: tMobileNav('termsAndConditions') },
+    { href: `/${locale}/accessibility`, icon: 'accessibilityBold', label: tMobileNav('accessibility') },
 ];
 
   // Prevent body scroll when open
@@ -262,7 +262,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     <>
       {/* Backdrop */}
       <div 
-        className={`fixed inset-0 z-[60] bg-sidebar dark:bg-sidebar-dark transition-colors duration-200 ${
+        className={`fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-colors duration-200 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         style={{ height: '150vh' }}
@@ -286,7 +286,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         <div className="flex-none border-b border-border dark:border-border-dark bg-header dark:bg-header-dark transition-colors duration-200">
           {/* Header */}
           <div className="flex items-start justify-between pb-2 mx-2 pt-6 flex-shrink-0">
-            <div className="flex flex-wrap items-center gap-1 top-0">
+            <div className="flex flex-nowrap items-center gap-1 top-0">
               <button
                 onClick={() => {
                   if (isSearchOpen) {
@@ -522,7 +522,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                               </p>
                             </div>
                             {/* Arrow */}
-                            <ChevronRight className="w-4 h-4 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-text dark:group-hover:text-text-dark flex-shrink-0 transition-colors duration-200" />
+                            <ChevronRight className="rtl:rotate-180 w-4 h-4 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-text dark:group-hover:text-text-dark flex-shrink-0 transition-colors duration-200" />
                           </Link>
                         );
                       })}
