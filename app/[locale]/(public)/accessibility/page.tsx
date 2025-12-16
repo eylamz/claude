@@ -28,3 +28,4 @@ export default async function AccessibilityPage({
   const { locale } = await params;
   return <AccessibilityPageClient locale={locale} />;
 }
+

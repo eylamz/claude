@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Dropdown } from '@/components/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Dropdown, Skeleton } from '@/components/ui';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ImageUploader } from '@/components/admin';
+import { Moon, Sun } from 'lucide-react';
 
 interface ContentBlock {
   id: string;
@@ -88,9 +90,14 @@ const CODE_LANGUAGES = [
   'other',
 ];
 
-export default function NewGuidePage() {
+export default function EditGuidePage() {
   const locale = useLocale();
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'en' | 'he'>('en');
   
   // Reset selected block when switching languages to ensure clean separation
@@ -99,15 +106,28 @@ export default function NewGuidePage() {
     setSelectedBlock(null); // Clear selection when switching languages
   };
   
+  // Handle tab value change for Tabs component
+  const handleTabsValueChange = (value: string) => {
+    if (value === 'hebrew' || value === 'english') {
+      handleTabChange(value === 'hebrew' ? 'he' : 'en');
+    }
+  };
+  
+  const currentTabValue = activeTab === 'he' ? 'hebrew' : 'english';
+  
   const [previewMode, setPreviewMode] = useState(false);
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isPageVisible, setIsPageVisible] = useState(true);
+  const lastSavedDataRef = useRef<string | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const draggedBlockRef = useRef<ContentBlock | null>(null);
   const [draggedOverId, setDraggedOverId] = useState<string | null>(null);
+  const [tagInput, setTagInput] = useState({ en: '', he: '' });
 
   const [formData, setFormData] = useState<GuideFormData>({
     title: { en: '', he: '' },
@@ -123,6 +143,154 @@ export default function NewGuidePage() {
     metaDescription: { en: '', he: '' },
     metaKeywords: { en: '', he: '' },
   });
+
+  // Fetch guide data
+  useEffect(() => {
+    const fetchGuide = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(`/api/admin/guides/${id}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Guide not found');
+          }
+          throw new Error('Failed to fetch guide');
+        }
+
+        const data = await response.json();
+        const guide = data.guide;
+
+        // Migrate content blocks from old format to new format (separated by language)
+        let contentBlocks: { en: ContentBlock[]; he: ContentBlock[] };
+        
+        if (guide.contentBlocks && Array.isArray(guide.contentBlocks)) {
+          // Old format: single array with bilingual fields
+          const enBlocks: ContentBlock[] = [];
+          const heBlocks: ContentBlock[] = [];
+          
+          guide.contentBlocks.forEach((block: any, index: number) => {
+            // Create separate blocks for each language - completely independent
+            // English block
+            const enBlockId = block.id ? `${block.id}-en` : `block-${Date.now()}-${index}-en-${Math.random()}`;
+            const enBlock: ContentBlock = {
+              id: enBlockId,
+              type: block.type,
+              order: block.order !== undefined ? block.order : enBlocks.length,
+              headingLevel: block.headingLevel,
+              listType: block.listType,
+              imageUrl: block.imageUrl,
+              imageLinkUrl: block.imageLinkUrl,
+              imageLinkExternal: block.imageLinkExternal,
+              videoUrl: block.videoUrl,
+              linkUrl: block.linkUrl,
+              linkExternal: block.linkExternal,
+              code: block.code,
+              language: block.language,
+              text: block.text?.en,
+              heading: block.heading?.en,
+              listItems: block.listItems?.en ? (Array.isArray(block.listItems.en) && block.listItems.en.length > 0 && typeof block.listItems.en[0] === 'object' 
+                ? block.listItems.en 
+                : block.listItems.en.map((item: string) => ({ title: '', content: item }))) : undefined,
+              imageCaption: block.imageCaption?.en,
+              imageAlt: block.imageAlt?.en,
+              videoTitle: block.videoTitle?.en,
+              linkText: block.linkText?.en,
+            };
+            enBlocks.push(enBlock);
+            
+            // Hebrew block - completely separate with different ID
+            const heBlockId = block.id ? `${block.id}-he` : `block-${Date.now()}-${index}-he-${Math.random()}`;
+            const heBlock: ContentBlock = {
+              id: heBlockId,
+              type: block.type,
+              order: block.order !== undefined ? block.order : heBlocks.length,
+              headingLevel: block.headingLevel,
+              listType: block.listType,
+              imageUrl: block.imageUrl, // Can be same URL or different
+              imageLinkUrl: block.imageLinkUrl,
+              imageLinkExternal: block.imageLinkExternal,
+              videoUrl: block.videoUrl,
+              linkUrl: block.linkUrl,
+              linkExternal: block.linkExternal,
+              code: block.code,
+              language: block.language,
+              text: block.text?.he,
+              heading: block.heading?.he,
+              listItems: block.listItems?.he ? (Array.isArray(block.listItems.he) && block.listItems.he.length > 0 && typeof block.listItems.he[0] === 'object'
+                ? block.listItems.he
+                : block.listItems.he.map((item: string) => ({ title: '', content: item }))) : undefined,
+              imageCaption: block.imageCaption?.he,
+              imageAlt: block.imageAlt?.he,
+              videoTitle: block.videoTitle?.he,
+              linkText: block.linkText?.he,
+            };
+            heBlocks.push(heBlock);
+          });
+          
+          // Reorder blocks
+          enBlocks.forEach((b, i) => b.order = i);
+          heBlocks.forEach((b, i) => b.order = i);
+          
+          contentBlocks = { en: enBlocks, he: heBlocks };
+        } else if (guide.contentBlocks && typeof guide.contentBlocks === 'object' && 'en' in guide.contentBlocks) {
+          // New format: already separated
+          contentBlocks = {
+            en: (guide.contentBlocks.en || []).map((block: any, index: number) => ({
+              ...block,
+              id: block.id || `block-${Date.now()}-${index}-${Math.random()}`,
+            })),
+            he: (guide.contentBlocks.he || []).map((block: any, index: number) => ({
+              ...block,
+              id: block.id || `block-${Date.now()}-${index}-${Math.random()}`,
+            })),
+          };
+        } else {
+          contentBlocks = { en: [], he: [] };
+        }
+
+        // Migrate tags from old format (array) to new format (localized object)
+        let tags: { en: string[]; he: string[] };
+        if (Array.isArray(guide.tags)) {
+          // Old format: single array - assign to both languages
+          tags = { en: [...guide.tags], he: [...guide.tags] };
+        } else if (guide.tags && typeof guide.tags === 'object' && 'en' in guide.tags) {
+          // New format: already localized
+          tags = { en: guide.tags.en || [], he: guide.tags.he || [] };
+        } else {
+          tags = { en: [], he: [] };
+        }
+
+        setFormData({
+          title: guide.title || { en: '', he: '' },
+          slug: guide.slug || '',
+          description: guide.description || { en: '', he: '' },
+          coverImage: guide.coverImage || '',
+          relatedSports: guide.relatedSports || [],
+          tags: tags,
+          contentBlocks: {
+            en: contentBlocks.en.map((block, idx) => ({ ...block, order: idx })),
+            he: contentBlocks.he.map((block, idx) => ({ ...block, order: idx })),
+          },
+          status: guide.status || 'draft',
+          isFeatured: guide.isFeatured || false,
+          metaTitle: guide.metaTitle || { en: '', he: '' },
+          metaDescription: guide.metaDescription || { en: '', he: '' },
+          metaKeywords: guide.metaKeywords || { en: '', he: '' },
+        });
+      } catch (err: any) {
+        setError(err.message || 'Failed to load guide');
+        console.error('Error fetching guide:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchGuide();
+    }
+  }, [id]);
 
   // Generate slug from title
   const generateSlug = (name: string) => {
@@ -367,13 +535,42 @@ export default function NewGuidePage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const saveDraft = useCallback(async () => {
-    // Don't auto-save if form is empty or invalid
-    if (!formData.slug || !formData.title.en) return;
+  // Track page visibility to avoid auto-saving when tab is in background
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(!document.hidden);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // Track initial form data after load
+  useEffect(() => {
+    if (formData.slug && !lastSavedDataRef.current) {
+      lastSavedDataRef.current = JSON.stringify(formData);
+    }
+  }, [formData.slug]);
+
+  // Auto-save functionality (only saves if there are changes and page is visible)
+  const autoSave = useCallback(async () => {
+    // Don't auto-save if:
+    // - No ID or slug
+    // - Currently submitting
+    // - Page is not visible (tab in background)
+    if (!id || !formData.slug || isSubmitting || !isPageVisible) {
+      return;
+    }
+    
+    // Check if there are actual changes by comparing current formData with last saved
+    const currentDataString = JSON.stringify(formData);
+    if (lastSavedDataRef.current === currentDataString) {
+      // No changes, skip auto-save
+      return;
+    }
     
     try {
-      // Clean contentBlocks for draft save too
-      const cleanedContentBlocksForDraft = {
+      // Clean contentBlocks for auto-save
+      const cleanedContentBlocks = {
         en: (formData.contentBlocks.en || [])
           .filter(block => block && block.type)
           .map((block, index) => {
@@ -388,36 +585,30 @@ export default function NewGuidePage() {
           }),
       };
 
-      const response = await fetch('/api/admin/guides', {
-        method: 'POST',
+      const response = await fetch(`/api/admin/guides/${id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          contentBlocks: cleanedContentBlocksForDraft,
-          status: 'draft',
+          contentBlocks: cleanedContentBlocks,
+          status: formData.status || 'draft',
         }),
       });
 
       if (response.ok) {
-        const data = await response.json();
         setLastSaved(new Date());
-        // Store the guide ID for future updates
-        if (data.guide && data.guide.id) {
-          // Could store in state or localStorage for future updates
-        }
-      } else {
-        const errorData = await response.json();
-        console.error('Error saving draft:', errorData.error || 'Failed to save draft');
+        lastSavedDataRef.current = currentDataString; // Update last saved data
+        console.log('Auto-saved guide');
       }
     } catch (error) {
-      console.error('Error saving draft:', error);
+      console.error('Error auto-saving:', error);
     }
-  }, [formData]);
+  }, [formData, id, isSubmitting, isPageVisible]);
 
   useEffect(() => {
-    const interval = setInterval(saveDraft, 30000);
+    const interval = setInterval(autoSave, 30000); // Every 30 seconds
     return () => clearInterval(interval);
-  }, [saveDraft]);
+  }, [autoSave]);
 
   // Debug: Log toast changes
   useEffect(() => {
@@ -426,15 +617,11 @@ export default function NewGuidePage() {
     }
   }, [toast]);
 
-  const handleSubmit = async (e?: React.FormEvent, saveAsDraft: boolean = false) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    // Only validate if not saving as draft
-    if (!saveAsDraft && !validate()) {
-      return;
-    }
-
     setIsSubmitting(true);
+    setError(null);
     
     try {
       // Ensure contentBlocks are properly formatted - remove id field and ensure type exists
@@ -496,53 +683,91 @@ export default function NewGuidePage() {
       const submitData = {
         ...formData,
         contentBlocks: cleanedContentBlocks,
-        status: saveAsDraft ? 'draft' : 'published', // When publishing, explicitly set to 'published'
+        status: formData.status || 'draft', // Use current status from form
       };
 
-      console.log('Submitting guide with contentBlocks:', {
-        en: cleanedContentBlocks.en.length,
-        he: cleanedContentBlocks.he.length,
-        structure: cleanedContentBlocks,
+      console.log('Submitting guide update:', {
+        contentBlocks: {
+          en: cleanedContentBlocks.en.length,
+          he: cleanedContentBlocks.he.length,
+        },
+        tags: {
+          type: typeof submitData.tags,
+          isObject: typeof submitData.tags === 'object' && !Array.isArray(submitData.tags),
+          hasEn: submitData.tags && 'en' in submitData.tags,
+          hasHe: submitData.tags && 'he' in submitData.tags,
+          enCount: submitData.tags?.en?.length || 0,
+          heCount: submitData.tags?.he?.length || 0,
+        },
+        status: submitData.status,
       });
 
-      const response = await fetch('/api/admin/guides', {
-        method: 'POST',
+      const response = await fetch(`/api/admin/guides/${id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submitData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create guide');
+        throw new Error(errorData.error || 'Failed to save guide');
       }
 
       const data = await response.json();
-      console.log('Guide created successfully:', data);
+      console.log('Guide saved successfully:', data);
       setLastSaved(new Date());
+      // Update last saved data reference to prevent unnecessary auto-saves
+      const submitDataString = JSON.stringify(submitData);
+      lastSavedDataRef.current = submitDataString;
       
-      if (saveAsDraft) {
-        // Show success toast for draft
-        setToast({ message: 'Draft saved successfully!', type: 'success' });
-        setTimeout(() => setToast(null), 3000);
-      } else {
-        // Show success toast before redirecting
-        console.log('Setting success toast...');
-        setToast({ message: 'Guide published successfully!', type: 'success' });
-        // Use setTimeout to ensure React has time to render the toast
-        setTimeout(() => {
-          console.log('Redirecting after toast display...');
-          router.push(`/${locale}/admin/guides`);
-        }, 2500);
-      }
+      // Show success toast
+      const statusMessage = formData.status === 'published' ? 'published' : 'saved';
+      setToast({ message: `Guide ${statusMessage} successfully!`, type: 'success' });
+      setTimeout(() => setToast(null), 3000);
     } catch (error: any) {
       console.error('Error submitting:', error);
       const errorMessage = error.message || 'Failed to save guide';
+      setError(errorMessage);
       setToast({ message: errorMessage, type: 'error' });
       setTimeout(() => setToast(null), 5000);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error && !formData.slug) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Edit Guide</h1>
+            <p className="text-sm text-red-500 mt-1">{error}</p>
+          </div>
+          <Button variant="secondary" onClick={() => router.back()}>
+            Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -587,9 +812,10 @@ export default function NewGuidePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Create New Guide</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Edit Guide</h1>
           <p className="text-sm text-gray-500 mt-1">
             {lastSaved && `Last saved: ${lastSaved.toLocaleTimeString()}`}
+            {error && <span className="text-red-500 ml-2">{error}</span>}
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -599,19 +825,12 @@ export default function NewGuidePage() {
           <Button type="button" variant="secondary" onClick={() => setPreviewMode(!previewMode)}>
             {previewMode ? 'Edit' : 'Preview'}
           </Button>
-          <Button type="button" variant="secondary" onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleSubmit(undefined, true);
-          }} disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save Draft'}
-          </Button>
           <Button type="button" variant="primary" onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             handleSubmit();
           }} disabled={isSubmitting}>
-            {isSubmitting ? 'Publishing...' : 'Publish Guide'}
+            {isSubmitting ? 'Saving...' : 'Save Guide'}
           </Button>
         </div>
       </div>
@@ -886,10 +1105,10 @@ export default function NewGuidePage() {
             <CardContent className="space-y-4">
               {/* Debug info - remove after testing */}
               <div className="text-xs text-gray-400 mb-2 px-2">
-                Showing {formData.contentBlocks[activeTab].length} {activeTab === 'en' ? 'English' : 'Hebrew'} block(s) | 
-                English: {formData.contentBlocks.en.length} | Hebrew: {formData.contentBlocks.he.length}
+                Showing {formData.contentBlocks[activeTab]?.length || 0} {activeTab === 'en' ? 'English' : 'Hebrew'} block(s) | 
+                English: {formData.contentBlocks.en?.length || 0} | Hebrew: {formData.contentBlocks.he?.length || 0}
               </div>
-              {formData.contentBlocks[activeTab].length === 0 ? (
+              {(!formData.contentBlocks[activeTab] || formData.contentBlocks[activeTab].length === 0) ? (
                 <div className="text-center py-12 text-gray-500">
                   No {activeTab === 'en' ? 'English' : 'Hebrew'} content blocks yet. Add one to get started.
                 </div>
@@ -1058,17 +1277,17 @@ export default function NewGuidePage() {
                                   placeholder={activeTab === 'en' ? 'Enter heading...' : 'הכנס כותרת...'}
                                   dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                 />
-                  <Select
-                    value={block.headingLevel}
-                    onChange={(e) =>
-                      handleUpdateContentBlock(block.id, { headingLevel: e.target.value as 'h2' | 'h3' | 'h4' })
-                    }
-                    options={[
-                      { value: 'h2', label: 'H2' },
-                      { value: 'h3', label: 'H3' },
-                      { value: 'h4', label: 'H4' },
-                    ]}
-                  />
+                                <Select
+                                  value={block.headingLevel}
+                                  onChange={(e) =>
+                                    handleUpdateContentBlock(block.id, { headingLevel: e.target.value as 'h2' | 'h3' | 'h4' })
+                                  }
+                                  options={[
+                                    { value: 'h2', label: 'H2' },
+                                    { value: 'h3', label: 'H3' },
+                                    { value: 'h4', label: 'H4' },
+                                  ]}
+                                />
                               </div>
                             )}
 
@@ -1460,7 +1679,7 @@ function RenderContentBlock({ block, lang }: { block: ContentBlock; lang: 'en' |
       // Parse markdown-style links [text](url)
       const parseTextWithLinks = (text: string) => {
         const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-        const parts: (string | JSX.Element)[] = [];
+        const parts: (string | React.ReactElement)[] = [];
         let lastIndex = 0;
         let match;
         let key = 0;

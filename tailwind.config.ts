@@ -614,6 +614,13 @@ const config: Config = {
         },
       });
     },
+    // Add custom variants for rtl: and ltr: based on locale
+    function({ addVariant }: any) {
+      // rtl: variant - activates when locale is Hebrew (he)
+      addVariant('rtl', '[dir="rtl"] &, [lang="he"] &');
+      // ltr: variant - activates when locale is English (en)
+      addVariant('ltr', '[dir="ltr"] &, [lang="en"] &');
+    },
   ],
 };
 

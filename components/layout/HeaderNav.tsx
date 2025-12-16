@@ -18,6 +18,7 @@ import {
 import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { useTheme } from '@/context/ThemeProvider';
@@ -550,72 +551,87 @@ export default function HeaderNav() {
                       </span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className={`w-56 p-2 ${locale === 'he' ? '!left-0 !right-auto' : '!right-0 !left-auto'}`}>
-                  <div className={locale === 'he' ? 'flex flex-col-reverse gap-1' : 'space-y-1'}>
-                    {/* Theme Toggle */}
-                    <div className="px-2 py-1.5">
-                      <ThemeToggle className={`w-full ${locale === 'he' ? 'justify-end' : 'justify-start'}`} />
-                    </div>
-
-                    {/* Language Switcher */}
-                    <div className="px-2 py-1.5 border-t border-gray-200 dark:border-gray-700">
-                      <div className="w-full">
-                        <LanguageSwitcher className={`w-full ${locale === 'he' ? 'justify-end' : 'justify-start'}`} />
+                  <PopoverContent className={`w-fit min-w-[280px] p-2 ${locale === 'he' ? '!left-0 !right-auto' : '!right-0 !left-auto'}`}>
+                    <div className="space-y-2">
+                      {/* Header */}
+                      <div className={`flex ${locale === 'he' ? 'flex-row-reverse' : ''} items-center justify-between h-[32px]`}>
+                        <h4 className="font-medium">{tCommon('settings') || 'Settings'}</h4>
                       </div>
+                      <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                      
+                      {/* Theme Toggle */}
+                      <div className="px-2 py-1.5">
+                        <ThemeToggle className={`w-full ${locale === 'he' ? 'justify-end' : 'justify-start'}`} />
+                      </div>
+
+                      {/* Language Switcher */}
+                      <div className="px-2 py-1.5">
+                        <div className="w-full">
+                          <LanguageSwitcher className={`w-full ${locale === 'he' ? 'justify-end' : 'justify-start'}`} />
+                        </div>
+                      </div>
+
+                      {/* Login Button */}
+                      {!session && (
+                        <>
+                          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                          <Link
+                            href={`/${locale}/login`}
+                            className={`flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                          >
+                            <LogIn className="w-4 h-4 text-text-secondary dark:text-text-secondary-dark" />
+                            <span>{tCommon('login') || 'Login'}</span>
+                          </Link>
+                        </>
+                      )}
+
+                      {/* User Profile Link */}
+                      {session && (
+                        <>
+                          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                          <Link
+                            href={`/${locale}/account`}
+                            className={`flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                          >
+                            <User className="w-4 h-4 text-text-secondary dark:text-text-secondary-dark" />
+                            <span>{tCommon('profile')}</span>
+                          </Link>
+                        </>
+                      )}
+
+                      {/* Admin Link */}
+                      {isAdmin && (
+                        <Link
+                          href={`/${locale}/admin`}
+                          className={`flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                        >
+                          <Shield className="w-4 h-4 text-text-secondary dark:text-text-secondary-dark" />
+                          <span>Admin</span>
+                        </Link>
+                      )}
+
+                      {/* Logout Button */}
+                      {session && (
+                        <>
+                          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                          <button
+                            onClick={handleLogout}
+                            disabled={isLoggingOut}
+                            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                          >
+                            {isLoggingOut ? (
+                              <LoadingSpinner size={16} variant="error" />
+                            ) : (
+                              <>
+                                <LogOut className="w-4 h-4" />
+                                <span>{tCommon('logout') || 'Logout'}</span>
+                              </>
+                            )}
+                          </button>
+                        </>
+                      )}
                     </div>
-
-                    {/* Login Button */}
-                    {!session && (
-                      <Link
-                        href={`/${locale}/login`}
-                        className={`flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
-                      >
-                        <LogIn className="w-4 h-4" />
-                        <span>{tCommon('login') || 'Login'}</span>
-                      </Link>
-                    )}
-
-                    {/* User Profile Link */}
-                    {session && (
-                      <Link
-                        href={`/${locale}/account`}
-                        className={`flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
-                      >
-                        <User className="w-4 h-4" />
-                        <span>{tCommon('profile')}</span>
-                      </Link>
-                    )}
-
-                    {/* Admin Link */}
-                    {isAdmin && (
-                      <Link
-                        href={`/${locale}/admin`}
-                        className={`flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
-                      >
-                        <Shield className="w-4 h-4" />
-                        <span>Admin</span>
-                      </Link>
-                    )}
-
-                    {/* Logout Button */}
-                    {session && (
-                      <button
-                        onClick={handleLogout}
-                        disabled={isLoggingOut}
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${locale === 'he' ? 'flex-row-reverse' : ''}`}
-                      >
-                        {isLoggingOut ? (
-                          <LoadingSpinner size={16} variant="error" />
-                        ) : (
-                          <>
-                            <LogOut className="w-4 h-4" />
-                            <span>{tCommon('logout') || 'Logout'}</span>
-                          </>
-                        )}
-                      </button>
-                    )}
-                  </div>
-                </PopoverContent>
+                  </PopoverContent>
                 </Popover>
               </div>
             </div>

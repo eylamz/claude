@@ -38,28 +38,30 @@ export interface IContentBlock {
   type: ContentBlockType;
   order: number;
   
-  // For text blocks
-  text?: ILocalizedField;
+  // For text blocks (now single language string)
+  text?: string;
   
-  // For heading blocks
-  heading?: ILocalizedField;
+  // For heading blocks (now single language string)
+  heading?: string;
   headingLevel?: HeadingLevel;
   
-  // For list blocks
+  // For list blocks (now single language)
   listType?: ListType;
-  listItems?: ILocalizedField[];
+  listItems?: Array<{ title?: string; content: string }>;
   
-  // For image blocks
+  // For image blocks (now single language strings)
   imageUrl?: string;
-  imageCaption?: ILocalizedField;
-  imageAlt?: ILocalizedField;
+  imageCaption?: string;
+  imageAlt?: string;
+  imageLinkUrl?: string;
+  imageLinkExternal?: boolean;
   
-  // For video blocks
+  // For video blocks (now single language string)
   videoUrl?: string;
-  videoTitle?: ILocalizedField;
+  videoTitle?: string;
   
-  // For link blocks
-  linkText?: ILocalizedField;
+  // For link blocks (now single language string)
+  linkText?: string;
   linkUrl?: string;
   linkExternal?: boolean;
   
@@ -87,11 +89,17 @@ export interface IGuide extends Document {
   // Related sports
   relatedSports: string[];
   
-  // Content
-  contentBlocks: IContentBlock[];
+  // Content - separated by language
+  contentBlocks: {
+    en: IContentBlock[];
+    he: IContentBlock[];
+  };
   
-  // Tags
-  tags: string[];
+  // Tags - separated by language
+  tags: {
+    en: string[];
+    he: string[];
+  };
   
   // Statistics
   viewsCount: number;
@@ -189,133 +197,15 @@ const GuideSchema: Schema<IGuide> = new Schema<IGuide>(
         trim: true,
       },
     ],
-    contentBlocks: [
-      {
-        type: {
-          type: String,
-          enum: ['text', 'heading', 'list', 'image', 'video', 'link', 'code', 'divider'],
-          required: true,
-        },
-        order: {
-          type: Number,
-          required: true,
-          default: 0,
-        },
-        text: {
-          en: {
-            type: String,
-            trim: true,
-          },
-          he: {
-            type: String,
-            trim: true,
-          },
-        },
-        heading: {
-          en: {
-            type: String,
-            trim: true,
-          },
-          he: {
-            type: String,
-            trim: true,
-          },
-        },
-        headingLevel: {
-          type: String,
-          enum: ['h2', 'h3', 'h4'],
-          default: 'h2',
-        },
-        listType: {
-          type: String,
-          enum: ['bullet', 'numbered'],
-          default: 'bullet',
-        },
-        listItems: [
-          {
-            en: {
-              type: String,
-              trim: true,
-            },
-            he: {
-              type: String,
-              trim: true,
-            },
-          },
-        ],
-        imageUrl: {
-          type: String,
-          trim: true,
-        },
-        imageCaption: {
-          en: {
-            type: String,
-            trim: true,
-          },
-          he: {
-            type: String,
-            trim: true,
-          },
-        },
-        imageAlt: {
-          en: {
-            type: String,
-            trim: true,
-          },
-          he: {
-            type: String,
-            trim: true,
-          },
-        },
-        videoUrl: {
-          type: String,
-          trim: true,
-        },
-        videoTitle: {
-          en: {
-            type: String,
-            trim: true,
-          },
-          he: {
-            type: String,
-            trim: true,
-          },
-        },
-        linkText: {
-          en: {
-            type: String,
-            trim: true,
-          },
-          he: {
-            type: String,
-            trim: true,
-          },
-        },
-        linkUrl: {
-          type: String,
-          trim: true,
-        },
-        linkExternal: {
-          type: Boolean,
-          default: false,
-        },
-        code: {
-          type: String,
-          trim: true,
-        },
-        language: {
-          type: String,
-          trim: true,
-          default: 'javascript',
-        },
-      },
-    ],
-    tags: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
+    contentBlocks: {
+      type: Schema.Types.Mixed,
+      default: { en: [], he: [] },
+      required: true,
+    },
+    tags: {
+      type: Schema.Types.Mixed,
+      default: { en: [], he: [] },
+    },
     viewsCount: {
       type: Number,
       default: 0,
@@ -409,7 +299,8 @@ const GuideSchema: Schema<IGuide> = new Schema<IGuide>(
 GuideSchema.index({ status: 1 });
 GuideSchema.index({ isFeatured: 1, status: 1 });
 GuideSchema.index({ relatedSports: 1, status: 1 });
-GuideSchema.index({ tags: 1, status: 1 });
+GuideSchema.index({ 'tags.en': 1, status: 1 });
+GuideSchema.index({ 'tags.he': 1, status: 1 });
 GuideSchema.index({ viewsCount: -1 });
 GuideSchema.index({ rating: -1 });
 GuideSchema.index({
@@ -417,7 +308,8 @@ GuideSchema.index({
   'title.he': 'text',
   'description.en': 'text',
   'description.he': 'text',
-  tags: 'text',
+  'tags.en': 'text',
+  'tags.he': 'text',
 });
 
 /**
@@ -507,22 +399,74 @@ GuideSchema.virtual('formattedRating').get(function (this: IGuide): string {
  * Virtual: Get reading time estimate
  */
 GuideSchema.virtual('readingTime').get(function (this: IGuide): number {
+  // Handle both old format (array) and new format (object with en/he)
+  let blocks: any[] = [];
+  
+  if (Array.isArray(this.contentBlocks)) {
+    // Old format: single array with bilingual fields
+    blocks = this.contentBlocks;
+  } else if (this.contentBlocks && typeof this.contentBlocks === 'object') {
+    // New format: { en: ContentBlock[], he: ContentBlock[] }
+    // Combine both languages for reading time estimate
+    const enBlocks = (this.contentBlocks as any).en || [];
+    const heBlocks = (this.contentBlocks as any).he || [];
+    blocks = [...enBlocks, ...heBlocks];
+  }
+  
   // Estimate reading time based on content blocks
-  const totalWords = this.contentBlocks.reduce((total, block) => {
+  const totalWords = blocks.reduce((total, block: any) => {
+    if (!block) return total;
+    
+    // Handle text blocks
     if (block.text) {
-      const enWords = block.text.en.split(' ').length;
-      const heWords = block.text.he.split(' ').length;
-      return total + Math.max(enWords, heWords);
-    } else if (block.heading) {
-      return total + 5; // Headings add minimal reading time
-    } else if (block.listItems) {
-      return total + block.listItems.length * 3;
+      if (typeof block.text === 'string') {
+        // New format: single string
+        const words = block.text.split(/\s+/).filter((w: string) => w.length > 0).length;
+        return total + words;
+      } else if (block.text.en || block.text.he) {
+        // Old format: bilingual object
+        const enWords = block.text.en ? block.text.en.split(/\s+/).filter((w: string) => w.length > 0).length : 0;
+        const heWords = block.text.he ? block.text.he.split(/\s+/).filter((w: string) => w.length > 0).length : 0;
+        return total + Math.max(enWords, heWords);
+      }
     }
+    
+    // Handle heading blocks
+    if (block.heading) {
+      if (typeof block.heading === 'string') {
+        // New format: single string
+        return total + 5; // Headings add minimal reading time
+      } else if (block.heading.en || block.heading.he) {
+        // Old format: bilingual object
+        return total + 5;
+      }
+    }
+    
+    // Handle list blocks
+    if (block.listItems) {
+      if (Array.isArray(block.listItems)) {
+        // New format: array of { title?, content }
+        const listWords = block.listItems.reduce((sum: number, item: any) => {
+          if (typeof item === 'object' && 'content' in item) {
+            const content = item.content || '';
+            return sum + content.split(/\s+/).filter((w: string) => w.length > 0).length;
+          }
+          return sum;
+        }, 0);
+        return total + listWords;
+      } else if (typeof block.listItems === 'object' && ('en' in block.listItems || 'he' in block.listItems)) {
+        // Old format: object with en/he arrays
+        const enItems = (block.listItems as any).en || [];
+        const heItems = (block.listItems as any).he || [];
+        return total + Math.max(enItems.length, heItems.length) * 3;
+      }
+    }
+    
     return total;
   }, 0);
   
   // Average reading speed is 200 words per minute
-  return Math.ceil(totalWords / 200);
+  return Math.ceil(totalWords / 200) || 1; // Minimum 1 minute
 });
 
 /**

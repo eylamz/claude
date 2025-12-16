@@ -20,10 +20,11 @@
     "perf:load": "artillery run artillery.config.yml",
     "perf:bundle": "next build && source-map-explorer \".next/static/chunks/*.js\" --html .sme-report.html || true",
     "db:seed": "tsx lib/db/seed.ts",
-    "db:seed-users": "tsx lib/db/seed-users.ts",
-    "db:seed-products": "tsx lib/db/seed-products.ts",
-    "db:seed-parks": "tsx lib/db/seed-parks.ts",
-    "db:seed-reviews": "tsx lib/db/seed-reviews.ts"
+    "users": "tsx lib/db/seed-users.ts",
+    "products": "tsx lib/db/seed-products.ts",
+    "parks": "tsx lib/db/seed-parks.ts",
+    "reviews": "tsx lib/db/seed-reviews.ts",
+    "guides": "tsx lib/db/seed-guides.ts"
   },
   "dependencies": {
     "@next-auth/mongodb-adapter": "^1.1.3",

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Dropdown, Skeleton } from '@/components/ui';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 interface Guide {
   id: string;
@@ -18,7 +19,7 @@ interface Guide {
   };
   coverImage: string;
   relatedSports: string[];
-  tags: string[];
+  tags: string[] | { en: string[]; he: string[] }; // Support both old (array) and new (localized) formats
   viewsCount: number;
   likesCount: number;
   rating: number;
@@ -44,12 +45,25 @@ const SPORTS = [
   'Snowboard',
 ];
 
+// Helper function to get tags array based on locale
+const getTagsForLocale = (tags: string[] | { en: string[]; he: string[] } | undefined, locale: string): string[] => {
+  if (!tags) return [];
+  if (Array.isArray(tags)) return tags; // Old format
+  if (typeof tags === 'object' && 'en' in tags && 'he' in tags) {
+    return tags[locale as 'en' | 'he'] || tags.en || tags.he || [];
+  }
+  return [];
+};
+
 export default function GuidesPage() {
   const locale = useLocale();
   const router = useRouter();
   const [guides, setGuides] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [viewPopoverOpen, setViewPopoverOpen] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [bulkOperation, setBulkOperation] = useState<string | null>(null);
   const [pagination, setPagination] = useState<Pagination>({
     currentPage: 1,
     totalPages: 1,
@@ -112,11 +126,203 @@ export default function GuidesPage() {
     }
   };
 
-  const handleBulkAction = (action: string) => {
+  const handleBulkAction = async (action: string) => {
     if (selectedItems.size === 0) return;
-    if (confirm(`Perform ${action} on ${selectedItems.size} selected guide(s)?`)) {
-      console.log(`Bulk action ${action}:`, Array.from(selectedItems));
+    
+    const actionLabels: Record<string, string> = {
+      'publish': 'publish',
+      'archive': 'archive',
+      'delete': 'delete',
+      'toggle-feature': 'toggle featured status',
+      'toggle-publish': 'toggle publish status',
+    };
+    
+    const actionLabel = actionLabels[action] || action;
+    const confirmMessage = action === 'delete' 
+      ? `Are you sure you want to delete ${selectedItems.size} selected guide(s)? This action cannot be undone.`
+      : `Are you sure you want to ${actionLabel} ${selectedItems.size} selected guide(s)?`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    setBulkOperation(action);
+    const guideIds = Array.from(selectedItems);
+    const results = { success: 0, failed: 0 };
+    const errors: string[] = [];
+
+    try {
+      if (action === 'delete') {
+        // Delete guides
+        for (const guideId of guideIds) {
+          try {
+            const response = await fetch(`/api/admin/guides/${guideId}`, {
+              method: 'DELETE',
+            });
+
+            if (response.ok) {
+              results.success++;
+            } else {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to delete guide');
+            }
+          } catch (error) {
+            results.failed++;
+            const guide = guides.find(g => g.id === guideId);
+            errors.push(guide ? guide.title.en : guideId);
+            console.error(`Error deleting guide ${guideId}:`, error);
+          }
+        }
+
+        // Remove successfully deleted guides from local state
+        setGuides(prevGuides => prevGuides.filter(guide => !guideIds.includes(guide.id)));
+        
+      } else if (action === 'publish' || action === 'archive') {
+        // Update status
+        const newStatus = action === 'publish' ? 'published' : 'archived';
+        
+        for (const guideId of guideIds) {
+          try {
+            const response = await fetch(`/api/admin/guides/${guideId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: newStatus }),
+            });
+
+            if (response.ok) {
+              results.success++;
+            } else {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to update guide');
+            }
+          } catch (error) {
+            results.failed++;
+            const guide = guides.find(g => g.id === guideId);
+            errors.push(guide ? guide.title.en : guideId);
+            console.error(`Error updating guide ${guideId}:`, error);
+          }
+        }
+
+        // Update guides in local state
+        setGuides(prevGuides =>
+          prevGuides.map(guide =>
+            guideIds.includes(guide.id) ? { ...guide, status: newStatus } : guide
+          )
+        );
+      } else if (action === 'toggle-feature') {
+        // Toggle featured status
+        for (const guideId of guideIds) {
+          try {
+            const guide = guides.find(g => g.id === guideId);
+            if (!guide) continue;
+
+            const response = await fetch(`/api/admin/guides/${guideId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ isFeatured: !guide.isFeatured }),
+            });
+
+            if (response.ok) {
+              results.success++;
+            } else {
+              const errorData = await response.json();
+              throw new Error(errorData.error || 'Failed to update guide');
+            }
+          } catch (error) {
+            results.failed++;
+            const guide = guides.find(g => g.id === guideId);
+            errors.push(guide ? guide.title.en : guideId);
+            console.error(`Error updating guide ${guideId}:`, error);
+          }
+        }
+
+        // Update guides in local state
+        setGuides(prevGuides =>
+          prevGuides.map(guide =>
+            guideIds.includes(guide.id)
+              ? { ...guide, isFeatured: !guide.isFeatured }
+              : guide
+          )
+        );
+      }
+
+      // Show results
+      if (results.failed > 0) {
+        alert(`Completed: ${results.success} succeeded, ${results.failed} failed.\n\nFailed guides: ${errors.join(', ')}`);
+      } else {
+        alert(`Successfully ${actionLabel}ed ${results.success} guide(s).`);
+      }
+
+      // Refresh the list
+      fetchGuides();
+    } catch (error) {
+      console.error('Error performing bulk action:', error);
+      alert(`Error performing bulk action: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setBulkOperation(null);
       setSelectedItems(new Set());
+    }
+  };
+
+  const handleStatusChange = async (guideId: string, newStatus: string) => {
+    try {
+      setUpdatingStatus(guideId);
+      const response = await fetch(`/api/admin/guides/${guideId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update status');
+      }
+
+      // Update the guide in the local state
+      setGuides(prevGuides =>
+        prevGuides.map(guide =>
+          guide.id === guideId ? { ...guide, status: newStatus } : guide
+        )
+      );
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert(error instanceof Error ? error.message : 'Failed to update status');
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  const handleDeleteGuide = async (guideId: string, guideTitle: string) => {
+    if (!confirm(`Are you sure you want to delete "${guideTitle}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setUpdatingStatus(guideId);
+      const response = await fetch(`/api/admin/guides/${guideId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete guide');
+      }
+
+      // Remove the guide from the local state
+      setGuides(prevGuides => prevGuides.filter(guide => guide.id !== guideId));
+      
+      // Close popover if it was open for this guide
+      if (viewPopoverOpen === guideId) {
+        setViewPopoverOpen(null);
+      }
+      
+      // Refresh the list to update pagination
+      fetchGuides();
+    } catch (error) {
+      console.error('Error deleting guide:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete guide');
+    } finally {
+      setUpdatingStatus(null);
     }
   };
 
@@ -248,14 +454,26 @@ export default function GuidesPage() {
                 {selectedItems.size} guide(s) selected
               </p>
               <div className="flex items-center space-x-2">
-                <Button variant="secondary" onClick={() => handleBulkAction('publish')}>
-                  Publish
+                <Button 
+                  variant="secondary" 
+                  onClick={() => handleBulkAction('publish')}
+                  disabled={!!bulkOperation}
+                >
+                  {bulkOperation === 'publish' ? 'Publishing...' : 'Publish'}
                 </Button>
-                <Button variant="secondary" onClick={() => handleBulkAction('archive')}>
-                  Archive
+                <Button 
+                  variant="secondary" 
+                  onClick={() => handleBulkAction('archive')}
+                  disabled={!!bulkOperation}
+                >
+                  {bulkOperation === 'archive' ? 'Archiving...' : 'Archive'}
                 </Button>
-                <Button variant="secondary" onClick={() => handleBulkAction('delete')}>
-                  Delete Selected
+                <Button 
+                  variant="danger" 
+                  onClick={() => handleBulkAction('delete')}
+                  disabled={!!bulkOperation}
+                >
+                  {bulkOperation === 'delete' ? 'Deleting...' : 'Delete Selected'}
                 </Button>
               </div>
             </div>
@@ -377,8 +595,15 @@ export default function GuidesPage() {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
                         <div className="truncate">
-                          {guide.tags.slice(0, 3).join(', ')}
-                          {guide.tags.length > 3 && '...'}
+                          {(() => {
+                            const tags = getTagsForLocale(guide.tags, locale);
+                            return (
+                              <>
+                                {tags.slice(0, 3).join(', ')}
+                                {tags.length > 3 && '...'}
+                              </>
+                            );
+                          })()}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -410,51 +635,191 @@ export default function GuidesPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <Dropdown
-                          trigger={
-                            <button className="text-gray-600 hover:text-gray-900">
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                              </svg>
-                            </button>
-                          }
-                          options={[
-                            {
-                              label: 'View',
-                              value: 'view',
-                              onClick: () => router.push(`/${locale}/admin/guides/${guide.id}`),
-                            },
-                            {
-                              label: 'Edit',
-                              value: 'edit',
-                              onClick: () => router.push(`/${locale}/admin/guides/${guide.id}/edit`),
-                            },
-                            {
-                              label: guide.isFeatured ? 'Unfeature' : 'Feature',
-                              value: 'toggle-feature',
-                              onClick: () => handleBulkAction('toggle-feature'),
-                            },
-                            {
-                              label: guide.status === 'published' ? 'Unpublish' : 'Publish',
-                              value: 'toggle-publish',
-                              onClick: () => handleBulkAction('toggle-publish'),
-                            },
-                            {
-                              label: 'Duplicate',
-                              value: 'duplicate',
-                              onClick: () => console.log('Duplicate:', guide.id),
-                            },
-                            {
-                              label: 'Delete',
-                              value: 'delete',
-                              onClick: () => {
-                                if (confirm(`Delete ${guide.title.en}?`)) {
-                                  console.log('Delete:', guide.id);
-                                }
+                        <div className="flex items-center space-x-2">
+                          <Popover open={viewPopoverOpen === guide.id} onOpenChange={(open) => setViewPopoverOpen(open ? guide.id : null)}>
+                            <PopoverTrigger asChild>
+                              <Button type="button" variant="secondary" size="sm">
+                                View
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-96 p-0" align="end">
+                              <div className="p-4 space-y-4">
+                                {/* Cover Image */}
+                                {guide.coverImage && (
+                                  <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
+                                    <img
+                                      src={guide.coverImage}
+                                      alt={guide.title.en}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).src = '/placeholder-guide.jpg';
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                                
+                                {/* Title */}
+                                <div>
+                                  <h3 className="text-lg font-semibold text-gray-900">{guide.title.en}</h3>
+                                  <p className="text-sm text-gray-500 mt-1">{guide.title.he}</p>
+                                </div>
+
+                                {/* Description */}
+                                <div>
+                                  <p className="text-sm text-gray-600 line-clamp-3">{guide.description.en}</p>
+                                </div>
+
+                                {/* Stats */}
+                                <div className="grid grid-cols-3 gap-4 pt-2 border-t border-gray-200">
+                                  <div>
+                                    <p className="text-xs text-gray-500">Views</p>
+                                    <p className="text-sm font-medium">{guide.viewsCount.toLocaleString()}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500">Likes</p>
+                                    <p className="text-sm font-medium">{guide.likesCount.toLocaleString()}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500">Rating</p>
+                                    <p className="text-sm font-medium">{guide.rating.toFixed(1)} ({guide.ratingCount})</p>
+                                  </div>
+                                </div>
+
+                                {/* Sports & Tags */}
+                                <div className="space-y-2 pt-2 border-t border-gray-200">
+                                  <div>
+                                    <p className="text-xs text-gray-500 mb-1">Sports</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {guide.relatedSports.slice(0, 3).map((sport) => (
+                                        <span key={sport} className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded">
+                                          {sport}
+                                        </span>
+                                      ))}
+                                      {guide.relatedSports.length > 3 && (
+                                        <span className="text-xs text-gray-500">+{guide.relatedSports.length - 3}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {(() => {
+                                    const tags = getTagsForLocale(guide.tags, locale);
+                                    return tags.length > 0 && (
+                                      <div>
+                                        <p className="text-xs text-gray-500 mb-1">Tags</p>
+                                        <div className="flex flex-wrap gap-1">
+                                          {tags.slice(0, 5).map((tag) => (
+                                            <span key={tag} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 rounded">
+                                              {tag}
+                                            </span>
+                                          ))}
+                                          {tags.length > 5 && (
+                                            <span className="text-xs text-gray-500">+{tags.length - 5}</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+
+                                {/* Status Change */}
+                                <div className="pt-2 border-t border-gray-200">
+                                  <label className="block text-xs font-medium text-gray-700 mb-2">
+                                    Status
+                                  </label>
+                                  <Select
+                                    value={guide.status}
+                                    onChange={(e) => handleStatusChange(guide.id, e.target.value)}
+                                    disabled={updatingStatus === guide.id}
+                                    options={[
+                                      { value: 'draft', label: 'Draft' },
+                                      { value: 'published', label: 'Published' },
+                                      { value: 'archived', label: 'Archived' },
+                                    ]}
+                                  />
+                                  {updatingStatus === guide.id && (
+                                    <p className="text-xs text-gray-500 mt-1">Updating...</p>
+                                  )}
+                                </div>
+
+                                {/* Actions */}
+                                <div className="flex flex-col gap-2 pt-2 border-t border-gray-200">
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      type="button"
+                                      variant="secondary"
+                                      size="sm"
+                                      className="flex-1"
+                                      onClick={() => {
+                                        setViewPopoverOpen(null);
+                                        router.push(`/${locale}/admin/guides/${guide.id}/edit`);
+                                      }}
+                                    >
+                                      Edit Guide
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="secondary"
+                                      size="sm"
+                                      onClick={() => {
+                                        setViewPopoverOpen(null);
+                                        router.push(`/${locale}/guides/${guide.slug}`);
+                                      }}
+                                    >
+                                      View Public
+                                    </Button>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="danger"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() => {
+                                      setViewPopoverOpen(null);
+                                      handleDeleteGuide(guide.id, guide.title.en);
+                                    }}
+                                    disabled={updatingStatus === guide.id}
+                                  >
+                                    {updatingStatus === guide.id ? 'Deleting...' : 'Delete Guide'}
+                                  </Button>
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                          
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => router.push(`/${locale}/admin/guides/${guide.id}/edit`)}
+                          >
+                            Edit
+                          </Button>
+                          <Dropdown
+                            trigger={
+                              <button type="button" className="text-gray-600 hover:text-gray-900">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                                </svg>
+                              </button>
+                            }
+                            options={[
+                              {
+                                label: guide.isFeatured ? 'Unfeature' : 'Feature',
+                                value: 'toggle-feature',
+                                onClick: () => handleBulkAction('toggle-feature'),
                               },
-                            },
-                          ]}
-                        />
+                              {
+                                label: 'Duplicate',
+                                value: 'duplicate',
+                                onClick: () => console.log('Duplicate:', guide.id),
+                              },
+                              {
+                                label: 'Delete',
+                                value: 'delete',
+                                onClick: () => handleDeleteGuide(guide.id, guide.title.en),
+                              },
+                            ]}
+                          />
+                        </div>
                       </td>
                     </tr>
                   ))

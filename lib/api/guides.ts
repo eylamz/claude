@@ -127,14 +127,32 @@ export async function fetchGuidesData(params: {
     description: guide.description?.[locale as 'en' | 'he'] || guide.description?.en || '',
     coverImage: guide.coverImage || '/placeholder-guide.jpg',
     relatedSports: guide.relatedSports || [],
-    tags: guide.tags || [],
+    tags: (() => {
+      // Handle both old format (array) and new format (localized object)
+      if (Array.isArray(guide.tags)) {
+        return guide.tags;
+      } else if (guide.tags && typeof guide.tags === 'object' && 'en' in guide.tags) {
+        // New format: get tags for current locale
+        return guide.tags[locale as 'en' | 'he'] || guide.tags.en || [];
+      }
+      return [];
+    })(),
     viewsCount: guide.viewsCount || 0,
     rating: guide.rating || 0,
     ratingCount: guide.ratingCount || 0,
     readTime: guide.readTime || 5,
-    difficulty: guide.tags?.find((tag: string) =>
-      ['beginner', 'intermediate', 'advanced', 'expert'].includes(tag.toLowerCase())
-    ) || null,
+    difficulty: (() => {
+      // Handle both old format (array) and new format (localized object)
+      let tagsArray: string[] = [];
+      if (Array.isArray(guide.tags)) {
+        tagsArray = guide.tags;
+      } else if (guide.tags && typeof guide.tags === 'object' && 'en' in guide.tags) {
+        tagsArray = guide.tags[locale as 'en' | 'he'] || guide.tags.en || [];
+      }
+      return tagsArray.find((tag: string) =>
+        ['beginner', 'intermediate', 'advanced', 'expert'].includes(tag.toLowerCase())
+      ) || null;
+    })(),
   }));
 
   // Get filters data if requested

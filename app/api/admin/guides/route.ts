@@ -128,9 +128,104 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    // Prepare guide data
-    const guideData = {
-      ...body,
+    // Validate and clean contentBlocks before creating
+    let cleanedContentBlocks = { en: [], he: [] };
+    if (body.contentBlocks) {
+      if (typeof body.contentBlocks === 'object' && !Array.isArray(body.contentBlocks)) {
+        // Ensure we have en and he properties
+        if (!('en' in body.contentBlocks) || !('he' in body.contentBlocks)) {
+          console.error('Invalid contentBlocks format - missing en or he:', body.contentBlocks);
+          return NextResponse.json(
+            { error: 'Invalid contentBlocks format. Expected object with en and he arrays.' },
+            { status: 400 }
+          );
+        }
+        
+        cleanedContentBlocks = {
+          en: Array.isArray(body.contentBlocks.en) 
+            ? body.contentBlocks.en.filter((block: any) => block && block.type && typeof block.type === 'string')
+            : [],
+          he: Array.isArray(body.contentBlocks.he)
+            ? body.contentBlocks.he.filter((block: any) => block && block.type && typeof block.type === 'string')
+            : [],
+        };
+        
+        // Ensure each block has required fields (type and order)
+        cleanedContentBlocks.en = cleanedContentBlocks.en.map((block: any, index: number) => {
+          if (!block.type) {
+            console.warn('Block missing type, skipping:', block);
+            return null;
+          }
+          return {
+            ...block,
+            type: String(block.type), // Ensure type is a string
+            order: typeof block.order === 'number' ? block.order : index,
+          };
+        }).filter(Boolean);
+        
+        cleanedContentBlocks.he = cleanedContentBlocks.he.map((block: any, index: number) => {
+          if (!block.type) {
+            console.warn('Block missing type, skipping:', block);
+            return null;
+          }
+          return {
+            ...block,
+            type: String(block.type), // Ensure type is a string
+            order: typeof block.order === 'number' ? block.order : index,
+          };
+        }).filter(Boolean);
+      } else {
+        console.error('Invalid contentBlocks format - not an object:', typeof body.contentBlocks, body.contentBlocks);
+        return NextResponse.json(
+          { error: 'Invalid contentBlocks format. Expected object with en and he arrays.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate and clean tags
+    let cleanedTags = { en: [], he: [] };
+    if (body.tags) {
+      if (typeof body.tags === 'object' && !Array.isArray(body.tags)) {
+        // Ensure we have en and he properties
+        if ('en' in body.tags && 'he' in body.tags) {
+          cleanedTags = {
+            en: Array.isArray(body.tags.en) ? body.tags.en.filter((t: any) => typeof t === 'string' && t.trim()) : [],
+            he: Array.isArray(body.tags.he) ? body.tags.he.filter((t: any) => typeof t === 'string' && t.trim()) : [],
+          };
+        } else {
+          console.error('Invalid tags format - missing en or he:', body.tags);
+          return NextResponse.json(
+            { error: 'Invalid tags format. Expected object with en and he arrays.' },
+            { status: 400 }
+          );
+        }
+      } else if (Array.isArray(body.tags)) {
+        // Old format: single array - migrate to new format
+        cleanedTags = {
+          en: body.tags.filter((t: any) => typeof t === 'string' && t.trim()),
+          he: body.tags.filter((t: any) => typeof t === 'string' && t.trim()),
+        };
+      } else {
+        console.error('Invalid tags format - not an object or array:', typeof body.tags, body.tags);
+        return NextResponse.json(
+          { error: 'Invalid tags format. Expected object with en and he arrays.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Prepare guide data - explicitly set contentBlocks and tags to ensure correct structure
+    // Don't spread body.contentBlocks or body.tags to avoid conflicts
+    const { contentBlocks: _, tags: __, ...bodyWithoutContentBlocksAndTags } = body;
+    
+    const guideData: any = {
+      ...bodyWithoutContentBlocksAndTags,
+      contentBlocks: {
+        en: cleanedContentBlocks.en,
+        he: cleanedContentBlocks.he,
+      },
+      tags: cleanedTags,
       authorId: session.user.id,
       authorName: user.name || user.email,
       viewsCount: 0,
@@ -139,8 +234,47 @@ export async function POST(request: Request) {
       ratingCount: 0,
     };
 
+    console.log('Creating guide with contentBlocks:', {
+      enCount: cleanedContentBlocks.en.length,
+      heCount: cleanedContentBlocks.he.length,
+      structure: {
+        isObject: typeof guideData.contentBlocks === 'object' && !Array.isArray(guideData.contentBlocks),
+        hasEn: 'en' in guideData.contentBlocks,
+        hasHe: 'he' in guideData.contentBlocks,
+        enType: Array.isArray(guideData.contentBlocks.en),
+        heType: Array.isArray(guideData.contentBlocks.he),
+        firstEnBlock: cleanedContentBlocks.en[0],
+        firstHeBlock: cleanedContentBlocks.he[0],
+      },
+    });
+
     // Create new guide
     const newGuide = new Guide(guideData);
+    
+    // Mark contentBlocks as modified to ensure Mongoose recognizes the nested structure
+    if (newGuide.isNew) {
+      newGuide.markModified('contentBlocks');
+    }
+    
+    // Validate before saving
+    try {
+      const validationError = newGuide.validateSync();
+      if (validationError) {
+        console.error('Validation error:', validationError);
+        console.error('Validation error details:', JSON.stringify(validationError, null, 2));
+        return NextResponse.json(
+          { error: validationError.message || 'Validation failed' },
+          { status: 400 }
+        );
+      }
+    } catch (validationErr: any) {
+      console.error('Validation exception:', validationErr);
+      return NextResponse.json(
+        { error: validationErr.message || 'Validation failed' },
+        { status: 400 }
+      );
+    }
+    
     await newGuide.save();
 
     return NextResponse.json(
@@ -149,6 +283,33 @@ export async function POST(request: Request) {
     );
   } catch (error: any) {
     console.error('Create guide error:', error);
+    
+    // Handle duplicate key error (unique constraint violation)
+    if (error.code === 11000 || error.name === 'MongoServerError') {
+      const duplicateField = error.keyPattern ? Object.keys(error.keyPattern)[0] : 'field';
+      const duplicateValue = error.keyValue ? Object.values(error.keyValue)[0] : 'value';
+      
+      if (duplicateField === 'slug') {
+        return NextResponse.json(
+          { error: `A guide with the slug "${duplicateValue}" already exists. Please choose a different slug.` },
+          { status: 409 } // Conflict status code
+        );
+      }
+      
+      return NextResponse.json(
+        { error: `A guide with this ${duplicateField} already exists.` },
+        { status: 409 }
+      );
+    }
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      return NextResponse.json(
+        { error: error.message || 'Validation failed' },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       { error: error.message || 'Failed to create guide' },
       { status: 500 }
