@@ -445,7 +445,10 @@ export const ProductCard: FC<ProductCardProps> = ({
     <div
       className={cn(
         'group relative',
-        'overflow-hidden',
+        'shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02]',
+        'border-[4px] border-card dark:border-card-dark',
+        'bg-card dark:bg-card-dark rounded-3xl overflow-hidden',
+        'cursor-pointer select-none transform-gpu transition-all duration-300',
         className
       )}
       onMouseEnter={() => setIsHovered(true)}
@@ -453,7 +456,7 @@ export const ProductCard: FC<ProductCardProps> = ({
     >
       {/* Image Container */}
       <Link href={`/shop/product/${product.slug}`} className="block">
-        <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-900">
+        <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-900">
           {/* Images with transition */}
           {displayImage && !imageError ? (
             <>
@@ -461,7 +464,7 @@ export const ProductCard: FC<ProductCardProps> = ({
                 src={primaryImage}
                 alt={getImageAlt(images[0]?.alt, productName)}
                 className={cn(
-                  'absolute inset-0 w-full h-full object-cover transition-opacity duration-500',
+                  'absolute inset-0 w-full h-full object-cover saturate-[1.75] rounded-xl transition-opacity duration-500',
                   isHovered && secondaryImage && secondaryImage !== primaryImage
                     ? 'opacity-0'
                     : 'opacity-100'
@@ -473,7 +476,7 @@ export const ProductCard: FC<ProductCardProps> = ({
                   src={secondaryImage}
                   alt={getImageAlt(images[1]?.alt, productName)}
                   className={cn(
-                    'absolute inset-0 w-full h-full object-cover transition-opacity duration-500',
+                    'absolute inset-0 w-full h-full object-cover saturate-[1.75] rounded-xl transition-opacity duration-500',
                     isHovered ? 'opacity-100' : 'opacity-0'
                   )}
                 />
@@ -582,7 +585,7 @@ export const ProductCard: FC<ProductCardProps> = ({
       </Link>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="p-2">
         {/* Product Name */}
         <Link href={`/shop/product/${product.slug}`}>
           <h3

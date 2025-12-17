@@ -58,10 +58,10 @@ export default function FixedBanner({ isRtl, locale }: FixedBannerProps) {
         >
           <Icon 
             name="logo" 
-            className="w-[12rem] sm:w-[15rem] md:w-[18rem] navShadow stroke-[7px] text-header-text stroke-header-dark overflow-visible" 
+            className="w-[12rem] sm:w-[15rem] md:w-[18rem] navShadow stroke-[7px] text-header-text stroke-brand-dark overflow-visible" 
             style={{ paintOrder: 'stroke' }}
           />
-          <h2 className="mt-2 text-center rtl:font-rtl ltr:font-ltr leading-[0.95] text-text-dark font-bold navShadow text-3xl sm:text-4xl md:text-5xl">
+          <h2 className="mt-2 text-center rtl:font-rtl ltr:font-ltr leading-[0.95] text-text-dark font-bold textShadow text-3xl sm:text-4xl md:text-5xl">
             {title}
           </h2>
         </div>

@@ -151,13 +151,13 @@ export const ProductSection = ({ products, t }: ProductSectionProps) => {
               }}
             >
               <Card 
-                className={`flex-none bg-card dark:bg-card-dark opacity-0 snap-center w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] hover:shadow-lg dark:hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent before:z-[1] before:pointer-events-none ${clickedCardId === product.id ? 'before:animate-shimmer' : ''}`}
+                className={`flex-none bg-card dark:bg-card-dark opacity-0 snap-center w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02] border-[4px] border-card dark:border-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent before:z-[1] before:pointer-events-none ${clickedCardId === product.id ? 'before:animate-shimmer' : ''}`}
                 style={{ animationDelay: `${150 + (index * 125)}ms` }}
               >
                 <img
                   src={product.image ?? '/placeholder.jpg'}
                   alt={product.name}
-                  className="select-none w-full h-36 md:h-40 object-cover rounded-t-lg saturate-[1.75]"
+                  className="select-none w-full h-36 md:h-40 object-cover saturate-[1.75] rounded-xl"
                 />
                 <CardContent className="p-2 w-full">
                   <div className="flex flex-col w-full text-text-secondary dark:text-text-secondary-dark">

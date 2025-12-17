@@ -439,7 +439,7 @@ const SkateparkThumbnail = memo(({
           ref={imgRef}
           src={optimizedUrl}
           alt={parkName}
-          className={`w-full h-full rounded-t-3xl object-cover transition-all duration-200 select-none ${
+          className={`w-full h-full rounded-xl object-cover transition-all duration-200 select-none ${
             alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
           } ${
             isLoaded ? 'opacity-100' : 'opacity-0'
@@ -499,7 +499,7 @@ ParkAmenities.displayName = 'ParkAmenities';
 /**
  * Skatepark Card Component
  */
-const SkateparkCard = memo(({ park, locale, animationDelay = 0 }: { park: Skatepark; locale: string; animationDelay?: number }) => {
+const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLocation }: { park: Skatepark; locale: string; animationDelay?: number; sortBy?: SortOption; userLocation?: UserLocation | null }) => {
   const [isClicked, setIsClicked] = useState(false);
   const name = typeof park.name === 'string' 
     ? park.name 
@@ -525,21 +525,16 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0 }: { park: Skatep
   const isNew = park.createdAt && isNewPark(park.createdAt);
   const isFeatured = park.isFeatured;
 
-  const distanceText = park.distance !== null && park.distance !== undefined
-    ? `(${park.distance.toFixed(1)} ${tr('km', 'ק\"מ')})`
+  // Show distance only when location sorting is active
+  const isLocationSortingActive = sortBy === 'nearest' && userLocation !== null && userLocation !== undefined;
+  const distanceText = isLocationSortingActive && park.distance !== null && park.distance !== undefined
+    ? `${park.distance.toFixed(1)} ${tr('km', 'ק\"מ')}`
     : null;
-
-  const areaLabels: Record<'north' | 'center' | 'south', { en: string; he: string }> = {
-    north: { en: 'North', he: 'צפון' },
-    center: { en: 'Center', he: 'מרכז' },
-    south: { en: 'South', he: 'דרום' },
-  };
-  const areaLabel = locale === 'he' ? areaLabels[park.area]?.he : areaLabels[park.area]?.en || park.area;
 
   return (
     <div
       onClick={handleCardClick}
-      className={`h-fit hover:shadow-lg dark:hover:!scale-[1.02] bord bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02] border-[4px] border-card dark:border-card-dark bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
       style={{ animationDelay: `${animationDelay}ms` }}
       aria-label={name}
     >
@@ -547,7 +542,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0 }: { park: Skatep
         <ParkAmenities amenities={park.amenities} locale={locale} />
       )}
 
-      <div className="relative bg-black/25 h-[10.5rem] overflow-hidden">
+      <div className="relative h-[10.5rem] overflow-hidden">
         {/* Opening Year Badge */}
         {hasOpeningYear && (
           <div className="absolute bottom-2 left-0 z-10">
@@ -606,18 +601,20 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0 }: { park: Skatep
         />
       </div>
       
-      <div className="px-4 py-3 space-y-1">
+      <div className="px-3 py-2 space-y-1">
         <h3 className="text-lg font-semibold truncate">
           {name}
         </h3>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
-            <MapPin className="w-3.5 h-3.5 shrink-0" />
-            <span className="text-sm truncate">
-              {distanceText ? `${areaLabel} ${distanceText}` : areaLabel}
-            </span>
+        {distanceText && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
+              <MapPin className="w-3.5 h-3.5 shrink-0" />
+              <span className="text-sm truncate">
+                {distanceText}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
@@ -1478,7 +1475,7 @@ export default function SkateparksPage() {
             </div>
             
             {/* Selected Park Detail Panel - Bottom */}
-            {selectedPark && (() => {
+            {selectedPark && !(userLocation && sortBy === 'nearest') && (() => {
               const name = typeof selectedPark.name === 'string' 
                 ? selectedPark.name 
                 : (locale === 'he' ? selectedPark.name.he : selectedPark.name.en) || selectedPark.name.en || selectedPark.name.he;
@@ -1632,7 +1629,6 @@ export default function SkateparksPage() {
                           e.preventDefault();
                           e.stopPropagation();
                         }}
-                        variant="brand"
                         className="flex items-center justify-center p-1.5 rounded-ful transition-colors cursor-move"
                         aria-label={tr('Drag to move card', 'גרור כדי להזיז את הכרטיס')}
                         title={tr('Drag to move card', 'גרור כדי להזיז את הכרטיס')}
@@ -1648,13 +1644,15 @@ export default function SkateparksPage() {
         ) : (
           /* GRID VIEW */
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-3">
               {skateparks.map((park, index) => (
                 <SkateparkCard 
                   key={park._id} 
                   park={park} 
                   locale={locale} 
-                  animationDelay={index * 50} 
+                  animationDelay={index * 50}
+                  sortBy={sortBy}
+                  userLocation={userLocation}
                 />
               ))}
             </div>

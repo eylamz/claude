@@ -146,14 +146,14 @@ export const ParkSection = ({ parks, t }: ParkSectionProps) => {
               }}
             >
               <Card 
-                className={`flex-none !rounded-3xl bg-card dark:bg-card-dark opacity-0 snap-center w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] hover:shadow-lg dark:hover:!scale-[1.02] overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent before:z-[1] before:pointer-events-none ${clickedCardId === park.id ? 'before:animate-shimmer' : ''}`}
+                className={`flex-none !rounded-3xl bg-card dark:bg-card-dark opacity-0 snap-center w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02] border-[4px] border-card dark:border-card-dark overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent before:z-[1] before:pointer-events-none ${clickedCardId === park.id ? 'before:animate-shimmer' : ''}`}
                 style={{ animationDelay: `${550 + (index * 125)}ms` }}
               >
                 <div className="relative">
                   <img
                     src={park.image ?? '/placeholder.jpg'}
                     alt={park.name}
-                    className="select-none w-full h-40 md:h-44 object-cover saturate-[1.75]"
+                    className="select-none w-full h-40 md:h-44 object-cover saturate-[1.75] rounded-xl"
                   />
                 </div>
                 <CardContent className="ps-3 pe-2 py-2 w-full">

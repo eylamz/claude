@@ -104,7 +104,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     },
     {
       href: `/${locale}/guides`,
-      icon: 'bookBold',
+      icon: 'books',
       label: tMobileNav('guides'),
       description: tMobileNav('guidesDesc'),
     },
