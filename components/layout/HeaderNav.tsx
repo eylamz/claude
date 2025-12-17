@@ -6,21 +6,27 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import {
-  User,
-  LogIn,
   LogOut,
-  Shield,
   Trash2,
   Minus,
   Plus,
   Loader2,
+  ChevronRight,
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Users,
+  MapPin,
+  Star,
+  Calendar,
+  UserCircle,
+  BookOpen,
+  Settings as SettingsIcon,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { useTheme } from '@/context/ThemeProvider';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { 
@@ -41,7 +47,8 @@ export default function HeaderNav() {
   const tShop = useTranslations('shop');
   const tEvents = useTranslations('events');
   const tAdmin = useTranslations('admin');
-  const { theme } = useTheme();
+  const tMobileNav = useTranslations('common.mobileNav');
+  const { theme, toggleTheme } = useTheme();
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -223,11 +230,11 @@ export default function HeaderNav() {
     <>
       {/* Desktop Header Navigation */}
       <header 
-        className={`hidden [@media_(min-width:820px)]:block fixed top-0 left-0 right-0 z-[50] px-3 select-none transition-transform duration-300 ease-in-out text-white bg-header dark:bg-header-dark ${
+        className={`hidden [@media_(min-width:820px)]:block fixed top-0 left-0 right-0 z-[50] px-3 select-none transition-all duration-300 ease-in-out text-white bg-header dark:bg-header-dark ${
           isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
-        <div className={`mx-auto ${getBorderClass()} border-header-border dark:border-header-border-dark w-full max-w-7xl px-2 overflow-visible text-header-text-dark dark:text-header-text`}>
+        <div className={`mx-auto ${getBorderClass()} border-header-border dark:border-header-border-dark w-full max-w-7xl px-2 overflow-visible text-header-text-dark dark:text-header-text transition-colors duration-200`}>
           <div className="flex items-center justify-between h-16">
             {/* LEFT: Logo*/}
             <div className="flex items-center gap-4">
@@ -314,15 +321,13 @@ export default function HeaderNav() {
               {/* Search (more prominent) */}
               <button
                 onClick={() => setIsSearchOpen(true)}
-                className="group flex items-center gap-2 px-3 py-2 rounded-lg text-black/70 dark:text-white/60 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
+                className="group flex items-center gap-2 px-3 py-2 rounded-lg text-sidebar-text dark:text-sidebar-text-dark hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
                 aria-label={locale === 'he' ? 'חיפוש פארקים' : 'Search parks'}
               >
                 <span className="inline-flex items-center justify-center w-4 h-4">
-                  <Icon name="search" className="w-4 h-4" />
+                  <Icon name="searchBold" className="w-4 h-4" />
                 </span>
-                <span className="hidden xl:inline text-sm font-medium">
-                  {tCommon('search')}
-                </span>
+              
               </button>
 
               {/* Cart with badge */}
@@ -330,28 +335,29 @@ export default function HeaderNav() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className="relative h-9 w-9 flex items-center justify-center rounded-lg text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
+                      className="relative h-9 w-9 flex items-center justify-center rounded-lg text-sidebar-text dark:text-sidebar-text-dark hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
                       aria-label={locale === 'he' ? 'עגלת קניות' : 'Shopping cart'}
                       type="button"
                     >
                       <span className="inline-flex items-center justify-center w-5 h-5">
-                        <Icon name="cart" className="w-5 h-5" />
+                      
+                        <Icon name="backpackBold" className="w-5 h-5" />
                       </span>
                       {/* Cart badge (show when items > 0) */}
                       {itemCount > 0 && (
-                        <span className="absolute -top-1 -right-1 h-4 min-w-[16px] px-1 rounded-full bg-accent text-white text-[10px] font-bold flex items-center justify-center">
-                          {itemCount > 9 ? '9+' : itemCount}
+                      <span className="absolute -top-1 -right-1  min-w-[16px] px-[6px] rounded-full bg-brand-main dark:bg-brand-dark text-text text-[0.75rem] font-bold flex items-center justify-center transition-colors duration-200">
+                      {itemCount > 9 ? '9+' : itemCount}
                         </span>
                       )}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-96 p-0 !right-0 !left-auto max-h-[600px] overflow-y-auto">
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-200">
                         Shopping Cart
                       </h3>
                       {itemCount > 0 && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors duration-200">
                           {itemCount} {itemCount === 1 ? 'item' : 'items'}
                         </p>
                       )}
@@ -359,8 +365,9 @@ export default function HeaderNav() {
 
                     {items.length === 0 ? (
                       <div className="p-8 text-center">
-                        <Icon name="cart" className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-                        <p className="text-gray-600 dark:text-gray-400">Your cart is empty</p>
+                        
+                        <Icon name="emptyBackpack" className="w-full h-auto  mx-auto mb-4 transition-colors duration-200" />
+                        <p className="text-gray-600 dark:text-gray-400 transition-colors duration-200">Your bag is empty</p>
                       </div>
                     ) : (
                       <>
@@ -383,7 +390,7 @@ export default function HeaderNav() {
                                 {/* Product Image */}
                                 <Link
                                   href={`/${locale}/shop/product/${item.productSlug}`}
-                                  className="relative flex-shrink-0 w-16 h-16 bg-white dark:bg-gray-700 rounded-lg overflow-hidden hover:opacity-75 transition-opacity"
+                                  className="relative flex-shrink-0 w-16 h-16 bg-white dark:bg-gray-700 rounded-lg overflow-hidden hover:opacity-75 transition-all duration-200"
                                 >
                                   <Image
                                     src={item.imageUrl}
@@ -400,7 +407,7 @@ export default function HeaderNav() {
                                   <div className="flex items-start justify-between gap-2 mb-1">
                                     <Link
                                       href={`/${locale}/shop/product/${item.productSlug}`}
-                                      className="font-medium text-sm text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors line-clamp-2 flex-1"
+                                      className="font-medium text-sm text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 line-clamp-2 flex-1"
                                     >
                                       {item.productName}
                                     </Link>
@@ -427,11 +434,11 @@ export default function HeaderNav() {
                                   <div className="flex items-center justify-between gap-2">
                                     {/* Price */}
                                     <div className="flex items-center gap-2">
-                                      <span className="font-semibold text-sm text-gray-900 dark:text-white">
+                                      <span className="font-semibold text-sm text-gray-900 dark:text-white transition-colors duration-200">
                                         ${currentPrice.toFixed(2)}
                                       </span>
                                       {hasDiscount && (
-                                        <span className="text-xs text-gray-500 dark:text-gray-400 line-through">
+                                        <span className="text-xs text-gray-500 dark:text-gray-400 line-through transition-colors duration-200">
                                           ${item.price.toFixed(2)}
                                         </span>
                                       )}
@@ -446,13 +453,13 @@ export default function HeaderNav() {
                                         aria-label="Decrease quantity"
                                       >
                                         {isUpdating ? (
-                                          <Loader2 className="w-3 h-3 text-gray-600 dark:text-gray-300 animate-spin" />
+                                          <Loader2 className="w-3 h-3 text-gray-600 dark:text-gray-300 animate-spin transition-colors duration-200" />
                                         ) : (
-                                          <Minus className="w-3 h-3 text-gray-600 dark:text-gray-300" />
+                                          <Minus className="w-3 h-3 text-gray-600 dark:text-gray-300 transition-colors duration-200" />
                                         )}
                                       </button>
                                       
-                                      <span className={`min-w-[1.5rem] text-center text-sm font-medium text-gray-900 dark:text-white ${
+                                      <span className={`min-w-[1.5rem] text-center text-sm font-medium text-gray-900 dark:text-white transition-colors duration-200 ${
                                         isUpdating ? 'opacity-50' : ''
                                       }`}>
                                         {item.quantity}
@@ -461,13 +468,13 @@ export default function HeaderNav() {
                                       <button
                                         onClick={() => handleUpdateQuantity(item, item.quantity + 1)}
                                         disabled={item.quantity >= item.maxStock || isUpdating || isRemoving}
-                                        className="p-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                        className="p-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                         aria-label="Increase quantity"
                                       >
                                         {isUpdating ? (
-                                          <Loader2 className="w-3 h-3 text-gray-600 dark:text-gray-300 animate-spin" />
+                                          <Loader2 className="w-3 h-3 text-gray-600 dark:text-gray-300 animate-spin transition-colors duration-200" />
                                         ) : (
-                                          <Plus className="w-3 h-3 text-gray-600 dark:text-gray-300" />
+                                          <Plus className="w-3 h-3 text-gray-600 dark:text-gray-300 transition-colors duration-200" />
                                         )}
                                       </button>
                                     </div>
@@ -484,32 +491,32 @@ export default function HeaderNav() {
                         </div>
 
                         {/* Totals and Checkout */}
-                        <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-3 bg-gray-50 dark:bg-gray-900">
+                        <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
                           {/* Totals */}
                           <div className="space-y-2">
                             <div className="flex justify-between text-sm">
-                              <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
-                              <span className="font-medium text-gray-900 dark:text-white">
+                              <span className="text-gray-600 dark:text-gray-400 transition-colors duration-200">Subtotal:</span>
+                              <span className="font-medium text-gray-900 dark:text-white transition-colors duration-200">
                                 ${totals.subtotal.toFixed(2)}
                               </span>
                             </div>
                             {totals.discount > 0 && (
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-400">Discount:</span>
-                                <span className="font-medium text-green-600 dark:text-green-400">
+                                <span className="text-gray-600 dark:text-gray-400 transition-colors duration-200">Discount:</span>
+                                <span className="font-medium text-green-600 dark:text-green-400 transition-colors duration-200">
                                   -${totals.discount.toFixed(2)}
                                 </span>
                               </div>
                             )}
                             <div className="flex justify-between text-sm">
-                              <span className="text-gray-600 dark:text-gray-400">Tax:</span>
-                              <span className="font-medium text-gray-900 dark:text-white">
+                              <span className="text-gray-600 dark:text-gray-400 transition-colors duration-200">Tax:</span>
+                              <span className="font-medium text-gray-900 dark:text-white transition-colors duration-200">
                                 ${totals.tax.toFixed(2)}
                               </span>
                             </div>
-                            <div className="flex justify-between text-base font-semibold pt-2 border-t border-gray-200 dark:border-gray-700">
-                              <span className="text-gray-900 dark:text-white">Total:</span>
-                              <span className="text-gray-900 dark:text-white">
+                            <div className="flex justify-between text-base font-semibold pt-2 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                              <span className="text-gray-900 dark:text-white transition-colors duration-200">Total:</span>
+                              <span className="text-gray-900 dark:text-white transition-colors duration-200">
                                 ${totals.total.toFixed(2)}
                               </span>
                             </div>
@@ -518,7 +525,7 @@ export default function HeaderNav() {
                           {/* Checkout Button */}
                           <button
                             onClick={handleCheckout}
-                            className="w-full px-4 py-2.5 bg-blue-600 dark:bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-700 rounded-lg transition-colors font-medium text-sm"
+                            className="w-full px-4 py-2.5 bg-blue-600 dark:bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium text-sm"
                           >
                             Checkout
                           </button>
@@ -526,7 +533,7 @@ export default function HeaderNav() {
                           {/* View Cart Link */}
                           <Link
                             href={`/${locale}/cart`}
-                            className="block w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                            className="block w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:underline transition-colors duration-200"
                           >
                             View full cart
                           </Link>
@@ -542,44 +549,59 @@ export default function HeaderNav() {
                 <Popover>
                   <PopoverTrigger asChild>
                     <button
-                      className="h-9 w-9 flex items-center justify-center rounded-lg text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/5 hover:rotate-[270deg] hover:text-black dark:hover:text-white transition-all duration-200"
+                      className="group h-9 w-9 flex items-center justify-center rounded-lg text-sidebar-text dark:text-sidebar-text-dark hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
                       aria-label={locale === 'he' ? 'הגדרות' : 'Settings'}
                       type="button"
                     >
                       <span className="inline-flex items-center justify-center w-5 h-5">
-                        <Icon name="settings" className="w-5 h-5" />
+                        <Icon name="settingsBold" className="w-5 h-5 group-hover:rotate-[46deg] transition-transform duration-500" />
                       </span>
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className={`w-fit min-w-[280px] p-2 ${locale === 'he' ? '!left-0 !right-auto' : '!right-0 !left-auto'}`}>
                     <div className="space-y-2">
-                      {/* Header */}
-                      <div className={`flex ${locale === 'he' ? 'flex-row-reverse' : ''} items-center justify-between h-[32px]`}>
-                        <h4 className="font-medium">{tCommon('settings') || 'Settings'}</h4>
-                      </div>
-                      <Separator className="bg-popover-border dark:bg-popover-border-dark" />
-                      
                       {/* Theme Toggle */}
-                      <div className="px-2 py-1.5">
-                        <ThemeToggle className={`w-full ${locale === 'he' ? 'justify-end' : 'justify-start'}`} />
-                      </div>
+                      <button
+                        onClick={toggleTheme}
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                        aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
+                      >
+                        {theme === 'dark' ? (
+                          <Icon name="sunBold" className="w-4 h-4 text-text/80 dark:text-text-dark/80 transition-colors duration-200" />
+                        ) : (
+                          <Icon name="moonBold" className="w-4 h-4 text-text/80 dark:text-text-dark/80 transition-colors duration-200" />
+                        )}
+                        <span>{theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}</span>
+                      </button>
 
                       {/* Language Switcher */}
-                      <div className="px-2 py-1.5">
-                        <div className="w-full">
-                          <LanguageSwitcher className={`w-full ${locale === 'he' ? 'justify-end' : 'justify-start'}`} />
-                        </div>
-                      </div>
+                      <button
+                        onClick={async () => {
+                          const newLang = locale === 'en' ? 'he' : 'en';
+                          const segments = pathname.split('/');
+                          segments[1] = newLang;
+                          await router.push(segments.join('/'));
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                        aria-label={tCommon('toggle_language') || 'Toggle language'}
+                      >
+                        {locale === 'en' ? (
+                          <Icon name="hebrewBold" className="w-4 h-4 text-text/80 dark:text-text-dark/80" />
+                        ) : (
+                          <Icon name="englishBold" className="w-4 h-4 text-text/80 dark:text-text-dark/80" />
+                        )}
+                        <span>{locale === 'en' ? 'עברית' : 'English'}</span>
+                      </button>
 
                       {/* Login Button */}
                       {!session && (
                         <>
-                          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                          <Separator className="bg-popover-border/80 dark:bg-popover-border-dark/50 transition-colors duration-200" />
                           <Link
                             href={`/${locale}/login`}
-                            className={`flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                            className={`flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 ${locale === 'he' ? 'flex-row-reverse' : ''}`}
                           >
-                            <LogIn className="w-4 h-4 text-text-secondary dark:text-text-secondary-dark" />
+                            <Icon name="account" className="w-4 h-4 text-text/80 dark:text-text-dark/80 transition-colors duration-200" />
                             <span>{tCommon('login') || 'Login'}</span>
                           </Link>
                         </>
@@ -588,26 +610,115 @@ export default function HeaderNav() {
                       {/* User Profile Link */}
                       {session && (
                         <>
-                          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                          <Separator className="bg-popover-border/50 dark:bg-popover-border-dark/50 transition-colors duration-200" />
                           <Link
                             href={`/${locale}/account`}
-                            className={`flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                            className={`flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 ${locale === 'he' ? 'flex-row-reverse' : ''}`}
                           >
-                            <User className="w-4 h-4 text-text-secondary dark:text-text-secondary-dark" />
+                            <Icon name="accountBold" className="w-4 h-4 text-text dark:text-text-dark transition-colors duration-200" />
                             <span>{tCommon('profile')}</span>
                           </Link>
                         </>
                       )}
 
-                      {/* Admin Link */}
+                      {/* Admin Menu */}
                       {isAdmin && (
-                        <Link
-                          href={`/${locale}/admin`}
-                          className={`flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
-                        >
-                          <Shield className="w-4 h-4 text-text-secondary dark:text-text-secondary-dark" />
-                          <span>Admin</span>
-                        </Link>
+                        <>
+                          <Separator className="bg-popover-border/50 dark:bg-popover-border-dark/50 transition-colors duration-200" />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                              >
+                                <div className={`flex items-center gap-3 ${locale === 'he' ? 'flex-row-reverse' : ''}`}>
+                                  <Icon name="adminBold" className=" w-4 h-4 text-text/80 dark:text-text-dark/80 transition-colors duration-200" />
+                                  <span className="flex-1">{tCommon('admin') || 'Admin'}</span>
+                                </div>
+                                <ChevronRight className={`w-4 h-4 text-text-secondary dark:text-text-secondary-dark transition-colors duration-200 ${locale === 'he' ? 'rotate-180' : ''}`} />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent 
+                              side={locale === 'he' ? 'left' : 'right'}
+                              align="start"
+                              sideOffset={8}
+                              className="w-fit min-w-[280px] p-2"
+                            >
+                              <div className="space-y-2">
+                                {/* Admin Links */}
+                                {[
+                                  {
+                                    href: `/${locale}/admin`,
+                                    labelKey: 'dashboard',
+                                    icon: LayoutDashboard,
+                                  },
+                                  {
+                                    href: `/${locale}/admin/products`,
+                                    labelKey: 'products',
+                                    icon: Package,
+                                  },
+                                  {
+                                    href: `/${locale}/admin/orders`,
+                                    labelKey: 'orders',
+                                    icon: ShoppingCart,
+                                  },
+                                  {
+                                    href: `/${locale}/admin/users`,
+                                    labelKey: 'users',
+                                    icon: Users,
+                                  },
+                                  {
+                                    href: `/${locale}/admin/skateparks`,
+                                    labelKey: 'findParks',
+                                    icon: MapPin,
+                                  },
+                                  {
+                                    href: `/${locale}/admin/reviews`,
+                                    labelKey: 'reviews',
+                                    icon: Star,
+                                  },
+                                  {
+                                    href: `/${locale}/admin/events`,
+                                    labelKey: 'events',
+                                    icon: Calendar,
+                                  },
+                                  {
+                                    href: `/${locale}/admin/trainers`,
+                                    labelKey: 'findCoaches',
+                                    icon: UserCircle,
+                                  },
+                                  {
+                                    href: `/${locale}/admin/guides`,
+                                    labelKey: 'guides',
+                                    icon: BookOpen,
+                                  },
+                                  {
+                                    href: `/${locale}/admin/settings`,
+                                    labelKey: 'settings',
+                                    icon: SettingsIcon,
+                                  },
+                                ].map((item) => {
+                                  const isActive = pathname === item.href || (item.href !== `/${locale}/admin` && pathname.startsWith(item.href));
+                                  const IconComponent = item.icon;
+                                  
+                                  return (
+                                    <Link
+                                      key={item.href}
+                                      href={item.href}
+                                      className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                                        isActive
+                                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                                          : 'text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                      } ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                                    >
+                                      <IconComponent className="w-4 h-4 text-text-secondary dark:text-text-secondary-dark" />
+                                      <span>{tMobileNav(item.labelKey)}</span>
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </>
                       )}
 
                       {/* Logout Button */}
@@ -617,7 +728,7 @@ export default function HeaderNav() {
                           <button
                             onClick={handleLogout}
                             disabled={isLoggingOut}
-                            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${locale === 'he' ? 'flex-row-reverse' : ''}`}
                           >
                             {isLoggingOut ? (
                               <LoadingSpinner size={16} variant="error" />
@@ -642,7 +753,7 @@ export default function HeaderNav() {
       {/* Search Modal */}
       {isSearchOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-start justify-center pt-20 md:pt-32"
+          className="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-start justify-center pt-20 md:pt-32 transition-colors duration-200"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setIsSearchOpen(false);
@@ -650,15 +761,15 @@ export default function HeaderNav() {
             }
           }}
         >
-          <div className="w-full max-w-2xl mx-4 bg-white dark:bg-gray-900 rounded-lg shadow-xl">
+          <div className="w-full max-w-2xl mx-4 bg-white dark:bg-gray-900 rounded-lg shadow-xl transition-colors duration-200">
             {/* Header */}
-            <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-800">
+            <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-800 transition-colors duration-200">
               <button
                 onClick={() => {
                   setIsSearchOpen(false);
                   setSearchQuery('');
                 }}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="p-2 text-sidebar-text dark:text-sidebar-text-dark hover:text-black/80 dark:hover:text-white/80 transition-colors duration-200"
                 aria-label="Close search"
               >
                 <Icon name="search" className="w-5 h-5" />
@@ -682,9 +793,9 @@ export default function HeaderNav() {
 
             {/* Recent Searches */}
             {searchQuery.trim() === '' && recentSearches.length > 0 && (
-              <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-800 transition-colors duration-200">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 transition-colors duration-200">
                     Recent Searches
                   </h3>
                   <button
@@ -692,7 +803,7 @@ export default function HeaderNav() {
                       setRecentSearches([]);
                       localStorage.removeItem('recentSearches');
                     }}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline transition-colors duration-200"
                   >
                     Clear
                   </button>
@@ -702,10 +813,10 @@ export default function HeaderNav() {
                     <button
                       key={index}
                       onClick={() => handleSearch(search)}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
                     >
-                      <span className="text-gray-900 dark:text-white">{search}</span>
-                      <Icon name="search" className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-900 dark:text-white transition-colors duration-200">{search}</span>
+                      <Icon name="search" className="w-4 h-4 text-gray-400 transition-colors duration-200" />
                     </button>
                   ))}
                 </div>
@@ -760,7 +871,7 @@ export default function HeaderNav() {
               <div className="p-4">
                 <button
                   onClick={() => handleSearch(searchQuery)}
-                  className="w-full px-4 py-2 bg-blue-600 dark:bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-700 rounded-lg transition-colors font-medium"
+                  className="w-full px-4 py-2 bg-blue-600 dark:bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
                 >
                   Search for &quot;{searchQuery}&quot;
                 </button>

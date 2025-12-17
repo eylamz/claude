@@ -566,6 +566,21 @@ const config: Config = {
             '0%': { opacity: '1', transform: 'scale(1) translateY(0)' },
             '100%': { opacity: '0', transform: 'scale(0.9) translateY(15px)' },
           },
+          'popoverIn': {
+            '0%': { opacity: '0.2', transform: 'scale(1) translateY(-15px)' },
+            '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+
+          },
+          'popoverOut': {
+            '0%': { 
+              opacity: '1',
+              transform: 'scale(1) translateY(0)'
+            },
+            '100%': { 
+              opacity: '0',
+              transform: 'scale(0.95) translateY(-4px)'
+            }
+          },
       },
       animation: {
         'popUp': 'popUp 0.2s',
@@ -599,6 +614,8 @@ const config: Config = {
         'fadeUpIn': 'fadeUpIn 0.6s ease-out forwards',
         'fadeInDown': 'fadeInDown 0.2s ease-out forwards',
         'bounchInDown': 'bounchInDown 0.2s forwards',
+        'popoverIn': 'popoverIn 0.2s forwards',
+        'popoverOut': 'popoverOut 0.15s forwards',
       },
     },
   },

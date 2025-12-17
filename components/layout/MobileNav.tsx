@@ -88,7 +88,7 @@ export default function MobileNavMinimal() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setIsMenuOpen(true)}
-              className="p-2.5 -ml-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95"
+              className="p-2.5 h-11 -ms-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95"
               aria-label="Open menu"
             >
               <Menu className="w-6 h-6" strokeWidth={2} />
@@ -106,10 +106,10 @@ export default function MobileNavMinimal() {
           {/* Right: Cart Button - Minimal Badge */}
           <Link
             href={`/${locale}/cart`}
-            className="relative p-2.5 -mr-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95 group"
+            className="relative h-11 p-2.5 -me-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95 group overflow-visible"              
             aria-label={`Cart with ${itemCount} items`}
           >
-            <ShoppingBag className="w-6 h-6" strokeWidth={2} />
+            <Icon name="backpack" className=" overflow-visible w-6 h-6" strokeWidth={2} />
             {itemCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-brand-main rounded-full shadow-lg ring-2 ring-white dark:ring-gray-900">
                 {itemCount > 9 ? '9+' : itemCount}

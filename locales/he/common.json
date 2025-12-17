@@ -209,7 +209,14 @@
     "signOut": "התנתק",
     "infoSupport": "מידע ותמיכה",
     "faq": "שאלות נפוצות",
-    "startTypingToSearch": "התחל להקליד כדי לחפש..."
+    "startTypingToSearch": "התחל להקליד כדי לחפש...",
+    "adminManagement": "ניהול מנהל",
+    "dashboard": "לוח בקרה",
+    "products": "מוצרים",
+    "orders": "הזמנות",
+    "users": "משתמשים",
+    "reviews": "ביקורות",
+    "settings": "הגדרות"
   },
   "community": {
     "hero": {

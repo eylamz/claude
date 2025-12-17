@@ -478,6 +478,8 @@ border-top-left-radius: 12px;
   animation: gradientShift 8s ease-in-out infinite;
 }
 
+/* Popover animations are now handled via Tailwind classes in the PopoverContent component */
+
 .hero-title-gradient {
   background: linear-gradient(135deg, var(--text-primary) 0%, #0D7377 100%);
   -webkit-background-clip: text;

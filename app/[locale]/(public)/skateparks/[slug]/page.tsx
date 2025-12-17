@@ -1116,8 +1116,8 @@ export default function SkateparkPage() {
                     }}
                     className={`p-2 h-[35px] flex items-center justify-center rounded-lg ${
                       skatepark.closingYear
-                        ? 'text-red-600 dark:text-red-400 shadow-md active:shadow-none border border-b-[4px] border-red-600 dark:border-red-400/20 active:border-b-[1px] active:translate-y-[2px] transition-all duration-200'
-                        : 'text-brand-main dark:text-brand-dark shadow-md active:shadow-none border border-b-[4px] border-brand-main dark:border-brand-dark/30 active:border-b-[1px] active:translate-y-[2px] transition-all duration-200'
+                        ? 'text-red-600 dark:text-red-400 shadow-md active:shadow-none border border-b-[4px] border-red-600 dark:border-red-400/20 active:border-b-[1px] active:translate-y-[2px] transition-all duration-700'
+                        : 'text-brand-main dark:text-brand-dark shadow-md active:shadow-none border border-b-[4px] border-brand-main dark:border-brand-dark/30 active:border-b-[1px] active:translate-y-[2px] transition-all duration-700'
                     }`}
                     aria-label="Share"
                   >

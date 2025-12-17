@@ -180,7 +180,7 @@ export default function CartPage() {
               <ShoppingBag className="w-12 h-12 text-gray-400 dark:text-gray-500" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Your cart is empty
+              Your bag is empty
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
               Looks like you haven't added anything to your cart yet. Start shopping to fill it up!

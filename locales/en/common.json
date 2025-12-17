@@ -208,7 +208,14 @@
     "signOut": "Sign Out",
     "infoSupport": "Info & Support",
     "faq": "FAQ",
-    "startTypingToSearch": "Start typing to search..."
+    "startTypingToSearch": "Start typing to search...",
+    "adminManagement": "Admin Management",
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "users": "Users",
+    "reviews": "Reviews",
+    "settings": "Settings"
   },
   "community": {
     "hero": {

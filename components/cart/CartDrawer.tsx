@@ -154,9 +154,6 @@ export default function CartDrawer() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10">
           <div>
-            <h2 id="cart-drawer-title" className="text-lg font-semibold text-gray-900 dark:text-white">
-              Shopping Cart
-            </h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               {totals.itemCount} {totals.itemCount === 1 ? 'item' : 'items'}
             </p>
@@ -186,7 +183,7 @@ export default function CartDrawer() {
                 <ShoppingBag className="w-12 h-12 text-gray-400 dark:text-gray-500" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Your cart is empty
+                Your bag is empty
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-sm">
                 Looks like you haven't added anything to your cart yet. Start shopping to fill it up!

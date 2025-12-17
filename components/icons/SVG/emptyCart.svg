@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 129 94.83">
+  <defs>
+    <style>
+      .cls-1 {
+        stroke: #2997a5;
+      }
+
+      .cls-1, .cls-2, .cls-3, .cls-4, .cls-5, .cls-6, .cls-7 {
+        fill: none;
+      }
+
+      .cls-2 {
+        stroke: #29a847;
+      }
+
+      .cls-8 {
+        fill: #af3ec6;
+      }
+
+      .cls-3 {
+        stroke: #bf72f3;
+      }
+
+      .cls-9 {
+        fill: #ff2939;
+      }
+
+      .cls-10 {
+        fill: #d1d1d1;
+      }
+
+      .cls-10, .cls-5, .cls-6 {
+        stroke: #000;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .cls-10, .cls-6 {
+        stroke-width: 1.5px;
+      }
+
+      .cls-11 {
+        fill: #ffae00;
+      }
+
+      .cls-4 {
+        stroke: #ff6b6b;
+      }
+
+      .cls-12 {
+        fill: #2c82ff;
+      }
+
+      .cls-5 {
+        stroke-width: 4px;
+      }
+
+      .cls-13 {
+        fill: #bf72f3;
+      }
+
+      .cls-7 {
+        stroke: #ffae00;
+      }
+
+      .cls-14 {
+        fill: #29a847;
+      }
+
+      .cls-15 {
+        fill: #242424;
+      }
+    </style>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g id="glow">
+      <path id="Rectangle-2" class="cls-15" d="M63.92,34.14h0c.55,0,1,.45,1,1v7c0,.55-.45,1-1,1h0c-.55,0-1-.45-1-1v-7c0-.55.45-1,1-1Z"/>
+      <rect class="cls-15" x="55.52" y="37.29" width="2" height="6" rx="1" ry="1" transform="translate(-7.14 12.63) rotate(-12)"/>
+      <path class="cls-15" d="M49.83,40.57h0c.5-.23,1.1-.02,1.33.48l.42.91c.23.5.02,1.1-.48,1.33h0c-.5.23-1.1.02-1.33-.48l-.42-.91c-.23-.5-.02-1.1.48-1.33Z"/>
+      <path class="cls-15" d="M79.1,40.57h0c-.5-.23-1.1-.02-1.33.48l-.42.91c-.23.5-.02,1.1.48,1.33h0c.5.23,1.1.02,1.33-.48l.42-.91c.23-.5.02-1.1-.48-1.33Z"/>
+      <path class="cls-15" d="M72.15,37.35h0c-.54-.11-1.07.23-1.19.77l-.83,3.91c-.11.54.23,1.07.77,1.19h0c.54.11,1.07-.23,1.19-.77l.83-3.91c.11-.54-.23-1.07-.77-1.19Z"/>
+    </g>
+    <polygon id="plus" class="cls-9" points="1.68 51 1.68 49.38 2.77 49.38 2.77 51 4.41 51 4.41 52.08 2.77 52.08 2.77 53.73 1.68 53.73 1.68 52.08 0 52.08 0 51 1.68 51"/>
+    <polygon id="plus-1" class="cls-13" points="122.29 48.83 122.29 46.6 123.77 46.6 123.77 48.83 126 48.83 126 50.31 123.77 50.31 123.77 52.6 122.29 52.6 122.29 50.31 120 50.31 120 48.83 122.29 48.83"/>
+    <polygon id="plus-2" class="cls-12" points="111.57 3.04 111.57 1.97 112.29 1.97 112.29 3.04 113.37 3.04 113.37 3.76 112.29 3.76 112.29 4.87 111.57 4.87 111.57 3.76 110.47 3.76 110.47 3.04 111.57 3.04"/>
+    <circle id="oval" class="cls-8" cx="15.72" cy="3.79" r="1.5"/>
+    <circle id="oval-1" class="cls-11" cx="75.27" cy="11.84" r="1.5"/>
+    <circle id="oval-1-2" data-name="oval-1" class="cls-12" cx="101.46" cy="82" r="1.5"/>
+    <circle id="oval-2" class="cls-14" cx="15.59" cy="80.19" r="1.5"/>
+    <circle id="oval-3" class="cls-14" cx="93.5" cy="5.1" r="1.5"/>
+    <circle id="oval-4" cx="127.5" cy="29.1" r="1.5"/>
+    <circle id="oval-5" class="cls-11" cx="112.5" cy="71.1" r="1.5"/>
+    <circle id="oval-6" cx="48.86" cy="26.29" r="1.5"/>
+    <circle id="oval-7" class="cls-3" cx="33.36" cy="41.79" r="3"/>
+    <circle id="oval-8" class="cls-7" cx="4.36" cy="35.79" r="3"/>
+    <circle id="oval-10" class="cls-2" cx="105" cy="27.6" r="3"/>
+    <polygon id="diamond" class="cls-4" points="95 52.6 98 55.6 95 58.6 92 55.6 95 52.6"/>
+    <polygon id="diamond-2" data-name="diamond" class="cls-4" points="48.26 .71 51.26 3.71 48.26 6.71 45.26 3.71 48.26 .71"/>
+    <path id="bubble-rounded" class="cls-2" d="M24.36,15.79c1.66,0,3,1.34,3,3,0-1.66,1.34-3,3-3-1.66,0-3-1.34-3-3,0,1.66-1.34,3-3,3Z"/>
+    <path id="bubble-rounded-2" data-name="bubble-rounded" class="cls-1" d="M85.6,27.05c1.66,0,3,1.34,3,3,0-1.66,1.34-3,3-3-1.66,0-3-1.34-3-3,0,1.66-1.34,3-3,3Z"/>
+    <g>
+      <path class="cls-10" d="M79.09,73.05h2.05v14.79h-3.78c-.99,0-1.79-.8-1.79-1.79v-9.48c0-1.94,1.58-3.52,3.52-3.52Z" transform="translate(156.71 160.9) rotate(-180)"/>
+      <path class="cls-10" d="M47.36,73.05h3.78v14.79h-2.05c-1.94,0-3.52-1.58-3.52-3.52v-9.48c0-.99.8-1.79,1.79-1.79Z"/>
+      <circle class="cls-6" cx="63.35" cy="55.42" r="6.37"/>
+      <path class="cls-10" d="M63.31,51.19h0c-7.83,0-12.74,6.35-12.74,14.17l-1.43,21.67c0,3.89,3.15,7.05,7.05,7.05h14.26c3.89,0,7.05-3.15,7.05-7.05l-1.43-21.67c0-7.83-4.92-14.17-12.74-14.17Z"/>
+      <ellipse class="cls-6" cx="63.11" cy="76.41" rx="6.54" ry=".08"/>
+    </g>
+    <line class="cls-5" x1="54.74" y1="68.06" x2="71.97" y2="68.06"/>
+    <line class="cls-5" x1="54.74" y1="83.62" x2="71.97" y2="83.62"/>
+    <path class="cls-10" d="M53.77,59.87c1.82-2.95,5.35-4.83,9.22-4.9,5.99-.1,9.17,4.22,9.31,4.41"/>
+    <ellipse cx="55.8" cy="78.18" rx=".58" ry="1.73"/>
+  </g>
+</svg>

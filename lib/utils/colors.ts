@@ -63,8 +63,8 @@ export const colors = {
       },
     },
     icon:{
-      light: 'hsl(187, 63%, 34%)',
-      dark: 'hsl(123, 74%, 46%)',
+      light: 'hsl(60, 3%, 38%)',
+      dark: 'hsl(180, 2%, 56%))',
       brand: {
         light: 'hsl(123, 63%, 34%)',
         dark: 'hsl(123, 63%, 34%)',

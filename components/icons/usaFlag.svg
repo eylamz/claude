@@ -19,7 +19,7 @@
         fill: CurrentColor;
       }
 
-      .cls-5 {
+      .cls-500 {
         fill: CurrentColor;
         opacity: 0.05;
       }
@@ -40,7 +40,7 @@
       <rect class="redLines" x="238.35" y="51.61" width="273.65" height="25.8"/>
       <path class="redLines" d="M238.35,171.8c0,4.88-3.95,8.83-8.83,8.83h282.48v-25.8H238.35v16.98Z"/>
     </g>
-    <g id="whiteLines" class="cls-5">
+    <g id="whiteLines" class="cls-500">
       <path class="whiteLines" d="M0,297.11c0,4.91.93,9.61,2.62,13.92-.18-.46-.35-.92-.51-1.38h507.78c-.16.47-.33.93-.51,1.39,1.68-4.32,2.62-9.01,2.62-13.93v-13.26H0v13.26Z"/>
       <rect class="whiteLines" y="232.24" width="512" height="25.81"/>
       <path class="whiteLines" d="M0,171.8v34.64h512v-25.81H8.83c-4.88,0-8.83-3.95-8.83-8.83Z"/>

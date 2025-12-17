@@ -19,8 +19,10 @@ import MapPinBold from './locationBold.svg';
 import MapPin from './location.svg';
 import AmenitiesBold from './notesBold.svg';
 import Info from './info.svg';
-import QuestionMark from './questionMark.svg';
 import InfoBold from './infoBold.svg';
+import Target from './target.svg';
+import TargetBold from './targetBold.svg';
+import QuestionMark from './questionMark.svg';
 import ClockBold from './clockBold.svg';
 import LightbulbBold from './lightbulbBold.svg';
 import Sunset from './sunset.svg';
@@ -96,6 +98,9 @@ import Star from './star.svg';
 import StarWand from './starWand.svg';
 import StarWandBold from './starWandBold.svg';
 import Cart from './cart.svg';
+import Backpack from './backpack.svg';
+import BackpackBold from './backpackBold.svg';
+import EmptyBackpack from './emptyBackpack.svg';  
 import LockBold from './lockBold.svg';
 import Eye from './eye.svg';
 import EyeBold from './eyeBold.svg';
@@ -130,6 +135,7 @@ import FavIcon from './favIcon.svg';
 import FavIconNew from './favIconNew.svg';
 import TrashCan from './trash-can.svg';
 import Settings from './settings.svg';
+import SettingsBold from './settingsBold.svg';
 import Admin from './admin.svg';
 import AdminBold from './adminBold.svg';
 import Logout from './logout.svg';
@@ -191,9 +197,13 @@ const iconMap: Record<string, SvgComponent> = {
   X: X,
   menu: Menu,
   cart: Cart,
+  backpack: Backpack,
+  backpackBold: BackpackBold,
+  emptyBackpack: EmptyBackpack,
   shop: Shop,
   shopBold: ShopBold,
   settings: Settings,
+  settingsBold: SettingsBold,
   admin: Admin,
   adminBold: AdminBold,
   logout: Logout,
@@ -255,6 +265,8 @@ const iconMap: Record<string, SvgComponent> = {
   notesBold: AmenitiesBold,
   info: Info,
   infoBold: InfoBold,
+  target: Target,
+  targetBold: TargetBold,
   accessibility: Accessibility,
   accessibilityBold: AccessibilityBold,
   terms: Terms,
@@ -271,7 +283,6 @@ const iconMap: Record<string, SvgComponent> = {
   sunset: Sunset,
   lightbulbBold: LightbulbBold,
   hours24: Hours24,
-  map: MapIcon,
   imageBold: ImageBold,
   bulkImage: BulkImage,
   sparks: Sparks,
@@ -372,6 +383,8 @@ export type IconName =
   | 'cart'
   | 'shopCart'
   | 'shopCartBold'
+  | 'backpackBold'
+  | 'emptyBackpack'
   | 'heart'
   | 'heartBold'
   | 'heartLike'
@@ -491,6 +504,7 @@ export type IconName =
   | 'umbrella'
   | 'broom'
   | 'settings'
+  | 'settingsBold'
   | 'admin'
   | 'adminBold'
   | 'logout'
@@ -511,7 +525,9 @@ export type IconName =
   | 'accessibilityBold'
   | 'terms'
   | 'termsBold'
-  | 'clock'; // Alias for clockBold if needed
+  | 'clock'
+  | 'target'
+  | 'targetBold'; // Alias for clockBold if needed
 
 interface IconProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'size'> {
   name: IconName;
