@@ -12,7 +12,19 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light');
+  // Initialize theme - the blocking script in layout.tsx will have already set the class
+  // So we read from localStorage or system preference to sync React state
+  const getInitialTheme = (): Theme => {
+    if (typeof window === 'undefined') return 'light';
+    
+    const storedTheme = localStorage.getItem('theme') as Theme | null;
+    if (storedTheme) return storedTheme;
+    
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return systemPrefersDark ? 'dark' : 'light';
+  };
+
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [mounted, setMounted] = useState(false);
 
   const updateMetaThemeColor = useCallback((newTheme: Theme) => {
@@ -29,7 +41,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const applyTheme = (newTheme: Theme) => {
+  const applyTheme = useCallback((newTheme: Theme) => {
     const root = document.documentElement;
     if (newTheme === 'dark') {
       root.classList.add('dark');
@@ -38,24 +50,34 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
     localStorage.setItem('theme', newTheme);
     updateMetaThemeColor(newTheme);
-  };
+  }, [updateMetaThemeColor]);
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    applyTheme(newTheme);
-  };
+  const toggleTheme = useCallback(() => {
+    setTheme((prevTheme) => {
+      const newTheme = prevTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(newTheme);
+      return newTheme;
+    });
+  }, [applyTheme]);
 
   useEffect(() => {
     setMounted(true);
-    // Get theme from localStorage or system preference
+    // Sync theme state with what's already applied (from blocking script)
+    // This ensures the React state matches the actual DOM state
     const storedTheme = localStorage.getItem('theme') as Theme | null;
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialTheme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
+    const currentTheme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
     
-    setTheme(initialTheme);
-    applyTheme(initialTheme);
-  }, []);
+    // Only apply if it's different from what's already set by the blocking script
+    const hasDarkClass = document.documentElement.classList.contains('dark');
+    const shouldBeDark = currentTheme === 'dark';
+    
+    if (hasDarkClass !== shouldBeDark) {
+      applyTheme(currentTheme);
+    }
+    
+    setTheme(currentTheme);
+  }, [applyTheme]);
 
   // Update meta theme-color when theme changes
   useEffect(() => {

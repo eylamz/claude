@@ -1,12 +1,10 @@
 'use client';
 
 import { useEffect, useState, useCallback, memo, useRef } from 'react';
-import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import Link from 'next/link';
 import { X, TrendingUp } from 'lucide-react';
-import { Button } from '@/components/ui';
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Icon } from '@/components/icons';
@@ -205,7 +203,7 @@ const GuideCard = memo(({
 
         {/* Difficulty Badge */}
         {guide.difficulty && (
-          <div className="absolute bottom-2 left-0 z-10">
+          <div className="absolute bottom-3 left-0 z-10">
             <div className="flex gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold px-2 py-1 rounded-r-full shadow-lg">
               {guide.difficulty}
             </div>
@@ -254,7 +252,6 @@ GuideCard.displayName = 'GuideCard';
 export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pathname = usePathname();
   const locale = useLocale();
   const t = useTranslations('guides');
   
@@ -360,31 +357,12 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
     router.push(`/${locale}/guides?${params.toString()}`);
   }, [selectedSports, difficulty, minRating, searchQuery, sortBy, locale, router]);
 
-  const handleSportToggle = (sport: string) => {
-    setSelectedSports((prev) =>
-      prev.includes(sport) ? prev.filter((s) => s !== sport) : [...prev, sport]
-    );
-    setPage(1);
-  };
-
   const handleClearFilters = () => {
     setSelectedSports([]);
     setDifficulty('');
     setMinRating(0);
     setSearchQuery('');
     setPage(1);
-  };
-
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setSortBy(value);
-    setPage(1);
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPage(1);
-    updateURL();
   };
 
   // Calculate pagination info
@@ -468,61 +446,76 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
               {/* Sports Filter */}
               {filtersData.sports.length > 0 && (
                 <div className="flex-shrink-0">
-                  <select
-                    value={selectedSports.length > 0 ? selectedSports[0] : ''}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        setSelectedSports([e.target.value]);
-                      } else {
+                  <Select
+                    value={selectedSports.length > 0 ? selectedSports[0] : 'all'}
+                    onValueChange={(value) => {
+                      if (value === 'all') {
                         setSelectedSports([]);
+                      } else {
+                        setSelectedSports([value]);
                       }
                       setPage(1);
                     }}
-                    className="h-10 px-3 py-2 text-sm rounded-md bg-input dark:bg-input-dark border border-input-border dark:border-input-border-dark focus:outline-none focus:ring-2 focus:ring-brand-main/20"
                   >
-                    <option value="">{tr('All Sports', 'כל הספורט')}</option>
-                    {filtersData.sports.map((sport) => (
-                      <option key={sport} value={sport}>
-                        {sport}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder={tr('All Sports', 'כל הספורט')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{tr('All Sports', 'כל הספורט')}</SelectItem>
+                      {filtersData.sports.map((sport) => (
+                        <SelectItem key={sport} value={sport}>
+                          {sport}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
               {/* Difficulty Filter */}
               {filtersData.difficulties.length > 0 && (
                 <div className="flex-shrink-0">
-                  <select
-                    value={difficulty}
-                    onChange={(e) => {
-                      setDifficulty(e.target.value);
+                  <Select
+                    value={difficulty || 'all'}
+                    onValueChange={(value) => {
+                      setDifficulty(value === 'all' ? '' : value);
                       setPage(1);
                     }}
-                    className="h-10 px-3 py-2 text-sm rounded-md bg-input dark:bg-input-dark border border-input-border dark:border-input-border-dark focus:outline-none focus:ring-2 focus:ring-brand-main/20"
                   >
-                    <option value="">{tr('All Levels', 'כל הרמות')}</option>
-                    {filtersData.difficulties.map((diff) => (
-                      <option key={diff} value={diff}>
-                        {diff}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder={tr('All Levels', 'כל הרמות')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{tr('All Levels', 'כל הרמות')}</SelectItem>
+                      {filtersData.difficulties.map((diff) => (
+                        <SelectItem key={diff} value={diff}>
+                          {diff}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
               {/* Sort */}
               <div className="flex-shrink-0">
-                <select
+                <Select
                   value={sortBy}
-                  onChange={handleSortChange}
-                  className="h-10 px-3 py-2 text-sm rounded-md bg-input dark:bg-input-dark border border-input-border dark:border-input-border-dark focus:outline-none focus:ring-2 focus:ring-brand-main/20"
+                  onValueChange={(value) => {
+                    setSortBy(value);
+                    setPage(1);
+                  }}
                 >
-                  <option value="newest">{t('sort.newest')}</option>
-                  <option value="rating">{t('sort.rating')}</option>
-                  <option value="views">{t('sort.views')}</option>
-                  <option value="title">{t('sort.alphabetical')}</option>
-                </select>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder={t('sort.newest')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">{t('sort.newest')}</SelectItem>
+                    <SelectItem value="rating">{t('sort.rating')}</SelectItem>
+                    <SelectItem value="views">{t('sort.views')}</SelectItem>
+                    <SelectItem value="title">{t('sort.alphabetical')}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
