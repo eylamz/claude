@@ -20,7 +20,7 @@ const buttonVariants = cva(
         info: "bg-info-bg/10 dark:bg-info-bg-dark/10 text-info dark:text-info-dark",
         destructive: "bg-destructive/80 text-destructive-foreground hover:bg-destructive/70",
         outline: "bord bg-white/5 hover:bg-black/5 hover:text-text-hover   dark:bg-black/10 dark:hover:bg-white/5 dark:hover:text-text-hover-dark",
-        none: "hover:bg-black/5 hover:text-text-hover dark:hover:bg-white/5 dark:hover:text-text-hover-dark",
+        none: "text-text/80 dark:text-text-dark/80 hover:bg-black/5 hover:text-text-hover dark:hover:bg-white/5 dark:hover:text-text-hover-dark",
         brandIcon: "text-brand-main dark:text-brand-dark",
         warningIcon: "text-warning dark:text-warning-dark",
         infoIcon: "text-info dark:text-info-dark",

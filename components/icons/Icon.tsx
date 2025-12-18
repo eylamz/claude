@@ -70,6 +70,7 @@ import SearchBold from './SearchBold.svg';
 import SearchQuest from './searchQuest.svg';
 import SearchClose from './searchClose.svg';
 import Sparks from './sparks.svg';
+import SparksBold from './sparksBold.svg';
 import New from './new.svg';
 import Featured from './featured.svg';
 import Archive from './archive.svg';
@@ -286,6 +287,7 @@ const iconMap: Record<string, SvgComponent> = {
   imageBold: ImageBold,
   bulkImage: BulkImage,
   sparks: Sparks,
+  sparksBold: SparksBold,
   new: New,
   featured: Featured,
   archive: Archive,
@@ -483,6 +485,7 @@ export type IconName =
   | 'featured'
   | 'new'
   | 'sparks'
+  | 'sparksBold'
   | 'searchQuest'
   | 'bulkImage'
   | 'imageBold'

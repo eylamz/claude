@@ -88,7 +88,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                 style={style}
               >
                 <Icon 
-                  name="filter" 
+                  name="filterBold" 
                   className="w-5 h-5"
                 />
                 {isActive && (
@@ -109,8 +109,8 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
       </TooltipProvider>
       <PopoverContent className="w-fit min-w-[330px] p-2">
         <div className="space-y-2">
-          <div className="flex rtl:flex-row-reverse items-center justify-between h-[32px]">
-            <h4 className="font-medium">{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
+          <div className={`flex ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'} items-center justify-between h-[32px]`}>
+            <h4 className={`text-sm font-medium w-full ${selectedAmenities.length > 0 ? 'text-right' : 'text-center'}`}>{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
             {selectedAmenities.length > 0 && (
               <Button
                 variant="error"

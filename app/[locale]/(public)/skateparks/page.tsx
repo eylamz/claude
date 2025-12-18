@@ -545,10 +545,10 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
       <div className="relative h-[10.5rem] overflow-hidden">
         {/* Opening Year Badge */}
         {hasOpeningYear && (
-          <div className="absolute bottom-2 left-0 z-10">
+          <div className="absolute bottom-[0.7rem] left-0 z-10 translate-x-[300px] animate-slideFromLeft !animation-delay-[800ms]">
             <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-r-full shadow-lg">
               {park.openingYear}
-              <Sparkles className="w-3 h-3" />
+              <Icon name="sparksBold" className="w-3 h-3" />
             </div>
           </div>
         )}
@@ -601,14 +601,14 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
         />
       </div>
       
-      <div className="px-3 py-2 space-y-1">
-        <h3 className="text-lg font-semibold truncate">
+      <div className="px-3 py-2 space-y-1 h-0 animate-expandHeight transition-all duration-300" style={{ animationDelay: '0.3s' }}> 
+        <h3 className="opacity-0 text-lg font-semibold truncate animate-appearDown" style={{ visibility: 'hidden', animationDelay: '0.4s' }}>
           {name}
         </h3>
         {distanceText && (
           <div className="flex items-center justify-between">
             <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
-              <MapPin className="w-3.5 h-3.5 shrink-0" />
+              <Icon name="locationBold" className="w-3.5 h-3.5 shrink-0" />
               <span className="text-sm truncate">
                 {distanceText}
               </span>
@@ -1267,7 +1267,7 @@ export default function SkateparksPage() {
                       aria-label={tr('Use My Location', 'השתמש במיקומי')}
                     >
                       <Icon 
-                        name={userLocation ? "locationOff" : "location"}
+                        name={userLocation ? "locationOffBold" : "locationBold"}
                         className="w-5 h-5"
                       />
                     </Button>
@@ -1289,9 +1289,9 @@ export default function SkateparksPage() {
                         aria-label={viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
                       >
                         {viewMode === 'grid' ? (
-                          <Icon name="map" className="w-5 h-5" />
+                          <Icon name="mapBold" className="w-5 h-5" />
                         ) : (
-                          <Icon name="category" className="w-5 h-5" />
+                          <Icon name="categoryBold" className="w-5 h-5" />
                         )}
                       </Button>
                       
@@ -1333,7 +1333,7 @@ export default function SkateparksPage() {
                   {/* Results Count Badge */}
                   {hasAnyFilter && !loading && (
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-brand-main/10 to-green-500/10 dark:from-brand-main/20 dark:to-green-500/20 rounded-full border border-brand-main/20 dark:border-brand-main/30">
-                      <Icon name="map" className="w-4 h-4 text-brand-main" />
+                      <Icon name="mapBold" className="w-4 h-4 text-brand-main" />
                       <span className="text-sm font-semibold text-gray-900 dark:text-white">
                         {skateparks.length}
                       </span>
@@ -1448,7 +1448,7 @@ export default function SkateparksPage() {
       ======================================== */}
       <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <ParkCardSkeleton key={i} />
             ))}
@@ -1550,7 +1550,7 @@ export default function SkateparksPage() {
                         {/* Opening Year Badge */}
                         {hasOpeningYear && (
                           <div className="absolute bottom-2 left-0 z-10">
-                            <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-r-full shadow-lg">
+                            <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-end-full shadow-lg animate-pop">
                               {selectedPark.openingYear}
                               <Sparkles className="w-3 h-3" />
                             </div>

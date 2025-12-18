@@ -10,23 +10,7 @@ const ParkCardSkeleton = () => {
         <div className="absolute inset-0 bg-text-secondary-dark/50 dark:bg-background-dark/50 transition-all duration-200" />
       </div>
       
-      {/* Content skeleton */}
-      <div className="px-4 py-3  space-y-1">
-        {/* Title skeleton */}
-        <div className="w-3/4 h-6 bg-text-secondary-dark/50 dark:bg-background-dark/50 transition-all duration-200 rounded-md" />
-        
-        {/* Location and rating skeleton */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <div className="w-4 h-4 bg-text-secondary-dark/50 dark:bg-background-dark/50 transition-all duration-200 rounded-full mr-1" />
-            <div className=" w-10 h-4 bg-text-secondary-dark/50 dark:bg-background-dark/50 transition-all duration-200 rounded-md" />
-          </div>
-          <div className="flex items-end gap-1">
-              <div className="w-4 h-4 bg-text-secondary-dark/50 dark:bg-background-dark/50 transition-all duration-200 rounded-full" />
-              <div className="w-5 h-5 -mt-1 bg-text-secondary-dark/50 dark:bg-background-dark/50 transition-all duration-200 rounded-full" />
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 };
