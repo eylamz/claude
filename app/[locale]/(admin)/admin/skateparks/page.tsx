@@ -1049,7 +1049,7 @@ export default function SkateparksPage() {
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
-                            <DropdownMenuItem onClick={() => router.push(`/${locale}/skateparks/${skatepark.slug}`)}>
+                            <DropdownMenuItem onClick={() => window.open(`/${locale}/skateparks/${skatepark.slug}`, '_blank')}>
                               {t('admin.table.view') || 'View'}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkId}`)}>
