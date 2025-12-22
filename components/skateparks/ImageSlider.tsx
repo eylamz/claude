@@ -12,7 +12,7 @@ interface ImageSliderProps {
 }
 
 // Creates optimized versions of Cloudinary images
-const getOptimizedImageUrl = (originalUrl: string, width: number = 600, quality: number = 90): string => {
+const getOptimizedImageUrl = (originalUrl: string, width: number = 800, quality: number = 90): string => {
   if (originalUrl && originalUrl.includes('cloudinary.com')) {
     const urlParts = originalUrl.split('/upload/');
     if (urlParts.length === 2) {
@@ -44,7 +44,7 @@ const OptimizedImage = React.memo(({
         </div>
       )}
       <img
-        src={getOptimizedImageUrl(url, 600, 90)}
+        src={getOptimizedImageUrl(url, 800, 90)}
         alt={alt || `Image ${index + 1}`}
         className={cn(
           'w-full h-full object-cover select-none transition-opacity duration-300',
@@ -191,7 +191,7 @@ const ImageSlider = ({ images, className }: ImageSliderProps) => {
       return;
     }
     
-    const amount = 300;
+    const amount = 400;
     sliderRef.current.scrollBy({
       left: direction === 'left' ? amount : -amount,
       behavior: 'smooth'
@@ -234,7 +234,7 @@ const ImageSlider = ({ images, className }: ImageSliderProps) => {
             {images.map((image, index) => (
               <div
                 key={index}
-                className="relative flex-shrink-0 w-[266px] h-[175px] rounded-xl overflow-hidden cursor-pointer transition-all duration-200 border-2 border-white dark:border-gray-800 hover:scale-[1.02] hover:saturate-150 shadow-lg hover:shadow-xl "
+                className="relative flex-shrink-0 w-[350px] h-[230px] rounded-xl overflow-hidden cursor-pointer transition-all duration-200 border-2 border-white dark:border-gray-800 hover:scale-[1.02] hover:saturate-150 shadow-lg hover:shadow-xl "
                 style={{
                   background: 'rgba(0,0,0,0.05)',
                   willChange: 'transform',

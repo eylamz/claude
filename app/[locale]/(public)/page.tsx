@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { HeroCarousel, FixedBanner, SkeletonSection, ProductSection, ParkSection, GuideSection, ArrowRight } from '@/components/home';
+import { HeroCarousel, FixedBanner, SkeletonSection, ProductSection, ParkSection, PhotoCollage, GuideSection, ArrowRight } from '@/components/home';
 import { Button } from '@/components/ui';
 import { Locale } from '@/i18n';
 
@@ -244,6 +244,17 @@ export default function HomePage() {
             <SkeletonSection />
           ) : (
             <ParkSection parks={skateparks} t={t} />
+          )}
+        </div>
+      </section>
+
+      {/* Photo Collage Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900 overflow-visible">
+        <div className="max-w-7xl mx-auto overflow-visible">
+          {loading || !skateparks || skateparks.length === 0 ? (
+            <SkeletonSection />
+          ) : (
+            <PhotoCollage parks={skateparks} />
           )}
         </div>
       </section>

@@ -1,0 +1,114 @@
+.container {
+    display: grid;
+    grid-template-columns: repeat(32, 1fr);
+    /* The negative margin makes photos appear to float off-screen */
+    margin: 0 -10vw; 
+    padding: 100px 0;
+    overflow: visible; /* Crucial for rotated edges not to get cut off */
+  }
+
+.card {
+  grid-column-start: var(--grid-column-start);
+  grid-column-end: calc(var(--grid-column-start) + 8);
+  grid-row: var(--grid-row);
+  position: relative;
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  cursor: pointer;
+  aspect-ratio: 4 / 3;
+  overflow: visible;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform-origin: center center;
+  will-change: transform;
+  transform: translateX(var(--left-offset, 0px)) rotate(var(--rotation, 0deg));
+  z-index: var(--z-index, 1);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 1rem;
+  z-index: 1;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  pointer-events: none;
+  backdrop-filter: blur(0.5px);
+}
+
+.card:hover {
+    /* Rotate slightly further and scale up */
+    transform: rotate(calc(var(--rotation) * 1.2)) scale(1.08) translateY(-10px);
+    z-index: 50; /* Ensure it comes to the very front */
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy feel */
+  }
+
+.dimmed::before {
+  opacity: 1;
+}
+
+.imageWrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.5);
+  border-radius: 1rem;
+}
+
+.overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  padding: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 0 0 1rem 1rem;
+}
+
+.card:hover .overlay {
+  opacity: 1;
+}
+
+.title {
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Mobile styles */
+@media (max-width: 767px) {
+  .container {
+    grid-template-columns: repeat(16, 1fr);
+    min-height: 400px;
+    padding: 2rem 1rem;
+    overflow: visible;
+  }
+
+  .card {
+    grid-column-start: var(--grid-column-start-mobile, var(--grid-column-start));
+    grid-column-end: calc(var(--grid-column-start-mobile, var(--grid-column-start)) + 8);
+    margin-top: var(--top-offset);
+    overflow: hidden;
+  }
+
+  .mobileHidden {
+    display: none;
+  }
+}
+
