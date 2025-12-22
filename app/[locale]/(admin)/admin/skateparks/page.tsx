@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { Button, Card, CardContent, Input, Select, Dropdown, Skeleton } from '@/components/ui';
+import { Button, Card, CardContent, Input, Select, Skeleton, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui';
 import { NumberInput } from '@/components/ui/number-input';
 import {
   BarChart,
@@ -119,6 +119,7 @@ interface Skatepark {
   status: 'active' | 'inactive';
   isFeatured: boolean;
   openingYear?: number;
+  openingMonth?: number;
   image?: string; // Main image URL from API
   images?: Array<{
     url: string;
@@ -146,6 +147,7 @@ export default function SkateparksPage() {
   const t = useTranslations('skateparks');
   const [skateparks, setSkateparks] = useState<Skatepark[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<Set<string>>(new Set()); // Track which parks are being deleted
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [pagination, setPagination] = useState<Pagination>({
     currentPage: 1,
@@ -624,11 +626,86 @@ export default function SkateparksPage() {
     }
   };
 
-  const handleBulkDelete = () => {
+  const handleDelete = async (id: string, parkName: string) => {
+    if (!confirm(t('admin.table.deleteConfirm', { name: parkName }))) {
+      return;
+    }
+
+    setDeleting(prev => new Set(prev).add(id));
+    try {
+      const response = await fetch(`/api/admin/skateparks/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete skatepark');
+      }
+
+      // Clear cache to force refresh
+      const cacheKey = 'skateparks_cache';
+      const versionKey = 'skateparks_version';
+      localStorage.removeItem(cacheKey);
+      localStorage.removeItem(versionKey);
+
+      // Refresh the list
+      await fetchSkateparks();
+    } catch (error: any) {
+      console.error('Error deleting skatepark:', error);
+      alert(error.message || 'Failed to delete skatepark');
+    } finally {
+      setDeleting(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  const handleBulkDelete = async () => {
     if (selectedItems.size === 0) return;
-    if (confirm(`Delete ${selectedItems.size} selected skatepark(s)?`)) {
-      console.log('Deleting:', Array.from(selectedItems));
+    
+    const count = selectedItems.size;
+    const confirmMessage = t('admin.deleteSelectedConfirm', { count }) || `Are you sure you want to delete ${count} selected skatepark(s)?`;
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    const idsToDelete = Array.from(selectedItems);
+    setDeleting(new Set(idsToDelete));
+
+    try {
+      // Delete all parks in parallel
+      const deletePromises = idsToDelete.map(id => 
+        fetch(`/api/admin/skateparks/${id}`, {
+          method: 'DELETE',
+        }).then(async (response) => {
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || `Failed to delete skatepark ${id}`);
+          }
+          return id;
+        })
+      );
+
+      await Promise.all(deletePromises);
+
+      // Clear cache to force refresh
+      const cacheKey = 'skateparks_cache';
+      const versionKey = 'skateparks_version';
+      localStorage.removeItem(cacheKey);
+      localStorage.removeItem(versionKey);
+
+      // Clear selection
       setSelectedItems(new Set());
+
+      // Refresh the list
+      await fetchSkateparks();
+    } catch (error: any) {
+      console.error('Error deleting skateparks:', error);
+      alert(error.message || 'Failed to delete some skateparks');
+    } finally {
+      setDeleting(new Set());
     }
   };
 
@@ -644,12 +721,21 @@ export default function SkateparksPage() {
       : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300';
   };
 
-  const getAreaName = (area: string) => {
-    return t(`search.area.${area}`) || area;
-  };
 
   const formatAddress = (address: { en: string; he: string }) => {
     return address.en || address.he || '';
+  };
+
+  const formatOpeningYear = (year?: number, month?: number): string => {
+    if (!year) return '—';
+    if (!month) return year.toString();
+    
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    return `${year} (${monthNames[month - 1]})`;
   };
 
   return (
@@ -663,6 +749,24 @@ export default function SkateparksPage() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              // Clear localStorage cache
+              const cacheKey = 'skateparks_cache';
+              const versionKey = 'skateparks_version';
+              localStorage.removeItem(cacheKey);
+              localStorage.removeItem(versionKey);
+              // Trigger refetch
+              fetchSkateparks();
+            }}
+            title="Refresh and clear cache"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {t('admin.refresh') || 'Refresh'}
+          </Button>
           <Button
             variant="secondary"
             onClick={() => {
@@ -779,8 +883,14 @@ export default function SkateparksPage() {
                 <Button variant="secondary" onClick={() => console.log('Export to CSV')}>
                   {t('admin.exportToCSV')}
                 </Button>
-                <Button variant="destructive" onClick={handleBulkDelete}>
-                  {t('admin.deleteSelected')}
+                <Button 
+                  variant="destructive" 
+                  onClick={handleBulkDelete}
+                  disabled={deleting.size > 0}
+                >
+                  {deleting.size > 0 
+                    ? `Deleting ${deleting.size}...` 
+                    : t('admin.deleteSelected')}
                 </Button>
               </div>
             </div>
@@ -810,7 +920,7 @@ export default function SkateparksPage() {
                     {t('admin.table.name')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    {t('admin.table.area')}
+                    {t('admin.table.slug')}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     {t('admin.table.address')}
@@ -849,14 +959,19 @@ export default function SkateparksPage() {
                 ) : (
                   skateparks.map((skatepark) => {
                     const skateparkId = skatepark._id || skatepark.id || '';
+                    const isDeleting = deleting.has(skateparkId);
                     return (
-                    <tr key={skateparkId} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <tr 
+                      key={skateparkId} 
+                      className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${isDeleting ? 'opacity-50' : ''}`}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <input
                           type="checkbox"
                           checked={selectedItems.has(skateparkId)}
                           onChange={() => toggleSelection(skateparkId)}
-                          className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
+                          disabled={isDeleting}
+                          className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 disabled:opacity-50"
                         />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -901,14 +1016,14 @@ export default function SkateparksPage() {
                           <div className="text-xs text-gray-500 dark:text-gray-400">{skatepark.name.he}</div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 capitalize">
-                        {getAreaName(skatepark.area)}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {skatepark.slug}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
                         {formatAddress(skatepark.address)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {skatepark.openingYear || '—'}
+                        {formatOpeningYear(skatepark.openingYear, skatepark.openingMonth)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {skatepark.isFeatured ? (
@@ -925,31 +1040,29 @@ export default function SkateparksPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <Dropdown
-                          trigger={
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
                             <button className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                               </svg>
                             </button>
-                          }
-                          options={[
-                            {
-                              label: t('admin.table.edit'),
-                              value: 'edit',
-                              onClick: () => router.push(`/${locale}/admin/skateparks/${skateparkId}`),
-                            },
-                            {
-                              label: t('admin.table.delete'),
-                              value: 'delete',
-                              onClick: () => {
-                                if (confirm(t('admin.table.deleteConfirm', { name: skatepark.name.en }))) {
-                                  console.log('Delete:', skateparkId);
-                                }
-                              },
-                            },
-                          ]}
-                        />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => router.push(`/${locale}/skateparks/${skatepark.slug}`)}>
+                              {t('admin.table.view') || 'View'}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkId}`)}>
+                              {t('admin.table.edit')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => handleDelete(skateparkId, skatepark.name.en)}
+                              disabled={deleting.has(skateparkId)}
+                            >
+                              {deleting.has(skateparkId) ? 'Deleting...' : t('admin.table.delete')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </td>
                     </tr>
                   );

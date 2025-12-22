@@ -29,3 +29,4 @@ export default async function AccessibilityPage({
   return <AccessibilityPageClient locale={locale} />;
 }
 
+

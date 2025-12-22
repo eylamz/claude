@@ -3,7 +3,8 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const Select = SelectPrimitive.Root;
+const SelectRoot = SelectPrimitive.Root;
+const Select = SelectPrimitive.Root; // Keep for backward compatibility
 
 const SelectGroup = SelectPrimitive.Group;
 
@@ -92,11 +93,75 @@ const SelectItem = React.forwardRef<
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
+// Wrapper component for easier usage with options and onChange
+interface SelectWrapperProps {
+  value: string;
+  onChange: (e: { target: { value: string } }) => void;
+  options: Array<{ value: string; label: string }>;
+  label?: string;
+  error?: string;
+  className?: string;
+  disabled?: boolean;
+}
+
+const SelectWrapper = React.forwardRef<HTMLButtonElement, SelectWrapperProps>(
+  ({ value, onChange, options, label, error, className, disabled, ...props }, ref) => {
+    const selectId = React.useId();
+    const finalId = props.id || selectId;
+
+    // Filter out options with empty string values (Radix UI doesn't allow them)
+    const validOptions = options.filter(option => option.value !== '');
+    const emptyOption = options.find(option => option.value === '');
+    
+    // Use undefined for empty string values to show placeholder
+    const selectValue = value === '' ? undefined : value;
+
+    return (
+      <div className={cn("relative w-full", className)}>
+        {label && (
+          <label
+            htmlFor={finalId}
+            className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1.5"
+          >
+            {label}
+          </label>
+        )}
+        <SelectRoot
+          value={selectValue}
+          onValueChange={(newValue) => onChange({ target: { value: newValue || '' } })}
+          disabled={disabled}
+        >
+          <SelectTrigger
+            ref={ref}
+            id={finalId}
+            className={cn(error && "border-red-500")}
+          >
+            <SelectValue placeholder={emptyOption?.label || "Select..."} />
+          </SelectTrigger>
+          <SelectContent>
+            {validOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </SelectRoot>
+        {error && (
+          <p className="text-xs text-red-500 mt-1">{error}</p>
+        )}
+      </div>
+    );
+  }
+);
+SelectWrapper.displayName = "SelectWrapper";
+
 export {
+  SelectRoot,
   Select,
   SelectGroup,
   SelectValue,
   SelectTrigger,
   SelectContent,
   SelectItem,
+  SelectWrapper,
 };

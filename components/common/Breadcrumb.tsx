@@ -44,7 +44,7 @@ export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
               </li>
               {!isLast && (
                 <li className="navMdShadow px-1">
-                  <span> » </span>
+                  <span> &gt; </span>
                 </li>
               )}
             </Fragment>

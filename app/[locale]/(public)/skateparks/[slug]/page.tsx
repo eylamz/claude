@@ -96,7 +96,9 @@ interface Skatepark {
   isFeatured: boolean;
   status: 'active' | 'inactive';
   closingYear?: number | null;
+  closingMonth?: number | null;
   openingYear?: number | null;
+  openingMonth?: number | null;
 }
 
 interface NearbyPark {
@@ -183,6 +185,21 @@ function convertOperatingHoursForFormatter(hours: OperatingHours): OperatingHour
     }
   });
   return converted as OperatingHoursType;
+}
+
+/**
+ * Get month name by number (1-12) based on locale
+ */
+function getMonthName(monthNumber: number, locale: string): string {
+  const monthNames: Record<string, string[]> = {
+    en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    he: ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'],
+  };
+  
+  if (monthNumber >= 1 && monthNumber <= 12) {
+    return monthNames[locale]?.[monthNumber - 1] || monthNames.en[monthNumber - 1];
+  }
+  return '';
 }
 
 /**
@@ -469,6 +486,24 @@ export default function SkateparkPage() {
     return () => clearTimeout(timer);
   }, [skatepark]);
 
+  // Validate image URL and return a safe fallback if invalid
+  const getValidImageUrl = (url: string | undefined | null): string => {
+    if (!url) return '/placeholder-skatepark.jpg';
+    
+    // Check if URL is from allowed domains or is a relative path
+    const allowedDomains = ['res.cloudinary.com', 'placehold.co'];
+    const isRelative = url.startsWith('/');
+    const isAllowedDomain = allowedDomains.some(domain => url.includes(domain));
+    
+    // If it's a relative path or from allowed domain, use it
+    if (isRelative || isAllowedDomain) {
+      return url;
+    }
+    
+    // Otherwise, use placeholder
+    return '/placeholder-skatepark.jpg';
+  };
+
   const fetchSkatepark = async () => {
     setLoading(true);
     try {
@@ -530,7 +565,7 @@ export default function SkateparkPage() {
                     _id: park._id,
                     slug: park.slug,
                     name: park.name,
-                    imageUrl: park.images?.[0]?.url || '/placeholder-skatepark.jpg',
+                    imageUrl: getValidImageUrl(park.images?.[0]?.url),
                     area: park.area,
                     rating: (park as any).rating || 0, // Use rating from cache if available
                     totalReviews: (park as any).totalReviews || 0, // Use totalReviews from cache if available
@@ -1144,10 +1179,20 @@ export default function SkateparkPage() {
               <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
                 <div className="flex flex-col flex-wrap gap-2 mb-2">
                   {skatepark.openingYear && (
-                    <span>{t('opened')} {skatepark.openingYear}.</span>
+                    <span>
+                      {skatepark.openingMonth 
+                        ? `${t('openedDate')}${getMonthName(skatepark.openingMonth, locale)} ${skatepark.openingYear}`
+                        : `${t('opened')} ${skatepark.openingYear}`
+                      }.
+                    </span>
                   )}
                   {skatepark.closingYear && (
-                    <span className='text-red-600 dark:text-red-400'>{t('closedYear')} {skatepark.closingYear}.</span>
+                    <span className='text-red-600 dark:text-red-400'>
+                      {skatepark.closingMonth 
+                        ? `${t('closedYearDate')}${getMonthName(skatepark.closingMonth, locale)} ${skatepark.closingYear}`
+                        : `${t('closedYear')} ${skatepark.closingYear}`
+                      }.
+                    </span>
                   )}
                 </div>
               </div>
@@ -1600,7 +1645,7 @@ export default function SkateparkPage() {
                       >
                         <div className="relative bg-black/25 h-[10.5rem] overflow-hidden">
                           <Image
-                            src={park.imageUrl}
+                            src={getValidImageUrl(park.imageUrl)}
                             alt={nearbyName}
                             fill
                             className="object-cover saturate-150 group-hover:saturate-[1.75] transition-all duration-200 rounded-t-3xl"

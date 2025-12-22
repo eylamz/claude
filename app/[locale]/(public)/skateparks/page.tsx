@@ -56,7 +56,9 @@ interface Skatepark {
   is24Hours: boolean;
   isFeatured?: boolean;
   openingYear?: number | null;
+  openingMonth?: number | null;
   closingYear?: number | null;
+  closingMonth?: number | null;
   createdAt?: string | null;
   distance?: number | null;
 }
@@ -347,6 +349,19 @@ const isNewPark = (createdAt: string | null): boolean => {
   return new Date(createdAt) > twoMonthsAgo;
 };
 
+// Get month name by number (1-12) based on locale
+const getMonthName = (monthNumber: number, locale: string): string => {
+  const monthNames: Record<string, string[]> = {
+    en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    he: ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'],
+  };
+  
+  if (monthNumber >= 1 && monthNumber <= 12) {
+    return monthNames[locale]?.[monthNumber - 1] || monthNames.en[monthNumber - 1];
+  }
+  return '';
+};
+
 // Memoized thumbnail component
 const SkateparkThumbnail = memo(({ 
   photoUrl, 
@@ -547,7 +562,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
         {hasOpeningYear && (
           <div className="absolute bottom-[0.7rem] left-0 z-10 translate-x-[300px] animate-slideFromLeft !animation-delay-[800ms]">
             <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-r-full shadow-lg">
-              {park.openingYear}
+              {park.openingMonth ? `${getMonthName(park.openingMonth, locale)} ${park.openingYear}` : park.openingYear}
               <Icon name="sparksBold" className="w-3 h-3" />
             </div>
           </div>
@@ -1551,7 +1566,7 @@ export default function SkateparksPage() {
                         {hasOpeningYear && (
                           <div className="absolute bottom-2 left-0 z-10">
                             <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-end-full shadow-lg animate-pop">
-                              {selectedPark.openingYear}
+                              {selectedPark.openingMonth ? `${getMonthName(selectedPark.openingMonth, locale)} ${selectedPark.openingYear}` : selectedPark.openingYear}
                               <Sparkles className="w-3 h-3" />
                             </div>
                           </div>

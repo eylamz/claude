@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41.07 52.03">
+  <defs>
+    <style>
+      .backpack-1 {
+        stroke-width: 4px;
+      }
+
+      .backpack-1, .backpack-2, .backpack-3 {
+        stroke: CurrentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .backpack-1, .backpack-3 {
+        fill: none;
+      }
+
+      .backpack-2 {
+        fill: red;
+        stroke-width: 5px;
+      }
+
+      .backpack-3 {
+        stroke-width:3px;
+      }
+    </style>
+  </defs>
+  <g>
+    <g>
+      <path class="backpack-3" d="M38.53,30.01l-4.79.02.92,13.96c0,.28-.02.55-.05.82h2.19c1.95,0,3.52-1.59,3.52-3.53v-9.48c0-.99-.8-1.79-1.79-1.79Z"/>
+      <path class="backpack-3" d="M6.31,43.99l.92-13.98H2.54c-.99,0-1.79.8-1.79,1.79v9.48c0,1.95,1.58,3.52,3.52,3.52h2.09c-.03-.27-.05-.54-.05-.81Z"/>
+      <g>
+        <path class="backpack-1" d="M26.49,9.63c.27-.7.42-1.46.42-2.26,0-3.52-2.85-6.37-6.37-6.37s-6.37,2.85-6.37,6.37c0,.78.15,1.53.41,2.22,1.71-.92,3.69-1.44,5.92-1.44s4.27.54,6,1.49Z"/>
+        <path class="backpack-1" d="M33.23,22.32c0-5.57-2.49-10.37-6.74-12.69-1.73-.94-3.74-1.49-6-1.49s-4.21.53-5.92,1.44c-4.3,2.3-6.82,7.13-6.82,12.73l-1.43,21.67c0,3.89,3.15,7.05,7.05,7.05h14.26c3.89,0,7.05-3.15,7.05-7.05l-1.43-21.67Z"/>
+      </g>
+    </g>
+    <line class="backpack-2" x1="14.74" y1="26.01" x2="26.33" y2="26.01"/>
+    <line class="backpack-2" x1="14.74" y1="37.57" x2="26.33" y2="37.57"/>
+  </g>
+</svg>

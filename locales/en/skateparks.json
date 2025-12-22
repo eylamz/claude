@@ -20,7 +20,10 @@
   "saturdayAndHolidays": "Sat and Holidays",
   "address": "Address",
   "opened": "Opened Since ",
+  "openedDate": "Opened At ",
   "closedYear": "Closed At",
+  "closedYearDate": "Closed At",
+  "closedDate": "Closed Since",
   "amenities": {
     "title": "Services / Rules",
     "entryFee": "Entry Fee",
@@ -88,6 +91,8 @@
     }
   },
   "admin": {
+    "refresh": "Refresh",
+    "view": "View",
     "title": "Skateparks",
     "subtitle": "Manage skatepark listings",
     "viewStatistics": "View Statistics",
@@ -107,10 +112,11 @@
     "setInactive": "Set Inactive",
     "exportToCSV": "Export to CSV",
     "deleteSelected": "Delete Selected",
+    "deleteSelectedConfirm": "Are you sure you want to delete {count} selected skatepark(s)?",
     "table": {
       "image": "Image",
       "name": "Name",
-      "area": "Area",
+      "slug": "Slug",
       "address": "Address",
       "openingYear": "Opening Year",
       "featured": "Featured",
@@ -119,6 +125,7 @@
       "noSkateparksFound": "No skateparks found",
       "edit": "Edit",
       "delete": "Delete",
+      "view": "View",
       "deleteConfirm": "Delete {name}?",
       "showing": "Showing {from} to {to} of {total} skateparks",
       "previous": "Previous",

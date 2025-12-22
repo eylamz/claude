@@ -44,7 +44,9 @@ interface SkateparkFormData {
     nearbyRestaurants: boolean;
   };
   openingYear?: number;
+  openingMonth?: number;
   closingYear?: number;
+  closingMonth?: number;
   notes: {
     en?: string[];
     he?: string[];
@@ -103,7 +105,9 @@ export default function NewSkateparkPage() {
       nearbyRestaurants: false,
     },
     openingYear: undefined,
+    openingMonth: undefined,
     closingYear: undefined,
+    closingMonth: undefined,
     notes: {
       en: [],
       he: [],
@@ -178,8 +182,12 @@ export default function NewSkateparkPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
 
+    console.log('Form submitted', formData);
+    
     if (!validate()) {
+      console.log('Validation failed', errors);
       return;
     }
 
@@ -187,24 +195,51 @@ export default function NewSkateparkPage() {
     setErrors({});
 
     try {
+      // Clean up operating hours - only include times when isOpen is true
+      const cleanedOperatingHours: any = {};
+      Object.keys(formData.operatingHours).forEach((day) => {
+        const dayHours = formData.operatingHours[day as keyof typeof formData.operatingHours];
+        if (dayHours.isOpen) {
+          cleanedOperatingHours[day] = {
+            isOpen: true,
+            openingTime: dayHours.openingTime || '',
+            closingTime: dayHours.closingTime || '',
+          };
+        } else {
+          cleanedOperatingHours[day] = {
+            isOpen: false,
+            openingTime: '',
+            closingTime: '',
+          };
+        }
+      });
+
+      const dataToSend = {
+        ...formData,
+        operatingHours: cleanedOperatingHours,
+      };
+
+      console.log('Sending request with data:', dataToSend);
       const response = await fetch('/api/admin/skateparks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataToSend),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('API error:', errorData);
         throw new Error(errorData.error || 'Failed to create skatepark');
       }
 
       const data = await response.json();
-      router.push(`/${locale}/admin/skateparks/${data.skatepark._id || data.skatepark.id}`);
+      console.log('Success:', data);
+      router.push(`/${locale}/admin/skateparks`);
     } catch (error: any) {
-      setErrors({ general: error.message || 'Failed to create skatepark' });
       console.error('Error creating skatepark:', error);
+      setErrors({ general: error.message || 'Failed to create skatepark' });
     } finally {
       setIsSubmitting(false);
     }
@@ -382,6 +417,471 @@ export default function NewSkateparkPage() {
               <label htmlFor="isFeatured" className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                 Featured Skatepark
               </label>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Images */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Images</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {formData.images && formData.images.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+                {formData.images
+                  .sort((a, b) => a.orderNumber - b.orderNumber)
+                  .map((image, index) => (
+                    <div
+                      key={index}
+                      className={`relative rounded-lg overflow-hidden border-2 ${
+                        image.isFeatured
+                          ? 'border-blue-500 dark:border-blue-400'
+                          : 'border-gray-200 dark:border-gray-700'
+                      }`}
+                    >
+                      {image.url ? (
+                        <img
+                          src={image.url}
+                          alt={`Image ${index + 1}`}
+                          className="w-full h-32 object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/placeholder-skatepark.jpg';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-32 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                          <span className="text-gray-400 dark:text-gray-500 text-sm">No image</span>
+                        </div>
+                      )}
+                      {image.isFeatured && (
+                        <div className="absolute top-2 right-2 bg-blue-500 dark:bg-blue-600 text-white text-xs px-2 py-1 rounded">
+                          Main
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            )}
+            <div className="space-y-4">
+              {formData.images && formData.images.length > 0 ? (
+                formData.images.map((image, imageIndex) => (
+                  <div
+                    key={imageIndex}
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                        {image.url ? (
+                          <img
+                            src={image.url}
+                            alt={`Image ${imageIndex + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/placeholder-skatepark.jpg';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                            <span className="text-gray-400 dark:text-gray-500 text-xs">No image</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              label="Order Number"
+                              type="number"
+                              value={image.orderNumber}
+                              onChange={(e) => {
+                                const newImages = [...formData.images];
+                                newImages[imageIndex].orderNumber = parseInt(e.target.value) || 0;
+                                setFormData({ ...formData, images: newImages });
+                              }}
+                              className="w-24"
+                            />
+                            <Button
+                              type="button"
+                              variant={image.isFeatured ? 'primary' : 'secondary'}
+                              size="sm"
+                              onClick={() => {
+                                const newImages = [...formData.images];
+                                newImages.forEach((img, idx) => {
+                                  img.isFeatured = idx === imageIndex;
+                                });
+                                setFormData({ ...formData, images: newImages });
+                              }}
+                            >
+                              {image.isFeatured ? 'Main Image' : 'Set as Main'}
+                            </Button>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              const newImages = formData.images.filter((_, idx) => idx !== imageIndex);
+                              setFormData({ ...formData, images: newImages });
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                        <Input
+                          label="Image URL"
+                          value={image.url}
+                          onChange={(e) => {
+                            const newImages = [...formData.images];
+                            newImages[imageIndex].url = e.target.value;
+                            setFormData({ ...formData, images: newImages });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark text-center py-4">
+                  No images added yet
+                </p>
+              )}
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  const newImages = [
+                    ...formData.images,
+                    {
+                      url: '',
+                      isFeatured: formData.images.length === 0,
+                      orderNumber: formData.images.length,
+                    },
+                  ];
+                  setFormData({ ...formData, images: newImages });
+                }}
+              >
+                + Add New Image
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Address */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Address</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Address (English)"
+                value={formData.address.en}
+                onChange={(e) =>
+                  handleNestedInputChange('address', 'en', e.target.value)
+                }
+                error={errors['address.en']}
+              />
+              <Input
+                label="Address (Hebrew)"
+                value={formData.address.he}
+                onChange={(e) =>
+                  handleNestedInputChange('address', 'he', e.target.value)
+                }
+                error={errors['address.he']}
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Latitude"
+                type="number"
+                step="any"
+                value={formData.location.coordinates[1]}
+                onChange={(e) =>
+                  handleNestedInputChange('location', 'coordinates', [
+                    formData.location.coordinates[0],
+                    parseFloat(e.target.value) || 0,
+                  ])
+                }
+              />
+              <Input
+                label="Longitude"
+                type="number"
+                step="any"
+                value={formData.location.coordinates[0]}
+                onChange={(e) =>
+                  handleNestedInputChange('location', 'coordinates', [
+                    parseFloat(e.target.value) || 0,
+                    formData.location.coordinates[1],
+                  ])
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Operating Hours */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Operating Hours</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center space-x-2 mb-4">
+              <input
+                type="checkbox"
+                id="is24Hours"
+                checked={formData.lightingHours?.is24Hours || false}
+                onChange={(e) =>
+                  handleNestedInputChange('lightingHours', 'is24Hours', e.target.checked)
+                }
+                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="is24Hours" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Open 24 Hours
+              </label>
+            </div>
+            {formData.lightingHours?.is24Hours ? (
+              <div className="pt-2">
+                <Input
+                  label="Lighting End Time (HH:mm)"
+                  type="time"
+                  value={formData.lightingHours?.endTime || ''}
+                  onChange={(e) =>
+                    handleNestedInputChange('lightingHours', 'endTime', e.target.value || '')
+                  }
+                  placeholder="22:00"
+                />
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  When 24 hours is enabled, enter the time when lighting ends.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    { key: 'sunday', label: 'Sunday' },
+                    { key: 'monday', label: 'Monday' },
+                    { key: 'tuesday', label: 'Tuesday' },
+                    { key: 'wednesday', label: 'Wednesday' },
+                    { key: 'thursday', label: 'Thursday' },
+                    { key: 'friday', label: 'Friday' },
+                    { key: 'saturday', label: 'Saturday' },
+                    { key: 'holidays', label: 'Holidays' },
+                  ].map((day) => {
+                    const dayHours = formData.operatingHours[day.key as keyof typeof formData.operatingHours];
+                    return (
+                      <div key={day.key} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {day.label}
+                          </label>
+                          <input
+                            type="checkbox"
+                            checked={dayHours.isOpen}
+                            onChange={(e) => {
+                              const newHours = {
+                                ...formData.operatingHours,
+                                [day.key]: {
+                                  ...dayHours,
+                                  isOpen: e.target.checked,
+                                  openingTime: e.target.checked ? (dayHours.openingTime || '') : '',
+                                  closingTime: e.target.checked ? (dayHours.closingTime || '') : '',
+                                },
+                              };
+                              handleInputChange('operatingHours', newHours);
+                            }}
+                            className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                          />
+                        </div>
+                        {dayHours.isOpen && (
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input
+                              type="time"
+                              label="Open"
+                              value={dayHours.openingTime}
+                              onChange={(e) => {
+                                const newHours = {
+                                  ...formData.operatingHours,
+                                  [day.key]: {
+                                    ...dayHours,
+                                    openingTime: e.target.value,
+                                  },
+                                };
+                                handleInputChange('operatingHours', newHours);
+                              }}
+                              className="text-sm"
+                            />
+                            <Input
+                              type="time"
+                              label="Close"
+                              value={dayHours.closingTime}
+                              onChange={(e) => {
+                                const newHours = {
+                                  ...formData.operatingHours,
+                                  [day.key]: {
+                                    ...dayHours,
+                                    closingTime: e.target.value,
+                                  },
+                                };
+                                handleInputChange('operatingHours', newHours);
+                              }}
+                              className="text-sm"
+                            />
+                          </div>
+                        )}
+                        {!dayHours.isOpen && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Closed</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="pt-2">
+                  <Input
+                    label="Lighting End Time (HH:mm)"
+                    type="time"
+                    value={formData.lightingHours?.endTime || ''}
+                    onChange={(e) =>
+                      handleNestedInputChange('lightingHours', 'endTime', e.target.value || '')
+                    }
+                    placeholder="22:00"
+                  />
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Amenities */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Amenities</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { key: 'entryFee', label: 'Entry Fee' },
+                { key: 'parking', label: 'Parking' },
+                { key: 'shade', label: 'Shade' },
+                { key: 'bathroom', label: 'Bathroom' },
+                { key: 'helmetRequired', label: 'Helmet Required' },
+                { key: 'guard', label: 'Security Guard' },
+                { key: 'seating', label: 'Seating' },
+                { key: 'bombShelter', label: 'Bomb Shelter' },
+                { key: 'scootersAllowed', label: 'Scooters Allowed' },
+                { key: 'bikesAllowed', label: 'Bikes Allowed' },
+                { key: 'noWax', label: 'No Wax Policy' },
+                { key: 'nearbyRestaurants', label: 'Nearby Restaurants' },
+              ].map((amenity) => (
+                <div key={amenity.key} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={amenity.key}
+                    checked={formData.amenities[amenity.key as keyof typeof formData.amenities] || false}
+                    onChange={(e) => {
+                      handleNestedInputChange('amenities', amenity.key, e.target.checked);
+                    }}
+                    className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor={amenity.key}
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
+                  >
+                    {amenity.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Additional Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Input
+                  label="Opening Year"
+                  type="number"
+                  value={formData.openingYear || ''}
+                  onChange={(e) =>
+                    handleInputChange('openingYear', e.target.value ? parseInt(e.target.value) : undefined)
+                  }
+                />
+                <Select
+                  label="Opening Month (Optional)"
+                  value={formData.openingMonth?.toString() || ''}
+                  onChange={(e) =>
+                    handleInputChange('openingMonth', e.target.value ? parseInt(e.target.value) : undefined)
+                  }
+                  options={[
+                    { value: '', label: 'No month specified' },
+                    { value: '1', label: 'January' },
+                    { value: '2', label: 'February' },
+                    { value: '3', label: 'March' },
+                    { value: '4', label: 'April' },
+                    { value: '5', label: 'May' },
+                    { value: '6', label: 'June' },
+                    { value: '7', label: 'July' },
+                    { value: '8', label: 'August' },
+                    { value: '9', label: 'September' },
+                    { value: '10', label: 'October' },
+                    { value: '11', label: 'November' },
+                    { value: '12', label: 'December' },
+                  ]}
+                />
+              </div>
+              <div className="space-y-2">
+                <Input
+                  label="Closing Year"
+                  type="number"
+                  value={formData.closingYear || ''}
+                  onChange={(e) =>
+                    handleInputChange('closingYear', e.target.value ? parseInt(e.target.value) : undefined)
+                  }
+                />
+                <Select
+                  label="Closing Month (Optional)"
+                  value={formData.closingMonth?.toString() || ''}
+                  onChange={(e) =>
+                    handleInputChange('closingMonth', e.target.value ? parseInt(e.target.value) : undefined)
+                  }
+                  options={[
+                    { value: '', label: 'No month specified' },
+                    { value: '1', label: 'January' },
+                    { value: '2', label: 'February' },
+                    { value: '3', label: 'March' },
+                    { value: '4', label: 'April' },
+                    { value: '5', label: 'May' },
+                    { value: '6', label: 'June' },
+                    { value: '7', label: 'July' },
+                    { value: '8', label: 'August' },
+                    { value: '9', label: 'September' },
+                    { value: '10', label: 'October' },
+                    { value: '11', label: 'November' },
+                    { value: '12', label: 'December' },
+                  ]}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="YouTube URL"
+                value={formData.mediaLinks.youtube || ''}
+                onChange={(e) =>
+                  handleNestedInputChange('mediaLinks', 'youtube', e.target.value)
+                }
+              />
+              <Input
+                label="Google Maps Frame"
+                value={formData.mediaLinks.googleMapsFrame || ''}
+                onChange={(e) =>
+                  handleNestedInputChange('mediaLinks', 'googleMapsFrame', e.target.value)
+                }
+              />
             </div>
           </CardContent>
         </Card>

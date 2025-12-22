@@ -86,8 +86,10 @@ export async function GET(
         endTime: skatepark.lightingUntil || '',
       } : undefined,
       amenities: skatepark.amenities || {},
-      openingYear: skatepark.openingYear || null,
-      closingYear: skatepark.closingYear || null,
+      openingYear: skatepark.openingYear ?? null,
+      openingMonth: skatepark.openingMonth ?? null,
+      closingYear: skatepark.closingYear ?? null,
+      closingMonth: skatepark.closingMonth ?? null,
       notes: skatepark.notes || { en: '', he: '' },
       isFeatured: skatepark.isFeatured || false,
       status: skatepark.status || 'active',
@@ -157,6 +159,18 @@ export async function PUT(
     }
 
     const body = await request.json();
+    console.log('Update request body keys:', Object.keys(body));
+    console.log('Update request body sample:', {
+      name: body.name,
+      location: body.location,
+      operatingHours: body.operatingHours,
+      openingYear: body.openingYear,
+      openingMonth: body.openingMonth,
+      closingYear: body.closingYear,
+      closingMonth: body.closingMonth,
+    });
+    console.log('Raw body openingMonth:', body.openingMonth, 'closingMonth:', body.closingMonth);
+    
     const {
       slug,
       name,
@@ -169,7 +183,9 @@ export async function PUT(
       lightingUntil,
       amenities,
       openingYear,
+      openingMonth,
       closingYear,
+      closingMonth,
       notes,
       is24Hours,
       isFeatured,
@@ -177,10 +193,16 @@ export async function PUT(
       mediaLinks,
     } = body;
 
-    // Update fields
+    // Update fields - explicitly set each field to ensure changes are saved
     if (slug !== undefined) skatepark.slug = slug;
-    if (name !== undefined) skatepark.name = name;
-    if (address !== undefined) skatepark.address = address;
+    if (name !== undefined) {
+      skatepark.name = name;
+      skatepark.markModified('name');
+    }
+    if (address !== undefined) {
+      skatepark.address = address;
+      skatepark.markModified('address');
+    }
     if (area !== undefined) skatepark.area = area;
     if (location !== undefined) {
       // Handle location in different formats
@@ -198,6 +220,7 @@ export async function PUT(
             type: 'Point',
             coordinates: [lng, lat] as [number, number],
           };
+          skatepark.markModified('location');
           console.log('Updated location coordinates:', skatepark.location.coordinates);
         }
       } else if (location.lng !== undefined && location.lat !== undefined) {
@@ -210,6 +233,7 @@ export async function PUT(
             type: 'Point',
             coordinates: [lng, lat] as [number, number],
           };
+          skatepark.markModified('location');
           console.log('Updated location coordinates:', skatepark.location.coordinates);
         }
       }
@@ -222,26 +246,230 @@ export async function PUT(
         orderNumber: img.orderNumber ?? img.order ?? index,
         publicId: img.publicId && img.publicId.trim() ? img.publicId.trim() : undefined,
       }));
+      skatepark.markModified('images');
     }
-    if (operatingHours !== undefined) skatepark.operatingHours = operatingHours;
-    // Handle lightingHours from frontend (converts to is24Hours and lightingUntil)
+    if (operatingHours !== undefined) {
+      // Clean up operating hours - only include times when isOpen is true
+      const cleanedOperatingHours: any = {};
+      if (operatingHours) {
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'holidays'];
+        days.forEach((day) => {
+          const dayHours = operatingHours[day];
+          if (dayHours && dayHours.isOpen === true && dayHours.openingTime && dayHours.closingTime) {
+            cleanedOperatingHours[day] = {
+              isOpen: true,
+              openingTime: dayHours.openingTime,
+              closingTime: dayHours.closingTime,
+            };
+          } else if (dayHours) {
+            // When closed, only include isOpen - don't include time fields
+            cleanedOperatingHours[day] = {
+              isOpen: false,
+            };
+          }
+        });
+      }
+      skatepark.operatingHours = cleanedOperatingHours;
+      skatepark.markModified('operatingHours');
+    }
+    // Handle lightingHours from frontend
     if (lightingHours !== undefined) {
-      skatepark.is24Hours = lightingHours.is24Hours || false;
-      skatepark.lightingUntil = lightingHours.endTime || null;
+      skatepark.lightingHours = {
+        is24Hours: lightingHours.is24Hours || false,
+        endTime: lightingHours.endTime || '',
+      };
+      skatepark.markModified('lightingHours');
     }
     // Also support direct lightingUntil and is24Hours for backward compatibility
-    if (lightingUntil !== undefined) skatepark.lightingUntil = lightingUntil;
-    if (is24Hours !== undefined) skatepark.is24Hours = is24Hours;
-    if (amenities !== undefined) skatepark.amenities = amenities;
-    if (openingYear !== undefined) skatepark.openingYear = openingYear;
-    if (closingYear !== undefined) skatepark.closingYear = closingYear;
-    if (notes !== undefined) skatepark.notes = notes;
+    if (lightingUntil !== undefined || is24Hours !== undefined) {
+      if (!skatepark.lightingHours) {
+        skatepark.lightingHours = {
+          is24Hours: false,
+          endTime: '',
+        };
+      }
+      if (lightingUntil !== undefined) {
+        skatepark.lightingHours.endTime = lightingUntil;
+      }
+      if (is24Hours !== undefined) {
+        skatepark.lightingHours.is24Hours = is24Hours;
+      }
+      skatepark.markModified('lightingHours');
+    }
+    if (amenities !== undefined) {
+      skatepark.amenities = amenities;
+      skatepark.markModified('amenities');
+    }
+    // Handle openingYear/openingMonth - allow null values (null means "not specified")
+    if (openingYear !== undefined) {
+      if (openingYear === null || openingYear === '' || openingYear === 0) {
+        skatepark.openingYear = null;
+        skatepark.markModified('openingYear');
+        // Only clear month if year is being cleared
+        if (openingMonth === undefined) {
+          skatepark.openingMonth = null;
+          skatepark.markModified('openingMonth');
+        }
+      } else {
+        const currentYear = new Date().getFullYear();
+        const year = typeof openingYear === 'number' ? openingYear : parseInt(openingYear);
+        if (!isNaN(year) && year >= 1900 && year <= currentYear) {
+          skatepark.openingYear = year;
+          skatepark.markModified('openingYear');
+        } else {
+          // Invalid year - keep existing value or set to null
+          console.warn(`Invalid openingYear: ${openingYear}, keeping existing value`);
+        }
+      }
+    }
+    if (openingMonth !== undefined) {
+      if (openingMonth === null || openingMonth === '' || openingMonth === 0) {
+        skatepark.openingMonth = null; // Store null instead of undefined
+        skatepark.markModified('openingMonth');
+      } else {
+        const month = typeof openingMonth === 'number' ? openingMonth : parseInt(openingMonth);
+        if (!isNaN(month) && month >= 1 && month <= 12) {
+          skatepark.openingMonth = month;
+          skatepark.markModified('openingMonth');
+        } else {
+          console.warn(`Invalid openingMonth: ${openingMonth}, keeping existing value`);
+        }
+      }
+    }
+    // Handle closingYear/closingMonth - allow null values (null means "not specified")
+    if (closingYear !== undefined) {
+      if (closingYear === null || closingYear === '' || closingYear === 0) {
+        skatepark.closingYear = null;
+        skatepark.markModified('closingYear');
+        // Only clear month if year is being cleared
+        if (closingMonth === undefined) {
+          skatepark.closingMonth = null;
+          skatepark.markModified('closingMonth');
+        }
+      } else {
+        const year = typeof closingYear === 'number' ? closingYear : parseInt(closingYear);
+        if (!isNaN(year) && year >= 1900) {
+          skatepark.closingYear = year;
+          skatepark.markModified('closingYear');
+        } else {
+          // Invalid year - keep existing value or set to null
+          console.warn(`Invalid closingYear: ${closingYear}, keeping existing value`);
+        }
+      }
+    }
+    if (closingMonth !== undefined) {
+      if (closingMonth === null || closingMonth === '' || closingMonth === 0) {
+        skatepark.closingMonth = null; // Store null instead of undefined
+        skatepark.markModified('closingMonth');
+      } else {
+        const month = typeof closingMonth === 'number' ? closingMonth : parseInt(closingMonth);
+        if (!isNaN(month) && month >= 1 && month <= 12) {
+          skatepark.closingMonth = month;
+          skatepark.markModified('closingMonth');
+        } else {
+          console.warn(`Invalid closingMonth: ${closingMonth}, keeping existing value`);
+        }
+      }
+    }
+    if (notes !== undefined) {
+      skatepark.notes = notes;
+      skatepark.markModified('notes');
+    }
     if (is24Hours !== undefined) skatepark.is24Hours = is24Hours;
     if (isFeatured !== undefined) skatepark.isFeatured = isFeatured;
     if (status !== undefined) skatepark.status = status;
-    if (mediaLinks !== undefined) skatepark.mediaLinks = mediaLinks;
+    if (mediaLinks !== undefined) {
+      skatepark.mediaLinks = mediaLinks;
+      skatepark.markModified('mediaLinks');
+    }
 
-    await skatepark.save();
+    console.log('About to save skatepark with data:', {
+      name: skatepark.name,
+      location: skatepark.location,
+      operatingHours: skatepark.operatingHours,
+      amenities: skatepark.amenities,
+      openingYear: skatepark.openingYear,
+      openingMonth: skatepark.openingMonth,
+      closingYear: skatepark.closingYear,
+      closingMonth: skatepark.closingMonth,
+      mediaLinks: skatepark.mediaLinks,
+    });
+    console.log('Month values before save - openingMonth:', skatepark.openingMonth, 'type:', typeof skatepark.openingMonth, 'closingMonth:', skatepark.closingMonth, 'type:', typeof skatepark.closingMonth);
+    
+    // Explicitly ensure months are set (even if null) before saving
+    if (openingMonth !== undefined) {
+      const monthValue = openingMonth === null || openingMonth === '' || openingMonth === 0 
+        ? null 
+        : (typeof openingMonth === 'number' ? openingMonth : parseInt(openingMonth));
+      skatepark.set('openingMonth', monthValue);
+      skatepark.markModified('openingMonth');
+      console.log('Set openingMonth to:', monthValue);
+    }
+    if (closingMonth !== undefined) {
+      const monthValue = closingMonth === null || closingMonth === '' || closingMonth === 0 
+        ? null 
+        : (typeof closingMonth === 'number' ? closingMonth : parseInt(closingMonth));
+      skatepark.set('closingMonth', monthValue);
+      skatepark.markModified('closingMonth');
+      console.log('Set closingMonth to:', monthValue);
+    }
+
+    // Log the document's modified paths
+    console.log('Modified paths:', skatepark.modifiedPaths());
+    console.log('Schema paths includes openingMonth:', skatepark.schema.paths.openingMonth ? 'YES' : 'NO');
+    console.log('Schema paths includes closingMonth:', skatepark.schema.paths.closingMonth ? 'YES' : 'NO');
+    
+    // Build update object for all changes including month fields
+    const updateData: any = {};
+    
+    // Add month fields to update if they're being changed
+    if (openingMonth !== undefined) {
+      const monthValue = openingMonth === null || openingMonth === '' || openingMonth === 0 
+        ? null 
+        : (typeof openingMonth === 'number' ? openingMonth : parseInt(openingMonth));
+      updateData.openingMonth = monthValue;
+      skatepark.openingMonth = monthValue;
+    }
+    if (closingMonth !== undefined) {
+      const monthValue = closingMonth === null || closingMonth === '' || closingMonth === 0 
+        ? null 
+        : (typeof closingMonth === 'number' ? closingMonth : parseInt(closingMonth));
+      updateData.closingMonth = monthValue;
+      skatepark.closingMonth = monthValue;
+    }
+    
+    // Use updateOne with $set to directly update MongoDB for month fields
+    // This bypasses any potential Mongoose schema caching issues
+    if (Object.keys(updateData).length > 0) {
+      console.log('Using updateOne with $set for months:', updateData);
+      const updateResult = await Skatepark.updateOne(
+        { _id: skatepark._id },
+        { $set: updateData }
+      );
+      console.log('Update result:', updateResult);
+    }
+
+    // Now save the rest of the changes (this will also update the document instance)
+    const savedSkatepark = await skatepark.save();
+    console.log('After save - openingMonth:', savedSkatepark.openingMonth, 'closingMonth:', savedSkatepark.closingMonth);
+    
+    // Verify in database by fetching fresh using raw MongoDB query to bypass Mongoose
+    const db = mongoose.connection.db;
+    if (db) {
+      const collection = db.collection('skateparks');
+      const rawDoc = await collection.findOne({ _id: new mongoose.Types.ObjectId(savedSkatepark._id) });
+      console.log('Raw MongoDB doc - openingMonth:', rawDoc?.openingMonth, 'closingMonth:', rawDoc?.closingMonth);
+      console.log('Raw MongoDB doc keys:', Object.keys(rawDoc || {}));
+    }
+    
+    // Also try with Mongoose
+    const verifyDocLean = await Skatepark.findById(savedSkatepark._id).lean();
+    const verifyDoc = await Skatepark.findById(savedSkatepark._id);
+    console.log('Verified from DB (lean) - openingMonth:', verifyDocLean?.openingMonth, 'closingMonth:', verifyDocLean?.closingMonth);
+    console.log('Verified from DB (non-lean) - openingMonth:', verifyDoc?.openingMonth, 'closingMonth:', verifyDoc?.closingMonth);
+    console.log('Full lean doc:', JSON.stringify(verifyDocLean, null, 2));
+    
+    console.log('Skatepark saved successfully');
 
     // Record success to reset counter
     recordSuccess(ENDPOINT, id);

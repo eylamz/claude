@@ -1,7 +1,7 @@
 export { Button } from './button';
 export { Card, CardHeader, CardTitle, CardContent } from './card';
 export { Input } from './input';
-export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectItem } from './select';
+export { SelectWrapper as Select, SelectRoot, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectItem } from './select';
 export { Textarea } from './textarea';
 export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuRadioItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuGroup, DropdownMenuPortal, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuRadioGroup } from './dropdown';
 export { Skeleton } from './skeleton';

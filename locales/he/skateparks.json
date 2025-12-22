@@ -20,7 +20,10 @@
   "saturdayAndHolidays": "שבתות וחגים",
   "address": "כתובת",
   "opened": "נפתח בשנת",
+  "openedDate": "נפתח ב",
   "closedYear": "נסגר בשנת",
+  "closedYearDate": "נסגר בתאריך",
+  "closedDate": "נסגר בתאריך",
   "amenities": {
     "title": "שירותים / חוקים",
     "entryFee": "דמי כניסה",
@@ -88,6 +91,8 @@
     }
   },
   "admin": {
+    "refresh": "רענן",
+    "view": "צפה",
     "title": "סקייטפארקים",
     "subtitle": "ניהול רשימת סקייטפארקים",
     "viewStatistics": "צפה בסטטיסטיקות",
@@ -103,10 +108,11 @@
     "setInactive": "הגדר כלא פעיל",
     "exportToCSV": "ייצא ל-CSV",
     "deleteSelected": "מחק נבחרים",
+    "deleteSelectedConfirm": "האם אתה בטוח שברצונך למחוק {count} סקייטפארק(ים) נבחר(ים)?",
     "table": {
       "image": "תמונה",
       "name": "שם",
-      "area": "אזור",
+      "slug": "כתובת URL",
       "address": "כתובת",
       "openingYear": "שנת פתיחה",
       "featured": "מומלץ",
@@ -115,6 +121,7 @@
       "noSkateparksFound": "לא נמצאו סקייטפארקים",
       "edit": "ערוך",
       "delete": "מחק",
+      "view": "צפה",
       "deleteConfirm": "למחוק את {name}?",
       "showing": "מציג {from} עד {to} מתוך {total} סקייטפארקים",
       "previous": "הקודם",
@@ -163,4 +170,144 @@
       }
     }
   }
+}
+
+
+
+
+{
+  "_id": {
+    "$oid": "69470494479e9b2cfbfe7c5b"
+  },
+  "slug": "rehovot",
+  "name": {
+    "en": "Rehovot",
+    "he": "רחובות"
+  },
+  "address": {
+    "en": "Infront of Hazon Ish St 28, Rehovot",
+    "he": "מול רחוב חזון איש 28, רחובות"
+  },
+  "area": "center",
+  "location": {
+    "type": "Point",
+    "coordinates": [
+      34.795196223281636,
+      31.883527520270174
+    ]
+  },
+  "images": [
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1766351504/skateparks/skateparks/rehovot.jpg",
+      "isFeatured": false,
+      "orderNumber": 4
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1766351505/skateparks/skateparks/rehovot1.jpg",
+      "isFeatured": false,
+      "orderNumber": 5
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1766351505/skateparks/skateparks/rehovot2.jpg",
+      "isFeatured": false,
+      "orderNumber": 6
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1766351505/skateparks/skateparks/rehovot3.jpg",
+      "isFeatured": false,
+      "orderNumber": 7
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1766351505/skateparks/skateparks/rehovot4.jpg",
+      "isFeatured": false,
+      "orderNumber": 8
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1766351506/skateparks/skateparks/rehovot5.jpg",
+      "isFeatured": false,
+      "orderNumber": 9
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1766351505/skateparks/skateparks/rehovot6.jpg",
+      "isFeatured": false,
+      "orderNumber": 10
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1766351506/skateparks/skateparks/rehovot7.jpg",
+      "isFeatured": false,
+      "orderNumber": 11
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1766351506/skateparks/skateparks/rehovot8.jpg",
+      "isFeatured": false,
+      "orderNumber": 12
+    }
+  ],
+  "operatingHours": {
+    "sunday": {
+      "isOpen": false
+    },
+    "monday": {
+      "isOpen": false
+    },
+    "tuesday": {
+      "isOpen": false
+    },
+    "wednesday": {
+      "isOpen": false
+    },
+    "thursday": {
+      "isOpen": false
+    },
+    "friday": {
+      "isOpen": false
+    },
+    "saturday": {
+      "isOpen": false
+    },
+    "holidays": {
+      "isOpen": false
+    }
+  },
+  "amenities": {
+    "entryFee": true,
+    "parking": true,
+    "shade": true,
+    "bathroom": false,
+    "helmetRequired": false,
+    "guard": false,
+    "seating": true,
+    "bombShelter": false,
+    "scootersAllowed": true,
+    "bikesAllowed": true,
+    "noWax": false,
+    "nearbyRestaurants": false
+  },
+  "openingYear": 2025,
+  "notes": {
+    "en": [],
+    "he": []
+  },
+  "isFeatured": false,
+  "status": "active",
+  "mediaLinks": {
+    "youtube": "",
+    "googleMapsFrame": "https://www.google.com/maps/embed?pb=!1m13!1m8!1m3!1d27101.439369890668!2d34.7954108!3d31.8881189!3m2!1i1024!2i768!4f13.1!3m2!1m1!2zMzHCsDUzJzAzLjEiTiAzNMKwNDcnNDIuOSJF!5e0!3m2!1sen!2sil!4v1766302447268!5m2!1sen!2sil"
+  },
+  "rating": 0,
+  "totalReviews": 0,
+  "createdAt": {
+    "$date": "2025-12-20T20:18:28.762Z"
+  },
+  "updatedAt": {
+    "$date": "2025-12-21T21:12:12.699Z"
+  },
+  "__v": 17,
+  "lightingHours": {
+    "endTime": "23:00",
+    "is24Hours": true
+  },
+  "closingYear": null,
+  "closingMonth": null,
+  "openingMonth": null
 }

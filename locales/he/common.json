@@ -3,6 +3,8 @@
     "title": "אפליקציית Next.js",
     "description": "אפליקציית Next.js מינימליסטית יוקרתית עם תמיכה רב-לשונית"
   },
+  "map": "מפה",
+  "location": "מיקום",
   "welcome": "ברוכים הבאים לחוויה מינימליסטית יוקרתית",
   "hello": "מעוצב בדיוק ואלגנטיות",
   "getStarted": "התחל",
@@ -322,5 +324,142 @@
       "getStarted": "התחל עכשיו",
       "learnMore": "למד עוד"
     }
+  }
+}
+
+{
+  "_id": {
+    "$oid": "68bc1c774f8e83b1ed679764"
+  },
+  "nameEn": "Mitzpe Ramon",
+  "nameHe": "מצפה רמון",
+  "slug": "mitzpe-ramon",
+  "area": "south",
+  "status": "active",
+  "addressEn": "Sderot David Ben Gurion 16, Mitzpe Ramon",
+  "addressHe": "שדרות דוד בן גוריות 16, מצפה רמון",
+  "openingYear": 2017,
+  "location": {
+    "latitude": 30.60991939056803,
+    "longitude": 34.80119258817613
+  },
+  "operatingHours": {
+    "sunday": {
+      "openingTime": "00:02",
+      "closingTime": "23:58",
+      "isOpen": true
+    },
+    "monday": {
+      "openingTime": "00:02",
+      "closingTime": "23:58",
+      "isOpen": true
+    },
+    "tuesday": {
+      "openingTime": "00:02",
+      "closingTime": "23:58",
+      "isOpen": true
+    },
+    "wednesday": {
+      "openingTime": "00:02",
+      "closingTime": "23:58",
+      "isOpen": true
+    },
+    "thursday": {
+      "openingTime": "00:02",
+      "closingTime": "23:58",
+      "isOpen": true
+    },
+    "friday": {
+      "openingTime": "00:02",
+      "closingTime": "23:58",
+      "isOpen": true
+    },
+    "saturday": {
+      "openingTime": "00:02",
+      "closingTime": "23:58",
+      "isOpen": true
+    },
+    "holidays": {
+      "openingTime": "00:02",
+      "closingTime": "23:58",
+      "isOpen": true
+    }
+  },
+  "lightingHours": {
+    "startTime": "00:01",
+    "endTime": "22:00",
+    "is24Hours": true
+  },
+  "amenities": {
+    "entryFee": false,
+    "parking": true,
+    "bathroom": false,
+    "shade": false,
+    "helmetRequired": false,
+    "guard": false,
+    "seating": true,
+    "bombShelter": false,
+    "scootersAllowed": true,
+    "bikesAllowed": true,
+    "noWax": false,
+    "nearbyRestaurants": false
+  },
+  "isFeatured": false,
+  "images": [
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1743687059/j7rl5rmoxxqfhyltgklt.webp",
+      "isFeatured": true,
+      "orderNumber": 1
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1743687060/rnuyzkkt1rrespobaswr.webp",
+      "isFeatured": false,
+      "orderNumber": 2
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1743687062/vhkldmnhxk6auqh6pmk8.webp",
+      "isFeatured": false,
+      "orderNumber": 3
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1743687064/ijshxzigsha9q0ceejst.webp",
+      "isFeatured": false,
+      "orderNumber": 4
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1743687067/tzsxddrewmcjfbpt5mfs.webp",
+      "isFeatured": false,
+      "orderNumber": 5
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1743687069/rbyovwrfxg0ghamueabe.webp",
+      "isFeatured": false,
+      "orderNumber": 6
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1743687074/f3gw9cuhvoste9yiegwx.webp",
+      "isFeatured": false,
+      "orderNumber": 7
+    },
+    {
+      "url": "https://res.cloudinary.com/dr0rvohz9/image/upload/v1743687081/dq9iwyxdratsbqu7cohh.webp",
+      "isFeatured": false,
+      "orderNumber": 8
+    }
+  ],
+  "mediaLinks": {
+    "googleMapsFrame": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d9285.496858410927!2d34.805168093706456!3d30.612219959649426!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1501f3d418eff145%3A0x793b474145222a6e!2z16HXp9eZ15nXmNek15DXqNenINee16bXpNeUINeo157Xldef!5e0!3m2!1siw!2sil!4v1726042787316!5m2!1siw!2sil",
+    "youtubeUrl": "https://www.youtube.com/embed/Z4M9LpLQCAM?si=XKgt8kUQBaF3Z0jG"
+  },
+  "notesEn": [],
+  "notesHe": [],
+  "rating": 3.1,
+  "ratingCount": 21,
+  "createdAt": {
+    "$date": "2024-01-01T00:00:00.000Z"
+  },
+  "__v": 0,
+  "updatedAt": {
+    "$date": "2025-09-06T11:35:19.984Z"
   }
 }

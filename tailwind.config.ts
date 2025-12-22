@@ -476,12 +476,12 @@ const config: Config = {
           '50%': { 
             visibility: 'visible',
             opacity: '0',
-            transform: 'scale(1)'
+            transform: 'scale(0.95)'
           },
           '100%': { 
             opacity: '1',
             visibility: 'visible',
-            transform: 'scale(0.95) translateX(10px)'
+            transform: 'scale(1) translateX(10px)'
           },
         },
         scaleDownFade: {

@@ -3,6 +3,8 @@
     "title": "Next.js App",
     "description": "A luxury minimalist Next.js application with internationalization"
   },
+  "location": "Location",
+  "map": "Map",
   "welcome": "Welcome to a Luxury Minimalist Experience",
   "hello": "Crafted with precision and elegance",
   "getStarted": "Get Started",

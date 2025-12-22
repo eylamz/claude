@@ -66,7 +66,7 @@ const getConnectionOptions = (): mongoose.ConnectOptions => {
     // Connection pooling configuration
     maxPoolSize: 10, // Maximum number of connections in the pool
     minPoolSize: 2, // Minimum number of connections to maintain
-    serverSelectionTimeoutMS: 5000, // How long to try selecting a server
+    serverSelectionTimeoutMS: 10000, // How long to try selecting a server (increased for DNS resolution)
     socketTimeoutMS: 45000, // How long a send or receive on a socket can take before timeout
     
     // Retry configuration
@@ -123,15 +123,25 @@ async function connectWithRetry(
     retryAttempts = 0;
     
     return connection;
-  } catch (error) {
+  } catch (error: any) {
     retryAttempts++;
+    
+    // Provide helpful error messages for common issues
+    if (error?.code === 'ETIMEOUT' || error?.syscall === 'querySrv') {
+      console.error('❌ MongoDB DNS resolution timeout. Possible causes:');
+      console.error('   - Network connectivity issues');
+      console.error('   - DNS server problems');
+      console.error('   - Firewall blocking MongoDB connections');
+      console.error('   - MongoDB Atlas cluster might be paused');
+      console.error('   - VPN or proxy interference');
+    }
     
     if (retryAttempts < MAX_RETRY_ATTEMPTS) {
       console.error(
         `❌ MongoDB connection failed (attempt ${retryAttempts}/${MAX_RETRY_ATTEMPTS}):`,
-        error
+        error?.message || error
       );
-      console.log(`Retrying in ${RETRY_DELAY}ms...`);
+      console.log(`Retrying in ${RETRY_DELAY * retryAttempts}ms...`);
       
       await sleep(RETRY_DELAY * retryAttempts); // Exponential backoff
       
@@ -293,8 +303,14 @@ function setupEventListeners(): void {
     console.log('📡 MongoDB connected');
   });
 
-  mongoose.connection.on('error', (error) => {
+  mongoose.connection.on('error', (error: any) => {
     console.error('❌ MongoDB connection error:', error);
+    
+    // Handle DNS timeout errors specifically
+    if (error?.code === 'ETIMEOUT' || error?.syscall === 'querySrv') {
+      console.error('⚠️  DNS resolution timeout detected. This is usually a network issue.');
+      console.error('   The connection may still work if retried. Check your network connection.');
+    }
   });
 
   mongoose.connection.on('disconnected', () => {
@@ -395,6 +411,27 @@ export async function forceReconnect(): Promise<void> {
     console.error('❌ Force reconnect failed:', error);
     throw error;
   }
+}
+
+// Handle unhandled promise rejections related to MongoDB DNS timeouts
+// This prevents crashes from DNS timeouts that occur during reconnection attempts
+if (typeof process !== 'undefined' && !process.listenerCount('unhandledRejection')) {
+  process.on('unhandledRejection', (reason: any, promise) => {
+    // Only handle MongoDB-related DNS timeout unhandled rejections
+    if (reason?.code === 'ETIMEOUT' && reason?.syscall === 'querySrv') {
+      console.error('⚠️  Unhandled MongoDB DNS timeout (this is usually a network issue):');
+      console.error('   Error:', reason.message || reason);
+      console.error('   The application will continue, but some MongoDB operations may fail.');
+      console.error('   Check your network connection and MongoDB Atlas cluster status.');
+      // Don't crash the app - just log the error
+      return;
+    }
+    
+    // For other unhandled rejections in development, log them
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    }
+  });
 }
 
 // Export mongoose for direct access

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 41.07 51.78">
+  <defs>
+    <style>
+      .backpackBold-1 {
+        fill: none;
+        stroke: CurrentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2px;
+      }
+	.backpackBold-2 {
+        fill: CurrentColor;
+	}
+    </style>
+  </defs>
+  <g>
+    <circle class="backpackBold-1" cx="20.54" cy="7.37" r="6.37"/>
+    <path class="backpackBold-2" d="M38.53,29.26h-3.78c-.11,0-.21.03-.31.07l-.46-7.01c0-8.65-5.67-14.92-13.49-14.92s-13.49,6.28-13.49,14.87l-.46,7.02c-.07-.02-.14-.03-.21-.03h-3.78c-1.4,0-2.54,1.14-2.54,2.54v9.48c0,2.36,1.92,4.27,4.27,4.27h1.46c.73,3.54,3.9,6.23,7.63,6.23h14.26c3.75,0,6.89-2.66,7.63-6.23h1.56c2.36,0,4.27-1.92,4.27-4.27v-9.48c0-1.4-1.14-2.54-2.54-2.54ZM26.33,39.57h-11.58c-1.1,0-2-.9-2-2s.9-2,2-2h11.58c1.1,0,2,.9,2,2s-.9,2-2,2ZM26.33,28.01h-11.58c-1.1,0-2-.9-2-2s.9-2,2-2h11.58c1.1,0,2,.9,2,2s-.9,2-2,2Z"/>
+  </g>
+</svg>

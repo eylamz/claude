@@ -115,7 +115,9 @@ export interface ISkatepark extends Document {
   lightingHours?: ILightingHours;
   amenities: IAmenities;
   openingYear?: number;
+  openingMonth?: number;
   closingYear?: number;
+  closingMonth?: number;
   notes: ILocalizedStringArray;
   isFeatured: boolean;
   mediaLinks: IMediaLinks;
@@ -149,13 +151,47 @@ export interface ISkateparkModel extends Model<ISkatepark> {
 const DayScheduleSchema = new Schema<IDaySchedule>({
   openingTime: {
     type: String,
-    required: true,
-    match: [/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Must be in HH:mm format'],
+    required: false,
+    default: undefined,
+    validate: {
+      validator: function(this: IDaySchedule, value: string | undefined) {
+        // If isOpen is false, value can be empty/undefined
+        if (this.isOpen === false) {
+          return true;
+        }
+        // If isOpen is true, value must be present and match format
+        if (this.isOpen === true) {
+          if (!value || value === '') {
+            return false;
+          }
+          return /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+        }
+        return true;
+      },
+      message: 'Opening time is required and must be in HH:mm format when the day is open',
+    },
   },
   closingTime: {
     type: String,
-    required: true,
-    match: [/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Must be in HH:mm format'],
+    required: false,
+    default: undefined,
+    validate: {
+      validator: function(this: IDaySchedule, value: string | undefined) {
+        // If isOpen is false, value can be empty/undefined
+        if (this.isOpen === false) {
+          return true;
+        }
+        // If isOpen is true, value must be present and match format
+        if (this.isOpen === true) {
+          if (!value || value === '') {
+            return false;
+          }
+          return /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+        }
+        return true;
+      },
+      message: 'Closing time is required and must be in HH:mm format when the day is open',
+    },
   },
   isOpen: { type: Boolean, default: false },
 }, { _id: false });
@@ -164,14 +200,14 @@ const DayScheduleSchema = new Schema<IDaySchedule>({
  * Operating hours schema
  */
 const OperatingHoursSchema = new Schema<IOperatingHours>({
-  sunday: { type: DayScheduleSchema, required: true },
-  monday: { type: DayScheduleSchema, required: true },
-  tuesday: { type: DayScheduleSchema, required: true },
-  wednesday: { type: DayScheduleSchema, required: true },
-  thursday: { type: DayScheduleSchema, required: true },
-  friday: { type: DayScheduleSchema, required: true },
-  saturday: { type: DayScheduleSchema, required: true },
-  holidays: { type: DayScheduleSchema, required: true },
+  sunday: { type: DayScheduleSchema, required: false },
+  monday: { type: DayScheduleSchema, required: false },
+  tuesday: { type: DayScheduleSchema, required: false },
+  wednesday: { type: DayScheduleSchema, required: false },
+  thursday: { type: DayScheduleSchema, required: false },
+  friday: { type: DayScheduleSchema, required: false },
+  saturday: { type: DayScheduleSchema, required: false },
+  holidays: { type: DayScheduleSchema, required: false },
 }, { _id: false });
 
 /**
@@ -181,7 +217,20 @@ const LightingHoursSchema = new Schema<ILightingHours>({
   endTime: {
     type: String,
     required: false,
-    match: [/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Must be in HH:mm format'],
+    validate: {
+      validator: function(this: ILightingHours, value: string | undefined) {
+        // If is24Hours is true, endTime is optional
+        if (this.is24Hours === true) {
+          // If provided, validate format; if empty, that's fine
+          if (!value || value === '') return true;
+          return /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+        }
+        // If is24Hours is false, endTime can be empty or valid format
+        if (!value || value === '') return true;
+        return /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(value);
+      },
+      message: 'End time must be in HH:mm format',
+    },
   },
   is24Hours: { type: Boolean, default: false },
 }, { _id: false });
@@ -266,7 +315,7 @@ const SkateparkSchema: Schema<ISkatepark> = new Schema<ISkatepark>(
       },
     },
     images: [SkateparkImageSchema],
-    operatingHours: { type: OperatingHoursSchema, required: true },
+    operatingHours: { type: OperatingHoursSchema, required: false },
     lightingHours: { type: LightingHoursSchema, required: false },
     amenities: {
       entryFee: {
@@ -320,8 +369,34 @@ const SkateparkSchema: Schema<ISkatepark> = new Schema<ISkatepark>(
     },
     openingYear: {
       type: Number,
-      min: [1900, 'Opening year must be after 1900'],
-      max: [new Date().getFullYear(), 'Opening year cannot be in the future'],
+      required: false,
+      validate: {
+        validator: function(value: number | undefined) {
+          if (!value || value === null || value === undefined) return true; // Optional field
+          const currentYear = new Date().getFullYear();
+          if (value < 1900) {
+            return false; // Too old
+          }
+          if (value > currentYear) {
+            return false; // In the future
+          }
+          return true;
+        },
+        message: 'Opening year must be between 1900 and the current year',
+      },
+    },
+    openingMonth: {
+      type: Number,
+      required: false,
+      validate: {
+        validator: function(this: ISkatepark, value: number | null | undefined) {
+          // Allow null/undefined (optional field)
+          if (value === null || value === undefined) return true;
+          // If value is provided, must be between 1 and 12
+          return value >= 1 && value <= 12;
+        },
+        message: 'Opening month must be between 1 (January) and 12 (December)',
+      },
     },
     closingYear: {
       type: Number,
@@ -331,6 +406,24 @@ const SkateparkSchema: Schema<ISkatepark> = new Schema<ISkatepark>(
           return !value || !this.openingYear || value >= this.openingYear;
         },
         message: 'Closing year must be after or equal to opening year',
+      },
+    },
+    closingMonth: {
+      type: Number,
+      required: false,
+      validate: {
+        validator: function(this: ISkatepark, value: number | null | undefined) {
+          // Allow null/undefined (optional field)
+          if (value === null || value === undefined) return true;
+          if (!this.closingYear) return true; // If no closing year, month doesn't matter
+          // If both year and month are set, validate that closing date is after opening date
+          if (this.openingYear && this.openingMonth && this.closingYear === this.openingYear) {
+            return value >= this.openingMonth;
+          }
+          // If value is provided, must be between 1 and 12
+          return value >= 1 && value <= 12;
+        },
+        message: 'Closing month must be between 1 (January) and 12 (December), and must be after or equal to opening month if same year',
       },
     },
     notes: {
@@ -530,6 +623,27 @@ SkateparkSchema.statics.findByArea = function (area: Area) {
 };
 
 /**
+ * Pre-validate middleware: Clean operating hours before validation
+ */
+SkateparkSchema.pre('validate', function (next) {
+  // Clean up operating hours - remove time fields when isOpen is false
+  if (this.operatingHours && this.isNew) {
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'holidays'];
+    days.forEach((day) => {
+      const dayHours = this.operatingHours[day as keyof IOperatingHours];
+      if (dayHours && (dayHours.isOpen === false || !dayHours.isOpen)) {
+        // Completely delete the time fields when closed to avoid validation
+        delete dayHours.openingTime;
+        delete dayHours.closingTime;
+        // Mark as modified so Mongoose knows to update
+        this.markModified(`operatingHours.${day}`);
+      }
+    });
+  }
+  next();
+});
+
+/**
  * Pre-save middleware: Sort images by orderNumber
  */
 SkateparkSchema.pre('save', function (next) {
@@ -577,10 +691,12 @@ SkateparkSchema.virtual('ratingDisplay').get(function (this: ISkatepark): string
 
 /**
  * Create and export the Skatepark model
+ * Delete existing model if it exists to force recompilation with new schema fields
  */
-const Skatepark: ISkateparkModel =
-  (mongoose.models.Skatepark as ISkateparkModel) ||
-  mongoose.model<ISkatepark, ISkateparkModel>('Skatepark', SkateparkSchema);
+if (mongoose.models.Skatepark) {
+  delete mongoose.models.Skatepark;
+}
+const Skatepark: ISkateparkModel = mongoose.model<ISkatepark, ISkateparkModel>('Skatepark', SkateparkSchema);
 
 export default Skatepark;
 

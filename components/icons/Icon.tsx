@@ -70,7 +70,6 @@ import SearchBold from './SearchBold.svg';
 import SearchQuest from './searchQuest.svg';
 import SearchClose from './searchClose.svg';
 import Sparks from './sparks.svg';
-import SparksBold from './sparksBold.svg';
 import New from './new.svg';
 import Featured from './featured.svg';
 import Archive from './archive.svg';
@@ -101,7 +100,6 @@ import StarWandBold from './starWandBold.svg';
 import Cart from './cart.svg';
 import Backpack from './backpack.svg';
 import BackpackBold from './backpackBold.svg';
-import EmptyBackpack from './emptyBackpack.svg';  
 import LockBold from './lockBold.svg';
 import Eye from './eye.svg';
 import EyeBold from './eyeBold.svg';
@@ -200,7 +198,6 @@ const iconMap: Record<string, SvgComponent> = {
   cart: Cart,
   backpack: Backpack,
   backpackBold: BackpackBold,
-  emptyBackpack: EmptyBackpack,
   shop: Shop,
   shopBold: ShopBold,
   settings: Settings,
@@ -284,10 +281,10 @@ const iconMap: Record<string, SvgComponent> = {
   sunset: Sunset,
   lightbulbBold: LightbulbBold,
   hours24: Hours24,
+  map: MapIcon,
   imageBold: ImageBold,
   bulkImage: BulkImage,
   sparks: Sparks,
-  sparksBold: SparksBold,
   new: New,
   featured: Featured,
   archive: Archive,
@@ -385,8 +382,6 @@ export type IconName =
   | 'cart'
   | 'shopCart'
   | 'shopCartBold'
-  | 'backpackBold'
-  | 'emptyBackpack'
   | 'heart'
   | 'heartBold'
   | 'heartLike'
@@ -485,7 +480,6 @@ export type IconName =
   | 'featured'
   | 'new'
   | 'sparks'
-  | 'sparksBold'
   | 'searchQuest'
   | 'bulkImage'
   | 'imageBold'

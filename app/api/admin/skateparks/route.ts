@@ -99,7 +99,10 @@ export async function GET(request: Request) {
       },
       status: skatepark.status || 'active',
       isFeatured: skatepark.isFeatured || false,
-      openingYear: skatepark.openingYear || null,
+      openingYear: skatepark.openingYear ?? null,
+      openingMonth: skatepark.openingMonth ?? null,
+      closingYear: skatepark.closingYear ?? null,
+      closingMonth: skatepark.closingMonth ?? null,
       image: skatepark.images?.[0]?.url || null,
       amenities: skatepark.amenities || {},
       location: skatepark.location || { lat: 0, lng: 0 },
@@ -156,7 +159,9 @@ export async function POST(request: Request) {
       lightingUntil,
       amenities,
       openingYear,
+      openingMonth,
       closingYear,
+      closingMonth,
       notes,
       is24Hours,
       isFeatured,
@@ -181,8 +186,34 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create new skatepark
-    const newSkatepark = new Skatepark({
+    // Clean up operating hours - only include times when isOpen is true
+    // When isOpen is false, completely omit time fields (don't set them at all)
+    const cleanedOperatingHours: any = {};
+    if (operatingHours) {
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'holidays'];
+      days.forEach((day) => {
+        const dayHours = operatingHours[day];
+        if (dayHours) {
+          if (dayHours.isOpen === true && dayHours.openingTime && dayHours.closingTime) {
+            // Only include times when day is open and times are provided
+            cleanedOperatingHours[day] = {
+              isOpen: true,
+              openingTime: dayHours.openingTime,
+              closingTime: dayHours.closingTime,
+            };
+          } else if (dayHours.isOpen === false) {
+            // When closed, create object with ONLY isOpen - no time fields whatsoever
+            const closedDay: any = { isOpen: false };
+            cleanedOperatingHours[day] = closedDay;
+          }
+        }
+      });
+    }
+    
+    console.log('Cleaned operating hours:', JSON.stringify(cleanedOperatingHours, null, 2));
+
+    // Create new skatepark - only include operatingHours if it has content
+    const skateparkData: any = {
       slug,
       name,
       address,
@@ -195,32 +226,68 @@ export async function POST(request: Request) {
         ...img,
         publicId: img.publicId && img.publicId.trim() ? img.publicId.trim() : undefined,
       })) : [],
-      operatingHours: operatingHours || {},
-      lightingUntil,
-      amenities: amenities || {
-        entryFee: false,
-        parking: false,
-        shade: false,
-        bathroom: false,
-        helmetRequired: false,
-        guard: false,
-        seating: false,
-        bombShelter: false,
-        scootersAllowed: false,
-        bikesAllowed: false,
-        noWax: false,
-        nearbyRestaurants: false,
-      },
-      openingYear,
-      closingYear,
-      notes: notes || { en: '', he: '' },
-      is24Hours: is24Hours || false,
-      isFeatured: isFeatured || false,
-      status: status || 'active',
-      mediaLinks: mediaLinks || { youtube: '', googleMapsFrame: '' },
-      rating: 0,
-      totalReviews: 0,
-    });
+    };
+
+    // Only add operatingHours if it exists and has at least one day
+    if (cleanedOperatingHours && Object.keys(cleanedOperatingHours).length > 0) {
+      skateparkData.operatingHours = cleanedOperatingHours;
+    }
+
+    // Add remaining fields
+    skateparkData.lightingUntil = lightingUntil;
+    skateparkData.amenities = amenities || {
+      entryFee: false,
+      parking: false,
+      shade: false,
+      bathroom: false,
+      helmetRequired: false,
+      guard: false,
+      seating: false,
+      bombShelter: false,
+      scootersAllowed: false,
+      bikesAllowed: false,
+      noWax: false,
+      nearbyRestaurants: false,
+    };
+    // Only set openingYear/openingMonth if they are valid numbers and not in the future
+    const currentYear = new Date().getFullYear();
+    if (openingYear !== undefined && openingYear !== null && openingYear !== '') {
+      const year = typeof openingYear === 'number' ? openingYear : parseInt(openingYear);
+      if (!isNaN(year) && year >= 1900 && year <= currentYear) {
+        skateparkData.openingYear = year;
+        // Set openingMonth if provided and valid
+        if (openingMonth !== undefined && openingMonth !== null && openingMonth !== '') {
+          const month = typeof openingMonth === 'number' ? openingMonth : parseInt(openingMonth);
+          if (!isNaN(month) && month >= 1 && month <= 12) {
+            skateparkData.openingMonth = month;
+          }
+        }
+      }
+    }
+    if (closingYear !== undefined && closingYear !== null && closingYear !== '') {
+      const year = typeof closingYear === 'number' ? closingYear : parseInt(closingYear);
+      if (!isNaN(year) && year >= 1900) {
+        skateparkData.closingYear = year;
+        // Set closingMonth if provided and valid
+        if (closingMonth !== undefined && closingMonth !== null && closingMonth !== '') {
+          const month = typeof closingMonth === 'number' ? closingMonth : parseInt(closingMonth);
+          if (!isNaN(month) && month >= 1 && month <= 12) {
+            skateparkData.closingMonth = month;
+          }
+        }
+      }
+    }
+    
+    console.log('Opening year value:', openingYear, 'Processed:', skateparkData.openingYear);
+    skateparkData.notes = notes || { en: '', he: '' };
+    skateparkData.is24Hours = is24Hours || false;
+    skateparkData.isFeatured = isFeatured || false;
+    skateparkData.status = status || 'active';
+    skateparkData.mediaLinks = mediaLinks || { youtube: '', googleMapsFrame: '' };
+    skateparkData.rating = 0;
+    skateparkData.totalReviews = 0;
+
+    const newSkatepark = new Skatepark(skateparkData);
 
     await newSkatepark.save();
 

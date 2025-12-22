@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Skeleton } from '@/components/ui';
+import { ImageUploader } from '@/components/admin/image-uploader';
 
 interface Skatepark {
   _id?: string;
@@ -27,6 +28,7 @@ interface Skatepark {
     url: string;
     isFeatured: boolean;
     orderNumber: number;
+    publicId?: string;
   }>;
   operatingHours: {
     sunday: { openingTime: string; closingTime: string; isOpen: boolean };
@@ -56,8 +58,10 @@ interface Skatepark {
     noWax: boolean;
     nearbyRestaurants: boolean;
   };
-  openingYear?: number;
-  closingYear?: number;
+  openingYear?: number | null;
+  openingMonth?: number | null;
+  closingYear?: number | null;
+  closingMonth?: number | null;
   notes: {
     en?: string[];
     he?: string[];
@@ -186,6 +190,14 @@ export default function SkateparkDetailPage() {
               skateparkData.mediaLinks = { youtube: '', googleMapsFrame: '' };
             }
             
+            // Ensure openingMonth and closingMonth are explicitly set (even if null)
+            if (!('openingMonth' in skateparkData)) {
+              skateparkData.openingMonth = null;
+            }
+            if (!('closingMonth' in skateparkData)) {
+              skateparkData.closingMonth = null;
+            }
+            
             setSkatepark(skateparkData);
             setLoading(false);
             return; // Exit early since we used cache
@@ -248,6 +260,14 @@ export default function SkateparkDetailPage() {
         };
       }
       
+      // Ensure openingMonth and closingMonth are explicitly set (even if null)
+      if (!('openingMonth' in skateparkData) || skateparkData.openingMonth === undefined) {
+        skateparkData.openingMonth = null;
+      }
+      if (!('closingMonth' in skateparkData) || skateparkData.closingMonth === undefined) {
+        skateparkData.closingMonth = null;
+      }
+      
       setSkatepark(skateparkData);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch skatepark');
@@ -270,8 +290,33 @@ export default function SkateparkDetailPage() {
       
       // Ensure all images have orderNumber before saving
       // Ensure location coordinates are properly formatted
+      // Clean up operating hours - only include times when isOpen is true
+      const cleanedOperatingHours: any = {};
+      if (skatepark.operatingHours) {
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'holidays'];
+        days.forEach((day) => {
+          const dayHours = skatepark.operatingHours[day as keyof typeof skatepark.operatingHours];
+          if (dayHours && dayHours.isOpen === true && dayHours.openingTime && dayHours.closingTime) {
+            cleanedOperatingHours[day] = {
+              isOpen: true,
+              openingTime: dayHours.openingTime,
+              closingTime: dayHours.closingTime,
+            };
+          } else if (dayHours) {
+            // When closed, only include isOpen - don't include time fields
+            cleanedOperatingHours[day] = {
+              isOpen: false,
+            };
+          }
+        });
+      }
+
+      // Only send fields that can be updated (exclude _id, createdAt, updatedAt, rating, totalReviews, etc.)
       const skateparkToSave = {
-        ...skatepark,
+        slug: skatepark.slug,
+        name: skatepark.name,
+        address: skatepark.address,
+        area: skatepark.area,
         location: skatepark.location && skatepark.location.coordinates
           ? {
               type: 'Point',
@@ -289,22 +334,53 @@ export default function SkateparkDetailPage() {
           url: img.url || '',
           isFeatured: img.isFeatured || false,
           orderNumber: img.orderNumber ?? index,
+          publicId: img.publicId,
         })),
+        operatingHours: cleanedOperatingHours,
+        lightingHours: skatepark.lightingHours,
+        amenities: skatepark.amenities,
+        openingYear: skatepark.openingYear ?? null,
+        openingMonth: skatepark.openingMonth ?? null,
+        closingYear: skatepark.closingYear ?? null,
+        closingMonth: skatepark.closingMonth ?? null,
+        notes: skatepark.notes,
+        isFeatured: skatepark.isFeatured,
+        status: skatepark.status,
+        mediaLinks: skatepark.mediaLinks,
+        is24Hours: skatepark.lightingHours?.is24Hours || false,
       };
       
-      console.log('Saving skatepark with location:', skateparkToSave.location);
+      // Ensure months are always explicitly set to null (not undefined) before stringifying
+      // This ensures they're always included in the JSON payload
+      if (skateparkToSave.openingMonth === undefined) {
+        skateparkToSave.openingMonth = null;
+      }
+      if (skateparkToSave.closingMonth === undefined) {
+        skateparkToSave.closingMonth = null;
+      }
+      
+      console.log('Saving skatepark - openingYear:', skateparkToSave.openingYear, 'openingMonth:', skateparkToSave.openingMonth);
+      console.log('Saving skatepark - closingYear:', skateparkToSave.closingYear, 'closingMonth:', skateparkToSave.closingMonth);
+      console.log('Full skateparkToSave object:', JSON.stringify(skateparkToSave, null, 2));
       
       const response = await fetch(`/api/admin/skateparks/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(skateparkToSave),
+        body: JSON.stringify(skateparkToSave, (_key, value) => {
+          // Replace undefined with null to ensure they're included in JSON
+          return value === undefined ? null : value;
+        }),
       });
 
       if (!response.ok) {
         const data = await response.json();
+        console.error('Save failed:', data);
         throw new Error(data.error || 'Failed to update skatepark');
       }
 
+      const result = await response.json();
+      console.log('Save successful:', result);
+      
       router.push(`/${locale}/admin/skateparks`);
     } catch (err: any) {
       setError(err.message || 'Failed to save skatepark');
@@ -514,9 +590,49 @@ export default function SkateparkDetailPage() {
           )}
           {showImageEditor && (
             <div className="space-y-4 mt-4">
-              {skatepark.images && skatepark.images.length > 0 ? (
-                skatepark.images.map((image, imageIndex) => {
-                  return (
+              {/* Image Uploader */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-text dark:text-text-dark mb-4">Upload Images to Cloudinary</h3>
+                <ImageUploader
+                  images={skatepark.images.map(img => ({
+                    url: img.url,
+                    publicId: img.publicId || '',
+                    alt: `${skatepark.name.en} image`,
+                  }))}
+                  onUpload={(uploadedImages) => {
+                    // Convert ImageUploader format to skatepark images format
+                    const newImages = uploadedImages.map((img, index) => {
+                      // Find existing image with same publicId or create new
+                      const existingIndex = skatepark.images.findIndex(existing => existing.publicId === img.publicId);
+                      if (existingIndex >= 0) {
+                        // Update existing image
+                        return {
+                          ...skatepark.images[existingIndex],
+                          url: img.url,
+                          publicId: img.publicId,
+                        };
+                      }
+                      // New image
+                      return {
+                        url: img.url,
+                        publicId: img.publicId,
+                        isFeatured: skatepark.images.length === 0 && index === 0,
+                        orderNumber: skatepark.images.length + index,
+                      };
+                    });
+                    setSkatepark({ ...skatepark, images: newImages });
+                  }}
+                  maxImages={20}
+                  folder="skateparks"
+                />
+              </div>
+
+              {/* Manual Image Editor */}
+              {skatepark.images && skatepark.images.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-text dark:text-text-dark">Edit Image Details</h3>
+                  {skatepark.images.map((image, imageIndex) => {
+                    return (
                       <div
                         key={imageIndex}
                         className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4"
@@ -580,32 +696,18 @@ export default function SkateparkDetailPage() {
                                 setSkatepark({ ...skatepark, images: newImages });
                               }}
                             />
+                            {image.publicId && (
+                              <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                                Cloudinary ID: {image.publicId}
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>
                     );
-                  })
-              ) : (
-                <p className="text-sm text-text-secondary dark:text-text-secondary-dark text-center py-4">
-                  No images added yet
-                </p>
+                  })}
+                </div>
               )}
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  const newImages = [
-                    ...skatepark.images,
-                    {
-                      url: '',
-                      isFeatured: skatepark.images.length === 0,
-                      orderNumber: skatepark.images.length,
-                    },
-                  ];
-                  setSkatepark({ ...skatepark, images: newImages });
-                }}
-              >
-                + Add New Image
-              </Button>
             </div>
           )}
         </CardContent>
@@ -651,8 +753,7 @@ export default function SkateparkDetailPage() {
                   setSkatepark({
                     ...skatepark,
                     location: {
-                      type: 'Point',
-                      ...skatepark.location,
+                      type: 'Point' as const,
                       coordinates: [
                         skatepark.location?.coordinates?.[0] ?? 0,
                         newValue,
@@ -673,8 +774,7 @@ export default function SkateparkDetailPage() {
                   setSkatepark({
                     ...skatepark,
                     location: {
-                      type: 'Point',
-                      ...skatepark.location,
+                      type: 'Point' as const,
                       coordinates: [
                         newValue,
                         skatepark.location?.coordinates?.[1] ?? 0,
@@ -694,47 +794,45 @@ export default function SkateparkDetailPage() {
           <CardTitle>Operating Hours</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {skatepark.lightingHours?.is24Hours && (
-            <div className="flex items-center space-x-2 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <input
-                type="checkbox"
-                id="is24Hours"
-                checked={skatepark.lightingHours.is24Hours}
+          <div className="flex items-center space-x-2 mb-4">
+            <input
+              type="checkbox"
+              id="is24Hours"
+              checked={skatepark.lightingHours?.is24Hours || false}
+              onChange={(e) => setSkatepark({ 
+                ...skatepark, 
+                lightingHours: { 
+                  endTime: skatepark.lightingHours?.endTime || '',
+                  is24Hours: e.target.checked,
+                } 
+              })}
+              className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+            />
+            <label htmlFor="is24Hours" className="text-sm font-medium text-text dark:text-text-dark">
+              Open 24 Hours
+            </label>
+          </div>
+          {skatepark.lightingHours?.is24Hours ? (
+            <div className="pt-2">
+              <Input
+                label="Lighting End Time (HH:mm)"
+                type="time"
+                value={skatepark.lightingHours?.endTime || ''}
                 onChange={(e) => setSkatepark({ 
                   ...skatepark, 
                   lightingHours: { 
-                    ...skatepark.lightingHours, 
-                    is24Hours: e.target.checked,
-                    endTime: e.target.checked ? '' : skatepark.lightingHours?.endTime || '',
+                    endTime: e.target.value || '',
+                    is24Hours: skatepark.lightingHours?.is24Hours || false,
                   } 
                 })}
-                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                placeholder="22:00"
               />
-              <label htmlFor="is24Hours" className="text-sm font-medium text-text dark:text-text-dark">
-                Open 24 Hours
-              </label>
+              <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-2">
+                When 24 hours is enabled, enter the time when lighting ends.
+              </p>
             </div>
-          )}
-          {!skatepark.lightingHours?.is24Hours && (
+          ) : (
             <>
-              <div className="flex items-center space-x-2 mb-4">
-                <input
-                  type="checkbox"
-                  id="is24Hours"
-                  checked={skatepark.lightingHours?.is24Hours || false}
-                  onChange={(e) => setSkatepark({ 
-                    ...skatepark, 
-                    lightingHours: { 
-                      endTime: skatepark.lightingHours?.endTime || '',
-                      is24Hours: e.target.checked,
-                    } 
-                  })}
-                  className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                />
-                <label htmlFor="is24Hours" className="text-sm font-medium text-text dark:text-text-dark">
-                  Open 24 Hours
-                </label>
-              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[
                   { key: 'sunday', label: 'Sunday' },
@@ -890,28 +988,82 @@ export default function SkateparkDetailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Opening Year"
-              type="number"
-              value={skatepark.openingYear || ''}
-              onChange={(e) =>
-                setSkatepark({
-                  ...skatepark,
-                  openingYear: e.target.value ? parseInt(e.target.value) : undefined,
-                })
-              }
-            />
-            <Input
-              label="Closing Year"
-              type="number"
-              value={skatepark.closingYear || ''}
-              onChange={(e) =>
-                setSkatepark({
-                  ...skatepark,
-                  closingYear: e.target.value ? parseInt(e.target.value) : undefined,
-                })
-              }
-            />
+            <div className="space-y-2">
+              <Input
+                label="Opening Year"
+                type="number"
+                value={skatepark.openingYear || ''}
+                onChange={(e) =>
+                  setSkatepark({
+                    ...skatepark,
+                    openingYear: e.target.value ? parseInt(e.target.value) : undefined,
+                  })
+                }
+              />
+              <Select
+                label="Opening Month (Optional)"
+                value={skatepark.openingMonth?.toString() || ''}
+                onChange={(e) =>
+                  setSkatepark({
+                    ...skatepark,
+                    openingMonth: e.target.value && e.target.value !== '' ? parseInt(e.target.value) : null,
+                  })
+                }
+                options={[
+                  { value: '', label: 'No month specified' },
+                  { value: '1', label: 'January' },
+                  { value: '2', label: 'February' },
+                  { value: '3', label: 'March' },
+                  { value: '4', label: 'April' },
+                  { value: '5', label: 'May' },
+                  { value: '6', label: 'June' },
+                  { value: '7', label: 'July' },
+                  { value: '8', label: 'August' },
+                  { value: '9', label: 'September' },
+                  { value: '10', label: 'October' },
+                  { value: '11', label: 'November' },
+                  { value: '12', label: 'December' },
+                ]}
+              />
+            </div>
+            <div className="space-y-2">
+              <Input
+                label="Closing Year"
+                type="number"
+                value={skatepark.closingYear || ''}
+                onChange={(e) =>
+                  setSkatepark({
+                    ...skatepark,
+                    closingYear: e.target.value ? parseInt(e.target.value) : undefined,
+                  })
+                }
+              />
+              <Select
+                label="Closing Month (Optional)"
+                value={skatepark.closingMonth?.toString() || ''}
+                onChange={(e) =>
+                  setSkatepark({
+                    ...skatepark,
+                    closingMonth: e.target.value && e.target.value !== '' ? parseInt(e.target.value) : null,
+                  })
+                }
+                options={[
+                  { value: '', label: 'No month specified' },
+                  { value: '1', label: 'January' },
+                  { value: '2', label: 'February' },
+                  { value: '3', label: 'March' },
+                  { value: '4', label: 'April' },
+                  { value: '5', label: 'May' },
+                  { value: '6', label: 'June' },
+                  { value: '7', label: 'July' },
+                  { value: '8', label: 'August' },
+                  { value: '9', label: 'September' },
+                  { value: '10', label: 'October' },
+                  { value: '11', label: 'November' },
+                  { value: '12', label: 'December' },
+                ]}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input

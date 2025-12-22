@@ -91,9 +91,39 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
 
   const uploadToCloudinary = async (file: File, publicId: string): Promise<ImageData> => {
     return new Promise((resolve, reject) => {
+      // Get Cloudinary configuration from environment variables
+      // Note: In Next.js, client-side code can only access variables prefixed with NEXT_PUBLIC_
+      const cloudName = (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '').trim();
+      const uploadPreset = (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '').trim();
+      
+      if (!cloudName) {
+        const errorMsg = 'Cloudinary cloud name is not configured.\n\n' +
+          'Please add to your .env.local file:\n' +
+          'NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dr0rvohz9\n\n' +
+          'Note: The NEXT_PUBLIC_ prefix is required for client-side access.\n' +
+          'After adding, restart your Next.js development server.';
+        console.error('❌', errorMsg);
+        reject(new Error(errorMsg));
+        return;
+      }
+      
+      if (!uploadPreset) {
+        const errorMsg = 'Cloudinary upload preset is not configured.\n\n' +
+          'Please add to your .env.local file:\n' +
+          'NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your-upload-preset-name\n\n' +
+          'To create an upload preset:\n' +
+          '1. Go to Cloudinary Dashboard → Settings → Upload\n' +
+          '2. Create a new upload preset (set to "Unsigned" for client-side uploads)\n' +
+          '3. Add the preset name to your .env.local file\n' +
+          '4. Restart your Next.js development server.';
+        console.error('❌', errorMsg);
+        reject(new Error(errorMsg));
+        return;
+      }
+      
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'default');
+      formData.append('upload_preset', uploadPreset);
       formData.append('folder', folder);
       formData.append('public_id', publicId);
 
@@ -114,7 +144,22 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
             publicId: response.public_id,
           });
         } else {
-          reject(new Error('Upload failed'));
+          // Try to parse error response for better error message
+          let errorMessage = 'Upload failed';
+          try {
+            const errorResponse = JSON.parse(xhr.responseText);
+            errorMessage = errorResponse.error?.message || errorResponse.error || errorMessage;
+          } catch {
+            errorMessage = `Upload failed with status ${xhr.status}: ${xhr.statusText}`;
+          }
+          console.error('Cloudinary upload error:', {
+            status: xhr.status,
+            statusText: xhr.statusText,
+            response: xhr.responseText,
+            cloudName: cloudName,
+            uploadPreset: uploadPreset,
+          });
+          reject(new Error(errorMessage));
         }
         setUploadProgress(prev => {
           const newProgress = { ...prev };
@@ -132,7 +177,7 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
         });
       });
 
-      xhr.open('POST', 'https://api.cloudinary.com/v1_1/demo/image/upload');
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`);
       xhr.send(formData);
     });
   };
@@ -163,7 +208,10 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
     
     try {
       const uploadPromises = fileArray.map(async (file, index) => {
-        const publicId = `${Date.now()}-${index}`;
+        // Preserve original filename (without extension, Cloudinary adds it)
+        const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+        // Use folder/filename format for public_id to preserve filename
+        const publicId = `${folder}/${fileNameWithoutExt}`;
         const compressedFile = await compressImage(file);
         return await uploadToCloudinary(compressedFile, publicId);
       });
