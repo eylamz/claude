@@ -68,6 +68,8 @@
   "addReview": "Add Review",
   "showMoreReviews": "Show {count} More Reviews",
   "showLessReviews": "Show Less Reviews",
+  "showMoreImages": "Show {count} More Images",
+  "showLessImages": "Show Less Images",
   "writeReview": "Write a Review",
   "loginToReview": "You must be logged in to write a review",
   "newestFirst": "Newest First",

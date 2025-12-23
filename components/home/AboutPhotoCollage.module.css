@@ -1,0 +1,141 @@
+/* Wrapper to allow overflow on sides */
+.wrapper {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  padding: 2rem 0;
+  overflow: hidden;
+}
+
+/* Gradient overlay at top and bottom */
+.wrapper::before {
+  background: linear-gradient(0deg, white, rgba(125, 125, 125, 0) 25%, rgba(203, 203, 203, 0) 75%, rgb(255, 255, 255));
+  content: "";
+  display: block;
+  height: 100%;
+  left: 0px;
+  pointer-events: none;
+  position: absolute;
+  top: 0px;
+  width: 100%;
+  z-index: 2;
+}
+
+.dark.wrapper::before {
+  background: linear-gradient(0deg, rgb(3, 7, 18), rgba(60, 5, 118, 0) 25%, rgba(60, 5, 118, 0) 75%, rgb(3, 7, 18));
+
+}
+
+/* Container with global rotation */
+.container {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  overflow: visible;
+  margin: -2rem -10vw;
+  padding: 0 10vw;
+  /* Global rotation for tilted architectural look */
+  transform: rotate(-7deg);
+  transform-origin: center center;
+  /* Ensure rotated container doesn't get clipped */
+  position: relative;
+  /* Add extra padding to account for rotation */
+  min-height: 400px;
+}
+
+
+
+/* Photo Cards */
+.card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: opacity 0.6s ease;
+}
+
+/* Image wrapper */
+.imageWrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(1.25);
+  transition: opacity 0.3s ease;
+}
+
+/* Dim effect */
+.card.dimmed .image {
+  opacity: 0.4;
+  transition: opacity 0.6s ease;
+}
+
+.card:hover:not(.dimmed) .image {
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+}
+
+.card.dimmed:hover .image {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Tablet Styles */
+@media (max-width: 1024px) {
+  .wrapper {
+    padding: 1.5rem 0;
+  }
+
+  .container {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.75rem;
+    margin: -2rem -5vw;
+    padding: 0 5vw;
+    transform: rotate(-6deg);
+    min-height: 350px;
+  }
+}
+
+/* Mobile Styles */
+@media (max-width: 767px) {
+  .wrapper {
+    padding: 1rem 0;
+  }
+
+  .container {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
+    margin: -2rem -3vw;
+    padding: 0 3vw;
+    /* Reduced rotation on mobile */
+    transform: rotate(-3deg);
+    min-height: 300px;
+  }
+
+  .card {
+    border-radius: 8px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .container {
+    gap: 0.5rem;
+    padding: 1.5rem 0.75rem;
+  }
+}
+

@@ -17,7 +17,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/comp
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import ReviewForm from '@/components/reviews/ReviewForm';
-import ImageSlider from '@/components/skateparks/ImageSlider';
+import ParkImageGallery from '@/components/skateparks/ParkImageGallery';
 import {
   is24HourSchedule,
   groupDaysWithSameHours,
@@ -929,7 +929,7 @@ export default function SkateparkPage() {
           {/* Info Cards Skeleton - Medium opacity */}
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 opacity-50">
             {/* Hours Card Skeleton */}
-            <Card className="p-4 backdrop-blur-custom bg-black/5 dark:bg-background-secondary-dark/80 rounded-lg shadow-none">
+            <Card className="p-4 rounded-lg shadow-none">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Skeleton className="w-5 h-5 rounded  " />
@@ -953,7 +953,7 @@ export default function SkateparkPage() {
             </Card>
 
             {/* Amenities Card Skeleton */}
-            <Card className="p-4 backdrop-blur-custom bg-black/5 dark:bg-background-secondary-dark/70 rounded-lg shadow-none">
+            <Card className="p-4 rounded-lg shadow-none">
               <div className="flex items-center gap-2 mb-3">
                 <Skeleton className="w-5 h-5 rounded  bg-background" />
                 <Skeleton className="h-6 w-24  " />
@@ -970,7 +970,7 @@ export default function SkateparkPage() {
 
           {/* Notes Card Skeleton - Lower opacity */}
           <div className="max-w-6xl mx-auto mb-8 opacity-30">
-            <Card className="p-4 backdrop-blur-custom bg-black/5 dark:bg-background-secondary-dark/70 rounded-lg shadow-none">
+            <Card className="p-4 rounded-lg shadow-none">
               <div className="flex items-center gap-2 mb-3">
                 <Skeleton className="w-5 h-5 rounded" />
                 <Skeleton className="h-6 w-20  " />
@@ -983,7 +983,7 @@ export default function SkateparkPage() {
           </div>
 
           {/* Get Directions Skeleton - Lowest opacity */}
-          <Card className="opacity-30 w-full !max-w-6xl mx-auto p-4 backdrop-blur-custom bg-black/5 dark:bg-background-secondary-dark/70 rounded-lg shadow-none">
+          <Card className="opacity-30 w-full !max-w-6xl mx-auto p-4 rounded-lg shadow-none">
             <div className="flex items-center gap-2 mb-4">
               <Skeleton className="w-5 h-5 rounded " />
               <Skeleton className="h-6 w-32  " />
@@ -1069,20 +1069,6 @@ export default function SkateparkPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
-      {/* Blurred Background Image */}
-      {featuredImage && (
-        <div 
-          className="bg-white dark:bg-background-dark fixed inset-0 z-[-1] bg-no-repeat w-[102%] h-[102%] -mt-2 bg-cover bg-center"
-          style={{
-            backgroundImage: `url(${featuredImage})`,
-            filter: 'blur(5px) saturate(2)',
-            WebkitFilter: 'blur(5px) saturate(2)',
-          }}
-        >
-          {/* Overlay to further reduce contrast and improve readability */}
-          <div className="absolute inset-0 bg-background-dark/30 dark:bg-background-dark/50"></div>
-        </div>
-      )}
 
       <div className="pt-14 min-h-screen">
         {/* Breadcrumb */}
@@ -1116,8 +1102,8 @@ export default function SkateparkPage() {
 
           {/* Image Gallery */}
         <div className="">
-          <div className="max-w-7xl mx-auto p-4 lg:p-6 overflow-visible">
-            <ImageSlider images={getImageSliderImages(skatepark.images, locale, parkNameEn)} />
+          <div className="max-w-7xl mx-auto overflow-visible">
+            <ParkImageGallery images={getImageSliderImages(skatepark.images, locale, parkNameEn)} />
           </div>
         </div>
 
@@ -1126,7 +1112,7 @@ export default function SkateparkPage() {
           {/* Info Cards */}
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Hours Card - Now using FormattedHours component */}
-            <Card className="text-text/80 dark:text-text-dark/80 p-4 backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/80">
+            <Card className="text-text/80 dark:text-text-dark/80 p-4">
               <div className="flex gap-4 mb-4 justify-between">
                 <div className={locale === 'he' ? '-ml-10' : ''}>
                   <FormattedHours
@@ -1202,7 +1188,7 @@ export default function SkateparkPage() {
             </Card>
 
             {/* Amenities Card */}
-            <Card className="p-4 overflow-visible backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70">
+            <Card className="p-4 overflow-visible">
               <div className="flex items-center justify-between mb-3 text-text dark:text-text-dark">
                 <h2 className="text-lg font-medium flex items-center gap-2">
                   <Icon name="notesBold" className={`w-5 h-5`} />
@@ -1285,7 +1271,7 @@ export default function SkateparkPage() {
           {/* Notes Card */}
           {notes && notes.trim() !== '' && (
             <div className="max-w-6xl mx-auto mb-8">
-              <Card className="p-4 backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70">
+              <Card className="p-4">
                 <div className="flex items-center mb-3 text-text dark:text-text-dark">
                   <h2 className="text-lg font-medium flex items-center gap-2">
                     <Icon name="infoBold" className={`w-5 h-5`} />
@@ -1307,7 +1293,7 @@ export default function SkateparkPage() {
           )}
 
           {/* Get Directions Section */}
-          <Card className="w-full !max-w-6xl mx-auto p-4 backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70 transition-all duration-200 transform-gpu">
+          <Card className="w-full !max-w-6xl mx-auto p-4 transition-all duration-200 transform-gpu">
             <Suspense fallback={
               <div className="w-full h-32 flex items-center justify-center">
                 <LoadingSpinner className="h-32" />
@@ -1419,7 +1405,7 @@ export default function SkateparkPage() {
 
           {/* YouTube Embed */}
           {skatepark.mediaLinks.youtube && (
-            <Card className="w-full max-w-6xl mx-auto backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70 transition-all duration-200 transform-gpu">
+            <Card className="w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
               <CardHeader>
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
                   <Icon name="youtube" className="w-5 h-5" />
@@ -1437,7 +1423,7 @@ export default function SkateparkPage() {
             <section aria-labelledby="location-heading" className="w-full max-w-6xl mx-auto">
               <h2 id="location-heading" className="sr-only">{parkName} {tCommon('location')}</h2>
 
-              <div className="backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70 h-32 sm:h-60 rounded-3xl mb-8 overflow-hidden relative">
+              <div className="h-32 sm:h-60 rounded-3xl mb-8 overflow-hidden relative">
                 {/* Shadow Overlay */}
                 <div className="absolute inset-0 pointer-events-none rounded-lg shadow-container z-10 dark:bg-background-dark/15"></div>
                 
@@ -1485,7 +1471,7 @@ export default function SkateparkPage() {
           )}
 
           {/* Reviews Section */}
-          <Card className="w-full max-w-6xl mx-auto backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70 transition-all duration-200 transform-gpu">
+          <Card className="w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg font-medium flex items-center gap-2">
@@ -1604,7 +1590,7 @@ export default function SkateparkPage() {
 
           {/* Nearby Parks */}
           {nearbyParks.length > 0 && (
-            <Card className="w-full max-w-6xl mx-auto backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70 transition-all duration-200 transform-gpu">
+            <Card className="w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
               <CardHeader className="flex flex-row items-center justify-start gap-2  text-text dark:text-text-dark">
               <Icon name="trees" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
                 <CardTitle className="!mt-0 text-lg font-medium">{t('nearbySkateparks')}</CardTitle>

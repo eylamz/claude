@@ -68,6 +68,8 @@
   "addReview": "הוסף ביקורת",
   "showMoreReviews": "הצג עוד {count} ביקורות",
   "showLessReviews": "הצג פחות ביקורות",
+  "showMoreImages": "הצג עוד {count} תמונות",
+  "showLessImages": "הצג פחות תמונות",
   "writeReview": "כתוב ביקורת",
   "loginToReview": "עליך להתחבר כדי לכתוב ביקורת",
   "newestFirst": "החדש ביותר",

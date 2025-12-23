@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Instagram, Youtube } from 'lucide-react';
 import { Icon } from '@/components/icons/Icon';
+import { AboutPhotoCollage } from '@/components/home';
 
 // Custom hook for scroll-triggered animations
 function useScrollAnimation() {
@@ -44,6 +45,7 @@ export default function AboutPage() {
   const [passionRef, passionVisible] = useScrollAnimation();
   const [whyRef, whyVisible] = useScrollAnimation();
   const [visionRef, visionVisible] = useScrollAnimation();
+  const [photosRef, photosVisible] = useScrollAnimation();
   const [joinRef, joinVisible] = useScrollAnimation();
   const [connectRef, connectVisible] = useScrollAnimation();
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -170,10 +172,25 @@ export default function AboutPage() {
             </p>
           </section>
 
-          {/* Vision Section */}
+
+          {/* Photo Collage Section */}
+          <section 
+            ref={photosRef}
+            className={`transition-all duration-700 ${
+              photosVisible 
+                ? 'opacity-100 translate-y-0 animate-fadeUpIn' 
+                : 'opacity-0 translate-y-8'
+            }`}
+          >
+            <div className="overflow-visible">
+              <AboutPhotoCollage />
+            </div>
+          </section>
+          
+            {/* Join Section */}
           <section 
             ref={visionRef}
-            className={`bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-2xl p-8 sm:p-10 lg:p-12 border border-purple-100 dark:border-purple-900 transition-all duration-700 hover:shadow-2xl hover:scale-[1.01] transform-gpu ${
+            className={`!-mt-[4rem] bg-gradient-to-br from-purple-50 to-pink-50 dark:from-[#14072b] dark:to-[#1a0718] rounded-2xl p-8 sm:p-10 lg:p-12 border border-purple-100 dark:border-purple-900 transition-all duration-700 hover:shadow-2xl hover:scale-[1.01] transform-gpu ${
               visionVisible 
                 ? 'opacity-100 translate-y-0 animate-popFadeIn' 
                 : 'opacity-0 translate-y-8'
@@ -186,6 +203,7 @@ export default function AboutPage() {
               {t('vision.description')}
             </p>
           </section>
+
 
           {/* Join Section */}
           <section 

@@ -374,6 +374,16 @@ const config: Config = {
             transform: 'translateY(0)'
           }
         },
+        'fadeInUp': {
+          '0%': { 
+            opacity: '0',
+            transform: 'translateY(30px)'
+          },
+          '100%': { 
+            opacity: '1',
+            transform: 'translateY(0)'
+          }
+        },
         'fadeInDown': {
           '0%': { 
             opacity: '0',
@@ -644,6 +654,7 @@ const config: Config = {
         'shimmerInfinite': 'shimmerInfinite 1s ease-in-out infinite',
         'infiniteLoader': 'infiniteLoader 1s infinite',
         'fadeUpIn': 'fadeUpIn 0.6s ease-out forwards',
+        'fadeInUp': 'fadeInUp 0.5s ease-out forwards',
         'fadeInDown': 'fadeInDown 0.2s ease-out forwards',
         'appearDown': 'appearDown 0.5s ease-out forwards',
         'bounchInDown': 'bounchInDown 0.2s forwards',
