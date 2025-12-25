@@ -1520,7 +1520,7 @@ export default function SkateparkPage() {
 
           {/* Reviews Section */}
           <Card
-            className="!shadow-none md:border border-border dark:border-border-dark w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
+            className="!shadow-none m w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
             <CardHeader className="">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-medium flex items-center gap-2">
@@ -1538,7 +1538,7 @@ export default function SkateparkPage() {
                 ) : (
                   <Link href={`/${locale}/login`}>
                     <Button variant="primary">
-                      {tCommon('signIn')}
+                      {tCommon('signInToReview')}
                     </Button>
                   </Link>
                 )}
@@ -1547,73 +1547,115 @@ export default function SkateparkPage() {
             <CardContent className="">
               {reviews.length > 0 && (
                 <>
-                  {/* Rating Distribution */}
-                  <div className=" mb-6 space-y-2">
-                    {ratingDistribution.map(({ rating, count, percentage }) => (
-                      <div key={rating} className="flex items-center justify-center gap-3">
-                        <p className="text-base font-medium w-12">{rating} {t('stars')}</p>
-                        <div className="w-full flex-1 h-2 bg-card dark:bg-card-dark rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-brand-yellow"
-                            style={{ width: `${percentage}%` }}
-                          />
+                  {/* 2-Column Layout: Rating Distribution + First 2 Reviews */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    {/* Rating Distribution */}
+                    <div className="space-y-2">
+                      {ratingDistribution.map(({ rating, count, percentage }) => (
+                        <div key={rating} className="flex items-center justify-center gap-3">
+                          <p className="text-base font-medium w-15">{rating} {t('stars')}</p>
+                          <div className="w-full flex-1 h-2 bg-card dark:bg-card-dark rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-brand-yellow"
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          <p className="text-base text-gray-600 dark:text-gray-400 w-4 text-right">
+                            {count}
+                          </p>
                         </div>
-                        <p className="text-base text-gray-600 dark:text-gray-400 w-4 text-right">
-                          {count}
-                        </p>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+
+                    {/* First Review Card */}
+                    <div className="space-y-4">
+                      {sortedReviews.slice(0, 1).map((review) => (
+                        <div
+                          key={review._id}
+                          className="opacity-0 bg-card dark:bg-card-dark rounded-lg p-4 animate-fadeInDown"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <p className="text-base font-semibold text-gray-900 dark:text-white">
+                                {review.userName}
+                              </p>
+                              <div className="flex items-center gap-1 mt-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Icon
+                                    key={star}
+                                    name="star"
+                                    className={`w-4 h-4 ${
+                                      star <= review.rating
+                                        ? 'fill-brand-yellow text-brand-yellow'
+                                        : 'text-text-secondary dark:text-text-secondary'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <time className="text-base text-gray-500 dark:text-gray-400">
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </time>
+                          </div>
+                          <p className="text-base text-gray-700 dark:text-gray-300 mt-2">
+                            {review.comment}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  {/* Review Cards */}
-                  <div className="space-y-4 ">
-                    {(reviewsExpanded ? sortedReviews : sortedReviews.slice(0, 3)).map((review) => (
-                      <div
-                        key={review._id}
-                        className="opacity-0 bg-card dark:bg-card-dark rounded-lg p-4 animate-fadeInDown"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <p className="text-base font-semibold text-gray-900 dark:text-white">
-                              {review.userName}
-                            </p>
-                            <div className="flex items-center gap-1 mt-1">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <Icon
-                                  key={star}
-                                  name="star"
-                                  className={`w-4 h-4 ${
-                                    star <= review.rating
-                                      ? 'fill-brand-yellow text-brand-yellow'
-                                      : 'text-text-secondary dark:text-text-secondary'
-                                  }`}
-                                />
-                              ))}
+                  {/* Additional Reviews (shown when expanded) */}
+                  {reviewsExpanded && sortedReviews.length > 2 && (
+                    <div className="space-y-4">
+                      {sortedReviews.slice(2).map((review) => (
+                        <div
+                          key={review._id}
+                          className="opacity-0 bg-card dark:bg-card-dark rounded-lg p-4 animate-fadeInDown"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <p className="text-base font-semibold text-gray-900 dark:text-white">
+                                {review.userName}
+                              </p>
+                              <div className="flex items-center gap-1 mt-1">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Icon
+                                    key={star}
+                                    name="star"
+                                    className={`w-4 h-4 ${
+                                      star <= review.rating
+                                        ? 'fill-brand-yellow text-brand-yellow'
+                                        : 'text-text-secondary dark:text-text-secondary'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
                             </div>
+                            <time className="text-base text-gray-500 dark:text-gray-400">
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </time>
                           </div>
-                          <time className="text-base text-gray-500 dark:text-gray-400">
-                            {new Date(review.createdAt).toLocaleDateString()}
-                          </time>
+                          <p className="text-base text-gray-700 dark:text-gray-300 mt-2">
+                            {review.comment}
+                          </p>
                         </div>
-                        <p className="text-base text-gray-700 dark:text-gray-300 mt-2">
-                          {review.comment}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Expand/Collapse Button */}
-                  {sortedReviews.length > 3 && (
+                  {sortedReviews.length > 2 && (
                     <div className="mt-4 flex justify-center">
                       <button
                         onClick={() => setReviewsExpanded(!reviewsExpanded)}
                         className="flex items-center gap-2 px-6 py-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/[7.5%] dark:hover:bg-white/[7.5%] transition-colors text-text-secondary dark:text-text-dark/70"
-                        aria-label={reviewsExpanded ? t('showLessReviews') : t('showMoreReviews', { count: sortedReviews.length - 3 })}
+                        aria-label={reviewsExpanded ? t('showLessReviews') : t('showMoreReviews', { count: sortedReviews.length - 2 })}
                       >
                         <span className=" text-base font-medium">
                           {reviewsExpanded 
                             ? t('showLessReviews')
-                            : t('showMoreReviews', { count: sortedReviews.length - 3 })}
+                            : t('showMoreReviews', { count: sortedReviews.length - 2 })}
                         </span>
                       </button>
                     </div>
@@ -1640,7 +1682,15 @@ export default function SkateparkPage() {
                 <CardTitle className="!mt-0 text-base font-medium">{t('nearbySkateparks')}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col sm:grid sm-grid-cols-2 md:grid-cols-3 gap-4">
+                <div className={`grid gap-4 ${
+                  nearbyParks.length === 1 
+                    ? 'grid-cols-1' 
+                    : nearbyParks.length === 2 
+                    ? 'grid-cols-1 sm:grid-cols-2' 
+                    : nearbyParks.length === 3
+                    ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                    : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+                }`}>
                   {nearbyParks.map((park, index) => {
                     const nearbyName = park.name[locale] || park.name.en || park.name.he;
                     
@@ -1751,37 +1801,36 @@ export default function SkateparkPage() {
                       <Link
                         key={park._id}
                         href={`/${locale}/skateparks/${park.slug}`}
-                        className={`h-fit hover:shadow-lg dark:hover:!scale-[1.02] bord bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 ${hideClass}`}
+                        className={`h-fit overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 ${hideClass}`}
                       >
-                        <div className="relative bg-black/25 h-[10.5rem] overflow-hidden">
+                        <div
+                         className="rounded-2xl relative h-[10.5rem] overflow-hidden"
+                         style={{
+                          filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
+                        }}
+                         >
                           <Image
                             src={getValidImageUrl(park.imageUrl)}
                             alt={nearbyName}
                             fill
-                            className="object-cover saturate-150 group-hover:saturate-[1.75] transition-all duration-200 rounded-t-3xl"
+                            quality={60}
+                            loading="lazy"
+                            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                            className="object-cover saturate-150 group-hover:saturate-[1.75] transition-all duration-200"
                           />
                         </div>
                         
-                        <div className="px-4 py-3 space-y-1">
-                          <h3 className="text-base font-semibold truncate">
-                            {nearbyName}
-                          </h3>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center text-gray-600 dark:text-gray-400 gap-1">
+                        <div className="pt-1">
+                            <div className="flex items-center text-text/80 dark:text-text-dark/80 gap-1">
                               <Icon name="locationBold" className="w-3.5 h-3.5 shrink-0" />
                               <p className="text-base truncate">
                                 {distanceText || ''}
                               </p>
                             </div>
-                            {park.rating > 0 && (
-                              <div className="flex items-center gap-1">
-                                <Icon name="star" className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                <p className="text-base font-medium text-gray-900 dark:text-white">
-                                  {park.rating.toFixed(1)}
-                                </p>
-                              </div>
-                            )}
-                          </div>
+                          <h3 className="text-base font-semibold truncate px-1">
+                            {nearbyName}
+                          </h3>
+                          <div className="flex items-center justify-between">                          </div>
                         </div>
                       </Link>
                     );
