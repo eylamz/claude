@@ -441,6 +441,7 @@ export default function SkateparkPage() {
   const [nearbyParks, setNearbyParks] = useState<NearbyPark[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [addressCopied, setAddressCopied] = useState(false);
   const [showAddReview, setShowAddReview] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
@@ -543,60 +544,110 @@ export default function SkateparkPage() {
                 return R * c;
               };
               
-              // Calculate nearby parks from cache (same area, limit 4, excluding current)
-              const currentCoords = cachedSkatepark.location.coordinates 
-                ? { lat: cachedSkatepark.location.coordinates[1], lng: cachedSkatepark.location.coordinates[0] }
-                : { lat: 0, lng: 0 };
+              // Calculate nearby parks from cache (sorted by distance, limit 4, excluding current)
+              // Extract current park coordinates - handle multiple formats
+              let currentCoords = { lat: 0, lng: 0 };
               
-              const nearbyFromCache = cachedSkateparks
-                .filter((park: Skatepark) => 
-                  park.slug !== slug && 
-                  park.area === cachedSkatepark.area && 
-                  park.status === 'active'
-                )
-                .map((park: Skatepark) => {
-                  const parkCoords = park.location.coordinates
-                    ? { lat: park.location.coordinates[1], lng: park.location.coordinates[0] }
-                    : { lat: 0, lng: 0 };
-                  
-                  const distance = calcDistance(
-                    currentCoords.lat,
-                    currentCoords.lng,
-                    parkCoords.lat,
-                    parkCoords.lng
-                  );
-                  
-                  return {
-                    _id: park._id,
-                    slug: park.slug,
-                    name: park.name,
-                    imageUrl: getValidImageUrl(park.images?.[0]?.url),
-                    area: park.area,
-                    rating: (park as any).rating || 0, // Use rating from cache if available
-                    totalReviews: (park as any).totalReviews || 0, // Use totalReviews from cache if available
-                    location: {
-                      lat: parkCoords.lat,
-                      lng: parkCoords.lng,
-                    },
-                    distance,
+              if (cachedSkatepark.location) {
+                // Try GeoJSON format first: { coordinates: [lng, lat] }
+                if (cachedSkatepark.location.coordinates && Array.isArray(cachedSkatepark.location.coordinates)) {
+                  const coords = cachedSkatepark.location.coordinates;
+                  if (coords.length >= 2) {
+                    currentCoords = { lat: coords[1], lng: coords[0] };
+                  }
+                }
+                // Try { lat, lng } format
+                else if ('lat' in cachedSkatepark.location && 'lng' in cachedSkatepark.location) {
+                  currentCoords = {
+                    lat: (cachedSkatepark.location as any).lat,
+                    lng: (cachedSkatepark.location as any).lng
                   };
-                })
-                .sort((a, b) => a.distance - b.distance)
-                .slice(0, 4)
-                .map(({ distance, ...park }) => park); // Remove distance from final result
+                }
+              }
               
-              setNearbyParks(nearbyFromCache);
-              setLoading(false);
-              
-              // Only fetch reviews (not cached)
-              await fetchReviews();
-              
-              return;
+              // Only proceed if current park has valid coordinates
+              if (currentCoords.lat !== 0 && currentCoords.lng !== 0) {
+                // More lenient filter - don't require status to be 'active' (might not be in cache)
+                const filteredParks = cachedSkateparks.filter((park: Skatepark) => {
+                  const hasValidSlug = park.slug !== slug;
+                  const hasValidLocation = park.location && (
+                    (park.location.coordinates && Array.isArray(park.location.coordinates) && park.location.coordinates.length >= 2) ||
+                    (park.location && 'lat' in park.location && 'lng' in park.location)
+                  );
+                  const isActive = park.status === 'active' || park.status === undefined; // Allow undefined status
+                  
+                  return hasValidSlug && hasValidLocation && isActive;
+                });
+                
+                const nearbyFromCache = filteredParks
+                  .map((park: Skatepark) => {
+                    // Extract coordinates - handle both formats
+                    let parkCoords = { lat: 0, lng: 0 };
+                    
+                    if (park.location) {
+                      // Try GeoJSON format first: { coordinates: [lng, lat] }
+                      if (park.location.coordinates && Array.isArray(park.location.coordinates)) {
+                        const coords = park.location.coordinates;
+                        if (coords.length >= 2) {
+                          parkCoords = { lat: coords[1], lng: coords[0] };
+                        }
+                      }
+                      // Try { lat, lng } format
+                      else if ('lat' in park.location && 'lng' in park.location) {
+                        parkCoords = {
+                          lat: (park.location as any).lat,
+                          lng: (park.location as any).lng
+                        };
+                      }
+                    }
+                    
+                    // Skip parks with invalid coordinates
+                    if (parkCoords.lat === 0 && parkCoords.lng === 0) {
+                      return null;
+                    }
+                    
+                    const distance = calcDistance(
+                      currentCoords.lat,
+                      currentCoords.lng,
+                      parkCoords.lat,
+                      parkCoords.lng
+                    );
+                    
+                    return {
+                      _id: park._id,
+                      slug: park.slug,
+                      name: park.name,
+                      imageUrl: getValidImageUrl(park.images?.[0]?.url),
+                      area: park.area,
+                      rating: (park as any).rating || 0, // Use rating from cache if available
+                      totalReviews: (park as any).totalReviews || 0, // Use totalReviews from cache if available
+                      location: {
+                        lat: parkCoords.lat,
+                        lng: parkCoords.lng,
+                      },
+                      distance,
+                    };
+                  })
+                  .filter((park): park is NonNullable<typeof park> => park !== null) // Remove null entries
+                  .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
+                  .slice(0, 4) // Get top 4 closest
+                  .map(({ distance, ...park }) => park); // Remove distance from final result
+                
+                setNearbyParks(nearbyFromCache);
+                setLoading(false);
+                
+                // Only fetch reviews (not cached)
+                await fetchReviews();
+                
+                return;
+              } else {
+                // Don't return - continue to fetch from API
+                // But still set the skatepark from cache for faster display
+              }
             }
           }
         } catch (e) {
           // If cache is corrupted, continue to fetch fresh data
-          console.warn('Failed to parse cached skateparks data', e);
         }
       }
 
@@ -697,7 +748,7 @@ export default function SkateparkPage() {
             });
           }
         } catch (e) {
-          console.warn('Failed to parse existing cache for merge', e);
+          // Failed to parse existing cache for merge
         }
       }
       
@@ -713,12 +764,9 @@ export default function SkateparkPage() {
       localStorage.setItem(cacheKey, JSON.stringify(allSkateparksArray));
       localStorage.setItem(versionKey, currentVersion.toString());
       
-      // Log operating hours for debugging
-      console.log('Operating Hours:', detailData.skatepark.operatingHours);
-      
       await fetchReviews();
     } catch (error) {
-      console.error('Error fetching skatepark:', error);
+      // Error fetching skatepark
       
       // Try to use cache as fallback even if version doesn't match
       const cacheKey = 'skateparks_cache';
@@ -734,7 +782,7 @@ export default function SkateparkPage() {
             }
           }
         } catch (e) {
-          console.error('Failed to use cached data as fallback', e);
+          // Failed to use cached data as fallback
         }
       }
     } finally {
@@ -750,7 +798,7 @@ export default function SkateparkPage() {
         setReviews(data.reviews || []);
       }
     } catch (error) {
-      console.error('Error fetching reviews:', error);
+      // Error fetching reviews
     }
   };
 
@@ -1586,7 +1634,7 @@ export default function SkateparkPage() {
 
           {/* Nearby Parks */}
           {nearbyParks.length > 0 && (
-            <Card className="w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
+            <Card className="!shadow-none w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
               <CardHeader className="flex flex-row items-center justify-start gap-2  text-text dark:text-text-dark">
               <Icon name="trees" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
                 <CardTitle className="!mt-0 text-base font-medium">{t('nearbySkateparks')}</CardTitle>
@@ -1595,17 +1643,94 @@ export default function SkateparkPage() {
                 <div className="flex flex-col sm:grid sm-grid-cols-2 md:grid-cols-3 gap-4">
                   {nearbyParks.map((park, index) => {
                     const nearbyName = park.name[locale] || park.name.en || park.name.he;
-                    const currentCoords = getLocationCoords();
-                    const distance = park.location 
+                    
+                    // Get current park's coordinates directly from skatepark.location
+                    let currentParkLat = 0;
+                    let currentParkLng = 0;
+                    if (skatepark?.location?.coordinates && Array.isArray(skatepark.location.coordinates)) {
+                      // GeoJSON format: [longitude, latitude]
+                      currentParkLng = skatepark.location.coordinates[0];
+                      currentParkLat = skatepark.location.coordinates[1];
+                    } else if (skatepark?.location && 'lat' in skatepark.location && 'lng' in skatepark.location) {
+                      // Old format: { lat, lng }
+                      currentParkLat = (skatepark.location as any).lat;
+                      currentParkLng = (skatepark.location as any).lng;
+                    }
+                    
+                    // Get nearby park's coordinates - handle both formats
+                    let nearbyParkLat: number | null = null;
+                    let nearbyParkLng: number | null = null;
+                    if (park.location) {
+                      // Check if it's in GeoJSON format (coordinates array)
+                      if ('coordinates' in park.location && Array.isArray((park.location as any).coordinates)) {
+                        const coords = (park.location as any).coordinates;
+                        if (coords.length >= 2 && coords[0] !== 0 && coords[1] !== 0) {
+                          nearbyParkLng = coords[0]; // longitude
+                          nearbyParkLat = coords[1]; // latitude
+                        }
+                      } 
+                      // Check if it's in { lat, lng } format
+                      else if ('lat' in park.location && 'lng' in park.location) {
+                        const lat = park.location.lat;
+                        const lng = park.location.lng;
+                        // Only use if both are non-zero (0,0 is invalid)
+                        // Check that at least one is non-zero (to handle edge cases) but prefer both non-zero
+                        if (lat !== 0 && lng !== 0) {
+                          nearbyParkLat = lat;
+                          nearbyParkLng = lng;
+                        }
+                      }
+                    }
+                    
+                    // Fallback: If coordinates are invalid, try to get from cache
+                    if (nearbyParkLat === null || nearbyParkLng === null) {
+                      try {
+                        const cacheKey = 'skateparks_cache';
+                        const cachedData = localStorage.getItem(cacheKey);
+                        if (cachedData) {
+                          const cachedSkateparks = JSON.parse(cachedData);
+                          if (Array.isArray(cachedSkateparks)) {
+                            const cachedPark = cachedSkateparks.find((p: any) => p.slug === park.slug);
+                            if (cachedPark) {
+                              // Try GeoJSON format first
+                              if (cachedPark.location?.coordinates && Array.isArray(cachedPark.location.coordinates)) {
+                                const coords = cachedPark.location.coordinates;
+                                if (coords.length >= 2 && coords[0] !== 0 && coords[1] !== 0) {
+                                  nearbyParkLng = coords[0]; // longitude
+                                  nearbyParkLat = coords[1]; // latitude
+                                }
+                              }
+                              // Try { lat, lng } format
+                              else if (cachedPark.location && 'lat' in cachedPark.location && 'lng' in cachedPark.location) {
+                                const lat = (cachedPark.location as any).lat;
+                                const lng = (cachedPark.location as any).lng;
+                                if (lat !== 0 && lng !== 0) {
+                                  nearbyParkLat = lat;
+                                  nearbyParkLng = lng;
+                                }
+                              }
+                            }
+                          }
+                        }
+                      } catch (e) {
+                        // Silently fail cache fallback
+                      }
+                    }
+                    
+                    const distance = nearbyParkLat !== null && nearbyParkLng !== null && 
+                                     currentParkLat !== 0 && currentParkLng !== 0
                       ? calculateDistance(
-                          currentCoords.lat,
-                          currentCoords.lng,
-                          park.location.lat,
-                          park.location.lng
+                          currentParkLat,
+                          currentParkLng,
+                          nearbyParkLat,
+                          nearbyParkLng
                         )
                       : null;
+                    
                     const distanceText = distance !== null
-                      ? `(${distance.toFixed(1)} ${tr('km', 'ק"מ')})`
+                      ? locale === 'he' 
+                        ? `במרחק ${distance.toFixed(1)} ${tr('km', 'ק"מ')}`
+                        : `at distance ${distance.toFixed(1)} ${tr('km', 'ק"מ')}`
                       : null;
                     const areaLabel = locale === 'he' ? areaLabels[park.area]?.he : areaLabels[park.area]?.en || park.area;
                     
@@ -1642,10 +1767,10 @@ export default function SkateparkPage() {
                             {nearbyName}
                           </h3>
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
-                              <MapPin className="w-3.5 h-3.5 shrink-0" />
+                            <div className="flex items-center text-gray-600 dark:text-gray-400 gap-1">
+                              <Icon name="locationBold" className="w-3.5 h-3.5 shrink-0" />
                               <p className="text-base truncate">
-                                {distanceText ? `${areaLabel} ${distanceText}` : areaLabel}
+                                {distanceText || ''}
                               </p>
                             </div>
                             {park.rating > 0 && (

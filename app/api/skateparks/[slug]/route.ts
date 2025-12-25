@@ -48,19 +48,59 @@ export async function GET(
 
     const [lng, lat] = skatepark.location.coordinates;
 
-    // Get nearby parks (same area, limit 4 excluding current)
-    const nearbyParks = await Skatepark.find({
-      area: skatepark.area,
+    // Get all active parks (excluding current) - no area filter
+    const allParks = await Skatepark.find({
       status: 'active',
       _id: { $ne: skatepark._id },
     })
-      .limit(4)
       .select('slug name images location area rating totalReviews')
       .lean();
 
-    // Format nearby parks
-    const formattedNearby = nearbyParks.map((park: any) => {
-      const [parkLng, parkLat] = park.location?.coordinates || [0, 0];
+    // Calculate distance for each park and sort by distance
+    const parksWithDistance = allParks
+      .map((park: any) => {
+        const coords = park.location?.coordinates;
+        if (!coords || !Array.isArray(coords) || coords.length < 2) {
+          return null; // Skip parks with invalid coordinates
+        }
+        
+        const [parkLng, parkLat] = coords;
+        
+        // Skip parks with invalid coordinates (0,0)
+        if (parkLng === 0 && parkLat === 0) {
+          return null;
+        }
+        
+        // Haversine formula to calculate distance
+        const R = 6371; // Earth's radius in km
+        const dLat = ((parkLat - lat) * Math.PI) / 180;
+        const dLng = ((parkLng - lng) * Math.PI) / 180;
+        const a =
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos((lat * Math.PI) / 180) *
+            Math.cos((parkLat * Math.PI) / 180) *
+            Math.sin(dLng / 2) *
+            Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+        
+        return { ...park, distance };
+      })
+      .filter((park): park is NonNullable<typeof park> => park !== null) // Remove null entries
+      .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
+      .slice(0, 4); // Take top 4 closest
+
+    // Format nearby parks (remove distance from response)
+    const formattedNearby = parksWithDistance.map((park: any) => {
+      const coords = park.location?.coordinates;
+      const [parkLng, parkLat] = coords || [0, 0];
+      
+      // Only include location if coordinates are valid (non-zero)
+      const hasValidCoords = coords && 
+                             Array.isArray(coords) && 
+                             coords.length >= 2 && 
+                             (coords[0] !== 0 || coords[1] !== 0);
+      
       return {
         _id: park._id.toString(),
         slug: park.slug,
@@ -69,7 +109,7 @@ export async function GET(
         area: park.area,
         rating: park.rating || 0,
         totalReviews: park.totalReviews || 0,
-        location: park.location?.coordinates ? {
+        location: hasValidCoords ? {
           lat: parkLat,
           lng: parkLng,
         } : undefined,
@@ -130,7 +170,6 @@ export async function GET(
       version,
     });
   } catch (error) {
-    console.error('Error fetching skatepark:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
