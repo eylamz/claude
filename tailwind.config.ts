@@ -481,17 +481,38 @@ const config: Config = {
         },
         appearDown: {
           '0%': { 
-            visibility: 'hidden',
+            opacity: '0',
+            transform: 'translateY(-500px)',
           },
           '50%': { 
-            visibility: 'visible',
             opacity: '0',
             transform: 'scale(0.95)'
           },
           '100%': { 
             opacity: '1',
-            visibility: 'visible',
-            transform: 'scale(1) translateX(10px)'
+            transform: 'translatey(0)',
+          },
+        },
+        bounceDownSqueeze: {
+          '0%': { 
+            opacity: '0',
+            transform: 'translateY(-30px) scaleY(0.8)',
+          },
+          '40%': { 
+            opacity: '0.8',
+            transform: 'translateY(5px) scaleY(1.1)',
+          },
+          '60%': { 
+            opacity: '0.9',
+            transform: 'translateY(-3px) scaleY(0.95)',
+          },
+          '80%': { 
+            opacity: '1',
+            transform: 'translateY(2px) scaleY(1.02)',
+          },
+          '100%': { 
+            opacity: '1',
+            transform: 'translateY(0) scaleY(1)',
           },
         },
         scaleDownFade: {
@@ -658,6 +679,7 @@ const config: Config = {
         'fadeInDown': 'fadeInDown 0.2s ease-out forwards',
         'appearDown': 'appearDown 0.5s ease-out forwards',
         'bounchInDown': 'bounchInDown 0.2s forwards',
+        'bounceDownSqueeze': 'bounceDownSqueeze 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
         'popoverIn': 'popoverIn 0.2s forwards',
         'popoverOut': 'popoverOut 0.15s forwards',
         'selectClose': 'selectClose 0.25s ease-out forwards',

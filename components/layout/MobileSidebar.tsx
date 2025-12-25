@@ -553,7 +553,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                       relative overflow-hidden rounded-xl bg-card dark:bg-card-dark border
                        transition-colors duration-200 p-3 h-full flex flex-col gap-2 items-start
                       ${isActive 
-                        ? 'border-sidebar-border-brand dark:border-sidebar-border-brand-dark bg-sidebar-hover-brand dark:bg-sidebar-hover-brand-dark' 
+                        ? 'border !bg-[#defce0] dark:!bg-[#1452174d] border-[#85ef8a] dark:border-[#1452174d]' 
                         : card.comingSoon
                           ? 'border-transparent bg-card/60 dark:bg-card-dark/40'
                           : 'border-transparent hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark'
@@ -565,7 +565,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                         <div className={`${card.comingSoon ? 'opacity-50' : ''}
                           w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200
                           ${isActive 
-                            ? 'bg-sidebar-icon-brand dark:bg-sidebar-icon-brand-dark text-[#e8fae9] dark:text-black/85 shadow-sm border border-sidebar-hover-brand dark:border-sidebar-hover-brand-dark' 
+                            ? 'bg-[#16641a] dark:bg-[#85ef8a] text-[#defce0] dark:text-[#145217] shadow-sm ' 
                             : 'bg-sidebar-hover dark:bg-black/20 text-sidebar-text dark:text-sidebar-text-dark group-hover:bg-sidebar/50 dark:group-hover:bg-sidebar-dark/50'
                           }
                         `}>
@@ -584,12 +584,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                       {/* Text Content */}
                       <div className={`w-full ${card.comingSoon ? 'opacity-50' : ''}`}>
                         <div className="flex items-center justify-between mb-0.5">
-                          <h3 className={`font-bold text-xs leading-tight transition-colors duration-200 ${isActive ? ' text-sidebar-text-brand dark:text-sidebar-text-brand-dark' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
+                          <h3 className={`font-bold text-xs leading-tight transition-colors duration-200 ${isActive ? 'text-[#16641a] dark:text-[#85ef8a]' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
                             {card.label}
                           </h3>
                         </div>
                         
-                          <p className="text-[10px] text-sidebar-text/80 dark:text-sidebar-text-dark/80 line-clamp-2 leading-tight transition-colors duration-200">
+                          <p className={`text-[10px]  line-clamp-2 leading-tight transition-colors duration-200 ${isActive ? 'text-[#16641a] dark:text-[#4fb154]' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
                             {card.description}
                           </p>
                       </div>

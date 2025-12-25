@@ -624,7 +624,8 @@ const FullscreenImageViewer = ({
                   WebkitUserSelect: 'none',
                   MozUserSelect: 'none',
                   msUserSelect: 'none',
-                  pointerEvents: 'auto'
+                  pointerEvents: 'auto',
+                  boxShadow: '0 1px 1px #66666612, 0 2px 2px #5e5e5e12, 0 4px 4px #7a5d4413, 0 8px 8px #5e5e5e12, 0 16px 16px #5e5e5e12',
                 }}
                 onLoad={handleImageLoad}
                 onClick={(e) => {
@@ -706,6 +707,7 @@ const FullscreenImageViewer = ({
                 alt={image.alt || `Thumbnail ${index + 1}`}
                 className="w-full h-full object-cover saturate-[125%] select-none"
                 draggable={false}
+                
               />
             </button>
           ))}

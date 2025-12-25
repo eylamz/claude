@@ -56,10 +56,9 @@ interface Skatepark {
   is24Hours: boolean;
   isFeatured?: boolean;
   openingYear?: number | null;
-  openingMonth?: number | null;
   closingYear?: number | null;
-  closingMonth?: number | null;
   createdAt?: string | null;
+  updatedAt?: string | null;
   distance?: number | null;
 }
 
@@ -307,7 +306,7 @@ const getOptimizedImageUrl = (originalUrl: string): string | null => {
 // Amenity icon mapping (for Icon component - matches AmenitiesButton)
 const AMENITY_ICON_MAP: Record<string, string> = {
   parking: 'parking',
-  shade: 'sun',
+  shade: 'sunBold',
   bathroom: 'toilet',
   guard: 'securityGuard',
   seating: 'couch',
@@ -347,19 +346,6 @@ const isNewPark = (createdAt: string | null): boolean => {
   const twoMonthsAgo = new Date();
   twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
   return new Date(createdAt) > twoMonthsAgo;
-};
-
-// Get month name by number (1-12) based on locale
-const getMonthName = (monthNumber: number, locale: string): string => {
-  const monthNames: Record<string, string[]> = {
-    en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-    he: ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'],
-  };
-  
-  if (monthNumber >= 1 && monthNumber <= 12) {
-    return monthNames[locale]?.[monthNumber - 1] || monthNames.en[monthNumber - 1];
-  }
-  return '';
 };
 
 // Memoized thumbnail component
@@ -516,10 +502,102 @@ ParkAmenities.displayName = 'ParkAmenities';
  */
 const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLocation }: { park: Skatepark; locale: string; animationDelay?: number; sortBy?: SortOption; userLocation?: UserLocation | null }) => {
   const [isClicked, setIsClicked] = useState(false);
+  const [showNameSection, setShowNameSection] = useState(false);
+  const [showParkName, setShowParkName] = useState(false);
+  const [isInViewport, setIsInViewport] = useState(false);
+  const [showBadgeContainer, setShowBadgeContainer] = useState<Record<string, boolean>>({});
+  const [showBadgeContent, setShowBadgeContent] = useState<Record<string, boolean>>({});
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const name = typeof park.name === 'string' 
     ? park.name 
     : (locale === 'he' ? park.name.he : park.name.en) || park.name.en || park.name.he;
   const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
+
+  // Detect touch device
+  useEffect(() => {
+    const checkTouchDevice = () => {
+      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsTouchDevice(isTouch);
+    };
+    checkTouchDevice();
+    window.addEventListener('resize', checkTouchDevice);
+    return () => window.removeEventListener('resize', checkTouchDevice);
+  }, []);
+
+  // Intersection Observer to detect when card is in viewport
+  useEffect(() => {
+    if (!cardRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsInViewport(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Show name section after 0.3s delay when card appears
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowNameSection(true);
+      // Show park name with pop animation after height starts growing
+      setTimeout(() => {
+        setShowParkName(true);
+      }, 0); // Small delay to let height transition start
+    }, 300 + animationDelay);
+    return () => clearTimeout(timer);
+  }, [animationDelay]);
+
+  // Animate badges when card enters viewport
+  useEffect(() => {
+    if (!isInViewport) return;
+
+    const currentYear = new Date().getFullYear();
+    const recentYears = [currentYear, currentYear - 1, currentYear - 2];
+    const hasOpeningYear = park.openingYear && recentYears.includes(park.openingYear);
+    const isClosed = park.closingYear && park.closingYear <= currentYear;
+    const isNew = park.createdAt && isNewPark(park.createdAt);
+    const isFeatured = park.isFeatured;
+
+    // Determine badge order and positions (order: openingYear -> closed -> new -> featured)
+    const badges: Array<{ key: string; delay: number }> = [];
+    let baseDelay = 1000;
+    
+    if (hasOpeningYear) {
+      badges.push({ key: 'openingYear', delay: baseDelay });
+      baseDelay += 100;
+    }
+    if (isClosed) {
+      badges.push({ key: 'closed', delay: baseDelay });
+      baseDelay += 100;
+    }
+    if (isNew) {
+      badges.push({ key: 'new', delay: baseDelay });
+      baseDelay += 100;
+    }
+    if (isFeatured) {
+      badges.push({ key: 'featured', delay: baseDelay });
+    }
+
+    // Animate each badge sequentially
+    badges.forEach((badge) => {
+      setTimeout(() => {
+        setShowBadgeContainer((prev) => ({ ...prev, [badge.key]: true }));
+        setTimeout(() => {
+          setShowBadgeContent((prev) => ({ ...prev, [badge.key]: true }));
+        }, 200); // Show content after badge container appears
+      }, badge.delay);
+    });
+  }, [isInViewport, park]);
 
   const handleCardClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -548,8 +626,9 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
 
   return (
     <div
+      ref={cardRef}
       onClick={handleCardClick}
-      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02] border-[4px] border-card dark:border-card-dark bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02]  bg-card dark:bg-card-dark rounded-xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
       style={{ animationDelay: `${animationDelay}ms` }}
       aria-label={name}
     >
@@ -560,10 +639,14 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
       <div className="relative h-[10.5rem] overflow-hidden">
         {/* Opening Year Badge */}
         {hasOpeningYear && (
-          <div className="absolute bottom-[0.7rem] left-0 z-10 translate-x-[300px] animate-slideFromLeft !animation-delay-[800ms]">
+          <div className={`absolute bottom-2 left-0 z-10 ${
+            showBadgeContainer.openingYear ? 'animate-slideRight animation-delay-[2s]' : 'opacity-0 translate-x-[-30px]'
+          }`}>
             <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-r-full shadow-lg">
-              {park.openingMonth ? `${getMonthName(park.openingMonth, locale)} ${park.openingYear}` : park.openingYear}
-              <Icon name="sparksBold" className="w-3 h-3" />
+              <span className={`transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`}>
+                {park.openingYear}
+              </span>
+              <Icon name="sparksBold" className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -572,12 +655,18 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
         {isClosed && (
           <div className={`absolute bottom-2 z-10 ${
             hasOpeningYear ? 'right-0' : 'left-0'
+          } ${
+            showBadgeContainer.closed 
+              ? (hasOpeningYear ? 'animate-slideLeft' : 'animate-slideRight')
+              : `opacity-0 ${hasOpeningYear ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
             <div className={`flex gap-1 justify-center items-center bg-red-500 dark:bg-red-600 text-white text-xs px-2 py-1 shadow-lg ${
               hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
-              {tr('Closed', 'סגור')}
-              <XCircle className="w-3 h-3" />
+              <span className={`transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
+                {tr('Closed', 'סגור')}
+              </span>
+              <XCircle className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -586,12 +675,18 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
         {isNew && (
           <div className={`absolute bottom-2 z-10 ${
             hasOpeningYear || isClosed ? 'right-0' : 'left-0'
+          } ${
+            showBadgeContainer.new 
+              ? ((hasOpeningYear || isClosed) ? 'animate-slideLeft' : 'animate-slideRight')
+              : `opacity-0 ${(hasOpeningYear || isClosed) ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
             <div className={`flex gap-1 justify-center items-center bg-blue-500 dark:bg-blue-600 text-white text-xs md:text-sm px-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
-              {tr('New', 'חדש')}
-              <Badge className="w-4 h-4" />
+              <span className={`transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`}>
+                {tr('New', 'חדש')}
+              </span>
+              <Badge className={`w-4 h-4 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -600,12 +695,18 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
         {isFeatured && (
           <div className={`absolute bottom-2 z-10 ${
             hasOpeningYear || isClosed || isNew ? 'right-0' : 'left-0'
+          } ${
+            showBadgeContainer.featured 
+              ? ((hasOpeningYear || isClosed || isNew) ? 'animate-slideLeft' : 'animate-slideRight')
+              : `opacity-0 ${(hasOpeningYear || isClosed || isNew) ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
             <div className={`flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs font-bold px-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
-              {tr('Featured', 'מומלץ')}
-              <Award className="w-3 h-3" />
+              <span className={`transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`}>
+                {tr('Featured', 'מומלץ')}
+              </span>
+              <Award className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -614,23 +715,69 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
           photoUrl={photoUrl}
           parkName={name}
         />
-      </div>
-      
-      <div className="px-3 py-2 space-y-1 h-0 animate-expandHeight transition-all duration-300" style={{ animationDelay: '0.3s' }}> 
-        <h3 className="opacity-0 text-lg font-semibold truncate animate-appearDown" style={{ visibility: 'hidden', animationDelay: '0.4s' }}>
-          {name}
-        </h3>
-        {distanceText && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
-              <Icon name="locationBold" className="w-3.5 h-3.5 shrink-0" />
-              <span className="text-sm truncate">
-                {distanceText}
-              </span>
+
+        {/* Hover Overlay - Only on non-touch devices */}
+        {!isTouchDevice && (
+          <div className={`absolute -bottom-1 z-20 pointer-events-none ${
+            locale === 'he' ? 'right-0' : 'left-0'
+          }`}>
+            {/* Distance Overlay - Behind park name */}
+            {distanceText && (
+              <div 
+                className={`border border-transparent dark:border-[#686868] max-w-[110%] min-w-[105px] absolute bottom-[calc(60%+0.5rem)] bg-card dark:bg-card-dark px-3 py-2 shadow-[-2px_1px_12px_3px_rgba(0,0,0,0.15)] ${
+                  locale === 'he'
+                    ? 'rounded-l-lg opacity-0 group-hover:opacity-100 translate-x-[8%] translate-y-[54%] rotate-[-2deg] group-hover:translate-x-[5%] group-hover:translate-y-[5%] group-hover:rotate-[1deg]'
+                    : 'rounded-r-xl opacity-0 group-hover:opacity-100 translate-x-[-8%] translate-y-[54%] rotate-[2deg] group-hover:translate-x-[-5%] group-hover:translate-y-[5%] group-hover:rotate-[-1deg]'
+                } transition-[opacity,transform] duration-[200ms,500ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)] [transition-delay:0ms,0ms] group-hover:[transition-delay:200ms,0ms]`}
+              >
+                <div className="flex items-center gap-1.5 text-text dark:text-text-dark text-xs">
+                  <Icon name="locationBold" className="w-3 h-3 shrink-0" />
+                  <span>{distanceText}</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Park Name Overlay - In front */}
+            <div className={`relative border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark px-3 pt-2 pb-3 shadow-[-2px_1px_8px_3px_rgba(0,0,0,0.2)]   ${
+              locale === 'he'
+                ? 'rounded-tl-lg opacity-0 group-hover:opacity-100 translate-x-[36%] translate-y-[22%] rotate-[-1deg] group-hover:translate-x-[3%] group-hover:translate-y-[3%] group-hover:rotate-[2deg]'
+                : 'rounded-tr-xl opacity-0 group-hover:opacity-100 translate-x-[-6%] translate-y-[12%] rotate-[1deg] group-hover:translate-x-[-3%] group-hover:translate-y-[3%] group-hover:rotate-[-2deg]'
+            } transition-[opacity,transform] duration-[200ms,300ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)]`}>
+              <h3 className="text-sm font-semibold text-text dark:text-text-dark truncate max-w-[200px]">
+                {name}
+              </h3>
             </div>
           </div>
         )}
       </div>
+      
+      {/* Name Section - Only on touch devices */}
+      {isTouchDevice && (
+        <div 
+          className="px-3 space-y-1 overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            maxHeight: showNameSection ? '200px' : '0',
+            paddingTop: showNameSection ? '0.5rem' : '0',
+            paddingBottom: showNameSection ? '0.5rem' : '0',
+          }}
+        >
+          <h3 
+            className={`text-lg font-semibold truncate ${showParkName ? 'animate-fadeInDown animation-delay-[1s]' : 'opacity-0'}`}
+          >
+            {name}
+          </h3>
+          {distanceText && (
+            <div className="opacity-0 animate-fadeInDown animation-delay-[4s] flex items-center justify-between">
+              <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
+                <Icon name="locationBold" className="w-3.5 h-3.5 shrink-0" />
+                <span className="text-sm truncate">
+                  {distanceText}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 });
@@ -1533,7 +1680,7 @@ export default function SkateparksPage() {
                     userSelect: isDragging ? 'none' : 'auto',
                   }}
                 >
-                  <div className={`h-fit bg-card dark:bg-card-dark rounded-2xl overflow-hidden relative group select-none transform-gpu shadow-2xl ${isDragging ? 'opacity-90' : ''}`}>
+                  <div className={`h-fit relative group select-none transform-gpu shadow-2xl ${isDragging ? 'opacity-90' : ''}`}>
                     {/* Close Button */}
                     <button
                       onClick={(e) => {
@@ -1566,8 +1713,8 @@ export default function SkateparksPage() {
                         {hasOpeningYear && (
                           <div className="absolute bottom-2 left-0 z-10">
                             <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-end-full shadow-lg animate-pop">
-                              {selectedPark.openingMonth ? `${getMonthName(selectedPark.openingMonth, locale)} ${selectedPark.openingYear}` : selectedPark.openingYear}
-                              <Sparkles className="w-3 h-3" />
+                              {selectedPark.openingYear}
+                              <Icon name="sparksBold" className="w-3 h-3" />
                             </div>
                           </div>
                         )}

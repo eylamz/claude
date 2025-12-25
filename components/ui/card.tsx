@@ -74,7 +74,7 @@ const Card = React.forwardRef(
 
         className={cn(
 
-          "rounded-3xl overflow-hidden text-card-foreground shadow-container",
+          "rounded-3xl p-2 md:p-6 overflow-hidden text-card-foreground shadow-container",
 
           className
 
@@ -112,7 +112,7 @@ const CardHeader = React.forwardRef<
 
     ref={ref}
 
-    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    className={cn("flex flex-col space-y-1.5 mb-3", className)}
 
     {...props}
 
@@ -186,7 +186,7 @@ const CardContent = React.forwardRef<
 
 >(({ className, children, ...props }, ref) => (
 
-  <div ref={ref} className={cn("p-6 pt-0", className)} {...props}>
+  <div ref={ref} className={cn("p-0 pt-0", className)} {...props}>
 
     {children}
 

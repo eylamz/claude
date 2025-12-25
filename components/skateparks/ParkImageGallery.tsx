@@ -5,11 +5,17 @@ import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import FullscreenImageViewer from './FullscreenImageViewer';
-import { Plus, Minus } from 'lucide-react';
+import { Button } from '../ui';
+import { Icon } from '@/components/icons';
 
 interface ParkImageGalleryProps {
   images: { url: string; alt?: string }[];
   className?: string;
+  parkName?: string;
+  closingYear?: number | null;
+  area?: 'north' | 'center' | 'south';
+  updatedAt?: string | Date;
+  locale?: string;
 }
 
 // Creates optimized versions of Cloudinary images
@@ -42,7 +48,7 @@ const OptimizedImage = React.memo(({
   return (
     <div className={cn('relative w-full h-full overflow-hidden', className)}>
       {!isLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center backdrop-blur-lg bg-gray-50/75 dark:bg-gray-900/75 z-10">
+        <div className="absolute inset-0 flex items-center justify-center backdrop-blur-lg bg-card dark:bg-white/5 z-10">
           <LoadingSpinner />
         </div>
       )}
@@ -50,7 +56,7 @@ const OptimizedImage = React.memo(({
         src={getOptimizedImageUrl(url, 1200, 90)}
         alt={alt || `Image ${index + 1}`}
         className={cn(
-          'w-full h-full object-cover select-none transition-all duration-300 cursor-pointer hover:scale-105',
+          'w-full h-full object-cover select-none transition-all duration-300 cursor-zoom-in saturate-[1.3]',
           isLoaded ? 'opacity-100' : 'opacity-0'
         )}
         draggable={false}
@@ -120,7 +126,7 @@ const ImageContainer = ({
         isInViewport && 'animate-fadeInUp'
       )}
       style={{
-        boxShadow: '0 1px 1px #7a5d4413, 0 2px 2px #7a5d4413, 0 4px 4px #7a5d4413, 0 8px 8px #7a5d4413, 0 16px 16px #7a5d4413'
+        boxShadow: '0 1px 1px #66666612, 0 2px 2px #5e5e5e12, 0 4px 4px #7a5d4413, 0 8px 8px #5e5e5e12, 0 16px 16px #5e5e5e12'
       }}
       onClick={onClick}
     >
@@ -129,7 +135,15 @@ const ImageContainer = ({
   );
 };
 
-const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
+const ParkImageGallery = ({ 
+  images, 
+  className, 
+  parkName = '',
+  closingYear,
+  area = 'center',
+  updatedAt,
+  locale = 'en'
+}: ParkImageGalleryProps) => {
   const t = useTranslations('skateparks');
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
@@ -214,7 +228,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
             {/* Main Image - Takes 2/3 of width if side images exist, full width if not */}
             <ImageContainer
               className={cn(
-                "relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group",
+                "relative aspect-[4/3] rounded-xl overflow-hidden cursor-zoom-in",
                 sideImages.length > 0 ? "w-2/3" : "w-full"
               )}
               onClick={() => handleImageClick(0)}
@@ -225,11 +239,9 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                 alt={mainImage.alt}
                 onClick={handleImageClick}
               />
-              {/* Overlay on hover */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                <div className="transition-opacity duration-300 text-white text-sm bg-black/50 px-4 py-2 rounded-lg">
-                  Click to view fullscreen
-                </div>
+              {/* Search Icon Overlay */}
+              <div className={`absolute top-2 rounded-xl  ${locale === 'he' ? 'right-2' : 'left-2'} z-20 bg-background-dark/70 backdrop-blur-sm  flex items-start justify-start p-2`}>
+                <Icon name="zoomIn" className="w-4 h-4 text-white" />
               </div>
             </ImageContainer>
 
@@ -239,7 +251,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                 {sideImages.map((image, index) => (
                   <ImageContainer
                     key={index + 1}
-                    className="relative flex-1 rounded-xl overflow-hidden cursor-pointer group"
+                    className="relative flex-1 rounded-xl overflow-hidden cursor-zoom-in"
                     onClick={() => handleImageClick(index + 1)}
                   >
                     <OptimizedImage 
@@ -248,12 +260,6 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                       alt={image.alt}
                       onClick={handleImageClick}
                     />
-                    {/* Overlay on hover */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                      <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                        View
-                      </div>
-                    </div>
                   </ImageContainer>
                 ))}
               </div>
@@ -264,7 +270,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
           <div className="md:hidden flex flex-col gap-2 p-2">
             {/* Main Image - Full width */}
             <ImageContainer
-              className="relative w-full aspect-video rounded-xl overflow-hidden cursor-pointer group"
+              className="relative w-full aspect-video rounded-xl overflow-hidden cursor-zoom-in"
               onClick={() => handleImageClick(0)}
             >
               <OptimizedImage 
@@ -273,11 +279,9 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                 alt={mainImage.alt}
                 onClick={handleImageClick}
               />
-              {/* Overlay on hover */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                <div className="transition-opacity duration-300 text-white text-sm bg-black/50 px-4 py-2 rounded-lg">
-                  Click to view fullscreen
-                </div>
+              {/* Search Icon Overlay */}
+              <div className={`absolute min-w-full inset-y-0 ${locale === 'he' ? 'right-0' : 'left-0'} z-20 bg-gradient-to-b from-black/40 via-black/30 to-transparent flex items-start justify-start pt-2`}>
+                <Icon name="sunBold" className="w-4 h-4 text-white" />
               </div>
             </ImageContainer>
 
@@ -287,7 +291,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                 {sideImages.map((image, index) => (
                   <ImageContainer
                     key={index + 1}
-                    className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group"
+                    className="relative aspect-video rounded-xl overflow-hidden cursor-zoom-in"
                     onClick={() => handleImageClick(index + 1)}
                   >
                     <OptimizedImage 
@@ -296,12 +300,6 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                       alt={image.alt}
                       onClick={handleImageClick}
                     />
-                    {/* Overlay on hover */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                      <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                        View
-                      </div>
-                    </div>
                   </ImageContainer>
                 ))}
               </div>
@@ -316,7 +314,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                     return (
                       <div key={rowIndex} className="flex flex-row gap-2">
                         <ImageContainer
-                          className="relative w-2/3 aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group"
+                          className="relative w-2/3 aspect-[4/3] rounded-xl overflow-hidden cursor-zoom-in"
                           onClick={() => handleImageClick(row.startIndex)}
                         >
                           <OptimizedImage 
@@ -325,17 +323,12 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                             alt={row.images[0].alt}
                             onClick={handleImageClick}
                           />
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                            <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                              View
-                            </div>
-                          </div>
                         </ImageContainer>
                         <div className="flex flex-col w-1/3 gap-2">
                           {row.images.slice(1).map((image, imgIndex) => (
                             <ImageContainer
                               key={imgIndex}
-                              className="relative flex-1 rounded-xl overflow-hidden cursor-pointer group"
+                              className="relative flex-1 rounded-xl overflow-hidden cursor-zoom-in"
                               onClick={() => handleImageClick(row.startIndex + imgIndex + 1)}
                             >
                               <OptimizedImage 
@@ -344,11 +337,6 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                                 alt={image.alt}
                                 onClick={handleImageClick}
                               />
-                              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                                <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                                  View
-                                </div>
-                              </div>
                             </ImageContainer>
                           ))}
                         </div>
@@ -362,7 +350,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                           {row.images.slice(0, 2).map((image, imgIndex) => (
                             <ImageContainer
                               key={imgIndex}
-                              className="relative flex-1 rounded-xl overflow-hidden cursor-pointer group"
+                              className="relative flex-1 rounded-xl overflow-hidden cursor-zoom-in"
                               onClick={() => handleImageClick(row.startIndex + imgIndex)}
                             >
                               <OptimizedImage 
@@ -371,16 +359,11 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                                 alt={image.alt}
                                 onClick={handleImageClick}
                               />
-                              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                                <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                                  View
-                                </div>
-                              </div>
                             </ImageContainer>
                           ))}
                         </div>
                         <ImageContainer
-                          className="relative w-2/3 aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group"
+                          className="relative w-2/3 aspect-[4/3] rounded-xl overflow-hidden cursor-zoom-in"
                           onClick={() => handleImageClick(row.startIndex + 2)}
                         >
                           <OptimizedImage 
@@ -389,11 +372,6 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                             alt={row.images[2].alt}
                             onClick={handleImageClick}
                           />
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                            <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                              View
-                            </div>
-                          </div>
                         </ImageContainer>
                       </div>
                     );
@@ -404,7 +382,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                         {row.images.map((image, imgIndex) => (
                           <ImageContainer
                             key={imgIndex}
-                            className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group"
+                            className="relative aspect-video rounded-xl overflow-hidden cursor-zoom-in"
                             onClick={() => handleImageClick(row.startIndex + imgIndex)}
                           >
                             <OptimizedImage 
@@ -413,11 +391,6 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                               alt={image.alt}
                               onClick={handleImageClick}
                             />
-                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                              <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                                View
-                              </div>
-                            </div>
                           </ImageContainer>
                         ))}
                       </div>
@@ -429,7 +402,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                         {row.images.map((image, imgIndex) => (
                           <ImageContainer
                             key={imgIndex}
-                            className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group"
+                            className="relative aspect-video rounded-xl overflow-hidden cursor-zoom-in"
                             onClick={() => handleImageClick(row.startIndex + imgIndex)}
                           >
                             <OptimizedImage 
@@ -438,11 +411,6 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                               alt={image.alt}
                               onClick={handleImageClick}
                             />
-                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                              <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                                View
-                              </div>
-                            </div>
                           </ImageContainer>
                         ))}
                       </div>
@@ -452,7 +420,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                     return (
                       <div key={rowIndex} className="w-full">
                         <ImageContainer
-                          className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group"
+                          className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-zoom-in"
                           onClick={() => handleImageClick(row.startIndex)}
                         >
                           <OptimizedImage 
@@ -461,11 +429,6 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                             alt={row.images[0].alt}
                             onClick={handleImageClick}
                           />
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                            <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                              View
-                            </div>
-                          </div>
                         </ImageContainer>
                       </div>
                     );
@@ -485,7 +448,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                   return (
                     <div key={rowIndex} className="flex flex-row gap-2">
                       <ImageContainer
-                        className="relative w-2/3 aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group"
+                          className="relative w-2/3 aspect-[4/3] rounded-xl overflow-hidden cursor-zoom-in"
                         onClick={() => handleImageClick(row.startIndex)}
                       >
                         <OptimizedImage 
@@ -494,17 +457,12 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                           alt={row.images[0].alt}
                           onClick={handleImageClick}
                         />
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                          <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                            View
-                          </div>
-                        </div>
                       </ImageContainer>
                       <div className="flex flex-col w-1/3 gap-2">
                         {row.images.slice(1).map((image, imgIndex) => (
                           <ImageContainer
                             key={imgIndex}
-                            className="relative flex-1 rounded-xl overflow-hidden cursor-pointer group"
+                            className="relative flex-1 rounded-xl overflow-hidden cursor-zoom-in"
                             onClick={() => handleImageClick(row.startIndex + imgIndex + 1)}
                           >
                             <OptimizedImage 
@@ -513,11 +471,6 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                               alt={image.alt}
                               onClick={handleImageClick}
                             />
-                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                              <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                                View
-                              </div>
-                            </div>
                           </ImageContainer>
                         ))}
                       </div>
@@ -531,7 +484,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                         {row.images.slice(0, 2).map((image, imgIndex) => (
                           <ImageContainer
                             key={imgIndex}
-                            className="relative flex-1 rounded-xl overflow-hidden cursor-pointer group"
+                            className="relative flex-1 rounded-xl overflow-hidden cursor-zoom-in"
                             onClick={() => handleImageClick(row.startIndex + imgIndex)}
                           >
                             <OptimizedImage 
@@ -540,16 +493,11 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                               alt={image.alt}
                               onClick={handleImageClick}
                             />
-                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                              <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                                View
-                              </div>
-                            </div>
                           </ImageContainer>
                         ))}
                       </div>
                       <ImageContainer
-                        className="relative w-2/3 aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group"
+                          className="relative w-2/3 aspect-[4/3] rounded-xl overflow-hidden cursor-zoom-in"
                         onClick={() => handleImageClick(row.startIndex + 2)}
                       >
                         <OptimizedImage 
@@ -558,11 +506,6 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                           alt={row.images[2].alt}
                           onClick={handleImageClick}
                         />
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                          <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                            View
-                          </div>
-                        </div>
                       </ImageContainer>
                     </div>
                   );
@@ -573,7 +516,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                       {row.images.map((image, imgIndex) => (
                         <ImageContainer
                           key={imgIndex}
-                          className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group"
+                          className="relative aspect-video rounded-xl overflow-hidden cursor-zoom-in"
                           onClick={() => handleImageClick(row.startIndex + imgIndex)}
                         >
                           <OptimizedImage 
@@ -582,11 +525,6 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                             alt={image.alt}
                             onClick={handleImageClick}
                           />
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                            <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                              View
-                            </div>
-                          </div>
                         </ImageContainer>
                       ))}
                     </div>
@@ -598,7 +536,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                       {row.images.map((image, imgIndex) => (
                         <ImageContainer
                           key={imgIndex}
-                          className="relative aspect-video rounded-xl overflow-hidden cursor-pointer group"
+                          className="relative aspect-video rounded-xl overflow-hidden cursor-zoom-in"
                           onClick={() => handleImageClick(row.startIndex + imgIndex)}
                         >
                           <OptimizedImage 
@@ -607,11 +545,6 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                             alt={image.alt}
                             onClick={handleImageClick}
                           />
-                          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                            <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                              View
-                            </div>
-                          </div>
                         </ImageContainer>
                       ))}
                     </div>
@@ -621,7 +554,7 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                   return (
                     <div key={rowIndex} className="w-full">
                       <ImageContainer
-                        className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group"
+                        className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-zoom-in"
                         onClick={() => handleImageClick(row.startIndex)}
                       >
                         <OptimizedImage 
@@ -630,11 +563,6 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
                           alt={row.images[0].alt}
                           onClick={handleImageClick}
                         />
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center backdrop-blur-[2px] group-hover:bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent to-black/50">
-                          <div className="transition-opacity duration-300 text-white text-xs bg-black/50 px-3 py-1.5 rounded-lg">
-                            View
-                          </div>
-                        </div>
                       </ImageContainer>
                     </div>
                   );
@@ -646,24 +574,79 @@ const ParkImageGallery = ({ images, className }: ParkImageGalleryProps) => {
 
           {/* Show More/Less Button */}
           {hasMoreImages && (
-            <div className="flex justify-center p-4 pt-2">
-              <button
-                onClick={() => setShowAllImages(!showAllImages)}
-                className="flex items-center gap-2 px-6 py-3 rounded-lg border border-border-dark/20 dark:border-text-secondary-dark/70 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300 font-medium"
-                aria-label={showAllImages ? t('showLessImages') : t('showMoreImages', { count: remainingImages.length })}
-              >
-                {showAllImages ? (
-                  <>
-                    <Minus className="w-5 h-5" />
-                    <span>{t('showLessImages')}</span>
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-5 h-5" />
-                    <span>{t('showMoreImages', { count: remainingImages.length })}</span>
-                  </>
-                )}
-              </button>
+            <div className="flex flex-col items-center gap-3 p-4 pt-2">
+              <div className="grid grid-cols-3 items-start gap-4 w-full">
+                {/* Share Button */}
+                <div 
+                  className={`flex ${locale === 'he' ? 'justify-end' : 'justify-start'}`}
+                  style={{ order: locale === 'he' ? 3 : 1 }}
+                >
+                  {parkName && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        if (typeof navigator !== 'undefined' && navigator.share) {
+                          navigator.share({
+                            title: parkName,
+                            text: `${parkName} - Skatepark`,
+                            url: typeof window !== 'undefined' ? window.location.href : '',
+                          }).catch((error) => {
+                            console.error('Error sharing:', error);
+                          });
+                        } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                          navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : '');
+                        }
+                      }}
+                      className={`px-2 py-1 rounded-lg font-medium transition-all duration-700  }`}
+                      aria-label="Share"
+                    >
+                      <Icon name="shareBold" className="-mt-[2px] w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+
+                {/* Show More/Less Button - Center */}
+                <div className="flex justify-center" style={{ order: 2 }}>
+                  <Button
+                    onClick={() => setShowAllImages(!showAllImages)}
+                    className="-mx-14 backdrop-blur-[2px] flex items-center gap-2 px-6 py-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/[7.5%] dark:hover:bg-white/[7.5%] transition-colors text-text-secondary dark:text-text-dark/70 font-medium opacity-0 animate-bounceDownSqueeze"
+                    aria-label={showAllImages ? t('showLessImages') : t('showMoreImages', { count: remainingImages.length })}
+                  >
+                    {showAllImages ? (
+                      <>
+                        <span>{t('showLessImages')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{t('showMoreImages', { count: remainingImages.length })}</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Last Updated Time */}
+                <div 
+                  className={`flex flex-col md:flex-row md:gap-1 ${locale === 'he' ? 'justify-start' : 'justify-end'} text-xs text-text/50 dark:text-text-dark/50`}
+                  style={{ order: locale === 'he' ? 1 : 3 }}
+                >
+                  {updatedAt && (
+                    <>
+                      <span>
+                        {locale === 'he' ? 'עודכן לאחרונה: ' : 'Last updated: '}
+                      </span>
+                      <span>
+                        {new Date(updatedAt).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+             
             </div>
           )}
         </div>

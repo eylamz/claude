@@ -5,7 +5,7 @@
 
 :root {
   --font-poppins: 'Poppins', sans-serif;
-  --font-arimo: 'Arimo', sans-serif;
+  --font-arimo:  'Arimo', system-ui, sans-serif;
   --background: #ffffff;
   --foreground: #171717;
   --text-primary: #1A1A1A;
@@ -35,7 +35,7 @@
     --font-size-small: 0.75rem;
 }
 
-/* Desktop font sizes */
+/* Desktop font sizes
 @media (min-width: 768px) {
   h1 { font-size: var(--h1-size); }
   h2 { font-size: var(--h2-size); }
@@ -46,7 +46,7 @@
   body { font-size: var(--body-font-size); }
   
 }
-/* Mobile font sizes */
+Mobile font sizes
 @media (max-width: 768px) {
   h1 { font-size: var(--h1-size-mobile); }
   h2 { font-size: var(--h2-size-mobile); }
@@ -55,7 +55,7 @@
   h5 { font-size: var(--h5-size-mobile); }
   h6 { font-size: var(--h6-size-mobile); }
   body { font-size: var(--body-font-size-mobile); }
-}
+} */
 
 @media (prefers-color-scheme: dark) {
   :root {

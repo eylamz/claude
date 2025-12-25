@@ -10,7 +10,7 @@ import Link from 'next/link';
 import Script from 'next/script';
 import { MapPin, Plus, Minus } from 'lucide-react';
 import { Icon } from '@/components/icons';
-import { Button } from '@/components/ui';
+import { Button, Badge } from '@/components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui';
@@ -100,6 +100,7 @@ interface Skatepark {
   closingMonth?: number | null;
   openingYear?: number | null;
   openingMonth?: number | null;
+  updatedAt?: string | Date;
 }
 
 interface NearbyPark {
@@ -229,7 +230,7 @@ function FormattedHours({
         {/* Header with closed badge */}
         <div className="flex items-center gap-2 text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5" />
-          <span className=" text-lg font-medium">{t('openingHours')}: </span>
+          <h3 className="text-base font-semibold">{t('openingHours')}: </h3>
           <span className="inline-flex items-center px-2 py-1 rounded text-sm font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border border-red-300 dark:border-red-700">
             {t('permanentlyClosed')}
           </span>
@@ -239,10 +240,10 @@ function FormattedHours({
         <div className="flex items-start gap-2">
           <div className="flex items-center gap-2">
             <Icon name="sun" className="w-5 h-5 text-gray-500" />
-            <span className="font-semibold">{t('lightingHours')}: </span>
+            <h4 className="text-base font-semibold">{t('lightingHours')}: </h4>
           </div>
           <div>
-            <span className="text-gray-500">{t('notApplicable')}</span>
+            <p className="text-base text-gray-500">{t('notApplicable')}</p>
           </div>
         </div>
       </div>
@@ -258,24 +259,27 @@ function FormattedHours({
         {/* 24/7 Header */}
         <div className="flex items-center gap-2 text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5" />
-          <span className="text-lg font-medium">{t('openingHours')}: </span>
-          <span className="inline-flex items-center px-2 py-1 rounded text-sm font-semibold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border border-green-300 dark:border-green-700">
-            {t('open247')}
-          </span>
+          <h3 className="text-base font-semibold">{t('openingHours')}: </h3>
+          <Badge 
+          variant="brandOutline" 
+          className="inline-flex items-center px-2 py-1 !rounded text-sm font-semibold"
+            >
+          {t('open247')}
+          </Badge>
         </div>
         
         {/* ALWAYS show lighting hours for 24/7 parks when is24Hours is true */}
         <div className="flex items-start gap-2">
           <div className="flex items-center gap-2">
-            <Icon name="sunBold" className={`w-5 h-5 ${lightingHours?.endTime ? 'text-yellow-500 dark:text-yellow-300' : 'text-gray-500'}`} />
-            <span className="font-semibold">{t('lightingHours')}: </span>
+            <Icon name="sunset" className={`w-5 h-5 ${lightingHours?.endTime ? 'text-yellow-500 dark:text-yellow-300' : 'text-gray-500'}`} />
+            <h4 className="text-base font-semibold">{t('lightingHours')}: </h4>
           </div>
           <div>
-            <span className={!lightingHours?.endTime ? 'text-gray-500' : ''}>
+            <p className={`text-base ${!lightingHours?.endTime ? 'text-gray-500' : ''}`}>
               {lightingHours?.endTime 
                 ? formatLightingHours(lightingHours.endTime, locale)
                 : t('noLighting')}
-            </span>
+            </p>
           </div>
         </div>
       </div>
@@ -309,22 +313,22 @@ function FormattedHours({
         {/* Header */}
         <div className="flex items-center gap-2 text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5 " />
-          <span className="text-lg font-medium">{t('openingHours')}</span>
+          <h3 className="text-base font-semibold">{t('openingHours')}</h3>
         </div>
         
         {/* All week hours */}
-        <div className="ml-6 flex items-start gap-1">
-          <span className="font-semibold text-gray-700 dark:text-gray-300 mr-2">
+        <div className="flex items-start gap-1">
+          <p className="text-base font-semibold text-gray-700 dark:text-gray-300 mr-2">
             {t('allWeek')} :
-          </span>
+          </p>
           
-          <span className={schedule.isOpen ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'}>
+          <p className={`text-base ${schedule.isOpen ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'}`}>
             {schedule.isOpen 
               ? scheduleKey === 'openAllDay'
                 ? t('openAllDay')
                 : formatTimeRange(schedule.openTime, schedule.closeTime, locale)
               : t('closedStatus')}
-          </span>
+          </p>
         </div>
       </div>
     );
@@ -342,34 +346,34 @@ function FormattedHours({
         {/* Header */}
         <div className="flex items-center gap-2  text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5 " />
-          <span className="text-lg font-medium">{t('openingHours')}</span>
+          <h3 className="text-base font-semibold">{t('openingHours')}</h3>
         </div>
         
         {/* All week hours */}
-        <div className="ml-6 space-y-2">
+        <div className="space-y-2">
           <div className="flex items-start gap-1">
-            <span className="font-semibold text-gray-700 dark:text-gray-300 mr-2">
+            <p className="text-base font-semibold text-gray-700 dark:text-gray-300 mr-2">
               {t('allWeek')} :
-            </span>
+            </p>
             
-            <span className={weekSchedule.isOpen ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'}>
+            <p className={`text-base ${weekSchedule.isOpen ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'}`}>
               {weekSchedule.isOpen 
                 ? formatTimeRange(weekSchedule.openTime, weekSchedule.closeTime, locale)
                 : t('closedStatus')}
-            </span>
+            </p>
           </div>
           
           {/* Holidays hours */}
           <div className="flex items-start gap-1">
-            <span className="font-semibold text-gray-700 dark:text-gray-300 mr-2">
+            <p className="text-base font-semibold text-gray-700 dark:text-gray-300 mr-2">
               {t('holidays')} :
-            </span>
+            </p>
             
-            <span className={holidaySchedule.isOpen ? 'text-gray-900 dark:text-white' : 'font-semibold text-red-600 dark:text-red-400'}>
+            <p className={`text-base ${holidaySchedule.isOpen ? 'text-gray-900 dark:text-white' : 'font-semibold text-red-600 dark:text-red-400'}`}>
               {holidaySchedule.isOpen 
                 ? formatTimeRange(holidaySchedule.openTime, holidaySchedule.closeTime, locale)
                 : t('closedStatus')}
-            </span>
+            </p>
           </div>
         </div>
       </div>
@@ -380,12 +384,12 @@ function FormattedHours({
     <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center gap-2 text-text dark:text-text-dark">
-        <Icon name="clockBold" className="w-5 h-5" />
-        <span className="text-lg font-medium">{t('openingHours')}</span>
+        <Icon name="clockBold" className="w-4 h-4" />
+        <h3 className="text-base font-semibold">{t('openingHours')}</h3>
       </div>
       
       {/* Hours by group */}
-      <div className="ml-6 space-y-2 text-text/80 dark:text-text-dark/80">
+      <div className="space-y-2 text-text/80 dark:text-text-dark/80">
         {sortScheduleKeys(Object.keys(groupedDays)).map(scheduleKey => {
           const days = groupedDays[scheduleKey];
           const schedule = hoursByGroup[scheduleKey];
@@ -400,17 +404,17 @@ function FormattedHours({
           
           return (
             <div key={scheduleKey} className="flex items-start gap-1">
-              <span className="font-semibold text-text/80 dark:text-text-dark/80 mr-2">
+              <p className="text-base font-semibold text-text/80 dark:text-text-dark/80 mr-2">
                 {daysDisplay} :
-              </span>
+              </p>
               
-              <span className={schedule.isOpen ? 'text-gray-900 dark:text-white' : 'font-semibold text-red-600 dark:text-red-400'}>
+              <p className={`text-base ${schedule.isOpen ? 'text-gray-900 dark:text-white' : 'font-semibold text-red-600 dark:text-red-400'}`}>
                 {schedule.isOpen 
                   ? (scheduleKey === 'openAllDay' || (schedule.openTime === '00:00' && schedule.closeTime === '00:00'))
                     ? t('openAllDay')
                     : formatTimeRange(schedule.openTime, schedule.closeTime, locale)
                   : t('closedStatus')}
-              </span>
+              </p>
             </div>
           );
         })}
@@ -904,7 +908,7 @@ export default function SkateparkPage() {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
+        <div className="max-w-7xl mx-auto  space-y-6">
           {/* Header Skeleton - Highest opacity */}
           <div className="flex justify-center -mb-5 mt-5 opacity-90">
             <Skeleton className="h-10 w-64 sm:w-96  " />
@@ -1003,7 +1007,7 @@ export default function SkateparkPage() {
     return (
       <div className="min-h-screen  flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-base font-bold text-gray-900 dark:text-white mb-2">
             {t('notFound')}
           </h1>
           <Link href={`/${locale}/skateparks`}>
@@ -1081,7 +1085,7 @@ export default function SkateparkPage() {
 
         <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
           {/* Header */}
-          <h1 className="-mb-5 mt-5 text-4xl font-bold text-center text-white">
+          <h1 className="mb-5 mt-5 text-2xl sm:text-3xl font-bold text-center text-black dark:text-white">
                     {/* Mobile version - splits on hyphens */}
                     <span className="sm:hidden">
                       {parkName.includes('-') ? 
@@ -1102,17 +1106,24 @@ export default function SkateparkPage() {
 
           {/* Image Gallery */}
         <div className="">
-          <div className="max-w-7xl mx-auto overflow-visible">
-            <ParkImageGallery images={getImageSliderImages(skatepark.images, locale, parkNameEn)} />
+          <div className="max-w-5xl mx-auto overflow-visible">
+            <ParkImageGallery 
+              images={getImageSliderImages(skatepark.images, locale, parkNameEn)} 
+              parkName={parkName}
+              closingYear={skatepark.closingYear}
+              area={skatepark.area}
+              updatedAt={skatepark.updatedAt}
+              locale={locale}
+            />
           </div>
         </div>
 
     
 
           {/* Info Cards */}
-          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 ">
             {/* Hours Card - Now using FormattedHours component */}
-            <Card className="text-text/80 dark:text-text-dark/80 p-4">
+            <Card className="text-text/80 dark:text-text-dark/80 md:p-4 shadow-none">
               <div className="flex gap-4 mb-4 justify-between">
                 <div className={locale === 'he' ? '-ml-10' : ''}>
                   <FormattedHours
@@ -1122,45 +1133,19 @@ export default function SkateparkPage() {
                     locale={locale}
                   />
                 </div>
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({
-                          title: parkName,
-                          text: `${parkName} - Skatepark in ${skatepark.area.charAt(0).toUpperCase() + skatepark.area.slice(1)}`,
-                          url: window.location.href
-                        }).catch(console.error);
-                      } else {
-                        navigator.clipboard.writeText(window.location.href);
-                        setAddressCopied(true);
-                        setTimeout(() => setAddressCopied(false), 2000);
-                      }
-                    }}
-                    className={`p-2 h-[35px] flex items-center justify-center rounded-lg ${
-                      skatepark.closingYear
-                        ? 'text-red-600 dark:text-red-400 shadow-md active:shadow-none border border-b-[4px] border-red-600 dark:border-red-400/20 active:border-b-[1px] active:translate-y-[2px] transition-all duration-700'
-                        : 'text-brand-main dark:text-brand-dark shadow-md active:shadow-none border border-b-[4px] border-brand-main dark:border-brand-dark/30 active:border-b-[1px] active:translate-y-[2px] transition-all duration-700'
-                    }`}
-                    aria-label="Share"
-                  >
-                    <Icon name="shareBold" className="w-5 h-5" />
-                  </button>
-                </div>
               </div>
 
               {/* Address Section */}
               <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
                 <div className="flex items-center mb-3">
-                  <h2 className="text-lg font-medium flex items-center gap-2 text-text dark:text-text-dark">
-                    <Icon name="locationBold" className={`w-5 h-5`} />
+                  <h3 className="text-base font-semibold flex items-center gap-2 text-text dark:text-text-dark">
+                    <Icon name="locationBold" className={`w-4 h-4`} />
                     {t('address')}
-                  </h2>
+                  </h3>
                 </div>
 
                 <div className="flex flex-col gap-2 mb-2">
-                  <span itemProp="address">{address}.</span>
+                  <p className="text-base" itemProp="address">{address}.</p>
                 </div>
               </div>
 
@@ -1168,29 +1153,29 @@ export default function SkateparkPage() {
               <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
                 <div className="flex flex-col flex-wrap gap-2 mb-2">
                   {skatepark.openingYear && (
-                    <span>
+                    <p className="text-base">
                       {skatepark.openingMonth 
                         ? `${t('openedDate')}${getMonthName(skatepark.openingMonth, locale)} ${skatepark.openingYear}`
                         : `${t('opened')} ${skatepark.openingYear}`
                       }.
-                    </span>
+                    </p>
                   )}
                   {skatepark.closingYear && (
-                    <span className='text-red-600 dark:text-red-400'>
+                    <p className="text-base text-red-600 dark:text-red-400">
                       {skatepark.closingMonth 
                         ? `${t('closedYearDate')}${getMonthName(skatepark.closingMonth, locale)} ${skatepark.closingYear}`
                         : `${t('closedYear')} ${skatepark.closingYear}`
                       }.
-                    </span>
+                    </p>
                   )}
                 </div>
               </div>
             </Card>
 
             {/* Amenities Card */}
-            <Card className="p-4 overflow-visible">
-              <div className="flex items-center justify-between mb-3 text-text dark:text-text-dark">
-                <h2 className="text-lg font-medium flex items-center gap-2">
+            <Card className="md:p-4 overflow-visible shadow-none">
+              <div className="flex items-center justify-center mb-3 text-text dark:text-text-dark">
+                <h2 className="text-base font-medium flex items-center gap-2">
                   <Icon name="notesBold" className={`w-5 h-5`} />
                   {t('amenities.title')}
                 </h2>
@@ -1232,18 +1217,18 @@ export default function SkateparkPage() {
                                     }`}
                                   />
                                 </div>
-                                <div className={`text-xs font-thin transition-all duration-300 ${
+                                <p className={`text-sm font-thin transition-all duration-300 ${
                                   amenitiesActive
                                     ? 'text-text dark:text-text-dark'
                                     : 'text-gray-400 dark:text-text-dark/50 line-through'
                                 }`}>
                                   {t(`amenities.${key}`) || key.replace(/([A-Z])/g, ' $1').trim()}
-                                </div>
+                                </p>
                               </div>
                             </div>
                           </TooltipTrigger>
                           <TooltipContent side="top" className="max-w-[200px] whitespace-normal">
-                            <div>{t(`amenities.${key}Description`)}</div>
+                            <p className="text-sm">{t(`amenities.${key}Description`)}</p>
                           </TooltipContent>
                         </Tooltip>
                       ) : (
@@ -1255,9 +1240,9 @@ export default function SkateparkPage() {
                                 className="w-5 h-5 mx-auto text-gray-400 dark:text-[#40535e]"
                                 />
                             </div>
-                            <div className="text-xs font-thin text-gray-400 dark:text-text-dark/50 line-through">
+                            <p className="text-sm font-thin text-gray-400 dark:text-text-dark/50 line-through">
                               {t(`amenities.${key}`) || key.replace(/([A-Z])/g, ' $1').trim()}
-                            </div>
+                            </p>
                           </div>
                         </div>
                       )}
@@ -1268,146 +1253,161 @@ export default function SkateparkPage() {
             </Card>
           </div>
 
-          {/* Notes Card */}
-          {notes && notes.trim() !== '' && (
-            <div className="max-w-6xl mx-auto mb-8">
-              <Card className="p-4">
-                <div className="flex items-center mb-3 text-text dark:text-text-dark">
-                  <h2 className="text-lg font-medium flex items-center gap-2">
-                    <Icon name="infoBold" className={`w-5 h-5`} />
-                    {t('notes')}
-                  </h2>
-                </div>
+          {/* Notes and Get Directions Combined Section */}
+          <div className="max-w-6xl mx-auto mb-8">
+            <Card className={`shadow-none transition-all duration-200 transform-gpu ${notes && notes.trim() !== '' ? 'grid grid-cols-1 md:grid-cols-2 gap-6 overflow-visible' : ''}`}>
+              {/* Notes Section */}
+              {notes && notes.trim() !== '' && (
+                <div className="md:p-4">
+                  <div className="flex items-center mb-3 text-text dark:text-text-dark">
+                    <h2 className="text-base font-medium flex items-center gap-2">
+                      <Icon name="infoBold" className={`w-5 h-5`} />
+                      {t('notes')}
+                    </h2>
+                  </div>
 
-                <div className="space-y-2">
-                  {notes.split('\n').filter(note => note.trim()).map((note, index) => (
-                    <div key={index} className="bg-gray-50/40 dark:bg-gray-400/10 w-fit px-2.5 py-1.5 rounded-md text-gray-900 dark:text-gray-300">
-                      <div className="text-sm">
-                        • {note.trim()}.
+                  <div className="space-y-2">
+                    {notes.split('\n').filter(note => note.trim()).map((note, index) => (
+                      <div key={index} className="bg-gray-50/40 dark:bg-gray-400/10 w-fit px-2.5 py-1.5 rounded-md text-gray-900 dark:text-gray-300">
+                        <p className="text-base">
+                          • {note.trim()}.
+                        </p>
                       </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Get Directions Section */}
+              <Suspense fallback={
+                <div className="w-full h-32 flex items-center justify-center">
+                  <LoadingSpinner className="h-32" />
+                </div>
+              }>
+                <section 
+                  aria-labelledby="directions-heading"
+                  key={`map-links-${locale}`}
+                  className="space-y-4 md:p-4"
+                >
+                  <h2 id="directions-heading" className="sr-only">{t('getDirections')}</h2>
+                  <div className="flex flex-col space-y-4 !mt-0">
+                    <div className="flex items-center gap-2 justify-start md:justify-center">
+                      <Icon name="mapBold" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
+                      <h3 className="font-semibold text-base text-gray-900 dark:text-[#f2f2f2]">
+                        {t('getDirections')}
+                      </h3>
                     </div>
-                  ))}
-                </div>
-              </Card>
-            </div>
-          )}
 
-          {/* Get Directions Section */}
-          <Card className="w-full !max-w-6xl mx-auto p-4 transition-all duration-200 transform-gpu">
-            <Suspense fallback={
-              <div className="w-full h-32 flex items-center justify-center">
-                <LoadingSpinner className="h-32" />
-              </div>
-            }>
-              <section 
-                aria-labelledby="directions-heading"
-                key={`map-links-${locale}`}
-                className="space-y-4"
-              >
-                <h2 id="directions-heading" className="sr-only">{t('getDirections')}</h2>
-                <div className="flex flex-col space-y-4 !mt-0">
-                  <div className="flex items-center gap-2 ">
-                    <Icon name="mapBold" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
-                    <h3 className="font-semibold text-lg text-gray-900 dark:text-[#f2f2f2]">
-                      {t('getDirections')}
-                    </h3>
+                    <div className="mx-auto w-full max-w-[220px] xsm:max-w-none flex flex-wrap justify-center gap-6 items-center">
+                      {/* Waze Map Link with Tooltip */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a 
+                            href={generateWazeUrl()} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            aria-label={`${t('waze')} ${parkName}`}
+                            className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
+                          >
+                            <Icon 
+                              name={theme === 'dark' ? "wazeDark" : "wazeBold"} 
+                              className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-[#1acdff] dark:text-gray-100 overflow-visible"
+                              style={{
+                                filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
+                              }}
+                            />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p className="text-sm">{t('waze')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      {/* Moovit Link with Tooltip */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a 
+                            href={generateMoovitUrl()} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            aria-label={`${t('moovit')} ${parkName}`}
+                            className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
+                          >
+                            <Icon 
+                              name={theme === 'dark' ? "moovitDark" : "moovit"} 
+                              className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-white dark:text-text overflow-visible"
+                              style={{
+                                filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
+                              }}
+                            />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p className="text-sm">{t('moovit')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      {/* Apple Maps Link with Tooltip */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a 
+                            href={generateAppleMapsUrl()} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            aria-label={`${t('appleMaps')} ${parkName}`}
+                            className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
+                          >
+                            <Icon 
+                              name={theme === 'dark' ? "newAppleMapsDark" : "newAppleMaps"} 
+                              className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-[#3a3a3a] dark:text-gray-300 overflow-visible"
+                              style={{
+                                filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
+                              }}
+                            />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p className="text-sm">{t('appleMaps')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+
+                      {/* Google Maps Link with Tooltip */}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a 
+                            href={generateGoogleMapsUrl()} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            aria-label={`${t('googleMaps')} ${parkName}`}
+                            className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
+                          >
+                            <Icon 
+                              name="newGoogleMaps" 
+                              className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-white dark:text-text overflow-visible"
+                              style={{
+                                filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
+                              }}
+                            />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p className="text-sm">{t('googleMaps')}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                   </div>
+                </section>
+              </Suspense>
+            </Card>
+          </div>
 
-                  <div className="mx-auto w-full max-w-[220px] xsm:max-w-none flex flex-wrap justify-center gap-6 items-center">
-                    {/* Waze Map Link with Tooltip */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <a 
-                          href={generateWazeUrl()} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          aria-label={`${t('waze')} ${parkName}`}
-                          className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
-                        >
-                          <Icon 
-                            name={theme === 'dark' ? "wazeDark" : "wazeBold"} 
-                            className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-[#1acdff] dark:text-gray-100 drop-shadow-md dark:drop-shadow-lg overflow-visible"
-                          />
-                        </a>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        {t('waze')}
-                      </TooltipContent>
-                    </Tooltip>
 
-                    {/* Moovit Link with Tooltip */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <a 
-                          href={generateMoovitUrl()} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          aria-label={`${t('moovit')} ${parkName}`}
-                          className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
-                        >
-                          <Icon 
-                            name={theme === 'dark' ? "moovitDark" : "moovit"} 
-                            className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-white dark:text-text drop-shadow-md dark:drop-shadow-lg overflow-visible"
-                          />
-                        </a>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        {t('moovit')}
-                      </TooltipContent>
-                    </Tooltip>
-
-                    {/* Apple Maps Link with Tooltip */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <a 
-                          href={generateAppleMapsUrl()} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          aria-label={`${t('appleMaps')} ${parkName}`}
-                          className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
-                        >
-                          <Icon 
-                            name={theme === 'dark' ? "newAppleMapsDark" : "newAppleMaps"} 
-                            className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-[#3a3a3a] dark:text-gray-300 drop-shadow-md dark:drop-shadow-lg overflow-visible"
-                          />
-                        </a>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        {t('appleMaps')}
-                      </TooltipContent>
-                    </Tooltip>
-
-                    {/* Google Maps Link with Tooltip */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <a 
-                          href={generateGoogleMapsUrl()} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          aria-label={`${t('googleMaps')} ${parkName}`}
-                          className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
-                        >
-                          <Icon 
-                            name="newGoogleMaps" 
-                            className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-white dark:text-text drop-shadow-md dark:drop-shadow-lg overflow-visible"
-                          />
-                        </a>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        {t('googleMaps')}
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </div>
-              </section>
-            </Suspense>
-          </Card>
 
           {/* YouTube Embed */}
           {skatepark.mediaLinks.youtube && (
             <Card className="w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
               <CardHeader>
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                <CardTitle className="text-base font-medium flex items-center gap-2">
                   <Icon name="youtube" className="w-5 h-5" />
                   {t('video')}
                 </CardTitle>
@@ -1430,7 +1430,7 @@ export default function SkateparkPage() {
                 {/* Border */}
                 <div className="absolute inset-0 pointer-events-none rounded-3xl bord"></div>
                 
-                {(() => {
+                  {(() => {
                   const iframeSrc = getGoogleMapsIframeSrc();
                   
                   if (iframeSrc) {
@@ -1459,7 +1459,7 @@ export default function SkateparkPage() {
                   } else {
                     return (
                       <div className="w-full h-full flex items-center justify-center">
-                        <p className="text-muted-foreground">
+                        <p className="text-base text-muted-foreground">
                           {tCommon('mapNotAvailable')}
                         </p>
                       </div>
@@ -1471,10 +1471,11 @@ export default function SkateparkPage() {
           )}
 
           {/* Reviews Section */}
-          <Card className="w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
-            <CardHeader>
+          <Card
+            className="!shadow-none md:border border-border dark:border-border-dark w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
+            <CardHeader className="">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                <CardTitle className="text-base font-medium flex items-center gap-2">
                   <Icon name="messages" className="w-5 h-5" />
                   {t('reviewsCount')}
                 </CardTitle>
@@ -1495,37 +1496,37 @@ export default function SkateparkPage() {
                 )}
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="">
               {reviews.length > 0 && (
                 <>
                   {/* Rating Distribution */}
-                  <div className="mb-6 space-y-2">
+                  <div className=" mb-6 space-y-2">
                     {ratingDistribution.map(({ rating, count, percentage }) => (
-                      <div key={rating} className="flex items-center gap-3">
-                        <span className="text-sm font-medium w-12">{rating} {t('stars')}</span>
-                        <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div key={rating} className="flex items-center justify-center gap-3">
+                        <p className="text-base font-medium w-12">{rating} {t('stars')}</p>
+                        <div className="w-full flex-1 h-2 bg-card dark:bg-card-dark rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-yellow-400"
+                            className="h-full bg-brand-yellow"
                             style={{ width: `${percentage}%` }}
                           />
                         </div>
-                        <span className="text-sm text-gray-600 dark:text-gray-400 w-12 text-right">
+                        <p className="text-base text-gray-600 dark:text-gray-400 w-4 text-right">
                           {count}
-                        </span>
+                        </p>
                       </div>
                     ))}
                   </div>
 
                   {/* Review Cards */}
-                  <div className="space-y-4">
+                  <div className="space-y-4 ">
                     {(reviewsExpanded ? sortedReviews : sortedReviews.slice(0, 3)).map((review) => (
                       <div
                         key={review._id}
-                        className="border border-border-dark/20 dark:border-text-secondary-dark/70 rounded-lg p-4"
+                        className="opacity-0 bg-card dark:bg-card-dark rounded-lg p-4 animate-fadeInDown"
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div>
-                            <p className="font-semibold text-gray-900 dark:text-white">
+                            <p className="text-base font-semibold text-gray-900 dark:text-white">
                               {review.userName}
                             </p>
                             <div className="flex items-center gap-1 mt-1">
@@ -1535,18 +1536,18 @@ export default function SkateparkPage() {
                                   name="star"
                                   className={`w-4 h-4 ${
                                     star <= review.rating
-                                      ? 'fill-yellow-400 text-yellow-400'
-                                      : 'text-gray-300 dark:text-gray-600'
+                                      ? 'fill-brand-yellow text-brand-yellow'
+                                      : 'text-text-secondary dark:text-text-secondary'
                                   }`}
                                 />
                               ))}
                             </div>
                           </div>
-                          <span className="text-sm text-gray-500 dark:text-gray-400">
+                          <time className="text-base text-gray-500 dark:text-gray-400">
                             {new Date(review.createdAt).toLocaleDateString()}
-                          </span>
+                          </time>
                         </div>
-                        <p className="text-gray-700 dark:text-gray-300 mt-2">
+                        <p className="text-base text-gray-700 dark:text-gray-300 mt-2">
                           {review.comment}
                         </p>
                       </div>
@@ -1558,15 +1559,10 @@ export default function SkateparkPage() {
                     <div className="mt-4 flex justify-center">
                       <button
                         onClick={() => setReviewsExpanded(!reviewsExpanded)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border-dark/20 dark:border-text-secondary-dark/70 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300"
+                        className="flex items-center gap-2 px-6 py-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/[7.5%] dark:hover:bg-white/[7.5%] transition-colors text-text-secondary dark:text-text-dark/70"
                         aria-label={reviewsExpanded ? t('showLessReviews') : t('showMoreReviews', { count: sortedReviews.length - 3 })}
                       >
-                        {reviewsExpanded ? (
-                          <Minus className="w-5 h-5" />
-                        ) : (
-                          <Plus className="w-5 h-5" />
-                        )}
-                        <span className="font-medium">
+                        <span className=" text-base font-medium">
                           {reviewsExpanded 
                             ? t('showLessReviews')
                             : t('showMoreReviews', { count: sortedReviews.length - 3 })}
@@ -1580,7 +1576,7 @@ export default function SkateparkPage() {
               {reviews.length === 0 && (
                 <div className="py-8 text-center text-text/70 dark:text-text-dark/70 transition-colors duration-200">
                   <Icon name="messages" className="w-12 h-12 mx-auto mb-3" />
-                  <p className=" mb-4">
+                  <p className="text-base mb-4">
                     {t('noReviewsYet')}
                   </p>
                 </div>
@@ -1593,7 +1589,7 @@ export default function SkateparkPage() {
             <Card className="w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
               <CardHeader className="flex flex-row items-center justify-start gap-2  text-text dark:text-text-dark">
               <Icon name="trees" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
-                <CardTitle className="!mt-0 text-lg font-medium">{t('nearbySkateparks')}</CardTitle>
+                <CardTitle className="!mt-0 text-base font-medium">{t('nearbySkateparks')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex flex-col sm:grid sm-grid-cols-2 md:grid-cols-3 gap-4">
@@ -1642,22 +1638,22 @@ export default function SkateparkPage() {
                         </div>
                         
                         <div className="px-4 py-3 space-y-1">
-                          <h3 className="text-lg font-semibold truncate">
+                          <h3 className="text-base font-semibold truncate">
                             {nearbyName}
                           </h3>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
                               <MapPin className="w-3.5 h-3.5 shrink-0" />
-                              <span className="text-sm truncate">
+                              <p className="text-base truncate">
                                 {distanceText ? `${areaLabel} ${distanceText}` : areaLabel}
-                              </span>
+                              </p>
                             </div>
                             {park.rating > 0 && (
                               <div className="flex items-center gap-1">
                                 <Icon name="star" className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                <p className="text-base font-medium text-gray-900 dark:text-white">
                                   {park.rating.toFixed(1)}
-                                </span>
+                                </p>
                               </div>
                             )}
                           </div>
@@ -1686,7 +1682,7 @@ export default function SkateparkPage() {
             <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10 rounded-lg shadow-sm border border-border-dark/20 dark:border-text-secondary-dark/70 p-4 backdrop-blur-custom bg-white/80 dark:bg-gray-800/70">
               {/* Header */}
               <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-6 flex items-center justify-between z-10">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t('writeReview')}</h2>
+                <h2 className="text-base font-bold text-gray-900 dark:text-white">{t('writeReview')}</h2>
                 <button
                   onClick={() => setShowAddReview(false)}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"

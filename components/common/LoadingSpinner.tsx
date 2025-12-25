@@ -20,7 +20,7 @@ export const LoadingSpinner: React.FC<{
       case 'header':
         return 'border-gray-900 dark:border-gray-100';
       default:
-        return 'border-blue-600 dark:border-blue-400';
+        return 'border-brand-main dark:border-brand-dark';
     }
   };
 

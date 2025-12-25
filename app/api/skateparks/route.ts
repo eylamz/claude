@@ -130,6 +130,7 @@ export async function GET(request: NextRequest) {
         mediaLinks: park.mediaLinks || {},
         status: park.status || 'active',
         createdAt: park.createdAt || null,
+        updatedAt: park.updatedAt || null,
         distance,
       };
     });
