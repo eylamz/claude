@@ -6,6 +6,8 @@ import User from '@/lib/models/User';
 import Skatepark from '@/lib/models/Skatepark';
 import mongoose from 'mongoose';
 import { isBlocked, record404, recordSuccess } from '@/lib/utils/circuitBreaker';
+import { revalidatePath } from 'next/cache';
+import { locales } from '@/i18n';
 
 const ENDPOINT = '/api/admin/skateparks/[id]';
 
@@ -157,6 +159,9 @@ export async function PUT(
       record404(ENDPOINT, id);
       return NextResponse.json({ error: 'Skatepark not found' }, { status: 404 });
     }
+
+    // Store old slug before any updates
+    const oldSlug = skatepark.slug;
 
     const body = await request.json();
     console.log('Update request body keys:', Object.keys(body));
@@ -481,6 +486,26 @@ export async function PUT(
     
     console.log('Skatepark saved successfully');
 
+    // Revalidate the updated skatepark page for all locales
+    const currentSlug = savedSkatepark.slug;
+    
+    // Revalidate current slug pages
+    for (const locale of locales) {
+      revalidatePath(`/${locale}/skateparks/${currentSlug}`, 'page');
+    }
+    
+    // If slug changed, also revalidate old slug pages
+    if (oldSlug && oldSlug !== currentSlug) {
+      for (const locale of locales) {
+        revalidatePath(`/${locale}/skateparks/${oldSlug}`, 'page');
+      }
+    }
+    
+    // Also revalidate the skateparks listing page
+    for (const locale of locales) {
+      revalidatePath(`/${locale}/skateparks`, 'page');
+    }
+
     // Record success to reset counter
     recordSuccess(ENDPOINT, id);
 
@@ -543,6 +568,17 @@ export async function DELETE(
       // Record 404 error
       record404(ENDPOINT, id);
       return NextResponse.json({ error: 'Skatepark not found' }, { status: 404 });
+    }
+
+    // Revalidate the deleted skatepark page for all locales
+    const deletedSlug = skatepark.slug;
+    for (const locale of locales) {
+      revalidatePath(`/${locale}/skateparks/${deletedSlug}`, 'page');
+    }
+    
+    // Also revalidate the skateparks listing page
+    for (const locale of locales) {
+      revalidatePath(`/${locale}/skateparks`, 'page');
     }
 
     // Record success to reset counter (even for delete)

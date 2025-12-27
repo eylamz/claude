@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import Skatepark from '@/lib/models/Skatepark';
+import { revalidatePath } from 'next/cache';
+import { locales } from '@/i18n';
 
 export async function GET(request: Request) {
   try {
@@ -298,6 +300,15 @@ export async function POST(request: Request) {
     const newSkatepark = new Skatepark(skateparkData);
 
     await newSkatepark.save();
+
+    // Revalidate the new skatepark page for all locales
+    for (const locale of locales) {
+      revalidatePath(`/${locale}/skateparks/${newSkatepark.slug}`, 'page');
+    }
+    // Also revalidate the skateparks listing page
+    for (const locale of locales) {
+      revalidatePath(`/${locale}/skateparks`, 'page');
+    }
 
     return NextResponse.json(
       { message: 'Skatepark created successfully', skatepark: newSkatepark },

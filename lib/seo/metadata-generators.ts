@@ -84,7 +84,7 @@ export async function generateSkateparkMetadata(params: { slug: string; locale: 
 
             // Build locale-specific title
             const title = locale === 'he' 
-              ? `סקייטפארק ${name} | ENBOSS`
+              ? `אנבוס | סקייטפארק ${name}`
               : `${name} Skatepark | ENBOSS`;
 
             const metadata = genMeta({
@@ -143,7 +143,7 @@ export async function generateSkateparkMetadata(params: { slug: string; locale: 
 
     // Build locale-specific title
     const title = locale === 'he' 
-      ? `סקייטפארק ${name} | ENBOSS`
+      ? `אנבוס | סקייטפארק ${name}`
       : `${name} Skatepark | ENBOSS`;
 
     const metadata = genMeta({
