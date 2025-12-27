@@ -8,7 +8,6 @@ import Helmet from './helmet.svg';
 import Toilet from './toilet.svg';
 import Parking from './parking.svg';
 import Guard from './securityGuard.svg';
-import Broom from './broom.svg';
 import Scoot from './scooter.svg';
 import Bike from './bmx-icon.svg';
 import BombShelter from './safe-house.svg';
@@ -51,6 +50,7 @@ import LogoHostage2 from './logo-hostage2.svg';
 import LogoHostage3 from './logo-hostage3.svg';
 import GymWeightBold from './gymWeightBold.svg';
 import GymWeight from './gymWeight.svg';
+import Wrench from './wrench.svg';
 import WrenchBold from './wrenchBold.svg';
 import GoogleMaps from './googleMaps.svg';
 import newGoogleMaps from './newGoogleMaps.svg';
@@ -156,6 +156,12 @@ import Accessibility from './accessibility.svg';
 import AccessibilityBold from './accessibilityBold.svg';
 import Terms from './terms.svg';
 import TermsBold from './termsBold.svg';
+import Chart from './chart.svg';
+import ChartBold from './chartBold.svg';
+import Objects from './objects.svg';
+import ObjectsBold from './objectsBold.svg';
+import BroomBold from './broomBold.svg';
+
 
 // Type for SVG components (Next.js imports SVGs as URLs by default)
 type SvgComponent = React.ComponentType<React.SVGProps<SVGSVGElement>> | string;
@@ -170,7 +176,6 @@ const iconMap: Record<string, SvgComponent> = {
   toilet: Toilet,
   parking: Parking,
   securityGuard: Guard,
-  broom: Broom,
   scooter: Scoot,
   'bmx-icon': Bike,
   'safe-house': BombShelter,
@@ -215,6 +220,8 @@ const iconMap: Record<string, SvgComponent> = {
   englishBold: EnglishBold,
   book: Book,
   bookBold: BookBold,
+  objects: Objects,
+  objectsBold: ObjectsBold,
 
 
   // Action Icons
@@ -249,10 +256,11 @@ const iconMap: Record<string, SvgComponent> = {
   dragBold: DragBold,
   
   // Rating Icons
-  wrench: WrenchBold,
+  wrench: Wrench,
   wrenchBold: WrenchBold,
   gymWeight: GymWeight,
   gymWeightBold: GymWeightBold,
+  broomBold: BroomBold,
   
   // UI Icons
   logo: Logo,
@@ -280,6 +288,8 @@ const iconMap: Record<string, SvgComponent> = {
   moon: Moon,
   moonBold: MoonBold,
   sunset: Sunset,
+  chart: Chart,
+  chartBold: ChartBold,
   lightbulbBold: LightbulbBold,
   hours24: Hours24,
   map: MapIcon,
@@ -321,6 +331,7 @@ const iconMap: Record<string, SvgComponent> = {
   monitorBold: MonitorBold,
   category: Category,
   categoryBold: CategoryBold,
+
   
   // Guide Icons
   Roller: Roller,
@@ -375,61 +386,40 @@ if (typeof window !== 'undefined') {
 // Type for icon names - dynamically generated from available SVG files
 // You can add more icon names here as you add SVG files
 export type IconName =
-  | 'search'
-  | 'searchBold'
+  | 'search'  | 'searchBold'
   | 'searchClose'
   | 'menu'
   | 'close'
   | 'X'
   | 'cart'
-  | 'shopCart'
-  | 'shopCartBold'
-  | 'heart'
-  | 'heartBold'
+  | 'shopCart'  | 'shopCartBold'
+  | 'heart'  | 'heartBold'
   | 'heartLike'
-  | 'share'
-  | 'shareBold'
-  | 'location'
-  | 'locationBold'
-  | 'locationOff'
-  | 'locationOffBold'
-  | 'map'
-  | 'mapBold'
-  | 'filter'
-  | 'filterBold'
+  | 'share'  | 'shareBold'
+  | 'location'  | 'locationBold'
+  | 'locationOff'  | 'locationOffBold'
+  | 'map'  | 'mapBold'
+  | 'filter'  | 'filterBold'
   | 'star'
-  | 'eye'
-  | 'eyeBold'
-  | 'edit'
-  | 'editBold'
-  | 'trash'
-  | 'trashBold'
+  | 'eye'  | 'eyeBold'
+  | 'edit'  | 'editBold'
+  | 'trash'  | 'trashBold'
   | 'checkmark'
-  | 'info'
-  | 'infoBold'
+  | 'info'  | 'infoBold'
   | 'arrowCircleDown'
   | 'zoomIn'
   | 'zoomOut'
-  | 'calendar'
-  | 'calendarBold'
-  | 'gift'
-  | 'giftBold'
-  | 'tag'
-  | 'tagBold'
-  | 'task'
-  | 'taskBold'
-  | 'shop'
-  | 'shopBold'
-  | 'sun'
-  | 'sunBold'
+  | 'calendar'  | 'calendarBold'
+  | 'gift'  | 'giftBold'
+  | 'tag'  | 'tagBold'
+  | 'task'  | 'taskBold'
+  | 'shop'  | 'shopBold'
+  | 'sun'  | 'sunBold'
   | 'moon'
   | 'moonBold'
-  | 'googleMaps'
-  | 'googleMapsBold'
-  | 'appleMaps'
-  | 'appleMapsBold'
-  | 'wazeMaps'
-  | 'wazeBold'
+  | 'googleMaps'  | 'googleMapsBold'
+  | 'appleMaps'  | 'appleMapsBold'
+  | 'wazeMaps'  | 'wazeBold'
   | 'instagram'
   | 'youtube'
   | 'tiktok'
@@ -439,14 +429,10 @@ export type IconName =
   | 'scooter'
   | 'parking'
   | 'toilet'
-  | 'wrench'
-  | 'wrenchBold'
-  | 'gymWeight'
-  | 'gymWeightBold'
-  | 'account'
-  | 'accountBold'
-  | 'trainers'
-  | 'trainersBold'
+  | 'wrench'  | 'wrenchBold'
+  | 'gymWeight'  | 'gymWeightBold'
+  | 'account'  | 'accountBold'
+  | 'trainers'  | 'trainersBold'
   | 'language'
   | 'logo'
   | 'logo-hostage'
@@ -468,14 +454,10 @@ export type IconName =
   | 'lightbulbBold'
   | 'lockBold'
   | 'notesBold'
-  | 'ranking'
-  | 'rankingBold'
-  | 'starWand'
-  | 'starWandBold'
-  | 'monitor'
-  | 'monitorBold'
-  | 'maximize'
-  | 'maximizeBold'
+  | 'ranking'  | 'rankingBold'
+  | 'starWand'  | 'starWandBold'
+  | 'monitor'  | 'monitorBold'
+  | 'maximize'  | 'maximizeBold'
   | 'questionMark'
   | 'link'
   | 'archive'
@@ -501,32 +483,24 @@ export type IconName =
   | 'oferSeshRose'
   | 'trash-can'
   | 'umbrella'
-  | 'broom'
-  | 'settings'
-  | 'settingsBold'
-  | 'admin'
-  | 'adminBold'
-  | 'logout'
-  | 'logoutBold'
-  | 'category'
-  | 'categoryBold'
-  | 'drag'
-  | 'dragBold'
-  | 'global'
-  | 'globalBold'
-  | 'hebrew'
-  | 'hebrewBold'
-  | 'english'
-  | 'englishBold'
-  | 'book'
-  | 'bookBold'
-  | 'accessibility'
-  | 'accessibilityBold'
-  | 'terms'
-  | 'termsBold'
+  | 'broom' | 'broomBold'
+  | 'settings'  | 'settingsBold'
+  | 'admin'  | 'adminBold'
+  | 'logout'  | 'logoutBold'
+  | 'category'  | 'categoryBold'
+  | 'drag'  | 'dragBold'
+  | 'global'  | 'globalBold'
+  | 'hebrew'  | 'hebrewBold'
+  | 'english'  | 'englishBold'
+  | 'book'  | 'bookBold'
+  | 'accessibility' | 'accessibilityBold'
+  | 'terms'  | 'termsBold'
   | 'clock'
-  | 'target'
-  | 'targetBold'; // Alias for clockBold if needed
+  | 'chart' | 'chartBold'
+  | 'target' | 'targetBold'
+  | 'wrench' | 'wrenchBold'
+  | 'objects' | 'objectsBold';
+  // Alias for clockBold if needed
 
 interface IconProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'size'> {
   name: IconName;

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 22.03">
+  <defs>
+    <style>
+      .chart {
+        fill: none;
+        stroke: CurrentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2px;
+      }
+    </style>
+  </defs>
+  <g>
+    <path class="chart" d="M1,21.03h18"/>
+    <path class="chart" d="M3.6,7.41h-1.6c-.55,0-1,.45-1,1v8.62c0,.55.45,1,1,1h1.6c.55,0,1-.45,1-1v-8.62c0-.55-.45-1-1-1Z"/>
+    <path class="chart" d="M10.8,1h-1.6c-.55,0-1,.55-1,1.23v14.56c0,.68.45,1.23,1,1.23h1.6c.55,0,1-.55,1-1.23V2.23c0-.68-.45-1.23-1-1.23Z"/>
+    <path class="chart" d="M18,3.92h-1.6c-.55,0-1,.37-1,.83v12.45c0,.46.45.83,1,.83h1.6c.55,0,1-.37,1-.83V4.75c0-.46-.45-.83-1-.83Z"/>
+  </g>
+</svg>

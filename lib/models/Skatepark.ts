@@ -83,6 +83,24 @@ export interface IMediaLinks {
 }
 
 /**
+ * SEO metadata interface
+ */
+export interface ISEOMetadata {
+  keywords?: ILocalizedString;
+  description?: ILocalizedString;
+  ogImage?: string;
+}
+
+/**
+ * Quality rating interface
+ */
+export interface IQualityRating {
+  elementDiversity?: number; // 1-5 (decimal allowed)
+  cleanliness?: number; // 1-5 (decimal allowed)
+  maintenance?: number; // 1-5 (decimal allowed)
+}
+
+/**
  * Geospatial location interface
  */
 export interface ILocation {
@@ -123,6 +141,8 @@ export interface ISkatepark extends Document {
   mediaLinks: IMediaLinks;
   rating: number;
   totalReviews: number;
+  seoMetadata?: ISEOMetadata;
+  qualityRating?: IQualityRating;
   createdAt: Date;
   updatedAt: Date;
 
@@ -467,6 +487,81 @@ const SkateparkSchema: Schema<ISkatepark> = new Schema<ISkatepark>(
       type: Number,
       default: 0,
       min: [0, 'Total reviews cannot be negative'],
+    },
+    seoMetadata: {
+      keywords: {
+        en: {
+          type: String,
+          trim: true,
+          maxlength: [500, 'SEO keywords cannot exceed 500 characters'],
+        },
+        he: {
+          type: String,
+          trim: true,
+          maxlength: [500, 'SEO keywords cannot exceed 500 characters'],
+        },
+      },
+      description: {
+        en: {
+          type: String,
+          trim: true,
+          maxlength: [300, 'SEO description cannot exceed 300 characters'],
+        },
+        he: {
+          type: String,
+          trim: true,
+          maxlength: [300, 'SEO description cannot exceed 300 characters'],
+        },
+      },
+      ogImage: {
+        type: String,
+        trim: true,
+        validate: {
+          validator: function (value: string | undefined) {
+            if (!value) return true;
+            return /^https?:\/\/.+/.test(value) || /^\/.+/.test(value);
+          },
+          message: 'OG image must be a valid URL or relative path',
+        },
+      },
+    },
+    qualityRating: {
+      elementDiversity: {
+        type: Number,
+        min: [1, 'Element diversity must be between 1 and 5'],
+        max: [5, 'Element diversity must be between 1 and 5'],
+        validate: {
+          validator: function (value: number | undefined) {
+            if (!value) return true;
+            return value >= 1 && value <= 5;
+          },
+          message: 'Element diversity must be between 1 and 5',
+        },
+      },
+      cleanliness: {
+        type: Number,
+        min: [1, 'Cleanliness must be between 1 and 5'],
+        max: [5, 'Cleanliness must be between 1 and 5'],
+        validate: {
+          validator: function (value: number | undefined) {
+            if (!value) return true;
+            return value >= 1 && value <= 5;
+          },
+          message: 'Cleanliness must be between 1 and 5',
+        },
+      },
+      maintenance: {
+        type: Number,
+        min: [1, 'Maintenance must be between 1 and 5'],
+        max: [5, 'Maintenance must be between 1 and 5'],
+        validate: {
+          validator: function (value: number | undefined) {
+            if (!value) return true;
+            return value >= 1 && value <= 5;
+          },
+          message: 'Maintenance must be between 1 and 5',
+        },
+      },
     },
   },
   {

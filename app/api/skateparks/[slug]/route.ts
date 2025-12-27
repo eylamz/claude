@@ -155,6 +155,8 @@ export async function GET(
       mediaLinks: skatepark.mediaLinks || {},
       isFeatured: skatepark.isFeatured || false,
       status: skatepark.status || 'active',
+      seoMetadata: skatepark.seoMetadata || undefined,
+      qualityRating: skatepark.qualityRating || undefined,
       isOpen,
       createdAt: skatepark.createdAt,
       updatedAt: skatepark.updatedAt,

@@ -167,6 +167,8 @@ export async function POST(request: Request) {
       isFeatured,
       status,
       mediaLinks,
+      seoMetadata,
+      qualityRating,
     } = body;
 
     // Validate required fields
@@ -284,6 +286,12 @@ export async function POST(request: Request) {
     skateparkData.isFeatured = isFeatured || false;
     skateparkData.status = status || 'active';
     skateparkData.mediaLinks = mediaLinks || { youtube: '', googleMapsFrame: '' };
+    if (seoMetadata !== undefined) {
+      skateparkData.seoMetadata = seoMetadata;
+    }
+    if (qualityRating !== undefined) {
+      skateparkData.qualityRating = qualityRating;
+    }
     skateparkData.rating = 0;
     skateparkData.totalReviews = 0;
 

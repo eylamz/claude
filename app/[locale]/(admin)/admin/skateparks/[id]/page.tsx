@@ -74,6 +74,22 @@ interface Skatepark {
   };
   rating: number;
   totalReviews: number;
+  seoMetadata?: {
+    keywords?: {
+      en?: string;
+      he?: string;
+    };
+    description?: {
+      en?: string;
+      he?: string;
+    };
+    ogImage?: string;
+  };
+  qualityRating?: {
+    elementDiversity?: number;
+    cleanliness?: number;
+    maintenance?: number;
+  };
 }
 
 export default function SkateparkDetailPage() {
@@ -189,6 +205,20 @@ export default function SkateparkDetailPage() {
             if (!skateparkData.mediaLinks) {
               skateparkData.mediaLinks = { youtube: '', googleMapsFrame: '' };
             }
+            if (!skateparkData.seoMetadata) {
+              skateparkData.seoMetadata = {
+                keywords: { en: '', he: '' },
+                description: { en: '', he: '' },
+                ogImage: '',
+              };
+            }
+            if (!skateparkData.qualityRating) {
+              skateparkData.qualityRating = {
+                elementDiversity: undefined,
+                cleanliness: undefined,
+                maintenance: undefined,
+              };
+            }
             
             // Ensure openingMonth and closingMonth are explicitly set (even if null)
             if (!('openingMonth' in skateparkData)) {
@@ -266,6 +296,22 @@ export default function SkateparkDetailPage() {
       }
       if (!('closingMonth' in skateparkData) || skateparkData.closingMonth === undefined) {
         skateparkData.closingMonth = null;
+      }
+      
+      // Initialize SEO metadata and quality rating if missing
+      if (!skateparkData.seoMetadata) {
+        skateparkData.seoMetadata = {
+          keywords: { en: '', he: '' },
+          description: { en: '', he: '' },
+          ogImage: '',
+        };
+      }
+      if (!skateparkData.qualityRating) {
+        skateparkData.qualityRating = {
+          elementDiversity: undefined,
+          cleanliness: undefined,
+          maintenance: undefined,
+        };
       }
       
       setSkatepark(skateparkData);
@@ -348,6 +394,8 @@ export default function SkateparkDetailPage() {
         status: skatepark.status,
         mediaLinks: skatepark.mediaLinks,
         is24Hours: skatepark.lightingHours?.is24Hours || false,
+        seoMetadata: skatepark.seoMetadata,
+        qualityRating: skatepark.qualityRating,
       };
       
       // Ensure months are always explicitly set to null (not undefined) before stringifying
@@ -1176,6 +1224,191 @@ export default function SkateparkDetailPage() {
             >
               + Add Hebrew Note
             </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* SEO Metadata */}
+      <Card>
+        <CardHeader>
+          <CardTitle>SEO Metadata</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-text dark:text-text-dark">English</h3>
+              <Input
+                label="Keywords (English)"
+                value={skatepark.seoMetadata?.keywords?.en || ''}
+                onChange={(e) =>
+                  setSkatepark({
+                    ...skatepark,
+                    seoMetadata: {
+                      ...skatepark.seoMetadata,
+                      keywords: {
+                        ...skatepark.seoMetadata?.keywords,
+                        en: e.target.value,
+                      },
+                    },
+                  })
+                }
+                placeholder="skatepark, skateboarding, ramps, rails"
+              />
+              <Input
+                label="Description (English)"
+                value={skatepark.seoMetadata?.description?.en || ''}
+                onChange={(e) =>
+                  setSkatepark({
+                    ...skatepark,
+                    seoMetadata: {
+                      ...skatepark.seoMetadata,
+                      description: {
+                        ...skatepark.seoMetadata?.description,
+                        en: e.target.value,
+                      },
+                    },
+                  })
+                }
+                placeholder="A brief description for search engines"
+              />
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-sm font-medium text-text dark:text-text-dark">Hebrew</h3>
+              <Input
+                label="Keywords (Hebrew)"
+                value={skatepark.seoMetadata?.keywords?.he || ''}
+                onChange={(e) =>
+                  setSkatepark({
+                    ...skatepark,
+                    seoMetadata: {
+                      ...skatepark.seoMetadata,
+                      keywords: {
+                        ...skatepark.seoMetadata?.keywords,
+                        he: e.target.value,
+                      },
+                    },
+                  })
+                }
+                placeholder="סקייטפארק, סקייטבורדינג"
+              />
+              <Input
+                label="Description (Hebrew)"
+                value={skatepark.seoMetadata?.description?.he || ''}
+                onChange={(e) =>
+                  setSkatepark({
+                    ...skatepark,
+                    seoMetadata: {
+                      ...skatepark.seoMetadata,
+                      description: {
+                        ...skatepark.seoMetadata?.description,
+                        he: e.target.value,
+                      },
+                    },
+                  })
+                }
+                placeholder="תיאור קצר למנועי חיפוש"
+              />
+            </div>
+          </div>
+          <Input
+            label="OG Image URL"
+            value={skatepark.seoMetadata?.ogImage || ''}
+            onChange={(e) =>
+              setSkatepark({
+                ...skatepark,
+                seoMetadata: {
+                  ...skatepark.seoMetadata,
+                  ogImage: e.target.value,
+                },
+              })
+            }
+            placeholder="https://example.com/image.jpg or /images/og-image.jpg"
+          />
+        </CardContent>
+      </Card>
+
+      {/* Quality Rating */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quality Rating</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
+                Element Diversity (1-5)
+              </label>
+              <Input
+                type="number"
+                min="1"
+                max="5"
+                step="0.1"
+                value={skatepark.qualityRating?.elementDiversity || ''}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                  if (value === undefined || (!isNaN(value) && value >= 1 && value <= 5)) {
+                    setSkatepark({
+                      ...skatepark,
+                      qualityRating: {
+                        ...skatepark.qualityRating,
+                        elementDiversity: value,
+                      },
+                    });
+                  }
+                }}
+                placeholder="1.0-5.0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
+                Cleanliness (1-5)
+              </label>
+              <Input
+                type="number"
+                min="1"
+                max="5"
+                step="0.1"
+                value={skatepark.qualityRating?.cleanliness || ''}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                  if (value === undefined || (!isNaN(value) && value >= 1 && value <= 5)) {
+                    setSkatepark({
+                      ...skatepark,
+                      qualityRating: {
+                        ...skatepark.qualityRating,
+                        cleanliness: value,
+                      },
+                    });
+                  }
+                }}
+                placeholder="1.0-5.0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
+                Maintenance (1-5)
+              </label>
+              <Input
+                type="number"
+                min="1"
+                max="5"
+                step="0.1"
+                value={skatepark.qualityRating?.maintenance || ''}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                  if (value === undefined || (!isNaN(value) && value >= 1 && value <= 5)) {
+                    setSkatepark({
+                      ...skatepark,
+                      qualityRating: {
+                        ...skatepark.qualityRating,
+                        maintenance: value,
+                      },
+                    });
+                  }
+                }}
+                placeholder="1.0-5.0"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>

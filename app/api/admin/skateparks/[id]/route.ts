@@ -191,6 +191,8 @@ export async function PUT(
       isFeatured,
       status,
       mediaLinks,
+      seoMetadata,
+      qualityRating,
     } = body;
 
     // Update fields - explicitly set each field to ensure changes are saved
@@ -381,6 +383,14 @@ export async function PUT(
     if (mediaLinks !== undefined) {
       skatepark.mediaLinks = mediaLinks;
       skatepark.markModified('mediaLinks');
+    }
+    if (seoMetadata !== undefined) {
+      skatepark.seoMetadata = seoMetadata;
+      skatepark.markModified('seoMetadata');
+    }
+    if (qualityRating !== undefined) {
+      skatepark.qualityRating = qualityRating;
+      skatepark.markModified('qualityRating');
     }
 
     console.log('About to save skatepark with data:', {

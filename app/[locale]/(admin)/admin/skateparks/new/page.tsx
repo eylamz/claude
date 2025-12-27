@@ -57,6 +57,22 @@ interface SkateparkFormData {
     youtube?: string;
     googleMapsFrame?: string;
   };
+  seoMetadata?: {
+    keywords?: {
+      en?: string;
+      he?: string;
+    };
+    description?: {
+      en?: string;
+      he?: string;
+    };
+    ogImage?: string;
+  };
+  qualityRating?: {
+    elementDiversity?: number;
+    cleanliness?: number;
+    maintenance?: number;
+  };
 }
 
 export default function NewSkateparkPage() {
@@ -117,6 +133,16 @@ export default function NewSkateparkPage() {
     mediaLinks: {
       youtube: '',
       googleMapsFrame: '',
+    },
+    seoMetadata: {
+      keywords: { en: '', he: '' },
+      description: { en: '', he: '' },
+      ogImage: '',
+    },
+    qualityRating: {
+      elementDiversity: undefined,
+      cleanliness: undefined,
+      maintenance: undefined,
     },
   });
 
@@ -882,6 +908,191 @@ export default function NewSkateparkPage() {
                   handleNestedInputChange('mediaLinks', 'googleMapsFrame', e.target.value)
                 }
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* SEO Metadata */}
+        <Card>
+          <CardHeader>
+            <CardTitle>SEO Metadata</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">English</h3>
+                <Input
+                  label="Keywords (English)"
+                  value={formData.seoMetadata?.keywords?.en || ''}
+                  onChange={(e) =>
+                    setFormData(prev => ({
+                      ...prev,
+                      seoMetadata: {
+                        ...prev.seoMetadata,
+                        keywords: {
+                          ...prev.seoMetadata?.keywords,
+                          en: e.target.value,
+                        },
+                      },
+                    }))
+                  }
+                  placeholder="skatepark, skateboarding, ramps, rails"
+                />
+                <Input
+                  label="Description (English)"
+                  value={formData.seoMetadata?.description?.en || ''}
+                  onChange={(e) =>
+                    setFormData(prev => ({
+                      ...prev,
+                      seoMetadata: {
+                        ...prev.seoMetadata,
+                        description: {
+                          ...prev.seoMetadata?.description,
+                          en: e.target.value,
+                        },
+                      },
+                    }))
+                  }
+                  placeholder="A brief description for search engines"
+                />
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Hebrew</h3>
+                <Input
+                  label="Keywords (Hebrew)"
+                  value={formData.seoMetadata?.keywords?.he || ''}
+                  onChange={(e) =>
+                    setFormData(prev => ({
+                      ...prev,
+                      seoMetadata: {
+                        ...prev.seoMetadata,
+                        keywords: {
+                          ...prev.seoMetadata?.keywords,
+                          he: e.target.value,
+                        },
+                      },
+                    }))
+                  }
+                  placeholder="סקייטפארק, סקייטבורדינג"
+                />
+                <Input
+                  label="Description (Hebrew)"
+                  value={formData.seoMetadata?.description?.he || ''}
+                  onChange={(e) =>
+                    setFormData(prev => ({
+                      ...prev,
+                      seoMetadata: {
+                        ...prev.seoMetadata,
+                        description: {
+                          ...prev.seoMetadata?.description,
+                          he: e.target.value,
+                        },
+                      },
+                    }))
+                  }
+                  placeholder="תיאור קצר למנועי חיפוש"
+                />
+              </div>
+            </div>
+            <Input
+              label="OG Image URL"
+              value={formData.seoMetadata?.ogImage || ''}
+              onChange={(e) =>
+                setFormData(prev => ({
+                  ...prev,
+                  seoMetadata: {
+                    ...prev.seoMetadata,
+                    ogImage: e.target.value,
+                  },
+                }))
+              }
+              placeholder="https://example.com/image.jpg or /images/og-image.jpg"
+            />
+          </CardContent>
+        </Card>
+
+        {/* Quality Rating */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Quality Rating</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Element Diversity (1-5)
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="5"
+                  step="0.1"
+                  value={formData.qualityRating?.elementDiversity || ''}
+                  onChange={(e) => {
+                    const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                    if (value === undefined || (!isNaN(value) && value >= 1 && value <= 5)) {
+                      setFormData(prev => ({
+                        ...prev,
+                        qualityRating: {
+                          ...prev.qualityRating,
+                          elementDiversity: value,
+                        },
+                      }));
+                    }
+                  }}
+                  placeholder="1.0-5.0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Cleanliness (1-5)
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="5"
+                  step="0.1"
+                  value={formData.qualityRating?.cleanliness || ''}
+                  onChange={(e) => {
+                    const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                    if (value === undefined || (!isNaN(value) && value >= 1 && value <= 5)) {
+                      setFormData(prev => ({
+                        ...prev,
+                        qualityRating: {
+                          ...prev.qualityRating,
+                          cleanliness: value,
+                        },
+                      }));
+                    }
+                  }}
+                  placeholder="1.0-5.0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Maintenance (1-5)
+                </label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="5"
+                  step="0.1"
+                  value={formData.qualityRating?.maintenance || ''}
+                  onChange={(e) => {
+                    const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+                    if (value === undefined || (!isNaN(value) && value >= 1 && value <= 5)) {
+                      setFormData(prev => ({
+                        ...prev,
+                        qualityRating: {
+                          ...prev.qualityRating,
+                          maintenance: value,
+                        },
+                      }));
+                    }
+                  }}
+                  placeholder="1.0-5.0"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

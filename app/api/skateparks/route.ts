@@ -129,6 +129,8 @@ export async function GET(request: NextRequest) {
         notes: park.notes || {},
         mediaLinks: park.mediaLinks || {},
         status: park.status || 'active',
+        seoMetadata: park.seoMetadata || undefined,
+        qualityRating: park.qualityRating || undefined,
         createdAt: park.createdAt || null,
         updatedAt: park.updatedAt || null,
         distance,

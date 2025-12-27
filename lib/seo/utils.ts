@@ -25,9 +25,24 @@ export function generateMetadata(config: SEOConfig): Metadata {
   
   const titleText = getLocalizedText(title, locale);
   const descText = getLocalizedText(description, locale);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
   const imageUrl = image ? (image.startsWith('http') ? image : `${siteUrl}${image}`) : `${siteUrl}/og-default.jpg`;
   const canonicalUrl = url ? `${siteUrl}${url}` : siteUrl;
+
+  // Handle alternate language URLs
+  // If URL contains locale prefix, replace it; otherwise add locale prefix
+  const getAlternateUrl = (targetLocale: string): string => {
+    if (canonicalUrl.includes(`/${locale}/`)) {
+      // URL has locale prefix, replace it
+      return canonicalUrl.replace(`/${locale}/`, `/${targetLocale}/`);
+    } else if (canonicalUrl.includes('/skateparks/') || canonicalUrl.includes('/shop/') || canonicalUrl.includes('/guides/') || canonicalUrl.includes('/trainers/') || canonicalUrl.includes('/events/')) {
+      // URL doesn't have locale prefix, add it
+      const pathWithoutDomain = canonicalUrl.replace(siteUrl, '');
+      return `${siteUrl}/${targetLocale}${pathWithoutDomain}`;
+    }
+    // Default: just return canonical
+    return canonicalUrl;
+  };
 
   const metadata: Metadata = {
     title: titleText,
@@ -35,9 +50,9 @@ export function generateMetadata(config: SEOConfig): Metadata {
     alternates: {
       canonical: canonicalUrl,
       languages: {
-        'en': canonicalUrl,
-        'he': canonicalUrl.replace(`/${locale}/`, '/he/'),
-        ...Object.fromEntries(alternateLocales.map(loc => [loc, canonicalUrl.replace(`/${locale}/`, `/${loc}/`)]))
+        'en': getAlternateUrl('en'),
+        'he': getAlternateUrl('he'),
+        ...Object.fromEntries(alternateLocales.map(loc => [loc, getAlternateUrl(loc)]))
       }
     },
     openGraph: {
@@ -292,7 +307,7 @@ export function generateArticleStructuredData(guide: {
 }
 
 export function generateBreadcrumbStructuredData(items: Array<{ name: string; url: string }>) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
   
   return {
     '@context': 'https://schema.org',
