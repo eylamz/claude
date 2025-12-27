@@ -180,6 +180,10 @@
         "south": "דרום",
         "count": "{count} פארקים"
       }
+    },
+    "status":{
+      "active": "פעיל",
+      "inactive": "לא פעיל"
     }
   }
 }

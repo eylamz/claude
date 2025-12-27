@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, Suspense, Fragment } from 'react';
+import { useEffect, useState, useRef, Suspense, Fragment } from 'react';
 import { usePathname, useParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSession } from 'next-auth/react';
@@ -140,6 +140,260 @@ const AMENITY_ICONS: Record<string, string> = {
   noWax: 'Wax', // Note: Wax icon exists, we'll show it crossed out for noWax
 };
 
+/**
+ * Load Google Maps script (prevents duplicate loading)
+ */
+const loadGoogleMapsScript = (locale: string = 'en'): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    // Helper function to check if Map constructor is ready and resolve
+    const checkMapReady = () => {
+      const google = (window as any).google;
+      if (google?.maps?.Map && typeof google.maps.Map === 'function') {
+        resolve();
+      } else {
+        setTimeout(checkMapReady, 50); // Check again in 50ms
+      }
+    };
+
+    // Check if Google Maps is already loaded
+    if ((window as any).google?.maps) {
+      // Even if maps exists, we need to wait for Map constructor with loading=async
+      checkMapReady();
+      return;
+    }
+
+    // Check if script is already being loaded
+    const existingScript = document.querySelector(
+      'script[src*="maps.googleapis.com/maps/api/js"]'
+    );
+    if (existingScript) {
+      // Wait for existing script to load, then check for Map constructor
+      existingScript.addEventListener('load', () => {
+        checkMapReady();
+      });
+      existingScript.addEventListener('error', reject);
+      return;
+    }
+
+    // Load Google Maps script with async/defer attributes
+    const script = document.createElement('script');
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+    const language = locale === 'he' ? 'he' : 'en';
+    const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
+    
+    // Build script URL with optional mapIds parameter and loading=async for best practices
+    let scriptUrl = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=marker&language=${language}&loading=async`;
+    if (mapId) {
+      scriptUrl += `&mapIds=${mapId}`;
+    }
+    
+    script.src = scriptUrl;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      // When using loading=async, we need to wait for the API to be fully initialized
+      // Use the same checkMapReady function defined above
+      checkMapReady();
+    };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+};
+
+/**
+ * Google Maps Component for Detail Page
+ */
+function SkateparkDetailMap({
+  skatepark,
+  nearbyParks,
+  locale,
+}: {
+  skatepark: Skatepark;
+  nearbyParks?: NearbyPark[];
+  locale: string;
+}) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+  const scriptLoadedRef = useRef(false);
+
+  // Helper function to create skatepark marker pin
+  const createSkateparkPin = (isCurrent: boolean = false) => {
+    const pinElement = document.createElement('div');
+    const pinColor = isCurrent ? '#00cc0a' : '#31c438';
+    pinElement.innerHTML = `
+      <svg width="40" height="50" overflow="visible" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 0 C9.4 0 0 9.4 0 20 C0 35 20 50 20 50 C20 50 40 35 40 20 C40 9.4 30.6 0 20 0 Z" fill="${pinColor}" stroke="#18671c" stroke-width="2"/>
+        <circle cx="20" cy="20" r="8" fill="#18671c"/>
+      </svg>
+    `;
+    pinElement.style.cursor = 'pointer';
+    return pinElement;
+  };
+
+  useEffect(() => {
+    if (!mapRef.current || typeof window === 'undefined') return;
+
+    const initMap = async () => {
+      try {
+        // Load script if not already loaded
+        if (!scriptLoadedRef.current) {
+          await loadGoogleMapsScript(locale);
+          scriptLoadedRef.current = true;
+        }
+
+        const google = (window as any).google;
+        if (!google?.maps) {
+          console.error('Google Maps failed to load');
+          return;
+        }
+
+        // Double-check Map constructor is available before using it
+        if (!google.maps.Map || typeof google.maps.Map !== 'function') {
+          console.error('Google Maps Map constructor is not available');
+          return;
+        }
+
+        // Get current park coordinates
+        let currentParkLat = 0;
+        let currentParkLng = 0;
+        if (skatepark.location.coordinates && Array.isArray(skatepark.location.coordinates)) {
+          currentParkLng = skatepark.location.coordinates[0];
+          currentParkLat = skatepark.location.coordinates[1];
+        } else if ('lat' in skatepark.location && 'lng' in skatepark.location) {
+          currentParkLat = (skatepark.location as any).lat;
+          currentParkLng = (skatepark.location as any).lng;
+        }
+
+        if (currentParkLat === 0 && currentParkLng === 0) {
+          console.error('Invalid park coordinates');
+          return;
+        }
+
+        const center = { lat: currentParkLat, lng: currentParkLng };
+
+        // Check if AdvancedMarkerElement is available (new API)
+        const useAdvancedMarkers = google.maps.marker?.AdvancedMarkerElement;
+
+        // Initialize map - mapId is required for AdvancedMarkerElement
+        const mapOptions: any = {
+          center,
+          zoom: 14,
+          mapTypeControl: true,
+          streetViewControl: false,
+          fullscreenControl: true,
+          language: locale === 'he' ? 'he' : 'en',
+          mode: 'dark',
+        };
+
+        // Only add mapId if using AdvancedMarkerElement
+        if (useAdvancedMarkers) {
+          mapOptions.mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID';
+        }
+
+        const map = new google.maps.Map(mapRef.current, mapOptions);
+        mapInstanceRef.current = map;
+
+        // Clear existing markers
+        markersRef.current.forEach((marker) => {
+          if (marker.map) marker.map = null;
+        });
+        markersRef.current = [];
+
+        // Add current park marker with highlighted pin
+        const parkName = typeof skatepark.name === 'string' 
+          ? skatepark.name 
+          : (locale === 'he' ? skatepark.name.he : skatepark.name.en) || skatepark.name.en || skatepark.name.he;
+
+        let currentMarker: any;
+        if (useAdvancedMarkers) {
+          const pinContent = createSkateparkPin(true);
+          currentMarker = new google.maps.marker.AdvancedMarkerElement({
+            map,
+            position: center,
+            title: parkName,
+            content: pinContent,
+          });
+        } else {
+          currentMarker = new google.maps.Marker({
+            position: center,
+            map,
+            title: parkName,
+            icon: {
+              path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+              scale: 7,
+              fillColor: '#00cc0a',
+              fillOpacity: 1,
+              strokeColor: '#18671c',
+              strokeWeight: 2,
+            },
+          });
+        }
+        markersRef.current.push(currentMarker);
+
+        // Add nearby parks markers if available
+        if (nearbyParks && nearbyParks.length > 0) {
+          nearbyParks.forEach((park) => {
+            let parkLat = 0;
+            let parkLng = 0;
+            
+            if (park.location) {
+              if ('coordinates' in park.location && Array.isArray((park.location as any).coordinates)) {
+                const coords = (park.location as any).coordinates;
+                if (coords.length >= 2) {
+                  parkLng = coords[0];
+                  parkLat = coords[1];
+                }
+              } else if ('lat' in park.location && 'lng' in park.location) {
+                parkLat = park.location.lat;
+                parkLng = park.location.lng;
+              }
+            }
+
+            if (parkLat === 0 && parkLng === 0) return;
+
+            const nearbyName = typeof park.name === 'string' 
+              ? park.name 
+              : (locale === 'he' ? park.name.he : park.name.en) || park.name.en || park.name.he;
+
+            let marker: any;
+            if (useAdvancedMarkers) {
+              const pinContent = createSkateparkPin(false);
+              marker = new google.maps.marker.AdvancedMarkerElement({
+                map,
+                position: { lat: parkLat, lng: parkLng },
+                title: nearbyName,
+                content: pinContent,
+              });
+            } else {
+              marker = new google.maps.Marker({
+                position: { lat: parkLat, lng: parkLng },
+                map,
+                title: nearbyName,
+                icon: {
+                  path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+                  scale: 6,
+                  fillColor: '#31c438',
+                  fillOpacity: 1,
+                  strokeColor: '#18671c',
+                  strokeWeight: 2,
+                },
+              });
+            }
+            markersRef.current.push(marker);
+          });
+        }
+      } catch (error) {
+        console.error('Error initializing Google Maps:', error);
+      }
+    };
+
+    initMap();
+  }, [skatepark, nearbyParks, locale]);
+
+  return <div ref={mapRef} className="w-full h-full min-h-[400px] rounded-xl overflow-hidden" />;
+}
+
 
 /**
  * Image Gallery helper to convert SkateparkImage format to ImageSlider format
@@ -167,12 +421,19 @@ function YouTubeEmbed({ url }: { url: string }) {
   if (!videoId) return null;
 
   return (
-    <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+    <div
+       className="relative w-full aspect-video rounded-lg overflow-hidden"
+       style={{
+        filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
+      }}
+       >
+      
       <iframe
         src={`https://www.youtube.com/embed/${videoId}`}
         className="absolute inset-0 w-full h-full"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
+        
       />
     </div>
   );
@@ -1293,7 +1554,7 @@ export default function SkateparkPage() {
 
             {/* Amenities Card */}
             <Card className="md:p-4 overflow-visible shadow-none">
-              <div className="flex items-center justify-center mb-3 text-text dark:text-text-dark">
+              <div className="flex items-center md:justify-center mb-3 text-text dark:text-text-dark">
                 <h2 className="text-base font-medium flex items-center gap-2">
                   <Icon name="notesBold" className={`w-5 h-5`} />
                   {t('amenities.title')}
@@ -1397,7 +1658,7 @@ export default function SkateparkPage() {
 
                   <div className="space-y-2">
                     {notes.split('\n').filter(note => note.trim()).map((note, index) => (
-                      <div key={index} className="bg-gray-50/40 dark:bg-gray-400/10 w-fit px-2.5 py-1.5 rounded-md text-gray-900 dark:text-gray-300">
+                      <div key={index} className="bg-black/[3%] dark:bg-white/[2.5%] w-fit px-2.5 py-1.5 rounded-md text-text/90 dark:text-text-dark/80">
                         <p className="text-base">
                           • {note.trim()}.
                         </p>
@@ -1422,23 +1683,23 @@ export default function SkateparkPage() {
                       </h2>
                     </div>
                     
-                    <div className="grid grid-cols-1 xsm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 xsm:grid-cols-3 gap-4 h-fit">
                       {skatepark.qualityRating.elementDiversity && (
-                        <div className="space-y-2">
+                        <div className="space-y-2 h-full flex flex-col justify-between">
                           <div className="flex md:justify-center gap-2">
                             <Icon name="objectsBold" className="w-4 h-4 overflow-visible" />
-                            <p className="text-sm font-medium truncate text-text/80 dark:text-text-dark/80">
+                            <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
                               {tr('Element Diversity', 'מגוון אלמנטים')}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-card dark:bg-card-dark rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-brand-yellow transition-all duration-300"
                                 style={{ width: `${(skatepark.qualityRating.elementDiversity / 5) * 100}%` }}
                               />
                             </div>
-                            <span className="text-xs font-semibold text-text dark:text-text-dark whitespace-nowrap">
+                            <span className="text-xs font-semibold text-text/80 dark:text-text-dark/80 whitespace-nowrap">
                               {formatRating(skatepark.qualityRating.elementDiversity)}/5
                             </span>
                           </div>
@@ -1446,7 +1707,7 @@ export default function SkateparkPage() {
                       )}
                       
                       {skatepark.qualityRating.cleanliness && (
-                        <div className="space-y-2">
+                        <div className="space-y-2 h-full flex flex-col justify-between">
                           <div className="flex md:justify-center gap-2">
                             <Icon name="broomBold" className="w-4 h-4 overflow-visible" />
                             <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
@@ -1454,13 +1715,13 @@ export default function SkateparkPage() {
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-card dark:bg-card-dark rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-brand-purple transition-all duration-300"
                                 style={{ width: `${(skatepark.qualityRating.cleanliness / 5) * 100}%` }}
                               />
                             </div>
-                            <span className="text-xs font-semibold text-text dark:text-text-dark whitespace-nowrap">
+                            <span className="text-xs font-semibold text-text/80 dark:text-text-dark/80 whitespace-nowrap">
                               {formatRating(skatepark.qualityRating.cleanliness)}/5
                             </span>
                           </div>
@@ -1468,7 +1729,7 @@ export default function SkateparkPage() {
                       )}
                       
                       {skatepark.qualityRating.maintenance && (
-                        <div className="space-y-2">
+                        <div className="space-y-2 h-full flex flex-col justify-between max-h-[5rem]">
                           <div className="flex md:justify-center items-center gap-2">
                             <Icon name="wrenchBold" className="w-4 h-4 overflow-visible" />
                             <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
@@ -1476,13 +1737,13 @@ export default function SkateparkPage() {
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-card dark:bg-card-dark rounded-full overflow-hidden">
                               <div
                                 className="h-full bg-brand-blue transition-all duration-300"
                                 style={{ width: `${(skatepark.qualityRating.maintenance / 5) * 100}%` }}
                               />
                             </div>
-                            <span className="text-xs font-semibold text-text dark:text-text-dark whitespace-nowrap">
+                            <span className="text-xs font-semibold text-text/80 dark:text-text-dark/80 whitespace-nowrap">
                               {formatRating(skatepark.qualityRating.maintenance)}/5
                             </span>
                           </div>
@@ -1513,7 +1774,7 @@ export default function SkateparkPage() {
                       </h3>
                     </div>
 
-                    <div className="mx-auto w-full max-w-[380px] flex flex-wrap justify-center gap-6 items-center">
+                    <div className="mx-auto w-full max-w-[380px] grid grid-cols-4 gap-4 items-center">
                       {/* Waze Map Link with Tooltip */}
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -1620,7 +1881,7 @@ export default function SkateparkPage() {
 
           {/* YouTube Embed */}
           {skatepark.mediaLinks.youtube && (
-            <Card className="!shadow-none md:!p-4 w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
+            <Card className="!rounded-none !shadow-none !p-0 md:!p-4 w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
               <CardHeader>
                 <CardTitle className="text-base font-medium flex items-center gap-2">
                   <Icon name="youtube" className="w-5 h-5" />
@@ -1634,56 +1895,49 @@ export default function SkateparkPage() {
           )}
 
           {/* Map Section - Always render if skatepark exists */}
-          {skatepark && (
-            <section aria-labelledby="location-heading" className="w-full max-w-6xl mx-auto px-2 md:px-4">
-              <h2 id="location-heading" className="sr-only">{parkName} {tCommon('location')}</h2>
+          {skatepark && (() => {
+            const iframeSrc = getGoogleMapsIframeSrc();
+            
+            return (
+              <section aria-labelledby="location-heading" className="w-full max-w-6xl mx-auto md:px-4">
+                <h2 id="location-heading" className="sr-only">{parkName} {tCommon('location')}</h2>
 
-              <div className="h-32 sm:h-60 rounded-xl mb-8 overflow-hidden relative">
-                {/* Shadow Overlay */}
-                <div className="rounded-xl absolute inset-0 pointer-events-none shadow-container z-10 dark:bg-background-dark/15"></div>
-                
-                {/* Border */}
-                <div className="rounded-xl absolute inset-0 pointer-events-none bord"></div>
-                
-                  {(() => {
-                  const iframeSrc = getGoogleMapsIframeSrc();
-                  
-                  if (iframeSrc) {
-                    return (
-                      <>
-                        {isMapLoading && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-gray-100/50 dark:bg-gray-800/50 backdrop-blur-custom z-10">
-                            <LoadingSpinner />
-                          </div>
-                        )}
-                        <iframe
-                          src={iframeSrc}
-                          width="100%"
-                          height="100%"
-                          style={{ border: 0 }}
-                          allowFullScreen
-                          loading="lazy"
-                          referrerPolicy="no-referrer-when-downgrade"
-                          title={`${parkName} ${tCommon('location')} ${tCommon('map')}`}
-                          className=""
-                          onLoad={() => setIsMapLoading(false)}
-                          onError={() => setIsMapLoading(false)}
-                        />
-                      </>
-                    );
-                  } else {
-                    return (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <p className="text-base text-muted-foreground">
-                          {tCommon('mapNotAvailable')}
-                        </p>
-                      </div>
-                    );
-                  }
-                })()}
-              </div>
-            </section>
-          )}
+                <div className={`h-32 sm:h-60  rounded-xl mb-8 overflow-hidden relative border-2 border-gray-200 dark:border-gray-700`}>
+
+                  {iframeSrc ? (
+                    // Show iframe if googleMapsFrame is available
+                    <>
+                      {isMapLoading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100/50 dark:bg-gray-800/50 backdrop-blur-custom z-10">
+                          <LoadingSpinner />
+                        </div>
+                      )}
+                      <iframe
+                        src={iframeSrc}
+                        width="100%"
+                        height="100%"
+                        style={{ border: 0 }}
+                        allowFullScreen
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                        title={`${parkName} ${tCommon('location')} ${tCommon('map')}`}
+                        className="w-full h-full"
+                        onLoad={() => setIsMapLoading(false)}
+                        onError={() => setIsMapLoading(false)}
+                      />
+                    </>
+                  ) : (
+                    // Show Google Maps API component if iframe is not available
+                    <SkateparkDetailMap
+                      skatepark={skatepark}
+                      nearbyParks={nearbyParks}
+                      locale={locale}
+                    />
+                  )}
+                </div>
+              </section>
+            );
+          })()}
 
 
           {/* Quality Rating Section - Show here if notes exist */}
@@ -1693,10 +1947,11 @@ export default function SkateparkPage() {
             skatepark.qualityRating.maintenance
           ) ? (
             <Card className="md:p-4 shadow-none w-full max-w-6xl mx-auto mb-8">
-              <div className="flex items-center justify-center mb-4 text-text dark:text-text-dark">
+              <div className="flex items-center md:justify-center mb-4 text-text dark:text-text-dark">
                 <h2 className="text-base font-medium flex items-center gap-2">
-                  <Icon name="chartBold" className="w-5 h-5 rotate-[45deg] rtl:rotate-[135deg] overflow-visible" />
-                  {tr('Quality Rating', 'דירוג איכות')}
+                {tr('Rating', 'דירוג')}
+                <Icon name="logo" className="w-auto h-3 text-brand-main dark:text-brand-dark overflow-visible" />
+
                 </h2>
               </div>
               
@@ -1705,20 +1960,24 @@ export default function SkateparkPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Icon name="objectsBold" className="w-5 h-5 overflow-visible" />
+                        <Icon name="objectsBold" className="w-4 h-4 overflow-visible" />
                         <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
                           {tr('Element Diversity', 'מגוון אלמנטים')}
                         </p>
                       </div>
-                      <span className="text-base font-semibold text-text dark:text-text-dark">
-                        {formatRating(skatepark.qualityRating.elementDiversity)}/5
-                      </span>
+                     
                     </div>
-                    <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                        <div className="flex items-center justify-between gap-3">
+
+                    <div className="w-full bg-card dark:bg-card-dark rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-brand-yellow transition-all duration-300"
+                        className="h-2 bg-brand-yellow transition-all duration-300"
                         style={{ width: `${(skatepark.qualityRating.elementDiversity / 5) * 100}%` }}
                       />
+                      </div>
+                       <span className="text-xs font-semibold text-text/80 dark:text-text-dark/80">
+                        {formatRating(skatepark.qualityRating.elementDiversity)}/5
+                      </span>
                     </div>
                   </div>
                 )}
@@ -1727,20 +1986,23 @@ export default function SkateparkPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Icon name="broomBold" className="w-5 h-5 overflow-visible" />
+                        <Icon name="broomBold" className="w-4 h-4 overflow-visible" />
                         <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
                           {tr('Cleanliness', 'רמת ניקיון')}
                         </p>
                       </div>
-                      <span className="text-base font-semibold text-text dark:text-text-dark">
-                        {formatRating(skatepark.qualityRating.cleanliness)}/5
-                      </span>
                     </div>
-                    <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                     <div className="flex items-center justify-between gap-3">
+
+                    <div className="w-full bg-card dark:bg-card-dark rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-brand-purple transition-all duration-300"
+                        className="h-2 bg-brand-purple transition-all duration-300"
                         style={{ width: `${(skatepark.qualityRating.cleanliness / 5) * 100}%` }}
                       />
+                      </div>
+                       <span className="text-xs font-semibold text-text/80 dark:text-text-dark/80">
+                        {formatRating(skatepark.qualityRating.cleanliness)}/5
+                      </span>
                     </div>
                   </div>
                 )}
@@ -1749,20 +2011,23 @@ export default function SkateparkPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between ">
                       <div className="flex items-center gap-2 ">
-                        <Icon name="wrenchBold" className="w-5 h-5 overflow-visible" />
+                        <Icon name="wrenchBold" className="w-4 h-4 overflow-visible" />
                         <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
                           {tr('Maintenance level', 'רמת תחזוקה')}
                         </p>
                       </div>
-                      <span className="text-base font-semibold text-text dark:text-text-dark">
-                        {skatepark.qualityRating.maintenance.toFixed(1)}/5
-                      </span>
                     </div>
-                    <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                     <div className="flex items-center justify-between gap-3">
+
+                    <div className="w-full bg-card dark:bg-card-dark rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-brand-blue transition-all duration-300"
+                        className="h-2 bg-brand-blue transition-all duration-300"
                         style={{ width: `${(skatepark.qualityRating.maintenance / 5) * 100}%` }}
                       />
+                      </div>
+                       <span className="text-xs font-semibold text-text/80 dark:text-text-dark/80">
+                        {formatRating(skatepark.qualityRating.maintenance)}/5
+                      </span>
                     </div>
                   </div>
                 )}

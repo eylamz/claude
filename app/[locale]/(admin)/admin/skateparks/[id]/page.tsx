@@ -228,6 +228,14 @@ export default function SkateparkDetailPage() {
               skateparkData.closingMonth = null;
             }
             
+            // Ensure rating and totalReviews have default values
+            if (skateparkData.rating === undefined || skateparkData.rating === null) {
+              skateparkData.rating = 0;
+            }
+            if (skateparkData.totalReviews === undefined || skateparkData.totalReviews === null) {
+              skateparkData.totalReviews = 0;
+            }
+            
             setSkatepark(skateparkData);
             setLoading(false);
             return; // Exit early since we used cache
@@ -312,6 +320,14 @@ export default function SkateparkDetailPage() {
           cleanliness: undefined,
           maintenance: undefined,
         };
+      }
+      
+      // Ensure rating and totalReviews have default values
+      if (skateparkData.rating === undefined || skateparkData.rating === null) {
+        skateparkData.rating = 0;
+      }
+      if (skateparkData.totalReviews === undefined || skateparkData.totalReviews === null) {
+        skateparkData.totalReviews = 0;
       }
       
       setSkatepark(skateparkData);
@@ -497,7 +513,7 @@ export default function SkateparkDetailPage() {
   if (!skatepark) return null;
 
   return (
-    <div className="space-y-6 min-h-screen bg-background dark:bg-background-dark">
+    <div className="pt-16 space-y-6 min-h-screen bg-background dark:bg-background-dark">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -1423,13 +1439,13 @@ export default function SkateparkDetailPage() {
             <div>
               <p className="text-text-secondary dark:text-text-secondary-dark">Rating</p>
               <p className="text-2xl font-bold text-text dark:text-text-dark">
-                {skatepark.rating.toFixed(1)} / 5.0
+                {(skatepark.rating ?? 0).toFixed(1)} / 5.0
               </p>
             </div>
             <div>
               <p className="text-text-secondary dark:text-text-secondary-dark">Total Reviews</p>
               <p className="text-2xl font-bold text-text dark:text-text-dark">
-                {skatepark.totalReviews}
+                {skatepark.totalReviews ?? 0}
               </p>
             </div>
           </div>
