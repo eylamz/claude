@@ -161,12 +161,12 @@ function GoogleMapView({
   };
 
   // Helper function to create skatepark marker pin
-  const createSkateparkPin = (color: string = '#00cc0a') => {
+  const createSkateparkPin = (fillColor: string = '#00cc0a', strokeColor: string = '#18671c', circleColor: string = '#18671c') => {
     const pinElement = document.createElement('div');
     pinElement.innerHTML = `
       <svg width="40" height="50" overflow="visible" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 0 C9.4 0 0 9.4 0 20 C0 35 20 50 20 50 C20 50 40 35 40 20 C40 9.4 30.6 0 20 0 Z" fill="${color}" stroke="#18671c" stroke-width="2"/>
-        <circle cx="20" cy="20" r="8" fill="#18671c"/>
+        <path d="M20 0 C9.4 0 0 9.4 0 20 C0 35 20 50 20 50 C20 50 40 35 40 20 C40 9.4 30.6 0 20 0 Z" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2"/>
+        <circle cx="20" cy="20" r="8" fill="${circleColor}"/>
       </svg>
     `;
     pinElement.style.cursor = 'pointer';
@@ -247,11 +247,20 @@ function GoogleMapView({
           const name = typeof park.name === 'string' ? park.name : park.name.en || park.name.he;
           const position = { lat: park.location.lat, lng: park.location.lng };
 
+          // Determine marker color based on closing year
+          const currentYear = new Date().getFullYear();
+          const isClosed = park.closingYear && park.closingYear <= currentYear;
+          const markerFillColor = isClosed ? '#ef4444' : '#31c438'; // Red for closed parks, green for open
+          const markerStrokeColor = isClosed ? '#991b1b' : '#18671c'; // Darker stroke for closed parks
+          const markerCircleColor = isClosed ? '#991b1b' : '#18671c'; // Circle color matches stroke
+          const fallbackFillColor = isClosed ? '#dc2626' : '#00b881'; // Darker red/green for fallback API
+          const fallbackStrokeColor = isClosed ? '#991b1b' : '#104413'; // Darker stroke for closed parks
+
           let marker: any;
 
           if (useAdvancedMarkers) {
             // Use new AdvancedMarkerElement API with custom pin
-            const pinContent = createSkateparkPin('#31c438');
+            const pinContent = createSkateparkPin(markerFillColor, markerStrokeColor, markerCircleColor);
             pinContent.setAttribute('data-marker-id', park._id);
 
             marker = new google.maps.marker.AdvancedMarkerElement({
@@ -269,9 +278,9 @@ function GoogleMapView({
               icon: {
                 path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
                 scale: 6,
-                fillColor: '#00b881',
+                fillColor: fallbackFillColor,
                 fillOpacity: 1,
-                strokeColor: '#104413',
+                strokeColor: fallbackStrokeColor,
                 strokeWeight: 2,
               },
             });
@@ -679,7 +688,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
           <div className={`absolute bottom-2 left-0 z-10 ${
             showBadgeContainer.openingYear ? 'animate-slideRight animation-delay-[2s]' : 'opacity-0 translate-x-[-30px]'
           }`}>
-            <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-r-full shadow-lg">
+            <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold ps-3 pe-2 py-1 rounded-r-full shadow-lg">
               <span className={`transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`}>
                 {park.openingYear}
               </span>
@@ -697,11 +706,11 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? (hasOpeningYear ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${hasOpeningYear ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex gap-1 justify-center items-center bg-red-500 dark:bg-red-600 text-white text-xs px-2 py-1 shadow-lg ${
+            <div className={`flex gap-1 justify-center items-center bg-error dark:bg-error-dark text-white text-xs ps-3 pe-2 py-1 shadow-lg ${
               hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
-              <span className={`transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
-                {tr('Closed', 'סגור')}
+              <span className={`text-sm transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
+                {tr('Permanently Closed', 'נסגר לצמיתות')}
               </span>
               <Icon name="closedPark" className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`} />
             </div>
@@ -717,13 +726,13 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? ((hasOpeningYear || isClosed) ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${(hasOpeningYear || isClosed) ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex gap-1 justify-center items-center bg-blue-500 dark:bg-blue-600 text-white text-xs md:text-sm px-2 py-1 shadow-lg ${
+            <div className={`flex rtl:flex-row-reverse gap-1 justify-center items-center bg-blue-500 dark:bg-blue-600 text-white text-xs md:text-sm pe-3 ps-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
               <span className={`transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('New', 'חדש')}
               </span>
-              <Icon name="trees" className={`w-4 h-4 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name="trees" className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -780,7 +789,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
                 ? 'rounded-tl-lg opacity-0 group-hover:opacity-100 translate-x-[36%] translate-y-[22%] rotate-[-1deg] group-hover:translate-x-[3%] group-hover:translate-y-[3%] group-hover:rotate-[2deg]'
                 : 'rounded-tr-xl opacity-0 group-hover:opacity-100 translate-x-[-6%] translate-y-[12%] rotate-[1deg] group-hover:translate-x-[-3%] group-hover:translate-y-[3%] group-hover:rotate-[-2deg]'
             } transition-[opacity,transform] duration-[200ms,300ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)]`}>
-              <h3 className="text-sm font-semibold text-text dark:text-text-dark truncate max-w-[200px]">
+              <h3 className="text-sm font-semibold text-text dark:text-text-dark ">
                 {name}
               </h3>
             </div>

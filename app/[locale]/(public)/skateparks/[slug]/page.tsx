@@ -118,6 +118,7 @@ interface NearbyPark {
   area: 'north' | 'center' | 'south';
   rating: number;
   totalReviews: number;
+  closingYear?: number | null;
   location?: {
     lat: number;
     lng: number;
@@ -889,6 +890,7 @@ export default function SkateparkPage() {
                       area: park.area,
                       rating: (park as any).rating || 0, // Use rating from cache if available
                       totalReviews: (park as any).totalReviews || 0, // Use totalReviews from cache if available
+                      closingYear: (park as any).closingYear || null, // Include closingYear from cache
                       location: {
                         lat: parkCoords.lat,
                         lng: parkCoords.lng,
@@ -1593,7 +1595,7 @@ export default function SkateparkPage() {
                                         ? isParkClosed
                                           ? 'text-error dark:text-error/80'
                                           : 'text-brand-main dark:text-brand-dark/80'
-                                        : 'text-gray-400 dark:text-[#40535e]'
+                                        : 'text-gray-400 dark:text-[#405e4e]'
                                     }`}
                                   />
                                 </div>
@@ -1617,7 +1619,7 @@ export default function SkateparkPage() {
                             <div className="mb-1.5">
                               <Icon
                                 name={iconName as any}
-                                className="w-5 h-5 mx-auto text-gray-400 dark:text-[#40535e]"
+                                className="w-5 h-5 mx-auto text-gray-400 dark:text-[#404141]"
                                 />
                             </div>
                             <p className="text-sm font-thin text-gray-400 dark:text-text-dark/50 line-through">
@@ -1679,7 +1681,14 @@ export default function SkateparkPage() {
                     <div className="flex items-center justify-center mb-4 text-text dark:text-text-dark">
                       <h2 className="text-base font-semibold flex items-center gap-1">
                         {tr('Rating', 'דירוג')}
-                        <Icon name="logo" className="w-auto h-3 text-brand-main dark:text-brand-dark overflow-visible" />
+                        <Icon 
+                          name="logo" 
+                          className={`w-auto h-3 overflow-visible ${
+                            skatepark.closingYear 
+                              ? 'text-error dark:text-error/80' 
+                              : 'text-brand-main dark:text-brand-dark'
+                          }`} 
+                        />
                       </h2>
                     </div>
                     
@@ -1689,7 +1698,7 @@ export default function SkateparkPage() {
                           <div className="flex md:justify-center gap-2">
                             <Icon name="objectsBold" className="w-4 h-4 overflow-visible" />
                             <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
-                              {tr('Element Diversity', 'מגוון אלמנטים')}
+                              {tr('Element Diversity', 'מגוון מתקנים')}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
@@ -1950,7 +1959,14 @@ export default function SkateparkPage() {
               <div className="flex items-center md:justify-center mb-4 text-text dark:text-text-dark">
                 <h2 className="text-base font-medium flex items-center gap-2">
                 {tr('Rating', 'דירוג')}
-                <Icon name="logo" className="w-auto h-3 text-brand-main dark:text-brand-dark overflow-visible" />
+                <Icon 
+                  name="logo" 
+                  className={`w-auto h-3 overflow-visible ${
+                    skatepark.closingYear 
+                      ? 'text-error dark:text-error/80' 
+                      : 'text-brand-main dark:text-brand-dark'
+                  }`} 
+                />
 
                 </h2>
               </div>
@@ -2213,6 +2229,10 @@ export default function SkateparkPage() {
                   {nearbyParks.map((park, index) => {
                     const nearbyName = (park.name as any)[locale] || park.name.en || park.name.he;
                     
+                    // Check if park is closed
+                    const currentYear = new Date().getFullYear();
+                    const isClosed = park.closingYear && park.closingYear <= currentYear;
+                    
                     // Get current park's coordinates directly from skatepark.location
                     let currentParkLat = 0;
                     let currentParkLng = 0;
@@ -2328,6 +2348,16 @@ export default function SkateparkPage() {
                           filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
                         }}
                          >
+                          {/* Closed Badge */}
+                          {isClosed && (
+                            <div className="absolute bottom-2 left-0 z-10">
+                              <div className="flex gap-1 justify-center items-center bg-red-500 dark:bg-red-600 text-white text-xs px-2 py-1 shadow-lg rounded-r-3xl">
+                                {tr('Permanently Closed', 'נסגר לצמיתות')}
+                                <Icon name="closedPark" className="w-3 h-3" />
+                              </div>
+                            </div>
+                          )}
+                          
                           <Image
                             src={getValidImageUrl(park.imageUrl)}
                             alt={nearbyName}

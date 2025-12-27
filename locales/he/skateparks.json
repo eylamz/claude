@@ -22,8 +22,8 @@
   "opened": "נפתח בשנת",
   "openedDate": "נפתח ב",
   "closedYear": "נסגר בשנת",
-  "closedYearDate": "נסגר בתאריך",
-  "closedDate": "נסגר בתאריך",
+  "closedYearDate": "נסגר ב",
+  "closedDate": "נסגר ב",
   "amenities": {
     "title": "שירותים / חוקים",
     "entryFee": "דמי כניסה",

@@ -908,7 +908,11 @@ export default function SkateparkDetailPage() {
                   { key: 'saturday', label: 'Saturday' },
                   { key: 'holidays', label: 'Holidays' },
                 ].map((day) => {
-                  const dayHours = skatepark.operatingHours[day.key as keyof typeof skatepark.operatingHours];
+                  const dayHours = skatepark.operatingHours[day.key as keyof typeof skatepark.operatingHours] || {
+                    openingTime: '',
+                    closingTime: '',
+                    isOpen: false,
+                  };
                   return (
                     <div key={day.key} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
                       <div className="flex items-center justify-between">
@@ -938,7 +942,7 @@ export default function SkateparkDetailPage() {
                           <Input
                             type="time"
                             label="Open"
-                            value={dayHours.openingTime}
+                            value={dayHours.openingTime || ''}
                             onChange={(e) => {
                               const newHours = {
                                 ...skatepark.operatingHours,
@@ -954,7 +958,7 @@ export default function SkateparkDetailPage() {
                           <Input
                             type="time"
                             label="Close"
-                            value={dayHours.closingTime}
+                            value={dayHours.closingTime || ''}
                             onChange={(e) => {
                               const newHours = {
                                 ...skatepark.operatingHours,
