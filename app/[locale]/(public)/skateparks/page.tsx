@@ -73,11 +73,22 @@ type SortOption = 'nearest' | 'alphabetical' | 'newest' | 'rating';
 /**
  * Load Google Maps script (prevents duplicate loading)
  */
-const loadGoogleMapsScript = (): Promise<void> => {
+const loadGoogleMapsScript = (locale: string = 'en'): Promise<void> => {
   return new Promise((resolve, reject) => {
+    // Helper function to check if Map constructor is ready and resolve
+    const checkMapReady = () => {
+      const google = (window as any).google;
+      if (google?.maps?.Map && typeof google.maps.Map === 'function') {
+        resolve();
+      } else {
+        setTimeout(checkMapReady, 50); // Check again in 50ms
+      }
+    };
+
     // Check if Google Maps is already loaded
     if ((window as any).google?.maps) {
-      resolve();
+      // Even if maps exists, we need to wait for Map constructor with loading=async
+      checkMapReady();
       return;
     }
 
@@ -86,8 +97,10 @@ const loadGoogleMapsScript = (): Promise<void> => {
       'script[src*="maps.googleapis.com/maps/api/js"]'
     );
     if (existingScript) {
-      // Wait for existing script to load
-      existingScript.addEventListener('load', () => resolve());
+      // Wait for existing script to load, then check for Map constructor
+      existingScript.addEventListener('load', () => {
+        checkMapReady();
+      });
       existingScript.addEventListener('error', reject);
       return;
     }
@@ -95,10 +108,23 @@ const loadGoogleMapsScript = (): Promise<void> => {
     // Load Google Maps script with async/defer attributes
     const script = document.createElement('script');
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=marker`;
+    const language = locale === 'he' ? 'he' : 'en';
+    const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
+    
+    // Build script URL with optional mapIds parameter and loading=async for best practices
+    let scriptUrl = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=marker&language=${language}&loading=async`;
+    if (mapId) {
+      scriptUrl += `&mapIds=${mapId}`;
+    }
+    
+    script.src = scriptUrl;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      // When using loading=async, we need to wait for the API to be fully initialized
+      // Use the same checkMapReady function defined above
+      checkMapReady();
+    };
     script.onerror = reject;
     document.head.appendChild(script);
   });
@@ -111,10 +137,12 @@ function GoogleMapView({
   skateparks,
   userLocation,
   onMarkerClick,
+  locale,
 }: {
   skateparks: Skatepark[];
   userLocation: UserLocation | null;
   onMarkerClick: (park: Skatepark | null) => void;
+  locale: string;
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -152,7 +180,7 @@ function GoogleMapView({
       try {
         // Load script if not already loaded
         if (!scriptLoadedRef.current) {
-          await loadGoogleMapsScript();
+          await loadGoogleMapsScript(locale);
           scriptLoadedRef.current = true;
         }
 
@@ -162,7 +190,13 @@ function GoogleMapView({
           return;
         }
 
-        const center = userLocation || { lat: 31.7683, lng: 35.2137 }; // Default to Jerusalem
+        // Double-check Map constructor is available before using it
+        if (!google.maps.Map || typeof google.maps.Map !== 'function') {
+          console.error('Google Maps Map constructor is not available');
+          return;
+        }
+
+        const center = userLocation || { lat: 32.0735802, lng: 34.7880511 }; // Default to Jerusalem
 
         // Check if AdvancedMarkerElement is available (new API)
         const useAdvancedMarkers = google.maps.marker?.AdvancedMarkerElement;
@@ -174,6 +208,8 @@ function GoogleMapView({
           mapTypeControl: true,
           streetViewControl: false,
           fullscreenControl: true,
+          language: locale === 'he' ? 'he' : 'en',
+          mode: 'dark',
         };
 
         // Only add mapId if using AdvancedMarkerElement
@@ -181,6 +217,7 @@ function GoogleMapView({
           // Use a generic map ID - in production, you should create your own Map ID in Google Cloud Console
           mapOptions.mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID';
         }
+        console.log('Final mapOptions being used:', mapOptions); // <--- ADD THIS LINE
 
         const map = new google.maps.Map(mapRef.current, mapOptions);
         mapInstanceRef.current = map;
@@ -285,7 +322,7 @@ function GoogleMapView({
     };
 
     initMap();
-  }, [skateparks, userLocation, onMarkerClick]);
+  }, [skateparks, userLocation, onMarkerClick, locale]);
 
   return <div ref={mapRef} className="w-full h-full min-h-[600px]" />;
 }
@@ -666,7 +703,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               <span className={`transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('Closed', 'סגור')}
               </span>
-              <XCircle className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name="closedPark" className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -700,13 +737,13 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? ((hasOpeningYear || isClosed || isNew) ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${(hasOpeningYear || isClosed || isNew) ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex gap-1 justify-center items-center bg-brand-main dark:bg-brand-dark text-black text-xs font-bold px-2 py-1 shadow-lg ${
+            <div className={`flex gap-1 justify-center items-center bg-brand-dark text-black text-xs font-bold px-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
               <span className={`transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('Featured', 'מומלץ')}
               </span>
-              <Award className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name="featured" className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -763,7 +800,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
 
         >
           <h3 
-            className={`text-lg font-semibold truncate ${showParkName ? 'animate-fadeInDown animation-delay-[1s]' : 'opacity-0'}`}
+            className={`text-sm font-semibold truncate ${showParkName ? 'animate-fadeInDown animation-delay-[1s]' : 'opacity-0'}`}
           >
             {name}
           </h3>
@@ -1346,12 +1383,12 @@ export default function SkateparksPage() {
         <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
-              {tr('Find Your Park', 'מצא את הפארק שלך')}
+              {tr('Find Your Park', 'מצא את הבית שלך')}
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               {tr(
-                'Discover skateparks near you. Join the community. Feel the joy.',
-                'גלה סקייטפארקים קרובים. הצטרף לקהילה. הרגש את השמחה.'
+                'Where wheels meet concrete, community happens.',
+                'פה הגלגלים והחברים נפגשים.'
               )}
             </p>
 
@@ -1367,7 +1404,7 @@ export default function SkateparksPage() {
               <div className="flex items-center gap-2 text-sm">
                 <TrendingUp className="w-4 h-4 text-green-500" />
                 <span className="text-gray-600 dark:text-gray-400">
-                  {tr('Updated Daily', 'מתעדכן יומי')}
+                  {tr('Reviewed by Local Riders', 'דירוגי קהילה')}
                 </span>
               </div>
             </div>
@@ -1624,6 +1661,7 @@ export default function SkateparksPage() {
                 skateparks={skateparks}
                 userLocation={userLocation}
                 onMarkerClick={setSelectedPark}
+                locale={locale}
               />
             </div>
 
@@ -1673,7 +1711,7 @@ export default function SkateparksPage() {
               return (
                 <div
                   ref={cardRef}
-                  className="absolute w-[calc(100%-2rem)] max-w-[20rem] z-40"
+                  className="absolute w-[calc(100%-2rem)] max-w-[20rem] z-40 bg-card dark:bg-card-dark rounded-3xl border-2 border-card dark:border-card-dark overflow-hidden"
                   style={{
                     left: `${cardPosition.x}px`,
                     top: `${cardPosition.y}px`,
@@ -1689,10 +1727,10 @@ export default function SkateparksPage() {
                         e.stopPropagation();
                         setSelectedPark(null);
                       }}
-                      className="absolute top-3 right-3 z-30 p-2 rounded-full bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-lg hover:bg-white dark:hover:bg-gray-700 transition-colors"
+                      className="absolute top-3 right-3 z-30 p-2 rounded-full bg-sidebar dark:bg-sidebar-dark backdrop-blur-sm shadow-lg hover:bg-card dark:hover:bg-card-dark transition-colors duration-200"
                       aria-label={tr('Close', 'סגור')}
                     >
-                      <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                      <X className="w-4 h-4 text-sidebar-text dark:text-sidebar-text-dark" />
                     </button>
 
                     <Link 
@@ -1729,7 +1767,7 @@ export default function SkateparksPage() {
                               hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
                             }`}>
                               {tr('Closed', 'סגור')}
-                              <XCircle className="w-3 h-3" />
+                              <Icon name="close" className="w-3 h-3" />
                             </div>
                           </div>
                         )}
@@ -1770,22 +1808,14 @@ export default function SkateparksPage() {
                       </div>
 
                       <div className="px-4 py-3 space-y-1">
-                        <h3 className="text-lg font-semibold truncate">
+                        <h3 className="text-sm font-semibold truncate">
                           {name}
                         </h3>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
-                            <MapPin className="w-3.5 h-3.5 shrink-0" />
-                            <span className="text-sm truncate">
-                              {distanceText ? `${areaLabel} ${distanceText}` : areaLabel}
-                            </span>
-                          </div>
-                        </div>
                       </div>
                     </Link>
 
                     {/* Drag Handle Button - Next to Location Info */}
-                    <div className="absolute bottom-3 end-3 z-30 flex items-center gap-2">
+                    <div className="absolute bottom-2 end-2 z-30 flex items-center gap-2">
                       <button
                         onMouseDown={handleDragHandleMouseDown}
                         onClick={(e) => {
@@ -1796,7 +1826,7 @@ export default function SkateparksPage() {
                         aria-label={tr('Drag to move card', 'גרור כדי להזיז את הכרטיס')}
                         title={tr('Drag to move card', 'גרור כדי להזיז את הכרטיס')}
                       >
-                        <Icon name="drag" className="w-5 h-5" />
+                        <Icon name="dragBold" className="w-5 h-5 overflow-visible navMdShadow"  />
                       </button>
                     </div>
                   </div>
