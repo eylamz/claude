@@ -8,7 +8,6 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
-import { MapPin, Plus, Minus } from 'lucide-react';
 import { Icon } from '@/components/icons';
 import { Button, Badge } from '@/components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
@@ -1302,8 +1301,8 @@ export default function SkateparkPage() {
           </div>
 
           {/* Notes and Get Directions Combined Section */}
-          <div className="max-w-6xl mx-auto mb-8">
-            <Card className={`shadow-none transition-all duration-200 transform-gpu ${notes && notes.trim() !== '' ? 'grid grid-cols-1 md:grid-cols-2 gap-6 overflow-visible' : ''}`}>
+          <div className="max-w-6xl mx-auto mb-8 ">
+            <Card className={`!p-0 shadow-none transition-all duration-200 transform-gpu ${notes && notes.trim() !== '' ? 'grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-6 overflow-visible' : ''}`}>
               {/* Notes Section */}
               {notes && notes.trim() !== '' && (
                 <div className="md:p-4">
@@ -1453,14 +1452,14 @@ export default function SkateparkPage() {
 
           {/* YouTube Embed */}
           {skatepark.mediaLinks.youtube && (
-            <Card className="w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
+            <Card className="!shadow-none md:!p-4 w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
               <CardHeader>
                 <CardTitle className="text-base font-medium flex items-center gap-2">
                   <Icon name="youtube" className="w-5 h-5" />
                   {t('video')}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="bord rounded-xl">
                 <YouTubeEmbed url={skatepark.mediaLinks.youtube} />
               </CardContent>
             </Card>
@@ -1468,15 +1467,15 @@ export default function SkateparkPage() {
 
           {/* Map Section - Always render if skatepark exists */}
           {skatepark && (
-            <section aria-labelledby="location-heading" className="w-full max-w-6xl mx-auto">
+            <section aria-labelledby="location-heading" className="w-full max-w-6xl mx-auto px-2 md:px-4">
               <h2 id="location-heading" className="sr-only">{parkName} {tCommon('location')}</h2>
 
-              <div className="h-32 sm:h-60 rounded-3xl mb-8 overflow-hidden relative">
+              <div className="h-32 sm:h-60 rounded-xl mb-8 overflow-hidden relative">
                 {/* Shadow Overlay */}
-                <div className="absolute inset-0 pointer-events-none rounded-lg shadow-container z-10 dark:bg-background-dark/15"></div>
+                <div className="rounded-xl absolute inset-0 pointer-events-none shadow-container z-10 dark:bg-background-dark/15"></div>
                 
                 {/* Border */}
-                <div className="absolute inset-0 pointer-events-none rounded-3xl bord"></div>
+                <div className="rounded-xl absolute inset-0 pointer-events-none bord"></div>
                 
                   {(() => {
                   const iframeSrc = getGoogleMapsIframeSrc();
@@ -1498,7 +1497,7 @@ export default function SkateparkPage() {
                           loading="lazy"
                           referrerPolicy="no-referrer-when-downgrade"
                           title={`${parkName} ${tCommon('location')} ${tCommon('map')}`}
-                          className="rounded-lg"
+                          className=""
                           onLoad={() => setIsMapLoading(false)}
                           onError={() => setIsMapLoading(false)}
                         />
@@ -1572,7 +1571,7 @@ export default function SkateparkPage() {
                       {sortedReviews.slice(0, 1).map((review) => (
                         <div
                           key={review._id}
-                          className="opacity-0 bg-card dark:bg-card-dark rounded-lg p-4 animate-fadeInDown"
+                          className="h-full opacity-0 bg-card dark:bg-card-dark rounded-lg p-4 animate-fadeInDown"
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div>
@@ -1607,7 +1606,7 @@ export default function SkateparkPage() {
 
                   {/* Additional Reviews (shown when expanded) */}
                   {reviewsExpanded && sortedReviews.length > 2 && (
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {sortedReviews.slice(2).map((review) => (
                         <div
                           key={review._id}
@@ -1801,7 +1800,7 @@ export default function SkateparkPage() {
                       <Link
                         key={park._id}
                         href={`/${locale}/skateparks/${park.slug}`}
-                        className={`h-fit overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 ${hideClass}`}
+                        className={`h-fit cursor-pointer relative group select-none transform-gpu transition-all duration-200 ${hideClass}`}
                       >
                         <div
                          className="rounded-2xl relative h-[10.5rem] overflow-hidden"
@@ -1882,5 +1881,4 @@ export default function SkateparkPage() {
     </TooltipProvider>
   );
 }
-
 

@@ -78,6 +78,16 @@
   "lowestRated": "Lowest Rated",
   "nearbySkateparks": "Nearby Skateparks",
   "closeModal": "Close modal",
+  "imageViewer": {
+    "tapToZoom": "Pinch to zoom",
+    "doubleClickToZoom": "Double-click to zoom",
+    "reset": "Reset",
+    "closeFullscreen": "Close fullscreen view",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "nextImage": "Next image",
+    "previousImage": "Previous image"
+  },
   "search": {
     "filterStatus": {
       "showing": "Showing {filtered} / {total} parks",

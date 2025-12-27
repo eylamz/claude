@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
@@ -72,6 +73,7 @@ const FullscreenImageViewer = ({
   isOpen, 
   onClose 
 }: FullscreenImageViewerProps) => {
+  const t = useTranslations('skateparks.imageViewer');
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -95,9 +97,6 @@ const FullscreenImageViewer = ({
   const touchEndXRef = useRef(0);
   const touchStartYRef = useRef(0);
   const minSwipeDistance = 50;
-  const lastTapTimeRef = useRef(0);
-  const lastTapPositionRef = useRef({ x: 0, y: 0 });
-  const doubleTapDelay = 300;
   const highQualityImageRef = useRef<HTMLImageElement | null>(null);
   const lastClickTimeRef = useRef(0);
   const lastClickPositionRef = useRef({ x: 0, y: 0 });
@@ -268,23 +267,6 @@ const FullscreenImageViewer = ({
     handleZoom(Math.max(scale - 0.5, 1));
   };
 
-  const handleDoubleTap = (x: number, y: number) => {
-    if (scale > 1) {
-      resetZoom();
-    } else {
-      handleZoom(2.5);
-      if (imageContainerRef.current) {
-        const rect = imageContainerRef.current.getBoundingClientRect();
-        const offsetX = x - (rect.left + rect.width / 2);
-        const offsetY = y - (rect.top + rect.height / 2);
-        setPosition({
-          x: -offsetX * (2.5 - 1),
-          y: -offsetY * (2.5 - 1)
-        });
-      }
-    }
-  };
-
   const isClickOnMainImage = (element: EventTarget): boolean => {
     if (!imageRef.current) return false;
     return element === imageRef.current || imageRef.current.contains(element as Node);
@@ -342,28 +324,11 @@ const FullscreenImageViewer = ({
     if (e.touches.length === 1) {
       const touch = e.touches[0];
       if (isClickOnMainImage(e.target)) {
-        const currentTime = new Date().getTime();
-        const tapPosition = { x: touch.clientX, y: touch.clientY };
-        const distanceBetweenTaps = Math.hypot(
-          tapPosition.x - lastTapPositionRef.current.x,
-          tapPosition.y - lastTapPositionRef.current.y
-        );
-
-        if (currentTime - lastTapTimeRef.current < doubleTapDelay && distanceBetweenTaps < 30) {
-          e.preventDefault();
-          e.stopPropagation();
-          handleDoubleTap(touch.clientX, touch.clientY);
-          lastTapTimeRef.current = 0;
-          setIsSwiping(false);
-        } else {
-          if (scale === 1) {
-            touchStartXRef.current = touch.clientX;
-            touchEndXRef.current = touch.clientX;
-            touchStartYRef.current = touch.clientY;
-            setIsSwiping(true);
-          }
-          lastTapTimeRef.current = currentTime;
-          lastTapPositionRef.current = tapPosition;
+        if (scale === 1) {
+          touchStartXRef.current = touch.clientX;
+          touchEndXRef.current = touch.clientX;
+          touchStartYRef.current = touch.clientY;
+          setIsSwiping(true);
         }
       }
     }
@@ -511,7 +476,7 @@ const FullscreenImageViewer = ({
 
   return (
     <div 
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center select-none"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center select-none"
       onClick={handleBackgroundClick}
     >
       {animationStylesElement}
@@ -522,7 +487,7 @@ const FullscreenImageViewer = ({
           onClose();
         }}
         className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors z-50"
-        aria-label="Close fullscreen view"
+        aria-label={t('closeFullscreen')}
       >
         <X className="w-8 h-8" />
       </button>
@@ -539,7 +504,7 @@ const FullscreenImageViewer = ({
             }}
             className={`p-1 rounded-full ${scale <= 1 ? 'text-white/40 cursor-not-allowed' : 'text-white/80 hover:text-white hover:bg-white/10'} transition-colors`}
             disabled={scale <= 1}
-            aria-label="Zoom out"
+            aria-label={t('zoomOut')}
           >
             <ZoomOut className="w-6 h-6" />
           </button>
@@ -551,7 +516,7 @@ const FullscreenImageViewer = ({
             }}
             className={`p-1 rounded-full ${scale >= 4 ? 'text-white/40 cursor-not-allowed' : 'text-white/80 hover:text-white hover:bg-white/10'} transition-colors`}
             disabled={scale >= 4}
-            aria-label="Zoom in"
+            aria-label={t('zoomIn')}
           >
             <ZoomIn className="w-6 h-6" />
           </button>
@@ -563,7 +528,7 @@ const FullscreenImageViewer = ({
               }}
               className="ml-2 text-sm text-white/80 hover:text-white hover:underline transition-colors"
             >
-              Reset
+              {t('reset')}
             </button>
           )}
         </div>
@@ -645,7 +610,7 @@ const FullscreenImageViewer = ({
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                {isTouchDevice ? 'Tap to zoom' : 'Double-click to zoom'}
+                {isTouchDevice ? t('tapToZoom') : t('doubleClickToZoom')}
               </div>
             )}
           </div>
@@ -658,7 +623,7 @@ const FullscreenImageViewer = ({
                   navigate('next', e);
                 }}
                 className="absolute left-4 p-2 rounded-full bg-black/50 text-white/80 hover:text-white hover:bg-black/70 transition-colors z-10"
-                aria-label="Next image"
+                aria-label={t('nextImage')}
               >
                 <ChevronLeft className="w-8 h-8" />
               </button>
@@ -668,7 +633,7 @@ const FullscreenImageViewer = ({
                   navigate('prev', e);
                 }}
                 className="absolute right-4 p-2 rounded-full bg-black/50 text-white/80 hover:text-white hover:bg-black/70 transition-colors z-10"
-                aria-label="Previous image"
+                aria-label={t('previousImage')}
               >
                 <ChevronRight className="w-8 h-8" />
               </button>

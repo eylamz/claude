@@ -58,7 +58,6 @@ interface Skatepark {
   openingYear?: number | null;
   closingYear?: number | null;
   createdAt?: string | null;
-  updatedAt?: string | null;
   distance?: number | null;
 }
 
@@ -306,7 +305,7 @@ const getOptimizedImageUrl = (originalUrl: string): string | null => {
 // Amenity icon mapping (for Icon component - matches AmenitiesButton)
 const AMENITY_ICON_MAP: Record<string, string> = {
   parking: 'parking',
-  shade: 'sunBold',
+  shade: 'sun',
   bathroom: 'toilet',
   guard: 'securityGuard',
   seating: 'couch',
@@ -507,23 +506,11 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
   const [isInViewport, setIsInViewport] = useState(false);
   const [showBadgeContainer, setShowBadgeContainer] = useState<Record<string, boolean>>({});
   const [showBadgeContent, setShowBadgeContent] = useState<Record<string, boolean>>({});
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const name = typeof park.name === 'string' 
     ? park.name 
     : (locale === 'he' ? park.name.he : park.name.en) || park.name.en || park.name.he;
   const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
-
-  // Detect touch device
-  useEffect(() => {
-    const checkTouchDevice = () => {
-      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      setIsTouchDevice(isTouch);
-    };
-    checkTouchDevice();
-    window.addEventListener('resize', checkTouchDevice);
-    return () => window.removeEventListener('resize', checkTouchDevice);
-  }, []);
 
   // Intersection Observer to detect when card is in viewport
   useEffect(() => {
@@ -628,7 +615,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
     <div
       ref={cardRef}
       onClick={handleCardClick}
-      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02]  bg-card dark:bg-card-dark rounded-xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02] border-[4px] border-card dark:border-card-dark bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
       style={{ animationDelay: `${animationDelay}ms` }}
       aria-label={name}
     >
@@ -646,7 +633,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               <span className={`transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`}>
                 {park.openingYear}
               </span>
-              <Icon name="sparksBold" className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`} />
+              <Sparkles className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -715,69 +702,32 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
           photoUrl={photoUrl}
           parkName={name}
         />
-
-        {/* Hover Overlay - Only on non-touch devices */}
-        {!isTouchDevice && (
-          <div className={`absolute -bottom-1 z-20 pointer-events-none ${
-            locale === 'he' ? 'right-0' : 'left-0'
-          }`}>
-            {/* Distance Overlay - Behind park name */}
-            {distanceText && (
-              <div 
-                className={`border border-transparent dark:border-[#686868] max-w-[110%] min-w-[105px] absolute bottom-[calc(60%+0.5rem)] bg-card dark:bg-card-dark px-3 py-2 shadow-[-2px_1px_12px_3px_rgba(0,0,0,0.15)] ${
-                  locale === 'he'
-                    ? 'rounded-l-lg opacity-0 group-hover:opacity-100 translate-x-[8%] translate-y-[54%] rotate-[-2deg] group-hover:translate-x-[5%] group-hover:translate-y-[5%] group-hover:rotate-[1deg]'
-                    : 'rounded-r-xl opacity-0 group-hover:opacity-100 translate-x-[-8%] translate-y-[54%] rotate-[2deg] group-hover:translate-x-[-5%] group-hover:translate-y-[5%] group-hover:rotate-[-1deg]'
-                } transition-[opacity,transform] duration-[200ms,500ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)] [transition-delay:0ms,0ms] group-hover:[transition-delay:200ms,0ms]`}
-              >
-                <div className="flex items-center gap-1.5 text-text dark:text-text-dark text-xs">
-                  <Icon name="locationBold" className="w-3 h-3 shrink-0" />
-                  <span>{distanceText}</span>
-                </div>
-              </div>
-            )}
-            
-            {/* Park Name Overlay - In front */}
-            <div className={`relative border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark px-3 pt-2 pb-3 shadow-[-2px_1px_8px_3px_rgba(0,0,0,0.2)]   ${
-              locale === 'he'
-                ? 'rounded-tl-lg opacity-0 group-hover:opacity-100 translate-x-[36%] translate-y-[22%] rotate-[-1deg] group-hover:translate-x-[3%] group-hover:translate-y-[3%] group-hover:rotate-[2deg]'
-                : 'rounded-tr-xl opacity-0 group-hover:opacity-100 translate-x-[-6%] translate-y-[12%] rotate-[1deg] group-hover:translate-x-[-3%] group-hover:translate-y-[3%] group-hover:rotate-[-2deg]'
-            } transition-[opacity,transform] duration-[200ms,300ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)]`}>
-              <h3 className="text-sm font-semibold text-text dark:text-text-dark truncate max-w-[200px]">
-                {name}
-              </h3>
+      </div>
+      
+      <div 
+        className="px-3 space-y-1 overflow-hidden transition-all duration-300 ease-out"
+        style={{
+          maxHeight: showNameSection ? '200px' : '0',
+          paddingTop: showNameSection ? '0.5rem' : '0',
+          paddingBottom: showNameSection ? '0.5rem' : '0',
+        }}
+      >
+        <h3 
+          className={`text-lg font-semibold truncate ${showParkName ? 'animate-fadeInDown animation-delay-[1s]' : 'opacity-0'}`}
+        >
+          {name}
+        </h3>
+        {distanceText && (
+          <div className="opacity-0 animate-fadeInDown animation-delay-[4s] flex items-center justify-between">
+            <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
+              <Icon name="locationBold" className="w-3.5 h-3.5 shrink-0" />
+              <span className="text-sm truncate">
+                {distanceText}
+              </span>
             </div>
           </div>
         )}
       </div>
-      
-      {/* Name Section - Only on touch devices */}
-      {isTouchDevice && (
-        <div 
-          className="px-3 space-y-1 overflow-hidden transition-all duration-300 ease-out"
-          style={{
-            maxHeight: showNameSection ? '200px' : '0',
-            paddingTop: showNameSection ? '0.5rem' : '0',
-            paddingBottom: showNameSection ? '0.5rem' : '0',
-          }}
-        >
-          <h3 
-            className={`text-lg font-semibold truncate ${showParkName ? 'animate-fadeInDown animation-delay-[1s]' : 'opacity-0'}`}
-          >
-            {name}
-          </h3>
-          {distanceText && (
-            <div className="opacity-0 animate-fadeInDown animation-delay-[4s] flex items-center justify-between">
-              <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
-                <Icon name="locationBold" className="w-3.5 h-3.5 shrink-0" />
-                <span className="text-sm truncate">
-                  {distanceText}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 });
@@ -1714,7 +1664,7 @@ export default function SkateparksPage() {
                           <div className="absolute bottom-2 left-0 z-10">
                             <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-end-full shadow-lg animate-pop">
                               {selectedPark.openingYear}
-                              <Icon name="sparksBold" className="w-3 h-3" />
+                              <Sparkles className="w-3 h-3" />
                             </div>
                           </div>
                         )}

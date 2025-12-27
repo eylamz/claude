@@ -78,6 +78,16 @@
   "lowestRated": "הדירוג הנמוך ביותר",
   "nearbySkateparks": "סקייטפארקים קרובים",
   "closeModal": "סגור חלון",
+  "imageViewer": {
+    "tapToZoom": "צביטה להגדלה",
+    "doubleClickToZoom": "לחיצה כפולה להגדלה",
+    "reset": "איפוס",
+    "closeFullscreen": "סגור תצוגה מלאה",
+    "zoomIn": "הגדל",
+    "zoomOut": "הקטן",
+    "nextImage": "תמונה הבאה",
+    "previousImage": "תמונה קודמת"
+  },
   "search": {
     "filterStatus": {
       "showing": "מציג {filtered} / {total} פארקים",

@@ -279,10 +279,7 @@ const ParkImageGallery = ({
                 alt={mainImage.alt}
                 onClick={handleImageClick}
               />
-              {/* Search Icon Overlay */}
-              <div className={`absolute min-w-full inset-y-0 ${locale === 'he' ? 'right-0' : 'left-0'} z-20 bg-gradient-to-b from-black/40 via-black/30 to-transparent flex items-start justify-start pt-2`}>
-                <Icon name="sunBold" className="w-4 h-4 text-white" />
-              </div>
+         
             </ImageContainer>
 
             {/* Side Images - 2 columns grid */}
