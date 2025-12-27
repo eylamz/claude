@@ -58,6 +58,7 @@ interface Skatepark {
   openingYear?: number | null;
   closingYear?: number | null;
   createdAt?: string | null;
+  updatedAt?: string | null;
   distance?: number | null;
 }
 
@@ -186,7 +187,7 @@ function GoogleMapView({
 
         // Track if a marker was clicked
         let markerClicked = false;
-        
+
         // Prevent clicking on empty map areas - clear selection on map click
         map.addListener('click', () => {
           // Small delay to check if marker click handler fired first
@@ -215,7 +216,7 @@ function GoogleMapView({
             // Use new AdvancedMarkerElement API with custom pin
             const pinContent = createSkateparkPin('#31c438');
             pinContent.setAttribute('data-marker-id', park._id);
-            
+
             marker = new google.maps.marker.AdvancedMarkerElement({
               map,
               position,
@@ -292,7 +293,7 @@ function GoogleMapView({
 // Utility function to optimize image URLs
 const getOptimizedImageUrl = (originalUrl: string): string | null => {
   if (!originalUrl || originalUrl.trim() === '') return null;
-  
+
   if (originalUrl.includes('cloudinary.com')) {
     const urlParts = originalUrl.split('/upload/');
     if (urlParts.length === 2) {
@@ -305,7 +306,7 @@ const getOptimizedImageUrl = (originalUrl: string): string | null => {
 // Amenity icon mapping (for Icon component - matches AmenitiesButton)
 const AMENITY_ICON_MAP: Record<string, string> = {
   parking: 'parking',
-  shade: 'sun',
+  shade: 'sunBold',
   bathroom: 'toilet',
   guard: 'securityGuard',
   seating: 'couch',
@@ -362,12 +363,12 @@ const SkateparkThumbnail = memo(({
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
-  
+
   useEffect(() => {
     setIsLoaded(false);
     setHasError(false);
   }, [photoUrl]);
-  
+
   // Check if image is already loaded (cached) after render
   useEffect(() => {
     const checkImageLoaded = () => {
@@ -388,15 +389,15 @@ const SkateparkThumbnail = memo(({
       }
       return false;
     };
-    
+
     // Check immediately
     if (checkImageLoaded()) return;
-    
+
     // Check after a small delay to allow ref to be set
     const timeout1 = setTimeout(() => {
       checkImageLoaded();
     }, 100);
-    
+
     // Fallback: if image hasn't loaded after 3 seconds, hide spinner
     const timeout2 = setTimeout(() => {
       if (!isLoaded && !hasError && imgRef.current) {
@@ -407,13 +408,13 @@ const SkateparkThumbnail = memo(({
         }
       }
     }, 3000);
-    
+
     return () => {
       clearTimeout(timeout1);
       clearTimeout(timeout2);
     };
   }, [photoUrl, onLoad]);
-  
+
   const handleImageLoad = () => {
     setIsLoaded(true);
     setHasError(false);
@@ -506,11 +507,23 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
   const [isInViewport, setIsInViewport] = useState(false);
   const [showBadgeContainer, setShowBadgeContainer] = useState<Record<string, boolean>>({});
   const [showBadgeContent, setShowBadgeContent] = useState<Record<string, boolean>>({});
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const name = typeof park.name === 'string' 
     ? park.name 
     : (locale === 'he' ? park.name.he : park.name.en) || park.name.en || park.name.he;
   const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
+
+  // Detect touch device
+  useEffect(() => {
+    const checkTouchDevice = () => {
+      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsTouchDevice(isTouch);
+    };
+    checkTouchDevice();
+    window.addEventListener('resize', checkTouchDevice);
+    return () => window.removeEventListener('resize', checkTouchDevice);
+  }, []);
 
   // Intersection Observer to detect when card is in viewport
   useEffect(() => {
@@ -558,7 +571,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
     // Determine badge order and positions (order: openingYear -> closed -> new -> featured)
     const badges: Array<{ key: string; delay: number }> = [];
     let baseDelay = 1000;
-    
+
     if (hasOpeningYear) {
       badges.push({ key: 'openingYear', delay: baseDelay });
       baseDelay += 100;
@@ -615,7 +628,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
     <div
       ref={cardRef}
       onClick={handleCardClick}
-      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02] border-[4px] border-card dark:border-card-dark bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02]  bg-card dark:bg-card-dark rounded-xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
       style={{ animationDelay: `${animationDelay}ms` }}
       aria-label={name}
     >
@@ -633,7 +646,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               <span className={`transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`}>
                 {park.openingYear}
               </span>
-              <Sparkles className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name="sparksBold" className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -673,7 +686,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               <span className={`transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('New', 'חדש')}
               </span>
-              <Badge className={`w-4 h-4 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name="trees" className={`w-4 h-4 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -687,7 +700,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? ((hasOpeningYear || isClosed || isNew) ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${(hasOpeningYear || isClosed || isNew) ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs font-bold px-2 py-1 shadow-lg ${
+            <div className={`flex gap-1 justify-center items-center bg-brand-main dark:bg-brand-dark text-black text-xs font-bold px-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
               <span className={`transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`}>
@@ -702,32 +715,70 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
           photoUrl={photoUrl}
           parkName={name}
         />
-      </div>
-      
-      <div 
-        className="px-3 space-y-1 overflow-hidden transition-all duration-300 ease-out"
-        style={{
-          maxHeight: showNameSection ? '200px' : '0',
-          paddingTop: showNameSection ? '0.5rem' : '0',
-          paddingBottom: showNameSection ? '0.5rem' : '0',
-        }}
-      >
-        <h3 
-          className={`text-lg font-semibold truncate ${showParkName ? 'animate-fadeInDown animation-delay-[1s]' : 'opacity-0'}`}
-        >
-          {name}
-        </h3>
-        {distanceText && (
-          <div className="opacity-0 animate-fadeInDown animation-delay-[4s] flex items-center justify-between">
-            <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
-              <Icon name="locationBold" className="w-3.5 h-3.5 shrink-0" />
-              <span className="text-sm truncate">
-                {distanceText}
-              </span>
+
+        {/* Hover Overlay - Only on non-touch devices */}
+        {!isTouchDevice && (
+          <div className={`absolute -bottom-1 z-20 pointer-events-none ${
+            locale === 'he' ? 'right-0' : 'left-0'
+          }`}>
+            {/* Distance Overlay - Behind park name */}
+            {distanceText && (
+              <div 
+                className={`border border-transparent dark:border-[#686868] max-w-[110%] min-w-[105px] absolute bottom-[calc(60%+0.5rem)] bg-card dark:bg-card-dark px-3 py-2 shadow-[-2px_1px_12px_3px_rgba(0,0,0,0.15)] ${
+                  locale === 'he'
+                    ? 'rounded-l-lg opacity-0 group-hover:opacity-100 translate-x-[8%] translate-y-[54%] rotate-[-2deg] group-hover:translate-x-[5%] group-hover:translate-y-[5%] group-hover:rotate-[1deg]'
+                    : 'rounded-r-xl opacity-0 group-hover:opacity-100 translate-x-[-8%] translate-y-[54%] rotate-[2deg] group-hover:translate-x-[-5%] group-hover:translate-y-[5%] group-hover:rotate-[-1deg]'
+                } transition-[opacity,transform] duration-[200ms,500ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)] [transition-delay:0ms,0ms] group-hover:[transition-delay:200ms,0ms]`}
+              >
+                <div className="flex items-center gap-1.5 text-text dark:text-text-dark text-xs">
+                  <Icon name="locationBold" className="w-3 h-3 shrink-0" />
+                  <span>{distanceText}</span>
+                </div>
+              </div>
+            )}
+            
+            {/* Park Name Overlay - In front */}
+            <div className={`relative border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark px-3 pt-2 pb-3 shadow-[-2px_1px_8px_3px_rgba(0,0,0,0.2)]   ${
+              locale === 'he'
+                ? 'rounded-tl-lg opacity-0 group-hover:opacity-100 translate-x-[36%] translate-y-[22%] rotate-[-1deg] group-hover:translate-x-[3%] group-hover:translate-y-[3%] group-hover:rotate-[2deg]'
+                : 'rounded-tr-xl opacity-0 group-hover:opacity-100 translate-x-[-6%] translate-y-[12%] rotate-[1deg] group-hover:translate-x-[-3%] group-hover:translate-y-[3%] group-hover:rotate-[-2deg]'
+            } transition-[opacity,transform] duration-[200ms,300ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)]`}>
+              <h3 className="text-sm font-semibold text-text dark:text-text-dark truncate max-w-[200px]">
+                {name}
+              </h3>
             </div>
           </div>
         )}
       </div>
+
+      {/* Name Section - Only on touch devices */}
+      {isTouchDevice && (
+        <div 
+          className="px-3 space-y-1 overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            maxHeight: showNameSection ? '200px' : '0',
+            paddingTop: showNameSection ? '0.5rem' : '0',
+            paddingBottom: showNameSection ? '0.5rem' : '0',
+          }}
+
+        >
+          <h3 
+            className={`text-lg font-semibold truncate ${showParkName ? 'animate-fadeInDown animation-delay-[1s]' : 'opacity-0'}`}
+          >
+            {name}
+          </h3>
+          {distanceText && (
+            <div className="opacity-0 animate-fadeInDown animation-delay-[4s] flex items-center justify-between">
+              <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
+                <Icon name="locationBold" className="w-3.5 h-3.5 shrink-0" />
+                <span className="text-sm truncate">
+                  {distanceText}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 });
@@ -788,22 +839,22 @@ export default function SkateparksPage() {
   useEffect(() => {
     const prev = prevSelectedAmenitiesRef.current;
     const current = selectedAmenities;
-    
+
     // Find newly added amenities
     const newlyAdded = current.filter(amenity => !prev.includes(amenity));
-    
+
     if (newlyAdded.length > 0) {
       // Add animation to newly added icons
       setAnimatingIcons(new Set(newlyAdded));
-      
+
       // Remove animation after animation completes (0.5s based on tailwind config)
       const timeoutId = setTimeout(() => {
         setAnimatingIcons(new Set());
       }, 500);
-      
+
       // Update ref for next comparison
       prevSelectedAmenitiesRef.current = current;
-      
+
       return () => clearTimeout(timeoutId);
     } else {
       // Update ref even if no new items
@@ -815,14 +866,14 @@ export default function SkateparksPage() {
   useEffect(() => {
     const prevLocation = prevUserLocationRef.current;
     const currentLocation = userLocation;
-    
+
     // If location was just enabled (was null, now has value)
     if (!prevLocation && currentLocation && sortBy === 'nearest') {
       setShouldAnimateLocation(true);
       const timeoutId = setTimeout(() => {
         setShouldAnimateLocation(false);
       }, 500);
-      
+
       prevUserLocationRef.current = currentLocation;
       return () => clearTimeout(timeoutId);
     } else {
@@ -835,7 +886,7 @@ export default function SkateparksPage() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const prevScrollY = prevScrollYRef.current;
-      
+
       // Determine header visibility (matches HeaderNav/MobileNav logic)
       if (currentScrollY < prevScrollY || currentScrollY < 10) {
         // Scrolling up or at top - show header
@@ -844,7 +895,7 @@ export default function SkateparksPage() {
         // Scrolling down - hide header
         setIsHeaderVisible(false);
       }
-      
+
       prevScrollYRef.current = currentScrollY;
       setIsScrolled(currentScrollY > 260);
     };
@@ -871,14 +922,14 @@ export default function SkateparksPage() {
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}&language=${locale}`
       );
-      
+
       if (!response.ok) {
         console.error('Reverse geocoding failed');
         return null;
       }
 
       const data = await response.json();
-      
+
       if (data.results && data.results.length > 0) {
         // Find city name from address components
         for (const result of data.results) {
@@ -889,14 +940,14 @@ export default function SkateparksPage() {
             }
           }
         }
-        
+
         // Fallback: use first result's formatted address
         if (data.results[0]?.formatted_address) {
           const parts = data.results[0].formatted_address.split(',');
           return parts[0]?.trim() || null;
         }
       }
-      
+
       return null;
     } catch (error) {
       console.error('Error getting city name:', error);
@@ -930,7 +981,7 @@ export default function SkateparksPage() {
         };
         setUserLocation(location);
         setSortBy('nearest');
-        
+
         // Get city name from coordinates
         const city = await getCityFromCoordinates(location.lat, location.lng);
         if (city) {
@@ -957,23 +1008,23 @@ export default function SkateparksPage() {
         // Normalize location format in cached data (handle both old and new formats)
         const normalizedCachedData = (parsedData || []).map((park: any) => {
           let location = park.location;
-          
+
           // Convert from { type: 'Point', coordinates: [lng, lat] } to { lat, lng }
           if (location?.coordinates && Array.isArray(location.coordinates)) {
             const [lng, lat] = location.coordinates;
             location = { lat, lng };
           }
           // If already in { lat, lng } format, keep it as is
-          
+
           return {
             ...park,
             location,
           };
         });
-        
+
         setAllSkateparks(normalizedCachedData);
         setLoading(false);
-        
+
         // Check version asynchronously after using cache
         // If version doesn't match, refetch and update both cache and version
         if (cachedVersion) {
@@ -993,28 +1044,28 @@ export default function SkateparksPage() {
                   if (response.ok) {
                     const data = await response.json();
                     const newVersion = data.version || 1;
-                    
+
                     // Convert location format from API (coordinates array) to expected format (lat/lng object)
                     const normalizedSkateparks = (data.skateparks || []).map((park: any) => {
                       let location = park.location;
-                      
+
                       // Convert from { type: 'Point', coordinates: [lng, lat] } to { lat, lng }
                       if (location?.coordinates && Array.isArray(location.coordinates)) {
                         const [lng, lat] = location.coordinates;
                         location = { lat, lng };
                       }
                       // If already in { lat, lng } format, keep it as is
-                      
+
                       return {
                         ...park,
                         location,
                       };
                     });
-                    
+
                     // Update both cache and version in localStorage (store normalized format)
                     localStorage.setItem(cacheKey, JSON.stringify(normalizedSkateparks));
                     localStorage.setItem(versionKey, newVersion.toString());
-                    
+
                     // Update state with new data
                     setAllSkateparks(normalizedSkateparks);
                   }
@@ -1026,7 +1077,7 @@ export default function SkateparksPage() {
             }
           })();
         }
-        
+
         return; // Exit early since we used cache
       } catch (e) {
         // If cache is corrupted, continue to fetch fresh data
@@ -1048,14 +1099,14 @@ export default function SkateparksPage() {
       // Convert location format from API (coordinates array) to expected format (lat/lng object)
       const normalizedSkateparks = (data.skateparks || []).map((park: any) => {
         let location = park.location;
-        
+
         // Convert from { type: 'Point', coordinates: [lng, lat] } to { lat, lng }
         if (location?.coordinates && Array.isArray(location.coordinates)) {
           const [lng, lat] = location.coordinates;
           location = { lat, lng };
         }
         // If already in { lat, lng } format, keep it as is
-        
+
         return {
           ...park,
           location,
@@ -1064,7 +1115,7 @@ export default function SkateparksPage() {
 
       // Use fresh data
       setAllSkateparks(normalizedSkateparks);
-      
+
       // Store both cache and version in localStorage (store normalized format)
       localStorage.setItem(cacheKey, JSON.stringify(normalizedSkateparks));
       localStorage.setItem(versionKey, currentVersion.toString());
@@ -1105,7 +1156,7 @@ export default function SkateparksPage() {
       filtered = filtered.filter((park) => {
         let nameEn = '';
         let nameHe = '';
-        
+
         if (typeof park.name === 'string') {
           nameEn = park.name;
           nameHe = park.name;
@@ -1113,7 +1164,7 @@ export default function SkateparksPage() {
           nameEn = park.name.en || '';
           nameHe = park.name.he || '';
         }
-        
+
         return (
           nameEn.toLowerCase().includes(query) ||
           nameHe.toLowerCase().includes(query)
@@ -1141,7 +1192,7 @@ export default function SkateparksPage() {
   // Client-side sorting function
   const sortSkateparks = useCallback((parks: Skatepark[], sortOption: SortOption): Skatepark[] => {
     const sorted = [...parks];
-    
+
     switch (sortOption) {
       case 'nearest':
         return sorted.sort((a, b) => {
@@ -1173,7 +1224,7 @@ export default function SkateparksPage() {
   // Filter, calculate distances, and sort skateparks when filters or sort changes
   useEffect(() => {
     let filtered = filterSkateparks(allSkateparks);
-    
+
     // Calculate distances if userLocation is available
     if (userLocation) {
       filtered = filtered.map((park) => ({
@@ -1192,7 +1243,7 @@ export default function SkateparksPage() {
         distance: null,
       }));
     }
-    
+
     const sorted = sortSkateparks(filtered, sortBy);
     setSkateparks(sorted);
   }, [allSkateparks, areaFilter, searchQuery, selectedAmenities, openNowOnly, sortBy, userLocation, filterSkateparks, sortSkateparks, calculateDistance]);
@@ -1222,10 +1273,10 @@ export default function SkateparksPage() {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
-    
+
     if (cardRef.current) {
       const cardRect = cardRef.current.getBoundingClientRect();
-      
+
       // Calculate offset from mouse to card top-left
       const offsetX = e.clientX - cardRect.left;
       const offsetY = e.clientY - cardRect.top;
@@ -1242,20 +1293,20 @@ export default function SkateparksPage() {
 
       const mapRect = mapContainerRef.current.getBoundingClientRect();
       const cardRect = cardRef.current.getBoundingClientRect();
-      
+
       // Calculate new position relative to map container
       let newX = e.clientX - mapRect.left - dragOffset.x;
       let newY = e.clientY - mapRect.top - dragOffset.y;
-      
+
       // Constrain to map bounds
       const minX = 0;
       const minY = 0;
       const maxX = mapRect.width - cardRect.width;
       const maxY = mapRect.height - cardRect.height;
-      
+
       newX = Math.max(minX, Math.min(maxX, newX));
       newY = Math.max(minY, Math.min(maxY, newY));
-      
+
       setCardPosition({ x: newX, y: newY });
     };
 
@@ -1287,7 +1338,7 @@ export default function SkateparksPage() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark" dir={locale === 'he' ? 'rtl' : 'ltr'}>
-      
+
       {/* ========================================
           HERO SECTION - Brand Messaging  
       ======================================== */}
@@ -1303,7 +1354,7 @@ export default function SkateparksPage() {
                 'גלה סקייטפארקים קרובים. הצטרף לקהילה. הרגש את השמחה.'
               )}
             </p>
-            
+
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
               <div className="flex items-center gap-2 text-sm">
@@ -1339,7 +1390,7 @@ export default function SkateparksPage() {
         <div className="max-w-7xl mx-auto px-4">
           {/* Main Filter Row */}
           <div className="flex flex-col xxs:flex-row items-stretch md:items-center gap-3">
-            
+
             {/* Left: Search + Amenities */}
             <div className="flex items-center gap-1 flex-1">
               {/* Search Input */}
@@ -1353,7 +1404,7 @@ export default function SkateparksPage() {
                 />
               </div>
 
-         
+
             </div>
 
             {/* Right: Location + View Toggle */}
@@ -1366,7 +1417,7 @@ export default function SkateparksPage() {
                   locale={locale}
                 />
               </div>
-              
+
               <TooltipProvider delayDuration={50}>
                 {/* Location Button */}
                 <Tooltip>
@@ -1406,7 +1457,7 @@ export default function SkateparksPage() {
                           <Icon name="categoryBold" className="w-5 h-5" />
                         )}
                       </Button>
-                      
+
                       {/* Pulsing indicator when map is active */}
                       {viewMode === 'grid' && (
                         <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -1491,7 +1542,7 @@ export default function SkateparksPage() {
                     const amenityOption = AMENITY_OPTIONS.find(a => a.key === amenity);
                     const iconName = amenityOption?.iconName;
                     const shouldAnimate = animatingIcons.has(amenity);
-                    
+
                     return (
                       <div
                         key={amenity}
@@ -1575,7 +1626,7 @@ export default function SkateparksPage() {
                 onMarkerClick={setSelectedPark}
               />
             </div>
-            
+
             {/* Map Controls Overlay - Top Right */}
             <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
               {/* Parks Count Badge */}
@@ -1585,13 +1636,13 @@ export default function SkateparksPage() {
                 </span>
               </div>
             </div>
-            
+
             {/* Selected Park Detail Panel - Bottom */}
             {selectedPark && !(userLocation && sortBy === 'nearest') && (() => {
               const name = typeof selectedPark.name === 'string' 
                 ? selectedPark.name 
                 : (locale === 'he' ? selectedPark.name.he : selectedPark.name.en) || selectedPark.name.en || selectedPark.name.he;
-              
+
               const photoUrl = selectedPark.images && selectedPark.images.length > 0 
                 ? selectedPark.images.find(img => img.isFeatured)?.url || selectedPark.images[0]?.url 
                 : selectedPark.imageUrl;
@@ -1664,7 +1715,7 @@ export default function SkateparksPage() {
                           <div className="absolute bottom-2 left-0 z-10">
                             <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-end-full shadow-lg animate-pop">
                               {selectedPark.openingYear}
-                              <Sparkles className="w-3 h-3" />
+                              <Icon name="sparksBold" className="w-3 h-3" />
                             </div>
                           </div>
                         )}
@@ -1717,7 +1768,7 @@ export default function SkateparksPage() {
                           alwaysSaturated={true}
                         />
                       </div>
-                      
+
                       <div className="px-4 py-3 space-y-1">
                         <h3 className="text-lg font-semibold truncate">
                           {name}
@@ -1732,7 +1783,7 @@ export default function SkateparksPage() {
                         </div>
                       </div>
                     </Link>
-                    
+
                     {/* Drag Handle Button - Next to Location Info */}
                     <div className="absolute bottom-3 end-3 z-30 flex items-center gap-2">
                       <button
@@ -1797,4 +1848,3 @@ export default function SkateparksPage() {
     </div>
   );
 }
-
