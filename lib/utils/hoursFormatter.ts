@@ -340,7 +340,7 @@ export const formatDayRanges = (days: DayOfWeek[], locale: string = 'en'): strin
     wednesday: { en: 'Wednesday', he: 'יום רביעי', short: { en: 'Wed', he: 'ד' } },
     thursday: { en: 'Thursday', he: 'יום חמישי', short: { en: 'Thu', he: 'ה' } },
     friday: { en: 'Friday', he: 'יום שישי', short: { en: 'Fri', he: 'ו' } },
-    saturday: { en: 'Saturday', he: 'שבת', short: { en: 'Sat', he: 'ש' } },
+    saturday: { en: 'Saturday', he: 'שבתות', short: { en: 'Sat', he: 'ש' } },
     holidays: { en: 'Holidays', he: 'חגים', short: { en: 'Holidays', he: 'חגים' } },
   };
 
@@ -356,7 +356,7 @@ export const formatDayRanges = (days: DayOfWeek[], locale: string = 'en'): strin
     if (!translation) return key;
     // Check if locale exists (including empty string), otherwise fall back to English, then key
     if (locale in translation) {
-      return translation[locale];
+      return translation[locale as 'en' | 'he'];
     }
     if ('en' in translation) {
       return translation.en;
@@ -381,10 +381,29 @@ export const formatDayRanges = (days: DayOfWeek[], locale: string = 'en'): strin
 
   // If it's just one day
   if (sortedDays.length === 1) {
+    const dayKey = sortedDays[0];
+    let dayName: string;
+    if (dayKey === 'friday') {
+      // For Friday with days prefix in Hebrew, use "שישי" instead of "ו"
+      const daysPrefix = t('days');
+      if (daysPrefix && locale === 'he') {
+        dayName = 'שישי';
+      } else {
+        dayName = dayNames['friday'].short[locale as 'en' | 'he'] || dayNames['friday'].short.en;
+      }
+    } else {
+      const dayInfo = dayNames[dayKey];
+      if (dayInfo) {
+        dayName = dayInfo[locale as 'en' | 'he'] || dayInfo.en || dayKey;
+      } else {
+        dayName = dayKey;
+      }
+    }
+    // Don't add "days" prefix for Saturday and Holidays
+    if (dayKey === 'saturday' || dayKey === 'holidays') {
+      return dayName;
+    }
     const daysPrefix = t('days');
-    const dayName = sortedDays[0] === 'friday' 
-      ? (dayNames['friday'].short[locale] || dayNames['friday'].short.en)
-      : (dayNames[sortedDays[0]]?.[locale] || dayNames[sortedDays[0]]?.en || sortedDays[0]);
     return daysPrefix ? `${daysPrefix} ${dayName}` : dayName;
   }
 
@@ -397,28 +416,50 @@ export const formatDayRanges = (days: DayOfWeek[], locale: string = 'en'): strin
   });
 
   if (isConsecutive) {
-    // Get first and last day with special handling for Friday
-    const firstDay = sortedDays[0] === 'friday' 
-      ? dayNames['friday'].short[locale] || dayNames['friday'].short.en
-      : dayNames[sortedDays[0]]?.short[locale] || dayNames[sortedDays[0]]?.short.en;
-    
-    const lastDay = sortedDays[sortedDays.length-1] === 'friday' 
-      ? dayNames['friday'].short[locale] || dayNames['friday'].short.en
-      : dayNames[sortedDays[sortedDays.length-1]]?.short[locale] || dayNames[sortedDays[sortedDays.length-1]]?.short.en;
-    
     const daysPrefix = t('days');
+    // Get first and last day with special handling for Friday
+    const firstDayKey = sortedDays[0];
+    let firstDay: string;
+    if (firstDayKey === 'friday') {
+      // For Friday with days prefix in Hebrew, use "שישי" instead of "ו"
+      firstDay = (daysPrefix && locale === 'he') 
+        ? 'שישי'
+        : (dayNames['friday'].short[locale as 'en' | 'he'] || dayNames['friday'].short.en);
+    } else {
+      firstDay = dayNames[firstDayKey]?.short[locale as 'en' | 'he'] || dayNames[firstDayKey]?.short.en || firstDayKey;
+    }
+    
+    const lastDayKey = sortedDays[sortedDays.length-1];
+    let lastDay: string;
+    if (lastDayKey === 'friday') {
+      // For Friday with days prefix in Hebrew, use "שישי" instead of "ו"
+      lastDay = (daysPrefix && locale === 'he') 
+        ? 'שישי'
+        : (dayNames['friday'].short[locale as 'en' | 'he'] || dayNames['friday'].short.en);
+    } else {
+      lastDay = dayNames[lastDayKey]?.short[locale as 'en' | 'he'] || dayNames[lastDayKey]?.short.en || lastDayKey;
+    }
+    
     return daysPrefix ? `${daysPrefix} ${firstDay} ${t('to')} ${lastDay}` : `${firstDay} ${t('to')} ${lastDay}`;
   }
 
   // Not consecutive, list them all with special handling for Friday
+  const daysPrefix = t('days');
   const formattedDays = sortedDays.map(day => {
     if (day === 'friday') {
-      return dayNames['friday'].short[locale] || dayNames['friday'].short.en;
+      // For Friday with days prefix in Hebrew, use "שישי" instead of "ו"
+      if (daysPrefix && locale === 'he') {
+        return 'שישי';
+      }
+      return dayNames['friday'].short[locale as 'en' | 'he'] || dayNames['friday'].short.en;
     }
-    return dayNames[day]?.[locale] || dayNames[day]?.en || day;
+    const dayInfo = dayNames[day];
+    if (dayInfo) {
+      return dayInfo[locale as 'en' | 'he'] || dayInfo.en || day;
+    }
+    return day;
   }).join(', ');
   
-  const daysPrefix = t('days');
   return daysPrefix ? `${daysPrefix} ${formattedDays}` : formattedDays;
 };
 
