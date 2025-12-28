@@ -20,7 +20,7 @@ export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
   return (
     <nav 
       aria-label="Breadcrumb" 
-      className={`select-none mx-auto w-full max-w-6xl absolute top-[4.25rem] z-20 ${locale === 'he' ? 'right-4' : 'left-4'} ${className}`}
+      className={`select-none mx-auto w-fit max-w-6xl absolute top-[4.25rem] z-20 ${locale === 'he' ? 'right-4' : 'left-4'} ${className}`}
     >
       <ol className="flex items-center text-sm text-text/80 dark:text-text-dark/90 transition-color duration-300">
         {items.map((item, index) => {

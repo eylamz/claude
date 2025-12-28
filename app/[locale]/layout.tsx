@@ -32,7 +32,7 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <AppProviders>
-        <div dir={htmlDir} lang={htmlLang} className={fontClass}>
+        <div dir={htmlDir} lang={htmlLang} className={`${fontClass} overflow-x-hidden`}>
           {children}
         </div>
       </AppProviders>

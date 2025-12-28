@@ -688,11 +688,11 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
           <div className={`absolute bottom-2 left-0 z-10 ${
             showBadgeContainer.openingYear ? 'animate-slideRight animation-delay-[2s]' : 'opacity-0 translate-x-[-30px]'
           }`}>
-            <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold ps-3 pe-2 py-1 rounded-r-full shadow-lg">
-              <span className={`transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
+              <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`}>
                 {park.openingYear}
               </span>
-              <Icon name="sparksBold" className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name="sparksBold" className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -706,13 +706,13 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? (hasOpeningYear ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${hasOpeningYear ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex gap-1 justify-center items-center bg-error dark:bg-error-dark text-white text-xs ps-3 pe-2 py-1 shadow-lg ${
+            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-error dark:bg-error-dark text-white text-xs ps-1 md:ps-3 pe-1 md:pe-2 py-1 shadow-lg ${
               hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
-              <span className={`text-sm transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
+              <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('Permanently Closed', 'נסגר לצמיתות')}
               </span>
-              <Icon name="closedPark" className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name="closedPark" className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -726,13 +726,13 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? ((hasOpeningYear || isClosed) ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${(hasOpeningYear || isClosed) ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex rtl:flex-row-reverse gap-1 justify-center items-center bg-blue-500 dark:bg-blue-600 text-white text-xs md:text-sm pe-3 ps-2 py-1 shadow-lg ${
+            <div className={`flex rtl:flex-row-reverse gap-0.5 md:gap-1 justify-center items-center bg-blue-500 dark:bg-blue-600 text-white text-xs md:text-sm pe-1 md:pe-3 ps-1 md:ps-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
-              <span className={`transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`}>
+              <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('New', 'חדש')}
               </span>
-              <Icon name="trees" className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name="trees" className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -746,13 +746,13 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? ((hasOpeningYear || isClosed || isNew) ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${(hasOpeningYear || isClosed || isNew) ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex gap-1 justify-center items-center bg-brand-dark text-black text-xs font-bold px-2 py-1 shadow-lg ${
+            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-brand-dark text-black text-xs md:text-sm font-bold px-1 md:px-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
-              <span className={`transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`}>
+              <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('Featured', 'מומלץ')}
               </span>
-              <Icon name="featured" className={`w-3 h-3 transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name="featured" className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -1413,7 +1413,7 @@ export default function SkateparksPage() {
               <div className="flex items-center gap-2 text-sm">
                 <TrendingUp className="w-4 h-4 text-green-500" />
                 <span className="text-gray-600 dark:text-gray-400">
-                  {tr('Reviewed by Local Riders', 'דירוגי קהילה')}
+                  {tr('Community Reviews', 'ביקורות קהילה')}
                 </span>
               </div>
             </div>

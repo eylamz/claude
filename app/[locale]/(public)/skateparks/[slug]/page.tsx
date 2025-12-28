@@ -538,13 +538,13 @@ function FormattedHours({
         </div>
         
         {/* ALWAYS show lighting hours for 24/7 parks when is24Hours is true */}
-        <div className="flex items-start gap-2">
+        <div className="flex ltr:flex-col xsm:ltr:flex-row items-start gap-2">
           <div className="flex items-center gap-2">
             <Icon name="sunset" className={`w-5 h-5 ${lightingHours?.endTime ? 'text-yellow-500 dark:text-yellow-300' : 'text-gray-500'}`} />
             <h4 className="text-base font-semibold">{t('lightingHours')}: </h4>
           </div>
           <div>
-            <p className={`text-base ${!lightingHours?.endTime ? 'text-gray-500' : ''}`}>
+            <p className={`ps-7 xsm:ps-0 text-base ${!lightingHours?.endTime ? 'text-gray-500' : ''}`}>
               {lightingHours?.endTime 
                 ? formatLightingHours(lightingHours.endTime, locale)
                 : t('noLighting')}
@@ -1229,24 +1229,40 @@ export default function SkateparkPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
-        <div className="max-w-7xl mx-auto  space-y-6">
-          {/* Header Skeleton - Highest opacity */}
-          <div className="flex justify-center -mb-5 mt-5 opacity-90">
-            <Skeleton className="h-10 w-64 sm:w-96  " />
+      <div className="pt-14 min-h-screen">
+        <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 overflow-visible">
+          {/* Breadcrumb Skeleton */}
+          <div className="mb-4 opacity-40">
+            <Skeleton className="h-4 w-48" />
           </div>
 
-          {/* Image Gallery Skeleton - High opacity */}
-          <div className="max-w-7xl mx-auto p-4 lg:p-6 opacity-60">
-            <div className="relative w-screen left-[50%] right-[50%] -ml-[50vw] -mr-[50vw] overflow-visible">
-              <div className="container w-fit max-w-[100vw] mx-auto relative">
-                <div className="flex gap-4 overflow-x-auto overflow-y-visible scroll-smooth py-8 -my-4 lg:-mx-2 pl-7 pr-4 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                  {[...Array(4)].map((_, i) => (
-                    <Skeleton 
-                      key={i} 
-                      className="flex-shrink-0 w-[266px] h-[175px] rounded-lg  " 
-                    />
-                  ))}
+          {/* Header Skeleton - Highest opacity */}
+          <div className="flex justify-center -mb-5 mt-5 opacity-90">
+            <Skeleton className="h-10 w-64 sm:w-96" />
+          </div>
+
+          {/* Image Gallery Skeleton - High opacity - Matching ParkImageGallery layout */}
+          <div className="w-full opacity-60">
+            <div className="-overflow-hidden">
+              {/* Desktop Layout: Main image on left (2/3), 2 side images on right (1/3) */}
+              <div className="hidden md:flex md:flex-row gap-2 p-2">
+                {/* Main Image Skeleton - 2/3 width */}
+                <Skeleton className="w-2/3 aspect-[4/3] rounded-xl" />
+                {/* Side Images Column Skeleton - 1/3 width */}
+                <div className="flex flex-col w-1/3 gap-2">
+                  <Skeleton className="flex-1 rounded-xl" />
+                  <Skeleton className="flex-1 rounded-xl" />
+                </div>
+              </div>
+
+              {/* Mobile/Tablet Layout: Main image on top, 2 columns below */}
+              <div className="md:hidden flex flex-col gap-2 p-2">
+                {/* Main Image Skeleton - Full width */}
+                <Skeleton className="w-full aspect-video rounded-xl" />
+                {/* Side Images Skeleton - 2 columns grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  <Skeleton className="aspect-video rounded-xl" />
+                  <Skeleton className="aspect-video rounded-xl" />
                 </div>
               </div>
             </div>
@@ -1255,71 +1271,74 @@ export default function SkateparkPage() {
           {/* Info Cards Skeleton - Medium opacity */}
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 opacity-50">
             {/* Hours Card Skeleton */}
-            <Card className="p-4 rounded-lg shadow-none">
+            <Card className="md:p-4 rounded-lg shadow-none">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Skeleton className="w-5 h-5 rounded  " />
-                  <Skeleton className="h-6 w-32  " />
+                  <Skeleton className="w-5 h-5 rounded" />
+                  <Skeleton className="h-6 w-32" />
                 </div>
                 <div className="ml-6 space-y-2">
-                  <Skeleton className="h-5 w-48  " />
-                  <Skeleton className="h-5 w-40  " />
+                  <Skeleton className="h-5 w-48" />
+                  <Skeleton className="h-5 w-40" />
                 </div>
                 <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
                   <div className="flex items-center gap-2 mb-3">
-                    <Skeleton className="w-5 h-5 rounded  " />
-                    <Skeleton className="h-5 w-20  " />
+                    <Skeleton className="w-5 h-5 rounded" />
+                    <Skeleton className="h-5 w-20" />
                   </div>
-                  <Skeleton className="h-4 w-full  " />
+                  <Skeleton className="h-4 w-full" />
                 </div>
                 <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
-                  <Skeleton className="h-4 w-32  " />
+                  <Skeleton className="h-4 w-32" />
                 </div>
               </div>
             </Card>
 
             {/* Amenities Card Skeleton */}
-            <Card className="p-4 rounded-lg shadow-none">
-              <div className="flex items-center gap-2 mb-3">
-                <Skeleton className="w-5 h-5 rounded  bg-background" />
-                <Skeleton className="h-6 w-24  " />
+            <Card className="md:p-4 rounded-lg shadow-none">
+              <div className="flex items-center md:justify-center gap-2 mb-3">
+                <Skeleton className="w-5 h-5 rounded" />
+                <Skeleton className="h-6 w-24" />
               </div>
               <div className="flex flex-wrap -mx-1">
                 {[...Array(8)].map((_, i) => (
                   <div key={i} className="w-1/4 px-1 mb-2">
-                    <Skeleton className="h-20 w-full rounded-md  " />
+                    <Skeleton className="h-20 w-full rounded-md" />
                   </div>
                 ))}
               </div>
             </Card>
           </div>
 
-          {/* Notes Card Skeleton - Lower opacity */}
+          {/* Notes and Get Directions Combined Section Skeleton - Lower opacity */}
           <div className="max-w-6xl mx-auto mb-8 opacity-30">
-            <Card className="p-4 rounded-lg shadow-none">
-              <div className="flex items-center gap-2 mb-3">
-                <Skeleton className="w-5 h-5 rounded" />
-                <Skeleton className="h-6 w-20  " />
+            <Card className="!overflow-visible !p-0 shadow-none grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-6">
+              {/* Notes Section Skeleton */}
+              <div className="md:p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Skeleton className="w-5 h-5 rounded" />
+                  <Skeleton className="h-6 w-20" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-12 w-full rounded-md" />
+                  <Skeleton className="h-12 w-3/4 rounded-md" />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Skeleton className="h-12 w-full rounded-md  " />
-                <Skeleton className="h-12 w-3/4 rounded-md  " />
+
+              {/* Get Directions Section Skeleton */}
+              <div className="md:p-4 space-y-4">
+                <div className="flex items-center gap-2 justify-start md:justify-center">
+                  <Skeleton className="w-5 h-5 rounded" />
+                  <Skeleton className="h-6 w-32" />
+                </div>
+                <div className="mx-auto w-full max-w-[380px] grid grid-cols-4 gap-4 items-center">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="w-16 h-16 rounded-xl" />
+                  ))}
+                </div>
               </div>
             </Card>
           </div>
-
-          {/* Get Directions Skeleton - Lowest opacity */}
-          <Card className="opacity-30 w-full !max-w-6xl mx-auto p-4 rounded-lg shadow-none">
-            <div className="flex items-center gap-2 mb-4">
-              <Skeleton className="w-5 h-5 rounded " />
-              <Skeleton className="h-6 w-32  " />
-            </div>
-            <div className="flex flex-wrap justify-center gap-6">
-              {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="w-16 h-16 rounded-lg  " />
-              ))}
-            </div>
-          </Card>
         </div>
       </div>
     );
@@ -1456,7 +1475,7 @@ export default function SkateparkPage() {
       />
 
 
-      <div className="pt-14 min-h-screen">
+      <div className="pt-14 min-h-screen ">
         {/* Breadcrumb */}
         <Breadcrumb
           items={[
@@ -1465,7 +1484,7 @@ export default function SkateparkPage() {
           ]}
         />
 
-        <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
+        <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 overflow-x-hidden">
           {/* Header */}
           <h1 className="mb-5 mt-5 text-2xl sm:text-3xl font-bold text-center text-black dark:text-white">
                     {/* Mobile version - splits on hyphens */}
@@ -1555,7 +1574,7 @@ export default function SkateparkPage() {
             </Card>
 
             {/* Amenities Card */}
-            <Card className="md:p-4 overflow-visible shadow-none">
+            <Card className="md:p-4 text-clip shadow-none">
               <div className="flex items-center md:justify-center mb-3 text-text dark:text-text-dark">
                 <h2 className="text-base font-medium flex items-center gap-2">
                   <Icon name="notesBold" className={`w-5 h-5`} />
@@ -1564,7 +1583,7 @@ export default function SkateparkPage() {
               </div>
 
               {/* Amenities grid */}
-              <div className="flex flex-wrap -mx-1">
+              <div className="grid grid-cols-4">
                 {Object.entries(skatepark.amenities).map(([key, value]) => {
                   const isAvailable = Boolean(value);
                   const isParkClosed = Boolean(skatepark.closingYear);
@@ -1573,17 +1592,17 @@ export default function SkateparkPage() {
                   if (!iconName) return null;
 
                   return (
-                    <div key={key} className="w-1/4 px-1 mb-2">
+                    <div key={key} className="w-full px-1 mb-2">
                       {isAvailable ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div
-                              className={`rounded-lg p-2 h-full cursor-pointer transition-all duration-300 ease-out ${
+                              className={`border border-transparent rounded-lg p-2 h-full cursor-pointer transition-all duration-300 ease-out ${
                                 amenitiesActive
                                   ? isParkClosed
                                     ? 'bg-error/[8%] dark:bg-error-bg-dark/[15%]'
-                                    : 'bg-brand-main/[8%] dark:bg-white/[2%]'
-                                  : 'bg-black/[3%] dark:bg-black/[5%] dark:shadow-inner'
+                                    : 'bg-[#defce0] dark:bg-[#1452174d] border-[#85ef8a] dark:border-[#1452174d]'
+                                  : ' bg-black/[3%] dark:bg-black/[5%] dark:shadow-inner'
                               }`}
                             >
                               <div className={`text-center ${amenitiesActive ? 'animate-pop' : ''}`}>
@@ -1594,12 +1613,12 @@ export default function SkateparkPage() {
                                       amenitiesActive
                                         ? isParkClosed
                                           ? 'text-error dark:text-error/80'
-                                          : 'text-brand-main dark:text-brand-dark/80'
+                                          : 'text-[#16641a] dark:text-[#85ef8a] shadow-sm'
                                         : 'text-gray-400 dark:text-[#405e4e]'
                                     }`}
                                   />
                                 </div>
-                                <p className={`text-sm font-thin transition-all duration-300 ${
+                                <p className={`text-xs xsm:text-sm font-thin transition-all duration-300 ${
                                   amenitiesActive
                                     ? 'text-text dark:text-text-dark'
                                     : 'text-gray-400 dark:text-text-dark/50 line-through'
@@ -1622,7 +1641,7 @@ export default function SkateparkPage() {
                                 className="w-5 h-5 mx-auto text-gray-400 dark:text-[#404141]"
                                 />
                             </div>
-                            <p className="text-sm font-thin text-gray-400 dark:text-text-dark/50 line-through">
+                            <p className="text-xs xsm:text-sm font-thin text-gray-400 dark:text-text-dark/50 line-through">
                               {t(`amenities.${key}`) || key.replace(/([A-Z])/g, ' $1').trim()}
                             </p>
                           </div>
@@ -1679,7 +1698,7 @@ export default function SkateparkPage() {
                 ) ? (
                   <div className="md:p-4 space-y-6">
                     <div className="flex items-center justify-center mb-4 text-text dark:text-text-dark">
-                      <h2 className="text-base font-semibold flex items-center gap-1">
+                      <h2 className={`text-base font-semibold flex items-center gap-1 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
                         {tr('Rating', 'דירוג')}
                         <Icon 
                           name="logo" 
@@ -1957,7 +1976,7 @@ export default function SkateparkPage() {
           ) ? (
             <Card className="md:p-4 shadow-none w-full max-w-6xl mx-auto mb-8">
               <div className="flex items-center md:justify-center mb-4 text-text dark:text-text-dark">
-                <h2 className="text-base font-medium flex items-center gap-2">
+                <h2 className={`text-base font-medium flex items-center gap-2 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
                 {tr('Rating', 'דירוג')}
                 <Icon 
                   name="logo" 
@@ -2187,7 +2206,7 @@ export default function SkateparkPage() {
                         className="flex items-center gap-2 px-6 py-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/[7.5%] dark:hover:bg-white/[7.5%] transition-colors text-text-secondary dark:text-text-dark/70"
                         aria-label={reviewsExpanded ? t('showLessReviews') : t('showMoreReviews', { count: sortedReviews.length - 2 })}
                       >
-                        <span className=" text-base font-medium">
+                        <span className=" text-sm font-medium">
                           {reviewsExpanded 
                             ? t('showLessReviews')
                             : t('showMoreReviews', { count: sortedReviews.length - 2 })}

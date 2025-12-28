@@ -571,7 +571,7 @@ const ParkImageGallery = ({
 
           {/* Show More/Less Button */}
           {hasMoreImages && (
-            <div className="flex flex-col items-center gap-3 p-4 pt-2">
+            <div className="flex flex-col items-center gap-3 p-2 pb-0">
               <div className="grid grid-cols-3 items-start gap-4 w-full">
                 {/* Share Button */}
                 <div 
@@ -606,7 +606,7 @@ const ParkImageGallery = ({
                 <div className="flex justify-center" style={{ order: 2 }}>
                   <Button
                     onClick={() => setShowAllImages(!showAllImages)}
-                    className="-mx-14 backdrop-blur-[2px] flex items-center gap-2 px-6 py-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/[7.5%] dark:hover:bg-white/[7.5%] transition-colors text-text-secondary dark:text-text-dark/70 font-medium opacity-0 animate-bounceDownSqueeze"
+                    className="-mx-14 line-clamp-2 max-w-[37vw] backdrop-blur-[2px] flex items-center gap-2 px-6 py-3 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/[7.5%] dark:hover:bg-white/[7.5%] transition-colors text-text-secondary dark:text-text-dark/70 font-medium opacity-0 animate-bounceDownSqueeze"
                     aria-label={showAllImages ? t('showLessImages') : t('showMoreImages', { count: remainingImages.length })}
                   >
                     {showAllImages ? (
