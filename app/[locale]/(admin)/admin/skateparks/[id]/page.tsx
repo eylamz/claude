@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Skeleton } from '@/components/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Skeleton } from '@/components/ui';
 import { ImageUploader } from '@/components/admin/image-uploader';
 
 interface Skatepark {
@@ -573,16 +573,25 @@ export default function SkateparkDetailPage() {
             onChange={(e) => setSkatepark({ ...skatepark, slug: e.target.value })}
           />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Select
-              label="Status"
-              value={skatepark.status}
-              onChange={(e) => setSkatepark({ ...skatepark, status: e.target.value as 'active' | 'inactive' })}
-              options={[
-                { value: 'active', label: 'Active' },
-                { value: 'inactive', label: 'Inactive' },
-              ]}
-            />
-            <Select
+            <div className="space-y-2">
+              <SelectWrapper
+                label="Status"
+                value={skatepark.status}
+                onChange={(e) => setSkatepark({ ...skatepark, status: e.target.value as 'active' | 'inactive' })}
+                options={[
+                  { value: 'active', label: 'Active' },
+                  { value: 'inactive', label: 'Inactive' },
+                ]}
+              />
+              {skatepark.status === 'inactive' && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    <strong>⚠️ Warning:</strong> Inactive parks are hidden from all public pages and search results. Users will not be able to view or access this skatepark.
+                  </p>
+                </div>
+              )}
+            </div>
+            <SelectWrapper
               label="Area"
               value={skatepark.area}
               onChange={(e) => setSkatepark({ ...skatepark, area: e.target.value as 'north' | 'center' | 'south' })}
@@ -1068,7 +1077,7 @@ export default function SkateparkDetailPage() {
                   })
                 }
               />
-              <Select
+              <SelectWrapper
                 label="Opening Month (Optional)"
                 value={skatepark.openingMonth?.toString() || ''}
                 onChange={(e) =>
@@ -1106,7 +1115,7 @@ export default function SkateparkDetailPage() {
                   })
                 }
               />
-              <Select
+              <SelectWrapper
                 label="Closing Month (Optional)"
                 value={skatepark.closingMonth?.toString() || ''}
                 onChange={(e) =>

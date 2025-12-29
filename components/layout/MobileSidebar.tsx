@@ -66,10 +66,6 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const tCommon = useTranslations('common');
   const tMobileNav = useTranslations('common.mobileNav');
   const { theme, toggleTheme } = useTheme();
-  
-  // Swipe gesture state
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
-  const [swipeDistance, setSwipeDistance] = useState(0);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -132,11 +128,35 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      // Prevent scrolling
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
     } else {
+      // Restore scroll position
+      const scrollY = document.body.style.top;
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      // Cleanup: restore scroll position
+      const scrollY = document.body.style.top;
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      }
+    };
   }, [isOpen]);
 
   // Reset search when sidebar closes
@@ -217,30 +237,6 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     trainers: tMobileNav('findCoaches') || 'Trainers',
   };
 
-  // Handle Swipe Gestures (Swipe left to close)
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!touchStart) return;
-    const diffX = e.touches[0].clientX - touchStart.x;
-    const diffY = e.touches[0].clientY - touchStart.y;
-
-    // Only allow horizontal swipe if vertical movement is minimal
-    if (Math.abs(diffX) > 10 && Math.abs(diffY) < 50) {
-      if (diffX < 0) { // Swiping Left
-        setSwipeDistance(diffX);
-      }
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (swipeDistance < -100) onClose(); // Close threshold
-    setTouchStart(null);
-    setSwipeDistance(0);
-  };
-
   // Theme toggle handler with animation
   const handleThemeToggle = () => {
     setShouldAnimate(true);
@@ -279,11 +275,8 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         className={`sidebar h-full fixed inset-0 z-[61] w-full max-w-[500px] bg-sidebar dark:bg-sidebar-dark shadow-2xl  ease-out transition-all duration-200 flex flex-col`}
         style={{ 
           height: '100dvh',
-          transform: isOpen ? `translateX(${swipeDistance}px)` : 'translateX(-100%)' 
+          transform: isOpen ? 'translateX(0)' : 'translateX(-100%)' 
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         
         {/* === HEADER === */}
@@ -577,7 +570,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                         </div>
                         <div className="h-full flex items-start justify-end">
                       {card.comingSoon && (
-                          <span className="inline-block text-[10px] xsm:text-[10px] font-bold px-1 py-0.5 bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] rounded">
+                          <span className="inline-block text-xs xsm:text-sm font-semibold px-1.5 py-0.5 bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] rounded">
                             {card.href.includes('/trainers') 
                               ? (locale === 'he' ? 'בשלבי סיום' : 'Almost Done')
                               : card.href.includes('/shop')
@@ -593,12 +586,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                       {/* Text Content */}
                       <div className={`w-full ${card.comingSoon ? 'opacity-50' : ''}`}>
                         <div className="flex items-center justify-between mb-0.5">
-                          <h3 className={`font-bold text-xs leading-tight transition-colors duration-200 ${isActive ? 'text-[#16641a] dark:text-[#85ef8a]' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
+                          <h3 className={`font-bold text-base leading-tight transition-colors duration-200 ${isActive ? 'text-[#16641a] dark:text-[#85ef8a]' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
                             {card.label}
                           </h3>
                         </div>
                         
-                          <p className={`text-[10px] xsm:text-xs  line-clamp-2 leading-tight transition-colors duration-200 ${isActive ? 'text-[#16641a] dark:text-[#4fb154]' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
+                          <p className={`text-xs xsm:text-sm  line-clamp-2 leading-tight transition-colors duration-200 ${isActive ? 'text-[#16641a] dark:text-[#4fb154]' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
                             {card.description}
                           </p>
                       </div>
@@ -730,7 +723,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                           {item.icon}
                         </span>
                       </div>
-                      <span className={`overflow-visible text-xs font-semibold transition-colors duration-200 ${
+                      <span className={`overflow-visible text-sm font-semibold transition-colors duration-200 ${
                         isActive 
                           ? 'text-sidebar-text-brand dark:text-sidebar-text-brand-dark' 
                           : 'text-gray-700 dark:text-gray-300'
@@ -760,7 +753,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   <div className=" flex-none flex items-center justify-center w-5 h-5 rounded-full transition-colors duration-200">
                      <Icon name={card.icon} className="w-4 h-4 overflow-visible text-sidebar-text dark:text-sidebar-text-dark group-hover:text-sidebar-brand dark:group-hover:text-sidebar-brand-dark transition-colors duration-200" />
                   </div>
-                  <span className="overflow-visible  text-xs font-semibold text-gray-700 dark:text-gray-300 transition-colors duration-200">
+                  <span className="overflow-visible  text-md font-semibold text-gray-700 dark:text-gray-300 transition-colors duration-200">
                     {card.label}
                   </span>
                 </Link>

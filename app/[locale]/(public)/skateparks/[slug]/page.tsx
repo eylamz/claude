@@ -838,14 +838,15 @@ export default function SkateparkPage() {
               
               // Only proceed if current park has valid coordinates
               if (currentCoords.lat !== 0 && currentCoords.lng !== 0) {
-                // More lenient filter - don't require status to be 'active' (might not be in cache)
+                // Filter to only show active parks (inactive parks are hidden from users)
                 const filteredParks = cachedSkateparks.filter((park: Skatepark) => {
                   const hasValidSlug = park.slug !== slug;
                   const hasValidLocation = park.location && (
                     (park.location.coordinates && Array.isArray(park.location.coordinates) && park.location.coordinates.length >= 2) ||
                     (park.location && 'lat' in park.location && 'lng' in park.location)
                   );
-                  const isActive = park.status === 'active' || park.status === undefined; // Allow undefined status
+                  // Only show active parks - if status is undefined, treat as inactive for safety
+                  const isActive = park.status === 'active';
                   
                   return hasValidSlug && hasValidLocation && isActive;
                 });
