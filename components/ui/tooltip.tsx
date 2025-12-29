@@ -81,13 +81,16 @@ TooltipTrigger.displayName = TooltipPrimitive.Trigger.displayName;
 
 
 
+interface TooltipContentProps extends React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> {
+  soon?: boolean;
+}
+
 const TooltipContent = React.forwardRef<
 
   React.ElementRef<typeof TooltipPrimitive.Content>,
+  TooltipContentProps
 
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
-
->(({ className, sideOffset = 8, side, ...props }, ref) => {
+>(({ className, sideOffset = 8, side, soon, ...props }, ref) => {
   const locale = useLocale();
   const isRTL = locale === 'he';
   const dir = isRTL ? 'rtl' : 'ltr';
@@ -105,7 +108,10 @@ const TooltipContent = React.forwardRef<
         side={side}
         dir={dir}
         className={cn(
-          "z-50 overflow-hidden rounded-lg bg-tooltip dark:bg-tooltip-dark text-text-dark dark:text-white bord text-xs px-3 py-1.5 whitespace-nowrap",
+          "z-50 overflow-hidden rounded-lg border  text-xs px-3 py-1.5 whitespace-nowrap",
+          soon 
+            ? "bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d]" 
+            : "bg-tooltip dark:bg-tooltip-dark text-text-dark dark:text-white border-border dark:border-border-dark",
           openAnimation,
           closeAnimation,
           className

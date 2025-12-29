@@ -54,7 +54,9 @@
     "boards": "Boards",
     "wheels": "Wheels",
     "trucks": "Trucks",
-    "bearings": "Bearings"
+    "bearings": "Bearings",
+    "helmets": "Helmets",
+    "parts": "Parts"
   },
   "sportLabels": {
     "skateboarding": "Skateboarding",

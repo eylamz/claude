@@ -90,7 +90,7 @@ export default function ProductPage() {
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
             {locale === 'he' 
-              ? 'החנות זמינה בקרוב. אנא חזור מאוחר יותר.'
+              ? 'החנות זמינה בקרוב. אנא נסו מאוחר יותר.'
               : 'The shop is coming soon. Please check back later.'
             }
           </p>
@@ -99,7 +99,7 @@ export default function ProductPage() {
             variant="brand"
             className="px-6 py-3"
           >
-            {locale === 'he' ? 'חזור לדף הבית' : 'Back to Homepage'}
+            {locale === 'he' ? 'חזרה לדף הבית' : 'Back to Homepage'}
           </Button>
         </div>
       </div>

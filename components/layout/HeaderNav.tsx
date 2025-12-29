@@ -38,7 +38,7 @@ import {
   type CartItem 
 } from '@/stores/cartStore';
 import { Input } from '@/components/ui';
-import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
+import { isEcommerceEnabled, isTrainersEnabled } from '@/lib/utils/ecommerce';
 
 export default function HeaderNav() {
   const pathname = usePathname();
@@ -57,6 +57,7 @@ export default function HeaderNav() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   
   const ecommerceEnabled = isEcommerceEnabled();
+  const trainersEnabled = isTrainersEnabled();
   const itemCount = useCartItemCount();
   const items = useCartItems();
   const totals = useCartTotals();
@@ -215,19 +216,7 @@ export default function HeaderNav() {
   const isAdmin = session?.user?.role === 'admin';
   const tHomepage = useTranslations('common.homepage');
 
-  // Check if on skateparks page
-  const isSkateparksPage = pathname.includes('/skateparks');
-  
-  // Determine border class based on page and scroll
-  const getBorderClass = () => {
-    if (isSkateparksPage) {
-      // On skateparks page: border-b when not scrolled, border-b-2 when scrolled
-      return scrollY > 0 ? 'border-b-2' : 'border-b';
-    } else {
-      // On all other pages: always border-b-2
-      return 'border-b-2';
-    }
-  };
+
 
   return (
     <>
@@ -237,7 +226,7 @@ export default function HeaderNav() {
           isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
-        <div className={`mx-auto ${getBorderClass()} border-header-border dark:border-header-border-dark w-full max-w-7xl px-2 overflow-visible text-header-text-dark dark:text-header-text transition-colors duration-200`}>
+        <div className={`mx-auto  border-header-border dark:border-header-border-dark w-full max-w-7xl px-2 overflow-visible text-header-text-dark dark:text-header-text transition-colors duration-200`}>
           <div className="flex items-center justify-between h-16">
             {/* LEFT: Logo*/}
             <div className="flex items-center gap-4">
@@ -261,17 +250,36 @@ export default function HeaderNav() {
               </Link>
 
               {/* Trainers */}
-              <Link
-                href={`/${locale}/trainers`}
-                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
-                  isActive(`/${locale}/trainers`) ? 'text-black dark:text-white' : ''
-                }`}
-              >
-                {tAdmin('trainers')}
-                {/* "Featured" badge for premium trainers */}
-                <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                </span>
-              </Link>
+              {!trainersEnabled ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href="#"
+                      onClick={(e) => e.preventDefault()}
+                      className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 relative cursor-not-allowed opacity-60 ${
+                        isActive(`/${locale}/trainers`) ? 'text-black dark:text-white' : ''
+                      }`}
+                    >
+                      {tAdmin('trainers')}
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" soon>
+                    {locale === 'he' ? 'בשלבי סיום' : 'Almost Done'}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Link
+                  href={`/${locale}/trainers`}
+                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
+                    isActive(`/${locale}/trainers`) ? 'text-black dark:text-white' : ''
+                  }`}
+                >
+                  {tAdmin('trainers')}
+                  {/* "Featured" badge for premium trainers */}
+                  <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                  </span>
+                </Link>
+              )}
 
               {/* Events */}
               <Link
@@ -317,8 +325,8 @@ export default function HeaderNav() {
                       {tShop('title')}
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {locale === 'he' ? 'החנות בבנייה. בקרוב!' : 'Shop is under construction. Coming soon!'}
+                  <TooltipContent side="bottom" soon>
+                    {locale === 'he' ? 'מסדרים מדפים' : 'Restocking Items'}
                   </TooltipContent>
                 </Tooltip>
               ) : (
@@ -587,7 +595,7 @@ export default function HeaderNav() {
                       {/* Theme Toggle */}
                       <button
                         onClick={toggleTheme}
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 ${locale === 'he' ? 'flex-row-reverse' : ''}`}
                         aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
                       >
                         {theme === 'dark' ? (
@@ -748,7 +756,7 @@ export default function HeaderNav() {
                       {/* Logout Button */}
                       {session && (
                         <>
-                          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                          <Separator className="bg-popover-border dark:bg-popover-border-dark transition-colors duration-200" />
                           <button
                             onClick={handleLogout}
                             disabled={isLoggingOut}

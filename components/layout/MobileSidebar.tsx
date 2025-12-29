@@ -11,7 +11,7 @@ import { Icon, type IconName } from '@/components/icons/Icon';
 import { useTheme } from '@/context/ThemeProvider';
 import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
-import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
+import { isEcommerceEnabled, isTrainersEnabled } from '@/lib/utils/ecommerce';
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -83,6 +83,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
   const isAdmin = session?.user?.role === 'admin';
   const ecommerceEnabled = isEcommerceEnabled();
+  const trainersEnabled = isTrainersEnabled();
 
   // 1. Navigation Configuration (Grid Cards)
   const navCards: NavCard[] = [
@@ -116,7 +117,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       icon: 'trainersBold',
       label: tMobileNav('findCoaches'),
       description: tMobileNav('comingSoon'),
-      comingSoon: true,
+      comingSoon: !trainersEnabled,
     },
   ];
 
@@ -576,8 +577,13 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                         </div>
                         <div className="h-full flex items-start justify-end">
                       {card.comingSoon && (
-                          <span className="inline-block text-[8px] font-bold px-1 py-0.5 bg-brand-accent rounded text-white">
-                            SOON
+                          <span className="inline-block text-[10px] xsm:text-[10px] font-bold px-1 py-0.5 bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] rounded">
+                            {card.href.includes('/trainers') 
+                              ? (locale === 'he' ? 'בשלבי סיום' : 'Almost Done')
+                              : card.href.includes('/shop')
+                              ? (locale === 'he' ? 'מסדרים מדפים' : 'Restocking')
+                              : (locale === 'he' ? 'בקרוב' : 'Coming soon!')
+                            }
                           </span>
                         )}
                         </div>
@@ -592,7 +598,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                           </h3>
                         </div>
                         
-                          <p className={`text-[10px]  line-clamp-2 leading-tight transition-colors duration-200 ${isActive ? 'text-[#16641a] dark:text-[#4fb154]' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
+                          <p className={`text-[10px] xsm:text-xs  line-clamp-2 leading-tight transition-colors duration-200 ${isActive ? 'text-[#16641a] dark:text-[#4fb154]' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
                             {card.description}
                           </p>
                       </div>

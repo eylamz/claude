@@ -1758,7 +1758,7 @@ export default function SkateparkPage() {
                       
                       {skatepark.qualityRating.maintenance && (
                         <div className="space-y-2 h-full flex flex-col justify-between max-h-[5rem]">
-                          <div className="flex md:justify-center items-center gap-2">
+                          <div className="flex md:justify-center gap-2">
                             <Icon name="wrenchBold" className="w-4 h-4 overflow-visible" />
                             <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
                               {tr('Maintenance level', 'רמת תחזוקה')}
