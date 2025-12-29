@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Calendar, Eye, Heart, Star, User, Tag, ExternalLink } from 'lucide-react';
+import { Calendar, User, Tag, ExternalLink, Share2, ChevronLeft } from 'lucide-react';
+import { Icon } from '@/components/icons';
 import { Skeleton } from '@/components/ui';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import { generateArticleStructuredData } from '@/lib/seo/utils';
@@ -18,7 +19,6 @@ interface ILocalizedField {
 interface ContentBlock {
   type: 'text' | 'heading' | 'list' | 'image' | 'video' | 'link' | 'code' | 'divider';
   order: number;
-  // New format: single language strings (for new structure)
   text?: string;
   heading?: string;
   headingLevel?: 'h2' | 'h3' | 'h4';
@@ -36,7 +36,6 @@ interface ContentBlock {
   linkExternal?: boolean;
   code?: string;
   language?: string;
-  // Old format: bilingual fields (for backward compatibility)
   textOld?: ILocalizedField;
   headingOld?: ILocalizedField;
   imageCaptionOld?: ILocalizedField;
@@ -54,7 +53,7 @@ interface Guide {
   coverImage: string;
   relatedSports: string[];
   contentBlocks: ContentBlock[] | { en: ContentBlock[]; he: ContentBlock[] };
-  tags: string[] | { en: string[]; he: string[] }; // Support both old (array) and new (localized) formats
+  tags: string[] | { en: string[]; he: string[] };
   viewsCount: number;
   likesCount: number;
   rating: number;
@@ -90,9 +89,9 @@ function YouTubeEmbed({ url }: { url: string }) {
   if (!videoId) return null;
 
   return (
-    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+    <div className="relative w-full my-8" style={{ paddingBottom: '56.25%' }}>
       <iframe
-        className="absolute top-0 left-0 w-full h-full rounded-lg"
+        className="absolute top-0 left-0 w-full h-full rounded-2xl"
         src={`https://www.youtube.com/embed/${videoId}`}
         title="YouTube video player"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -103,39 +102,66 @@ function YouTubeEmbed({ url }: { url: string }) {
 }
 
 /**
- * Content Block Renderer
+ * Content Block Renderer - Duolingo Style
  */
 function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { en: ContentBlock[]; he: ContentBlock[] }; locale: string }) {
-  // Handle both old format (array) and new format (object with en/he)
   let sortedBlocks: ContentBlock[];
   if (Array.isArray(blocks)) {
-    // Old format: single array with bilingual fields
     sortedBlocks = [...blocks].sort((a, b) => a.order - b.order);
   } else if (blocks && typeof blocks === 'object' && ('en' in blocks || 'he' in blocks)) {
-    // New format: separated by language - get blocks for current locale
     const langBlocks = blocks[locale as 'en' | 'he'] || blocks.en || blocks.he || [];
     sortedBlocks = Array.isArray(langBlocks) ? [...langBlocks].sort((a, b) => a.order - b.order) : [];
   } else {
     sortedBlocks = [];
   }
 
+  const parseTextWithLinks = (text: string) => {
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const parts: (string | React.ReactElement)[] = [];
+    let lastIndex = 0;
+    let match;
+    let key = 0;
+
+    while ((match = linkRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      parts.push(
+        <a
+          key={key++}
+          href={match[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-brand-main dark:text-brand-dark font-medium underline decoration-2 underline-offset-2 hover:decoration-brand-main/50 transition-all"
+        >
+          {match[1]}
+        </a>
+      );
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+    return parts.length > 0 ? parts : [text];
+  };
+
   return (
-    <div>
+    <div className="space-y-6">
       {sortedBlocks.map((item, index) => {
         switch (item.type) {
           case 'heading':
             const HeadingTag = item.headingLevel || 'h2';
-            // New format: single string, Old format: ILocalizedField
             const headingText = typeof item.heading === 'string'
               ? item.heading
               : item.headingOld
               ? getLocalizedText(item.headingOld, locale)
               : '';
-            // Enhanced heading styling for better readability using design system colors
+            
+            // Duolingo-style heading classes - clean and bold
             const headingClasses = {
-              h2: 'text-3xl font-bold mt-12 mb-6 leading-tight text-heading dark:text-heading-dark',
-              h3: 'text-2xl font-bold mt-10 mb-4 leading-snug text-heading dark:text-heading-dark',
-              h4: 'text-xl font-bold mt-8 mb-3 leading-snug text-heading dark:text-heading-dark',
+              h2: 'text-[1.225rem] sm:text-3xl font-extrabold mt-12 mb-4 text-gray-900 dark:text-white',
+              h3: 'text-xl sm:text-[1.225rem] font-bold mt-10 mb-3 text-gray-900 dark:text-white',
+              h4: 'text-lg sm:text-xl font-bold mt-8 mb-2 text-gray-900 dark:text-white',
             };
             return (
               <HeadingTag
@@ -147,142 +173,95 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
             );
 
           case 'text':
-            // New format: single string, Old format: ILocalizedField
             const textContent = typeof item.text === 'string' 
               ? item.text 
               : item.textOld
               ? getLocalizedText(item.textOld, locale)
               : '';
-            // Parse markdown-style links [text](url)
-            const parseTextWithLinks = (text: string) => {
-              const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-              const parts: (string | React.ReactElement)[] = [];
-              let lastIndex = 0;
-              let match;
-              let key = 0;
-
-              while ((match = linkRegex.exec(text)) !== null) {
-                // Add text before the link
-                if (match.index > lastIndex) {
-                  parts.push(text.substring(lastIndex, match.index));
-                }
-                // Add the link
-                parts.push(
-                  <a
-                    key={key++}
-                    href={match[2]}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-brand-main dark:text-brand-dark font-medium underline hover:no-underline transition-all"
-                  >
-                    {match[1]}
-                  </a>
-                );
-                lastIndex = match.index + match[0].length;
-              }
-              // Add remaining text
-              if (lastIndex < text.length) {
-                parts.push(text.substring(lastIndex));
-              }
-              return parts.length > 0 ? parts : [text];
-            };
             
-            // Enhanced paragraph styling for better readability using design system colors
             return (
-              <p key={index} className="text-base leading-relaxed text-content dark:text-content-dark mb-6">
+              <p key={index} className="text-[1rem] leading-relaxed text-gray-700 dark:text-gray-300">
                 {parseTextWithLinks(textContent)}
               </p>
             );
 
           case 'list':
             const ListTag = item.listType === 'numbered' ? 'ol' : 'ul';
-            const isBulletList = item.listType !== 'numbered';
+            const isNumbered = item.listType === 'numbered';
             const isRTL = locale === 'he';
-            // Enhanced list styling for better readability
+            
             return (
-              <ListTag key={index} className={`my-6 ${isBulletList ? 'list-none' : ''}`}>
+              <ListTag 
+                key={index} 
+                className={`my-6 space-y-3 ${isNumbered ? 'list-decimal' : 'list-none'} ${isRTL ? 'pr-0' : 'pl-0'}`}
+              >
                 {(() => {
-                  // New format: array of { title?, content }
                   if (item.listItems && Array.isArray(item.listItems) && item.listItems.length > 0) {
                     const firstItem = item.listItems[0];
                     if (typeof firstItem === 'object' && 'content' in firstItem && !('en' in firstItem) && !('he' in firstItem)) {
-                      // New format: array of { title?, content }
-                      return item.listItems.map((listItem: { title?: string; content: string }, itemIndex: number) => {
-                        const paddingClass = isRTL ? 'pl-4 pr-0' : 'pr-4 pl-0';
-                        const bulletPositionClass = isRTL ? 'right-0' : 'left-0';
-                        const contentPaddingClass = isBulletList ? (isRTL ? 'pr-4' : 'pl-4') : '';
-                        return (
-                          <li key={itemIndex} className={`my-4 relative ${paddingClass} leading-relaxed text-content dark:text-content-dark`}>
-                            {isBulletList && (
-                              <span className={`absolute ${bulletPositionClass} top-0 text-brand-main dark:text-brand-dark`}>•</span>
+                      return item.listItems.map((listItem: { title?: string; content: string }, itemIndex: number) => (
+                        <li 
+                          key={itemIndex} 
+                          className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}
+                        >
+                          {!isNumbered && (
+                            <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+                          )}
+                          <div>
+                            {listItem.title && (
+                              <span className="font-bold text-gray-900 dark:text-white">{listItem.title} </span>
                             )}
-                            <div className={contentPaddingClass}>
-                              {listItem.title && <div className="text-md font-bold text-heading dark:text-heading-dark">{listItem.title}</div>}
-                              {listItem.content}
-                            </div>
-                          </li>
-                        );
-                      });
+                            {listItem.content}
+                          </div>
+                        </li>
+                      ));
                     }
                   }
                   
-                  // Old format: ILocalizedField array or object with en/he
                   const listItems = item.listItemsOld || item.listItems;
                   if (!listItems) return null;
                   
                   if (Array.isArray(listItems) && listItems.length > 0) {
                     const firstItem = listItems[0];
-                    // Old format: array of ILocalizedField
                     if (typeof firstItem === 'object' && ('en' in firstItem || 'he' in firstItem)) {
-                      return (listItems as ILocalizedField[]).map((listItem: ILocalizedField, itemIndex: number) => {
-                        const paddingClass = isRTL ? 'pl-4 pr-0' : 'pr-4 pl-0';
-                        const bulletPositionClass = isRTL ? 'right-0' : 'left-0';
-                        const contentPaddingClass = isBulletList ? (isRTL ? 'pr-4' : 'pl-4') : '';
-                        return (
-                          <li key={itemIndex} className={`my-4 relative ${paddingClass} leading-relaxed text-content dark:text-content-dark`}>
-                            {isBulletList && (
-                              <span className={`absolute ${bulletPositionClass} top-0 text-brand-main dark:text-brand-dark`}>•</span>
-                            )}
-                            <div className={contentPaddingClass}>
-                              {getLocalizedText(listItem, locale)}
-                            </div>
-                          </li>
-                        );
-                      });
+                      return (listItems as ILocalizedField[]).map((listItem: ILocalizedField, itemIndex: number) => (
+                        <li 
+                          key={itemIndex} 
+                          className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}
+                        >
+                          {!isNumbered && (
+                            <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+                          )}
+                          <span>{getLocalizedText(listItem, locale)}</span>
+                        </li>
+                      ));
                     }
                   }
                   
-                  // Very old format: object with en/he arrays
                   if (typeof listItems === 'object' && !Array.isArray(listItems) && 'en' in listItems) {
                     const items = (listItems as any)[locale as 'en' | 'he'] || [];
-                    return items.map((listItem: any, itemIndex: number) => {
-                      const paddingClass = isRTL ? 'pl-4 pr-0' : 'pr-4 pl-0';
-                      const bulletPositionClass = isRTL ? 'right-0' : 'left-0';
-                      const contentPaddingClass = isBulletList ? (isRTL ? 'pr-4' : 'pl-4') : '';
-                      if (typeof listItem === 'object' && 'content' in listItem) {
-                        return (
-                          <li key={itemIndex} className={`my-4 relative ${paddingClass} leading-relaxed text-content dark:text-content-dark`}>
-                            {isBulletList && (
-                              <span className={`absolute ${bulletPositionClass} top-0 text-brand-main dark:text-brand-dark`}>•</span>
-                            )}
-                            <div className={contentPaddingClass}>
-                              {listItem.title && <div className="text-lg font-semibold text-heading dark:text-heading-dark mb-1">{listItem.title}</div>}
+                    return items.map((listItem: any, itemIndex: number) => (
+                      <li 
+                        key={itemIndex} 
+                        className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}
+                      >
+                        {!isNumbered && (
+                          <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+                        )}
+                        <div>
+                          {typeof listItem === 'object' && 'content' in listItem ? (
+                            <>
+                              {listItem.title && (
+                                <span className="font-bold text-gray-900 dark:text-white">{listItem.title} </span>
+                              )}
                               {listItem.content}
-                            </div>
-                          </li>
-                        );
-                      }
-                      return (
-                        <li key={itemIndex} className={`my-4 relative ${paddingClass} leading-relaxed text-content dark:text-content-dark`}>
-                          {isBulletList && (
-                            <span className={`absolute ${bulletPositionClass} top-0 text-brand-main dark:text-brand-dark`}>•</span>
+                            </>
+                          ) : (
+                            listItem
                           )}
-                          <div className={contentPaddingClass}>
-                            {listItem}
-                          </div>
-                        </li>
-                      );
-                    });
+                        </div>
+                      </li>
+                    ));
                   }
                   return null;
                 })()}
@@ -290,7 +269,6 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
             );
 
           case 'image':
-            // New format: single strings, Old format: ILocalizedField
             const imageAlt = typeof item.imageAlt === 'string'
               ? item.imageAlt
               : item.imageAltOld
@@ -302,15 +280,14 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
               ? getLocalizedText(item.imageCaptionOld, locale)
               : '';
             
-            // Enhanced figure styling for better readability
             const imageElement = item.imageUrl ? (
               <Image
                 src={item.imageUrl}
                 alt={imageAlt || imageCaption || 'Guide image'}
                 width={800}
                 height={450}
-                className={`w-full h-auto rounded-lg ${item.imageLinkUrl ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                className={`w-full h-auto rounded-2xl ${item.imageLinkUrl ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
               />
             ) : null;
             
@@ -328,7 +305,7 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
                   imageElement
                 )}
                 {imageCaption && (
-                  <figcaption className="text-center text-sm text-content-secondary dark:text-content-secondary-dark mt-3">
+                  <figcaption className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3 italic">
                     {imageCaption}
                   </figcaption>
                 )}
@@ -336,7 +313,6 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
             );
 
           case 'video':
-            // New format: single string, Old format: ILocalizedField
             const videoTitle = typeof item.videoTitle === 'string'
               ? item.videoTitle
               : item.videoTitleOld
@@ -350,7 +326,7 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
                     {item.videoUrl.includes('youtube.com') || item.videoUrl.includes('youtu.be') ? (
                       <YouTubeEmbed url={item.videoUrl} />
                     ) : (
-                      <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 shadow-lg">
+                      <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
                         <video
                           src={item.videoUrl}
                           controls
@@ -361,7 +337,7 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
                       </div>
                     )}
                     {videoTitle && (
-                      <p className="text-sm text-content-secondary dark:text-content-secondary-dark mt-3 text-center">{videoTitle}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 text-center italic">{videoTitle}</p>
                     )}
                   </>
                 )}
@@ -369,39 +345,36 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
             );
 
           case 'link':
-            // New format: single string, Old format: ILocalizedField
             const linkText = typeof item.linkText === 'string'
               ? item.linkText
               : item.linkTextOld
               ? getLocalizedText(item.linkTextOld, locale)
               : item.linkUrl || '';
-            // Enhanced link styling for better readability
+            
             return (
               <p key={index} className="my-6">
                 <Link
                   href={item.linkUrl || '#'}
                   target={item.linkExternal ? '_blank' : '_self'}
                   rel={item.linkExternal ? 'noopener noreferrer' : undefined}
-                  className="text-brand-main dark:text-brand-dark font-medium no-underline hover:underline transition-colors"
+                  className="inline-flex items-center gap-1 text-brand-main dark:text-brand-dark font-semibold underline decoration-2 underline-offset-2 hover:decoration-brand-main/50 transition-colors"
                 >
                   {linkText}
-                  {item.linkExternal && <ExternalLink className="w-4 h-4 inline ml-1" />}
+                  {item.linkExternal && <ExternalLink className="w-4 h-4" />}
                 </Link>
               </p>
             );
 
           case 'code':
-            // Enhanced code block styling for better readability using design system colors
             return (
-              <pre key={index} className="bg-background-dark dark:bg-background-dark text-content-dark rounded-lg p-4 overflow-x-auto my-6 shadow-lg">
+              <pre key={index} className="bg-gray-900 text-gray-100 rounded-2xl p-6 overflow-x-auto my-8">
                 <code className="text-sm font-mono">{item.code}</code>
               </pre>
             );
 
           case 'divider':
-            // Enhanced divider styling for better readability using design system colors
             return (
-              <hr key={index} className="my-12 border-t border-border dark:border-border-dark" />
+              <hr key={index} className="my-12 border-t-2 border-gray-200 dark:border-gray-700" />
             );
 
           default:
@@ -413,7 +386,40 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
 }
 
 /**
- * Main Guide Page Component
+ * Share Button Component
+ */
+function ShareButton({ title, url }: { title: string; url: string }) {
+  const [copied, setCopied] = useState(false);
+  
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, url });
+      } catch (err) {
+        // User cancelled or error
+      }
+    } else {
+      // Fallback: copy to clipboard
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+  
+  return (
+    <button
+      onClick={handleShare}
+      className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+      aria-label="Share this guide"
+    >
+      <Share2 className="w-4 h-4" />
+      <span>{copied ? 'Copied!' : 'Share'}</span>
+    </button>
+  );
+}
+
+/**
+ * Main Guide Page Component - Duolingo Style
  */
 export default function GuidePage() {
   const params = useParams();
@@ -454,11 +460,10 @@ export default function GuidePage() {
     fetchGuide();
   }, [slug, locale]);
 
-  // Calculate SEO metadata (safe to call even if guide is null)
+  // SEO calculations
   const guideTitle = guide ? getLocalizedText(guide.title, locale) : '';
   const guideDescription = guide ? getLocalizedText(guide.description, locale) : '';
   
-  // Get locale-specific SEO metadata
   const metaTitle = guide?.metaTitle 
     ? getLocalizedText(guide.metaTitle, locale) 
     : guideTitle || 'Guide';
@@ -469,7 +474,6 @@ export default function GuidePage() {
     ? getLocalizedText(guide.metaKeywords, locale) 
     : '';
   
-  // Get locale-specific tags for keywords
   let tagsForKeywords: string[] = [];
   if (guide?.tags) {
     if (Array.isArray(guide.tags)) {
@@ -480,7 +484,6 @@ export default function GuidePage() {
     }
   }
   
-  // Combine metaKeywords with tags
   const allKeywords = metaKeywords 
     ? `${metaKeywords}${tagsForKeywords.length > 0 ? `, ${tagsForKeywords.join(', ')}` : ''}`
     : tagsForKeywords.join(', ');
@@ -493,18 +496,15 @@ export default function GuidePage() {
     ? (guide.coverImage.startsWith('http') ? guide.coverImage : `${siteUrl}${guide.coverImage}`) 
     : `${siteUrl}/og-default.jpg`;
 
-  // Set SEO meta tags dynamically - must be called before any conditional returns
+  // Set SEO meta tags dynamically
   useEffect(() => {
     if (!guide) {
-      // Reset to default title if no guide
       document.title = 'Guide - ENBOSS';
       return;
     }
 
-    // Update document title
     document.title = metaTitle;
 
-    // Helper function to set or update meta tag
     const setMetaTag = (name: string, content: string, isProperty = false) => {
       const attribute = isProperty ? 'property' : 'name';
       let meta = document.querySelector(`meta[${attribute}="${name}"]`);
@@ -516,7 +516,6 @@ export default function GuidePage() {
       meta.setAttribute('content', content);
     };
 
-    // Helper function to set or update link tag
     const setLinkTag = (rel: string, href: string, hreflang?: string) => {
       const selector = hreflang 
         ? `link[rel="${rel}"][hreflang="${hreflang}"]`
@@ -531,13 +530,11 @@ export default function GuidePage() {
       link.setAttribute('href', href);
     };
 
-    // Basic meta tags
     setMetaTag('description', metaDescription);
     if (allKeywords) {
       setMetaTag('keywords', allKeywords);
     }
 
-    // Canonical and alternate links
     if (canonicalUrl) {
       setLinkTag('canonical', canonicalUrl);
       setLinkTag('alternate', alternateEnUrl, 'en');
@@ -545,7 +542,6 @@ export default function GuidePage() {
       setLinkTag('alternate', alternateEnUrl, 'x-default');
     }
 
-    // Open Graph tags
     setMetaTag('og:title', metaTitle, true);
     setMetaTag('og:description', metaDescription, true);
     setMetaTag('og:image', ogImage, true);
@@ -569,11 +565,9 @@ export default function GuidePage() {
       setMetaTag('article:modified_time', guide.updatedAt, true);
     }
 
-    // Article tags - remove existing article:tag meta tags first
     const existingArticleTags = document.querySelectorAll('meta[property="article:tag"]');
     existingArticleTags.forEach(tag => tag.remove());
     
-    // Add new article:tag meta tags
     tagsForKeywords.forEach((tag) => {
       const meta = document.createElement('meta');
       meta.setAttribute('property', 'article:tag');
@@ -581,48 +575,54 @@ export default function GuidePage() {
       document.head.appendChild(meta);
     });
 
-    // Twitter Card tags
     setMetaTag('twitter:card', 'summary_large_image');
     setMetaTag('twitter:title', metaTitle);
     setMetaTag('twitter:description', metaDescription);
     setMetaTag('twitter:image', ogImage);
   }, [guide, metaTitle, metaDescription, allKeywords, canonicalUrl, alternateEnUrl, alternateHeUrl, ogImage, locale, tagsForKeywords]);
 
+  // Loading state - Duolingo style skeleton
   if (loading) {
     return (
-      <div className="min-h-screen bg-background dark:bg-background-dark">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <Skeleton className="h-12 w-3/4 mb-4" />
-          <Skeleton className="h-64 w-full mb-6" />
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-3/4" />
+      <div className="min-h-screen bg-white dark:bg-gray-950">
+        <div className="max-w-3xl mx-auto px-5 sm:px-6 py-12">
+          <Skeleton className="h-4 w-32 mb-2" />
+          <Skeleton className="h-12 w-full mb-4" />
+          <Skeleton className="h-6 w-3/4 mb-8" />
+          <Skeleton className="h-80 w-full rounded-2xl mb-8" />
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error || !guide) {
     return (
-      <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-text dark:text-text-dark mb-4">
+      <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+        <div className="text-center px-5">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             {error || 'Guide not found'}
           </h1>
           <Link
             href={`/${locale}/guides`}
-            className="text-brand-main hover:text-brand-main/80 dark:text-brand-dark"
+            className="inline-flex items-center gap-2 text-brand-main hover:text-brand-main/80 dark:text-brand-dark font-medium"
           >
-            ← Back to Guides
+            <ChevronLeft className="w-4 h-4" />
+            Back to Guides
           </Link>
         </div>
       </div>
     );
   }
 
-  // At this point, guide is guaranteed to exist, so we can safely use it
+  // Format published date
   const publishedDate = guide.publishedAt
-    ? new Date(guide.publishedAt).toLocaleDateString(locale, {
+    ? new Date(guide.publishedAt).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -644,14 +644,21 @@ export default function GuidePage() {
     siteUrl,
   });
 
-  // Handle content blocks - use the appropriate language blocks
-  // New format: { en: ContentBlock[], he: ContentBlock[] }
-  // Old format: ContentBlock[] (with bilingual fields)
+  // Handle content blocks
   const contentBlocksToRender = Array.isArray(guide.contentBlocks)
-    ? guide.contentBlocks // Old format: single array with bilingual fields
+    ? guide.contentBlocks
     : (guide.contentBlocks && typeof guide.contentBlocks === 'object' && ('en' in guide.contentBlocks || 'he' in guide.contentBlocks))
-    ? guide.contentBlocks[locale as 'en' | 'he'] || guide.contentBlocks.en || guide.contentBlocks.he || [] // New format: separated by language
+    ? guide.contentBlocks[locale as 'en' | 'he'] || guide.contentBlocks.en || guide.contentBlocks.he || []
     : [];
+
+  // Get tags for display
+  let tagsToDisplay: string[] = [];
+  if (Array.isArray(guide.tags)) {
+    tagsToDisplay = guide.tags;
+  } else if (guide.tags && typeof guide.tags === 'object' && 'en' in guide.tags) {
+    const localizedTags = guide.tags as { en: string[]; he: string[] };
+    tagsToDisplay = localizedTags[locale as 'en' | 'he'] || localizedTags.en || localizedTags.he || [];
+  }
 
   return (
     <>
@@ -661,169 +668,135 @@ export default function GuidePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
-      <div className="min-h-screen bg-background dark:bg-background-dark">
-        {/* Breadcrumb */}
-        <Breadcrumb
-          items={[
-            { label: tCommon('guides') || 'Guides', href: '/guides' },
-            { label: guideTitle },
-          ]}
-        />
+      <div className="min-h-screen bg-white dark:bg-gray-950">
+        {/* Sticky Back Navigation - Duolingo style */}
+        <div className="sticky top-0 z-40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3">
+            <Link
+              href={`/${locale}/guides`}
+              className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium text-sm transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              {tCommon('guides') || 'Guides'}
+            </Link>
+          </div>
+        </div>
 
-        <main className="min-h-screen w-full flex-1 mx-auto text-text dark:text-text-dark">
-          <div className="p-6 py-36 mx-auto">
-            {/* Header - Meta information outside article */}
-            <header className="mb-8">
-            {guide.isFeatured && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-brand-main/10 text-brand-main dark:bg-brand-main/20 dark:text-brand-dark mb-4">
-                <Star className="w-4 h-4 mr-1" />
-                Featured
-              </span>
-            )}
-
-            {/* Meta Information */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-text/70 dark:text-text-dark/70 mb-6">
+        <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          {/* Article Header - Duolingo Style */}
+          <header className="mb-8">
+            {/* Date and Author - First appearance (small, above title) */}
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
+              {publishedDate && <span>{publishedDate}</span>}
+              {publishedDate && guide.authorName && <span>•</span>}
               {guide.authorName && (
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  <span>{guide.authorName}</span>
-                </div>
-              )}
-
-              {publishedDate && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>{publishedDate}</span>
-                </div>
-              )}
-
-              <div className="flex items-center gap-2">
-                <Eye className="w-4 h-4" />
-                <span>{guide.viewsCount.toLocaleString()} views</span>
-              </div>
-
-              {guide.ratingCount > 0 && (
-                <div className="flex items-center gap-2">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span>
-                    {guide.rating.toFixed(1)} ({guide.ratingCount} {guide.ratingCount === 1 ? 'rating' : 'ratings'})
-                  </span>
-                </div>
-              )}
-
-              {guide.likesCount > 0 && (
-                <div className="flex items-center gap-2">
-                  <Heart className="w-4 h-4" />
-                  <span>{guide.likesCount} likes</span>
-                </div>
+                <Link href="#" className="hover:text-brand-main dark:hover:text-brand-dark transition-colors">
+                  {guide.authorName}
+                </Link>
               )}
             </div>
 
-            {/* Tags */}
-            {(() => {
-              // Handle both old format (array) and new format (localized object)
-              let tagsToDisplay: string[] = [];
-              if (Array.isArray(guide.tags)) {
-                // Old format: single array
-                tagsToDisplay = guide.tags;
-              } else if (guide.tags && typeof guide.tags === 'object' && 'en' in guide.tags) {
-                // New format: localized object - get tags for current locale
-                const localizedTags = guide.tags as { en: string[]; he: string[] };
-                tagsToDisplay = localizedTags[locale as 'en' | 'he'] || localizedTags.en || localizedTags.he || [];
-              }
-              
-              return tagsToDisplay.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-2 mb-6">
-                  <Tag className="w-4 h-4 text-text/70 dark:text-text-dark/70" />
-                  {tagsToDisplay.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 rounded-full text-sm bg-sidebar-hover dark:bg-sidebar-hover-dark text-text dark:text-text-dark/90"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              ) : null;
-            })()}
+            {/* Title - Large and bold */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mb-4">
+              {guideTitle}
+            </h1>
 
-            {/* Related Sports */}
-            {guide.relatedSports.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                {guide.relatedSports.map((sport) => (
-                  <span
-                    key={sport}
-                    className="px-3 py-1 rounded-full text-sm bg-brand-main/10 text-brand-main dark:bg-brand-main/20 dark:text-brand-dark"
-                  >
-                    {sport}
-                  </span>
-                ))}
-              </div>
-            )}
+            {/* Description/Subtitle - Hook line */}
+            <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+              {guideDescription}
+            </p>
+
+            {/* Date and Author - Second appearance (below description) */}
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-8">
+              {publishedDate && <span>{publishedDate}</span>}
+              {publishedDate && guide.authorName && <span>•</span>}
+              {guide.authorName && (
+                <Link href="#" className="hover:text-brand-main dark:hover:text-brand-dark transition-colors">
+                  {guide.authorName}
+                </Link>
+              )}
+            </div>
           </header>
 
-          {/* Cover Image */}
+          {/* Cover Image - Full width with rounded corners */}
           {guide.coverImage && (
-            <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-card dark:bg-card-dark mb-8">
+            <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-10">
               <Image
                 src={guide.coverImage}
                 alt={guideTitle}
                 fill
                 className="object-cover"
                 priority
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
               />
             </div>
           )}
 
-            {/* Content Blocks */}
-            <article className="prose prose-lg prose-slate dark:prose-invert max-w-4xl mx-auto 
-              prose-headings:font-bold prose-headings:text-heading dark:prose-headings:text-heading-dark
-              prose-h1:text-4xl prose-h1:mb-6 prose-h1:mt-0 prose-h1:leading-tight
-              prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-h2:leading-tight
-              prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-4 prose-h3:leading-snug
-              prose-h4:text-xl prose-h4:mt-8 prose-h4:mb-3 prose-h4:leading-snug
-              prose-p:text-base prose-p:leading-relaxed prose-p:mb-6 prose-p:text-content dark:prose-p:text-content-dark
-              prose-a:text-brand-main dark:prose-a:text-brand-dark prose-a:font-medium prose-a:no-underline hover:prose-a:underline
-              prose-strong:text-heading dark:prose-strong:text-heading-dark prose-strong:font-semibold
-              prose-ul:my-6 prose-ol:my-6
-              prose-li:my-2 prose-li:leading-relaxed prose-li:text-content dark:prose-li:text-content-dark
-              prose-figure:my-8 prose-img:rounded-lg prose-img:shadow-lg
-              prose-figcaption:text-center prose-figcaption:text-sm prose-figcaption:text-content-secondary dark:prose-figcaption:text-content-secondary-dark prose-figcaption:mt-3
-              prose-pre:bg-background-dark dark:prose-pre:bg-background-dark prose-pre:text-content-dark
-              prose-code:text-sm prose-code:bg-background-secondary dark:prose-code:bg-background-secondary-dark prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-              prose-hr:my-12 prose-hr:border-border dark:prose-hr:border-border-dark
-              prose-blockquote:border-l-4 prose-blockquote:border-brand-main dark:prose-blockquote:border-brand-dark prose-blockquote:pl-4 prose-blockquote:italic">
-              <h1>{guideTitle}</h1>
-              <p className="text-lg leading-relaxed text-content-secondary dark:text-content-secondary-dark mb-8">{guideDescription}</p>
-              <ContentBlockRenderer blocks={contentBlocksToRender} locale={locale} />
-            </article>
+          {/* Article Content */}
+          <article className="mb-12">
+            <ContentBlockRenderer blocks={contentBlocksToRender} locale={locale} />
+          </article>
 
-            {/* Footer Actions */}
-            <div className="mt-12 pt-8 border-t border-border dark:border-border-dark">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <Link
-                  href={`/${locale}/guides`}
-                  className="text-brand-main hover:text-brand-main/80 dark:text-brand-dark hover:dark:text-brand-dark/80 font-medium"
-                >
-                  ← Back to Guides
-                </Link>
-
-                <div className="flex items-center gap-4">
-                  <button
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                    aria-label="Like this guide"
+          {/* Tags Section - Duolingo Style */}
+          {tagsToDisplay.length > 0 && (
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Icon name="tagBold" className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tags</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {tagsToDisplay.map((tag) => (
+                  <Link
+                    key={tag}
+                    href={`/${locale}/guides?tag=${encodeURIComponent(tag)}`}
+                    className="uppercase px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] transition-colors"
                   >
-                    <Heart className="w-5 h-5" />
-                    <span>{guide.likesCount}</span>
-                  </button>
-                </div>
+                    {tag}
+                  </Link>
+                ))}
               </div>
             </div>
+          )}
+
+          {/* Share Section */}
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-12">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Share Article</span>
+              <ShareButton title={guideTitle} url={canonicalUrl} />
+            </div>
+          </div>
+
+          {/* Related Sports - Subtle display */}
+          {guide.relatedSports.length > 0 && (
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 mb-8">
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                Related Sports
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {guide.relatedSports.map((sport) => (
+                  <span
+                    key={sport}
+                    className="px-3 py-1.5 rounded-full text-sm font-medium bg-brand-main/10 text-brand-main dark:bg-brand-main/20 dark:text-brand-dark"
+                  >
+                    {sport}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Back to Guides - Bottom CTA */}
+          <div className="text-center pt-8">
+            <Link
+              href={`/${locale}/guides`}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-main hover:bg-brand-main/90 text-white font-semibold transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              {locale === 'he' ? 'חזרה למדריכים' : 'Back to Guides'}
+            </Link>
           </div>
         </main>
       </div>
     </>
   );
 }
-

@@ -230,7 +230,7 @@ input{
 }
 
 html {
-  font-size: 18px;
+  font-size: 16px;
   scrollbar-gutter: stable;
   /* You can also use 'stable both-edges' if you need to reserve space on both sides, though less common for vertical scrollbars */
   font-family: var(--font-poppins), sans-serif;

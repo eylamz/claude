@@ -164,7 +164,34 @@ const GuideCard = memo(({
   animationDelay?: number;
 }) => {
   const [isClicked, setIsClicked] = useState(false);
+  const [showNameSection, setShowNameSection] = useState(false);
+  const [showGuideName, setShowGuideName] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
+
+  // Detect touch device
+  useEffect(() => {
+    const checkTouchDevice = () => {
+      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsTouchDevice(isTouch);
+    };
+    checkTouchDevice();
+    window.addEventListener('resize', checkTouchDevice);
+    return () => window.removeEventListener('resize', checkTouchDevice);
+  }, []);
+
+  // Show name section after 0.3s delay when card appears
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowNameSection(true);
+      // Show guide name with pop animation after height starts growing
+      setTimeout(() => {
+        setShowGuideName(true);
+      }, 0); // Small delay to let height transition start
+    }, 300 + animationDelay);
+    return () => clearTimeout(timer);
+  }, [animationDelay]);
 
   const handleCardClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -174,10 +201,20 @@ const GuideCard = memo(({
     }, 300);
   }, [guide.slug, locale]);
 
+  // Truncate description for display
+  const truncateDescription = (text: string | undefined, maxLength: number = 80): string => {
+    if (!text) return '';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
+  const description = guide.description ? truncateDescription(guide.description, 80) : '';
+
   return (
     <div
+      ref={cardRef}
       onClick={handleCardClick}
-      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02] border-[4px] border-card dark:border-card-dark bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
       style={{ animationDelay: `${animationDelay}ms` }}
       aria-label={guide.title}
     >
@@ -203,8 +240,8 @@ const GuideCard = memo(({
 
         {/* Difficulty Badge */}
         {guide.difficulty && (
-          <div className="absolute bottom-3 left-0 z-10">
-            <div className="flex gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold px-2 py-1 rounded-r-full shadow-lg">
+          <div className="absolute bottom-2 left-0 z-10">
+            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
               {guide.difficulty}
             </div>
           </div>
@@ -214,36 +251,76 @@ const GuideCard = memo(({
           photoUrl={guide.coverImage || ''}
           guideTitle={guide.title}
         />
-      </div>
-      
-      <div className="px-3 py-2 space-y-1 h-0 animate-expandHeight transition-all duration-300" style={{ animationDelay: '0.3s' }}> 
-        <h3 className="opacity-0 text-lg font-semibold truncate animate-appearDown" style={{ visibility: 'hidden', animationDelay: '0.4s' }}>
-          {guide.title}
-        </h3>
-        <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 gap-2">
-          {guide.rating !== undefined && guide.rating > 0 && (
-            <div className="flex items-center gap-1">
-              <Icon name="star" className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-              <span className="font-medium">{guide.rating.toFixed(1)}</span>
-              {guide.ratingCount !== undefined && guide.ratingCount > 0 && (
-                <span className="text-gray-400">({guide.ratingCount})</span>
+
+        {/* Hover Overlay - Only on non-touch devices */}
+        {!isTouchDevice && (
+          <div className={`absolute -bottom-1 z-20 pointer-events-none ${
+            locale === 'he' ? 'right-0' : 'left-0'
+          }`}>
+            {/* Guide Name & Description Overlay */}
+            <div className={`relative border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark px-3 pt-2 pb-3 shadow-[-2px_1px_8px_3px_rgba(0,0,0,0.2)] max-w-[90%] ${
+              locale === 'he'
+                ? 'rounded-tl-lg opacity-0 group-hover:opacity-100 translate-x-[36%] translate-y-[22%] rotate-[-1deg] group-hover:translate-x-[3%] group-hover:translate-y-[3%] group-hover:rotate-[2deg]'
+                : 'rounded-tr-xl opacity-0 group-hover:opacity-100 translate-x-[-6%] translate-y-[12%] rotate-[1deg] group-hover:translate-x-[-3%] group-hover:translate-y-[3%] group-hover:rotate-[-2deg]'
+            } transition-[opacity,transform] duration-[200ms,300ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)]`}>
+              <h3 className="text-sm font-semibold text-text dark:text-text-dark mb-1">
+                {guide.title}
+              </h3>
+              {description && (
+                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                  {description}
+                </p>
               )}
             </div>
-          )}
-          {guide.readTime !== undefined && guide.readTime > 0 && (
-            <div className="flex items-center gap-1">
-              <Icon name="clock" className="w-3.5 h-3.5" />
-              <span>{guide.readTime} {tr('min', 'דק')}</span>
-            </div>
-          )}
-          {guide.viewsCount !== undefined && (
-            <div className="flex items-center gap-1">
-              <Icon name="eye" className="w-3.5 h-3.5" />
-              <span>{guide.viewsCount}</span>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
+
+      {/* Name Section - Only on touch devices */}
+      {isTouchDevice && (
+        <div 
+          className="px-3 space-y-1 overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            maxHeight: showNameSection ? '200px' : '0',
+            paddingTop: showNameSection ? '0.5rem' : '0',
+            paddingBottom: showNameSection ? '0.5rem' : '0',
+          }}
+        >
+          <h3 
+            className={`text-sm font-semibold truncate ${showGuideName ? 'animate-fadeInDown animation-delay-[1s]' : 'opacity-0'}`}
+          >
+            {guide.title}
+          </h3>
+          {description && (
+            <p className={`text-xs text-gray-600 dark:text-gray-400 line-clamp-2 ${showGuideName ? 'animate-fadeInDown animation-delay-[1.2s]' : 'opacity-0'}`}>
+              {description}
+            </p>
+          )}
+          <div className={`flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 gap-2 ${showGuideName ? 'opacity-0 animate-fadeInDown animation-delay-[1.4s]' : 'opacity-0'}`}>
+            {guide.rating !== undefined && guide.rating > 0 && (
+              <div className="flex items-center gap-1">
+                <Icon name="star" className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
+                <span className="font-medium">{guide.rating.toFixed(1)}</span>
+                {guide.ratingCount !== undefined && guide.ratingCount > 0 && (
+                  <span className="text-gray-400">({guide.ratingCount})</span>
+                )}
+              </div>
+            )}
+            {guide.readTime !== undefined && guide.readTime > 0 && (
+              <div className="flex items-center gap-1">
+                <Icon name="clock" className="w-3.5 h-3.5" />
+                <span>{guide.readTime} {tr('min', 'דק')}</span>
+              </div>
+            )}
+            {guide.viewsCount !== undefined && (
+              <div className="flex items-center gap-1">
+                <Icon name="eye" className="w-3.5 h-3.5" />
+                <span>{guide.viewsCount}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 });

@@ -22,7 +22,7 @@ export default function Breadcrumb({ items, className = '' }: BreadcrumbProps) {
       aria-label="Breadcrumb" 
       className={`select-none mx-auto w-fit max-w-6xl absolute top-[4.25rem] z-20 ${locale === 'he' ? 'right-4' : 'left-4'} ${className}`}
     >
-      <ol className="flex items-center text-sm text-text/80 dark:text-text-dark/90 transition-color duration-300">
+      <ol className="flex items-center text-xs text-text/80 dark:text-text-dark/90 transition-color duration-300">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           

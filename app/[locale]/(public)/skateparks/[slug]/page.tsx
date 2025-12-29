@@ -497,22 +497,24 @@ function FormattedHours({
     return (
       <div className="space-y-2">
         {/* Header with closed badge */}
-        <div className="flex items-center gap-2 text-text dark:text-text-dark">
+        <div className="flex ltr:flex-col xsm:ltr:flex-row gap-2 text-text dark:text-text-dark">
+          <div className="flex items-center gap-2">
           <Icon name="clockBold" className="w-5 h-5" />
           <h3 className="text-base font-semibold">{t('openingHours')}: </h3>
-          <span className="inline-flex items-center px-2 py-1 rounded text-sm font-semibold bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border border-red-300 dark:border-red-700">
+          </div>
+          <span className="ms-6 xsm:ms-0 inline-flex items-center px-2 py-1 rounded text-sm font-semibold bg-[#fcdede] dark:bg-[#812828] text-[#e72727] dark:text-[#fdb6b6] border border-[#f89e9e67] dark:border-[#c54c4c4d]">
             {t('permanentlyClosed')}
           </span>
         </div>
         
         {/* Still show lighting hours for historical reference */}
-        <div className="flex items-start gap-2">
+        <div className="flex ltr:flex-col xsm:ltr:flex-row items-start gap-2">
           <div className="flex items-center gap-2">
             <Icon name="sunset" className="w-5 h-5 text-gray-500" />
             <h4 className="text-base font-semibold">{t('lightingHours')}: </h4>
           </div>
           <div>
-            <p className="text-base text-gray-500">{t('notApplicable')}</p>
+            <p className="ps-7 xsm:ps-0 text-base text-gray-500">{t('notApplicable')}</p>
           </div>
         </div>
       </div>
@@ -1556,7 +1558,7 @@ export default function SkateparkPage() {
                   {skatepark.openingYear && (
                     <p className="text-base">
                       {skatepark.openingMonth 
-                        ? `${t('openedDate')}${getMonthName(skatepark.openingMonth, locale)} ${skatepark.openingYear}`
+                        ? `${t('openedDate')} ${getMonthName(skatepark.openingMonth, locale)} ${skatepark.openingYear}`
                         : `${t('opened')} ${skatepark.openingYear}`
                       }.
                     </p>
@@ -1564,7 +1566,7 @@ export default function SkateparkPage() {
                   {skatepark.closingYear && (
                     <p className="text-base text-red-600 dark:text-red-400">
                       {skatepark.closingMonth 
-                        ? `${t('closedYearDate')}${getMonthName(skatepark.closingMonth, locale)} ${skatepark.closingYear}`
+                        ? `${t('closedYearDate')} ${getMonthName(skatepark.closingMonth, locale)} ${skatepark.closingYear}`
                         : `${t('closedYear')} ${skatepark.closingYear}`
                       }.
                     </p>
@@ -1600,7 +1602,7 @@ export default function SkateparkPage() {
                               className={`border border-transparent rounded-lg p-2 h-full cursor-pointer transition-all duration-300 ease-out ${
                                 amenitiesActive
                                   ? isParkClosed
-                                    ? 'bg-error/[8%] dark:bg-error-bg-dark/[15%]'
+                                    ? 'bg-[#fcdede] dark:bg-[#812828] border-[#f89e9e67] dark:border-[#c54c4c4d]'
                                     : 'bg-[#defce0] dark:bg-[#1452174d] border-[#85ef8a] dark:border-[#1452174d]'
                                   : ' bg-black/[3%] dark:bg-black/[5%] dark:shadow-inner'
                               }`}
@@ -1612,7 +1614,7 @@ export default function SkateparkPage() {
                                     className={`w-5 h-5 mx-auto transition-colors duration-300 ease-out overflow-visible ${
                                       amenitiesActive
                                         ? isParkClosed
-                                          ? 'text-error dark:text-error/80'
+                                          ? 'text-[#e72727] dark:text-[#fdb6b6]'
                                           : 'text-[#16641a] dark:text-[#85ef8a] shadow-sm'
                                         : 'text-gray-400 dark:text-[#405e4e]'
                                     }`}
