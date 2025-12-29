@@ -1187,6 +1187,20 @@ export default function SkateparksPage() {
     return R * c;
   }, []);
 
+  // Normalize text for search (handles apostrophes, diacritics, and whitespace)
+  const normalizeSearchText = useCallback((text: string): string => {
+    return text
+      .toLowerCase()
+      .trim()
+      // Remove/normalize apostrophes (both regular ' and curly apostrophes ')
+      .replace(/[''']/g, '')
+      // Normalize whitespace (multiple spaces to single space)
+      .replace(/\s+/g, ' ')
+      // Remove diacritics for better matching (e.g., é -> e, ü -> u)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }, []);
+
   // Client-side filtering function
   const filterSkateparks = useCallback((parks: Skatepark[]): Skatepark[] => {
     let filtered = [...parks];
@@ -1198,7 +1212,7 @@ export default function SkateparksPage() {
 
     // Search filter (text search in name only - both English and Hebrew)
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
+      const normalizedQuery = normalizeSearchText(searchQuery);
       filtered = filtered.filter((park) => {
         let nameEn = '';
         let nameHe = '';
@@ -1211,9 +1225,13 @@ export default function SkateparksPage() {
           nameHe = park.name.he || '';
         }
 
+        // Normalize both names before comparing
+        const normalizedNameEn = normalizeSearchText(nameEn);
+        const normalizedNameHe = normalizeSearchText(nameHe);
+
         return (
-          nameEn.toLowerCase().includes(query) ||
-          nameHe.toLowerCase().includes(query)
+          normalizedNameEn.includes(normalizedQuery) ||
+          normalizedNameHe.includes(normalizedQuery)
         );
       });
     }
@@ -1233,7 +1251,7 @@ export default function SkateparksPage() {
     }
 
     return filtered;
-  }, [areaFilter, searchQuery, selectedAmenities, openNowOnly, locale]);
+  }, [areaFilter, searchQuery, selectedAmenities, openNowOnly, locale, normalizeSearchText]);
 
   // Client-side sorting function
   const sortSkateparks = useCallback((parks: Skatepark[], sortOption: SortOption): Skatepark[] => {

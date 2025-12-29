@@ -392,6 +392,7 @@ export type IconName =
   | 'close'
   | 'X'
   | 'cart'
+  | 'backpack'  | 'backpackBold'
   | 'shopCart'  | 'shopCartBold'
   | 'heart'  | 'heartBold'
   | 'heartLike'

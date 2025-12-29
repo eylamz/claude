@@ -8,6 +8,8 @@ import { Accordion, Button } from '@/components/ui';
 import { useTranslation } from '@/hooks/use-translation';
 import { useLocaleInfo } from '@/hooks/use-translation';
 import { cn } from '@/lib/utils/cn';
+import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
+import { useRouter } from 'next/navigation';
 
 interface ProductImage {
   url: string;
@@ -55,9 +57,11 @@ interface Product {
 export default function ProductPage() {
   const params = useParams();
   const pathname = usePathname();
+  const router = useRouter();
   const locale = pathname.split('/')[1] || 'en';
   const t = useTranslation('shop');
   const { isRTL } = useLocaleInfo();
+  const ecommerceEnabled = isEcommerceEnabled();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,6 +74,37 @@ export default function ProductPage() {
   const [reviewCount] = useState(128); // Mock review count
 
   const slug = params.slug as string;
+
+  // Show "Page in construction" if ecommerce is disabled
+  if (!ecommerceEnabled) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 flex items-center justify-center">
+        <div className="text-center px-4 max-w-2xl mx-auto">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-500/10 to-brand-main/10 dark:from-green-500/20 dark:to-brand-main/20 mb-6">
+            <svg className="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            {locale === 'he' ? 'דף בבנייה' : 'Page in Construction'}
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+            {locale === 'he' 
+              ? 'החנות זמינה בקרוב. אנא חזור מאוחר יותר.'
+              : 'The shop is coming soon. Please check back later.'
+            }
+          </p>
+          <Button
+            onClick={() => router.push(`/${locale}`)}
+            variant="brand"
+            className="px-6 py-3"
+          >
+            {locale === 'he' ? 'חזור לדף הבית' : 'Back to Homepage'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     fetchProduct();

@@ -5,10 +5,11 @@ import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
-import { ShoppingBag, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { Icon } from '@/components/icons/Icon';
 import { useCartItemCount } from '@/stores/cartStore';
 import MobileSidebar from './MobileSidebar';
+import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
 
 export default function MobileNavMinimal() {
   const pathname = usePathname();
@@ -18,6 +19,7 @@ export default function MobileNavMinimal() {
   const [scrollY, setScrollY] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevScrollYRef = useRef(0);
+  const ecommerceEnabled = isEcommerceEnabled();
   const itemCount = useCartItemCount();
 
   // Check if on skateparks page
@@ -103,19 +105,21 @@ export default function MobileNavMinimal() {
             />
           </Link>
 
-          {/* Right: Cart Button - Minimal Badge */}
-          <Link
-            href={`/${locale}/cart`}
-            className="relative h-11 p-2.5 -me-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95 group overflow-visible"              
-            aria-label={`Cart with ${itemCount} items`}
-          >
-            <Icon name="backpack" className=" overflow-visible w-6 h-6" strokeWidth={2} />
-            {itemCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-brand-main rounded-full shadow-lg ring-2 ring-white dark:ring-gray-900">
-                {itemCount > 9 ? '9+' : itemCount}
-              </span>
-            )}
-          </Link>
+          {/* Right: Cart Button - Minimal Badge - only show if ecommerce is enabled */}
+          {ecommerceEnabled && (
+            <Link
+              href={`/${locale}/cart`}
+              className="relative h-11 p-2.5 -me-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95 group overflow-visible"              
+              aria-label={`Cart with ${itemCount} items`}
+            >
+              <Icon name="backpack" className=" overflow-visible w-6 h-6" />
+              {itemCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-brand-main rounded-full shadow-lg ring-2 ring-white dark:ring-gray-900">
+                  {itemCount > 9 ? '9+' : itemCount}
+                </span>
+              )}
+            </Link>
+          )}
         </div>
       </header>
 

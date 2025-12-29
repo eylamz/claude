@@ -27,6 +27,7 @@ import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useTheme } from '@/context/ThemeProvider';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { 
@@ -37,6 +38,7 @@ import {
   type CartItem 
 } from '@/stores/cartStore';
 import { Input } from '@/components/ui';
+import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
 
 export default function HeaderNav() {
   const pathname = usePathname();
@@ -54,6 +56,7 @@ export default function HeaderNav() {
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   
+  const ecommerceEnabled = isEcommerceEnabled();
   const itemCount = useCartItemCount();
   const items = useCartItems();
   const totals = useCartTotals();
@@ -301,19 +304,38 @@ export default function HeaderNav() {
               </Link>
 
               {/* Shop */}
-              <Link
-                href={`/${locale}/shop`}
-                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
-                  isActive(`/${locale}/shop`) ? 'text-black dark:text-white' : ''
-                }`}
-              >
-                {tShop('title')}
-                {/* "Featured" badge for shop */}
-                <span className="absolute top-2 right-1 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-accent"></span>
-                </span>
-              </Link>
+              {!ecommerceEnabled ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href="#"
+                      onClick={(e) => e.preventDefault()}
+                      className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 relative cursor-not-allowed opacity-60 ${
+                        isActive(`/${locale}/shop`) ? 'text-black dark:text-white' : ''
+                      }`}
+                    >
+                      {tShop('title')}
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {locale === 'he' ? 'החנות בבנייה. בקרוב!' : 'Shop is under construction. Coming soon!'}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Link
+                  href={`/${locale}/shop`}
+                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
+                    isActive(`/${locale}/shop`) ? 'text-black dark:text-white' : ''
+                  }`}
+                >
+                  {tShop('title')}
+                  {/* "Featured" badge for shop */}
+                  <span className="absolute top-2 right-1 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-accent opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-accent"></span>
+                  </span>
+                </Link>
+              )}
             </nav>
 
             {/* RIGHT: Actions (Search, Cart, Settings) */}
@@ -330,9 +352,10 @@ export default function HeaderNav() {
               
               </button>
 
-              {/* Cart with badge */}
-              <div className="relative">
-                <Popover>
+              {/* Cart with badge - only show if ecommerce is enabled */}
+              {ecommerceEnabled && (
+                <div className="relative">
+                  <Popover>
                   <PopoverTrigger asChild>
                     <button
                       className="relative h-9 w-9 flex items-center justify-center rounded-lg text-sidebar-text dark:text-sidebar-text-dark hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
@@ -543,6 +566,7 @@ export default function HeaderNav() {
                   </PopoverContent>
                 </Popover>
               </div>
+              )}
 
               {/* Settings */}
               <div className="relative">

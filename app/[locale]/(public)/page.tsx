@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { HeroCarousel, FixedBanner, SkeletonSection, ProductSection, ParkSection, PhotoCollage, GuideSection, ArrowRight } from '@/components/home';
 import { Button } from '@/components/ui';
 import { Locale } from '@/i18n';
+import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
 
 interface HeroCarouselImage {
   desktopImageUrl?: string;
@@ -63,6 +64,7 @@ export default function HomePage() {
   // Get locale from pathname as fallback to ensure it matches the URL
   const locale = (pathname?.split('/')?.[1] as Locale) || (localeFromHook as Locale) || 'en';
   const t = useTranslations('common.homepage');
+  const ecommerceEnabled = isEcommerceEnabled();
   
   const [loading, setLoading] = useState(true);
   const [homepageSettings, setHomepageSettings] = useState<HomepageSettings | null>(null);
@@ -196,29 +198,31 @@ export default function HomePage() {
         <HeroCarousel images={homepageSettings.heroCarouselImages} />
       )}
       
-      {/* Featured Products Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-2 px-4 xl:px-0 select-none">
-            <h2 className="text-header-text dark:text-text-secondary-dark text-lg font-bold">{t('newArrivals')}</h2>
-            <Link href={`/${locale}/shop`}>
-              <Button 
-                variant="secondary" 
-                className="opacity-0 !px-0 animate-popFadeIn group"
-                style={{ animationDelay: '400ms' }}
-              >
-                {t('seeAllProducts')}
-                <ArrowRight className="ltr:ml-2 rtl:mr-2 h-4 w-4 rtl:rotate-180 transition-all duration-200 group-hover:w-[1.25rem] group-hover:h-[1.25rem] group-hover:ltr:translate-x-[10px] group-hover:rtl:translate-x-[-10px]" />
-              </Button>
-            </Link>
+      {/* Featured Products Section - only show if ecommerce is enabled */}
+      {ecommerceEnabled && (
+        <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-2 px-4 xl:px-0 select-none">
+              <h2 className="text-header-text dark:text-text-secondary-dark text-lg font-bold">{t('newArrivals')}</h2>
+              <Link href={`/${locale}/shop`}>
+                <Button 
+                  variant="secondary" 
+                  className="opacity-0 !px-0 animate-popFadeIn group"
+                  style={{ animationDelay: '400ms' }}
+                >
+                  {t('seeAllProducts')}
+                  <ArrowRight className="ltr:ml-2 rtl:mr-2 h-4 w-4 rtl:rotate-180 transition-all duration-200 group-hover:w-[1.25rem] group-hover:h-[1.25rem] group-hover:ltr:translate-x-[10px] group-hover:rtl:translate-x-[-10px]" />
+                </Button>
+              </Link>
+            </div>
+            {loading || !products || products.length === 0 ? (
+              <SkeletonSection />
+            ) : (
+              <ProductSection products={products} t={t} />
+            )}
           </div>
-          {loading || !products || products.length === 0 ? (
-            <SkeletonSection />
-          ) : (
-            <ProductSection products={products} t={t} />
-          )}
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Skateparks Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">

@@ -11,6 +11,7 @@ import { Icon, type IconName } from '@/components/icons/Icon';
 import { useTheme } from '@/context/ThemeProvider';
 import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
+import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -81,6 +82,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = session?.user?.role === 'admin';
+  const ecommerceEnabled = isEcommerceEnabled();
 
   // 1. Navigation Configuration (Grid Cards)
   const navCards: NavCard[] = [
@@ -101,6 +103,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       icon: 'shopBold',
       label: tMobileNav('shop'),
       description: tMobileNav('shopDesc'),
+      comingSoon: !ecommerceEnabled,
     },
     {
       href: `/${locale}/guides`,
