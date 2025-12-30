@@ -109,13 +109,9 @@ const loadGoogleMapsScript = (locale: string = 'en'): Promise<void> => {
     const script = document.createElement('script');
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
     const language = locale === 'he' ? 'he' : 'en';
-    const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID;
     
-    // Build script URL with optional mapIds parameter and loading=async for best practices
-    let scriptUrl = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=marker&language=${language}&loading=async`;
-    if (mapId) {
-      scriptUrl += `&mapIds=${mapId}`;
-    }
+    // Build script URL with loading=async for best practices
+    const scriptUrl = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&language=${language}&loading=async`;
     
     script.src = scriptUrl;
     script.async = true;
@@ -148,30 +144,7 @@ function GoogleMapView({
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const scriptLoadedRef = useRef(false);
-
-  // Helper function to create user location pin for AdvancedMarkerElement
-  const createUserLocationPin = () => {
-    const pinElement = document.createElement('div');
-    pinElement.style.width = '16px';
-    pinElement.style.height = '16px';
-    pinElement.style.borderRadius = '50%';
-    pinElement.style.backgroundColor = '#4285F4';
-    pinElement.style.border = '2px solid #104413';
-    return pinElement;
-  };
-
-  // Helper function to create skatepark marker pin
-  const createSkateparkPin = (fillColor: string = '#00cc0a', strokeColor: string = '#18671c', circleColor: string = '#18671c') => {
-    const pinElement = document.createElement('div');
-    pinElement.innerHTML = `
-      <svg width="40" height="50" overflow="visible" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 0 C9.4 0 0 9.4 0 20 C0 35 20 50 20 50 C20 50 40 35 40 20 C40 9.4 30.6 0 20 0 Z" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2"/>
-        <circle cx="20" cy="20" r="8" fill="${circleColor}"/>
-      </svg>
-    `;
-    pinElement.style.cursor = 'pointer';
-    return pinElement;
-  };
+  const themeCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!mapRef.current || typeof window === 'undefined') return;
@@ -198,10 +171,121 @@ function GoogleMapView({
 
         const center = userLocation || { lat: 32.0735802, lng: 34.7880511 }; // Default to Jerusalem
 
-        // Check if AdvancedMarkerElement is available (new API)
-        const useAdvancedMarkers = google.maps.marker?.AdvancedMarkerElement;
+        // Helper function to create custom icon for skatepark marker
+        const createSkateparkIcon = (fillColor: string, strokeColor: string, circleColor: string) => {
+          const svg = `
+            <svg width="40" height="50" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 0 C9.4 0 0 9.4 0 20 C0 35 20 50 20 50 C20 50 40 35 40 20 C40 9.4 30.6 0 20 0 Z" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2"/>
+              <circle cx="20" cy="20" r="8" fill="${circleColor}"/>
+            </svg>
+          `;
+          return {
+            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+            scaledSize: new google.maps.Size(40, 50),
+            anchor: new google.maps.Point(20, 50),
+          };
+        };
 
-        // Initialize map - mapId is required for AdvancedMarkerElement
+        // Get theme from localStorage (matches app theme system)
+        const getCurrentTheme = (): 'light' | 'dark' => {
+          if (typeof window === 'undefined') return 'light';
+          
+          // Check localStorage first
+          const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+          if (storedTheme === 'dark' || storedTheme === 'light') {
+            return storedTheme;
+          }
+          
+          // Fallback to checking document class
+          const hasDarkClass = document.documentElement.classList.contains('dark');
+          return hasDarkClass ? 'dark' : 'light';
+        };
+
+        const currentTheme = getCurrentTheme();
+
+        // Dark theme styles for Google Maps (without requiring mapId)
+        const darkThemeStyles = [
+          { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+          { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+          { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+          {
+            featureType: 'administrative.locality',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#d59563' }],
+          },
+          {
+            featureType: 'poi',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#d59563' }],
+          },
+          {
+            featureType: 'poi.park',
+            elementType: 'geometry',
+            stylers: [{ color: '#263c3f' }],
+          },
+          {
+            featureType: 'poi.park',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#6b9a76' }],
+          },
+          {
+            featureType: 'road',
+            elementType: 'geometry',
+            stylers: [{ color: '#38414e' }],
+          },
+          {
+            featureType: 'road',
+            elementType: 'geometry.stroke',
+            stylers: [{ color: '#212a37' }],
+          },
+          {
+            featureType: 'road',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#9ca5b3' }],
+          },
+          {
+            featureType: 'road.highway',
+            elementType: 'geometry',
+            stylers: [{ color: '#746855' }],
+          },
+          {
+            featureType: 'road.highway',
+            elementType: 'geometry.stroke',
+            stylers: [{ color: '#1f2835' }],
+          },
+          {
+            featureType: 'road.highway',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#f3d19c' }],
+          },
+          {
+            featureType: 'transit',
+            elementType: 'geometry',
+            stylers: [{ color: '#2f3948' }],
+          },
+          {
+            featureType: 'transit.station',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#d59563' }],
+          },
+          {
+            featureType: 'water',
+            elementType: 'geometry',
+            stylers: [{ color: '#17263c' }],
+          },
+          {
+            featureType: 'water',
+            elementType: 'labels.text.fill',
+            stylers: [{ color: '#515c6d' }],
+          },
+          {
+            featureType: 'water',
+            elementType: 'labels.text.stroke',
+            stylers: [{ color: '#17263c' }],
+          },
+        ];
+
+        // Initialize map with theme-based styles
         const mapOptions: any = {
           center,
           zoom: userLocation ? 12 : 10,
@@ -209,15 +293,9 @@ function GoogleMapView({
           streetViewControl: false,
           fullscreenControl: true,
           language: locale === 'he' ? 'he' : 'en',
-          mode: 'dark',
+          // Only apply dark theme styles if theme is dark
+          styles: currentTheme === 'dark' ? darkThemeStyles : [],
         };
-
-        // Only add mapId if using AdvancedMarkerElement
-        if (useAdvancedMarkers) {
-          // Use a generic map ID - in production, you should create your own Map ID in Google Cloud Console
-          mapOptions.mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID';
-        }
-        console.log('Final mapOptions being used:', mapOptions); // <--- ADD THIS LINE
 
         const map = new google.maps.Map(mapRef.current, mapOptions);
         mapInstanceRef.current = map;
@@ -253,38 +331,14 @@ function GoogleMapView({
           const markerFillColor = isClosed ? '#ef4444' : '#31c438'; // Red for closed parks, green for open
           const markerStrokeColor = isClosed ? '#991b1b' : '#18671c'; // Darker stroke for closed parks
           const markerCircleColor = isClosed ? '#991b1b' : '#18671c'; // Circle color matches stroke
-          const fallbackFillColor = isClosed ? '#dc2626' : '#00b881'; // Darker red/green for fallback API
-          const fallbackStrokeColor = isClosed ? '#991b1b' : '#104413'; // Darker stroke for closed parks
 
-          let marker: any;
-
-          if (useAdvancedMarkers) {
-            // Use new AdvancedMarkerElement API with custom pin
-            const pinContent = createSkateparkPin(markerFillColor, markerStrokeColor, markerCircleColor);
-            pinContent.setAttribute('data-marker-id', park._id);
-
-            marker = new google.maps.marker.AdvancedMarkerElement({
-              map,
-              position,
-              title: name,
-              content: pinContent,
-            });
-          } else {
-            // Fallback to deprecated Marker API with custom icon
-            marker = new google.maps.Marker({
-              position,
-              map,
-              title: name,
-              icon: {
-                path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
-                scale: 6,
-                fillColor: fallbackFillColor,
-                fillOpacity: 1,
-                strokeColor: fallbackStrokeColor,
-                strokeWeight: 2,
-              },
-            });
-          }
+          // Create marker with custom icon
+          const marker = new google.maps.Marker({
+            position,
+            map,
+            title: name,
+            icon: createSkateparkIcon(markerFillColor, markerStrokeColor, markerCircleColor),
+          });
 
           // Add click listener - show bottom panel
           marker.addListener('click', () => {
@@ -297,40 +351,76 @@ function GoogleMapView({
 
         // Add user location marker
         if (userLocation) {
-          let userMarker: any;
-
-          if (useAdvancedMarkers) {
-            // Use AdvancedMarkerElement for user location
-            userMarker = new google.maps.marker.AdvancedMarkerElement({
-              map,
-              position: userLocation,
-              title: 'Your Location',
-              content: createUserLocationPin(),
-            });
-          } else {
-            // Fallback to deprecated Marker with custom icon
-            userMarker = new google.maps.Marker({
-              position: userLocation,
-              map,
-              icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: '#4285F4',
-                fillOpacity: 1,
-                strokeColor: '#104413',
-                strokeWeight: 2,
-              },
-              title: 'Your Location',
-            });
-          }
+          const userMarker = new google.maps.Marker({
+            position: userLocation,
+            map,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 8,
+              fillColor: '#4285F4',
+              fillOpacity: 1,
+              strokeColor: '#104413',
+              strokeWeight: 2,
+            },
+            title: 'Your Location',
+          });
           markersRef.current.push(userMarker);
         }
+
+        // Listen for theme changes and update map styles
+        const updateMapTheme = () => {
+          const newTheme = getCurrentTheme();
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.setOptions({
+              styles: newTheme === 'dark' ? darkThemeStyles : [],
+            });
+          }
+        };
+
+        // Listen for localStorage changes (theme toggle) - works across tabs
+        const handleStorageChange = (e: StorageEvent) => {
+          if (e.key === 'theme') {
+            updateMapTheme();
+          }
+        };
+
+        // Listen for class changes on document element (theme toggle) - works in same tab
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+              updateMapTheme();
+            }
+          });
+        });
+
+        // Start observing document element for class changes
+        observer.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['class'],
+        });
+
+        // Listen for storage events (cross-tab theme changes)
+        window.addEventListener('storage', handleStorageChange);
+
+        // Store cleanup function in ref
+        themeCleanupRef.current = () => {
+          observer.disconnect();
+          window.removeEventListener('storage', handleStorageChange);
+        };
       } catch (error) {
         console.error('Error initializing Google Maps:', error);
       }
     };
 
     initMap();
+
+    // Cleanup function for useEffect
+    return () => {
+      if (themeCleanupRef.current) {
+        themeCleanupRef.current();
+        themeCleanupRef.current = null;
+      }
+    };
   }, [skateparks, userLocation, onMarkerClick, locale]);
 
   return <div ref={mapRef} className="w-full h-full min-h-[600px]" />;
@@ -1040,6 +1130,49 @@ export default function SkateparksPage() {
     );
   }, [getCityFromCoordinates, userLocation, sortBy]);
 
+  // Helper function to merge inactive parks with active parks
+  const mergeInactiveParks = useCallback((activeParks: any[]): any[] => {
+    try {
+      const inactiveCacheKey = 'skateparks_cache_inactive';
+      const inactiveCachedData = localStorage.getItem(inactiveCacheKey);
+      
+      if (!inactiveCachedData) {
+        return activeParks;
+      }
+
+      const inactiveParks = JSON.parse(inactiveCachedData);
+      if (!Array.isArray(inactiveParks) || inactiveParks.length === 0) {
+        return activeParks;
+      }
+
+      // Normalize location format for inactive parks
+      const normalizedInactiveParks = inactiveParks.map((park: any) => {
+        let location = park.location;
+
+        // Convert from { type: 'Point', coordinates: [lng, lat] } to { lat, lng }
+        if (location?.coordinates && Array.isArray(location.coordinates)) {
+          const [lng, lat] = location.coordinates;
+          location = { lat, lng };
+        }
+        // If already in { lat, lng } format, keep it as is
+
+        return {
+          ...park,
+          location,
+        };
+      });
+
+      // Merge inactive parks with active parks (avoid duplicates by slug)
+      const activeSlugs = new Set(activeParks.map((p: any) => p.slug));
+      const uniqueInactiveParks = normalizedInactiveParks.filter((p: any) => !activeSlugs.has(p.slug));
+      
+      return [...activeParks, ...uniqueInactiveParks];
+    } catch (e) {
+      console.warn('Failed to merge inactive parks', e);
+      return activeParks;
+    }
+  }, []);
+
   // Fetch all skateparks once on mount (no filters, no pagination)
   const fetchAllSkateparks = useCallback(async () => {
     const cacheKey = 'skateparks_cache';
@@ -1068,7 +1201,9 @@ export default function SkateparksPage() {
           };
         });
 
-        setAllSkateparks(normalizedCachedData);
+        // Merge with inactive parks
+        const allParks = mergeInactiveParks(normalizedCachedData);
+        setAllSkateparks(allParks);
         setLoading(false);
 
         // Check version asynchronously after using cache
@@ -1112,8 +1247,9 @@ export default function SkateparksPage() {
                     localStorage.setItem(cacheKey, JSON.stringify(normalizedSkateparks));
                     localStorage.setItem(versionKey, newVersion.toString());
 
-                    // Update state with new data
-                    setAllSkateparks(normalizedSkateparks);
+                    // Merge with inactive parks and update state
+                    const allParks = mergeInactiveParks(normalizedSkateparks);
+                    setAllSkateparks(allParks);
                   }
                 }
               }
@@ -1159,8 +1295,9 @@ export default function SkateparksPage() {
         };
       });
 
-      // Use fresh data
-      setAllSkateparks(normalizedSkateparks);
+      // Merge with inactive parks
+      const allParks = mergeInactiveParks(normalizedSkateparks);
+      setAllSkateparks(allParks);
 
       // Store both cache and version in localStorage (store normalized format)
       localStorage.setItem(cacheKey, JSON.stringify(normalizedSkateparks));
@@ -1170,7 +1307,7 @@ export default function SkateparksPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [mergeInactiveParks]);
 
   // Calculate distance between two coordinates (Haversine formula)
   const calculateDistance = useCallback((lat1: number, lng1: number, lat2: number, lng2: number): number => {

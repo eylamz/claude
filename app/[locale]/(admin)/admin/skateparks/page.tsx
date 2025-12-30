@@ -356,6 +356,18 @@ export default function SkateparksPage() {
                     localStorage.setItem(cacheKey, JSON.stringify(publicData.skateparks || []));
                     localStorage.setItem(versionKey, newVersion.toString());
                     
+                    // Also fetch and cache inactive parks
+                    try {
+                      const inactiveResponse = await fetch('/api/admin/skateparks?all=true&limit=10000&status=inactive');
+                      if (inactiveResponse.ok) {
+                        const inactiveData = await inactiveResponse.json();
+                        const inactiveParks = inactiveData.skateparks || [];
+                        localStorage.setItem('skateparks_cache_inactive', JSON.stringify(inactiveParks));
+                      }
+                    } catch (e) {
+                      console.warn('Failed to fetch inactive parks during version check', e);
+                    }
+                    
                     // Only trigger refetch if we're not already fetching
                     if (!isFetchingRef.current && fetchSkateparksRef.current) {
                       setTimeout(() => {
@@ -412,6 +424,14 @@ export default function SkateparksPage() {
           
           localStorage.setItem(cacheKey, JSON.stringify(publicData.skateparks || []));
           localStorage.setItem(versionKey, currentVersion.toString());
+        }
+        
+        // Also fetch and cache inactive parks
+        const inactiveResponse = await fetch('/api/admin/skateparks?all=true&limit=10000&status=inactive');
+        if (inactiveResponse.ok) {
+          const inactiveData = await inactiveResponse.json();
+          const inactiveParks = inactiveData.skateparks || [];
+          localStorage.setItem('skateparks_cache_inactive', JSON.stringify(inactiveParks));
         }
       } catch (e) {
         console.warn('Failed to update cache', e);
@@ -751,12 +771,27 @@ export default function SkateparksPage() {
         <div className="flex items-center space-x-3">
           <Button
             variant="secondary"
-            onClick={() => {
+            onClick={async () => {
               // Clear localStorage cache
               const cacheKey = 'skateparks_cache';
               const versionKey = 'skateparks_version';
+              const inactiveCacheKey = 'skateparks_cache_inactive';
               localStorage.removeItem(cacheKey);
               localStorage.removeItem(versionKey);
+              localStorage.removeItem(inactiveCacheKey);
+              
+              // Fetch and cache inactive parks
+              try {
+                const inactiveResponse = await fetch('/api/admin/skateparks?all=true&limit=10000&status=inactive');
+                if (inactiveResponse.ok) {
+                  const inactiveData = await inactiveResponse.json();
+                  const inactiveParks = inactiveData.skateparks || [];
+                  localStorage.setItem(inactiveCacheKey, JSON.stringify(inactiveParks));
+                }
+              } catch (error) {
+                console.warn('Failed to fetch inactive parks for cache', error);
+              }
+              
               // Trigger refetch
               fetchSkateparks();
             }}

@@ -85,30 +85,71 @@ export async function GET(request: Request) {
       .lean();
 
     // Format skateparks data
-    const formattedSkateparks = skateparks.map((skatepark: any) => ({
-      id: skatepark._id.toString(),
-      name: {
-        en: skatepark.name?.en || 'Untitled',
-        he: skatepark.name?.he || 'ללא כותרת',
-      },
-      area: skatepark.area || skatepark.address?.area || '',
-      address: {
-        en: skatepark.address?.en || skatepark.address?.street || '',
-        he: skatepark.address?.he || skatepark.address?.city || '',
-        street: skatepark.address?.street || '',
-        city: skatepark.address?.city || '',
-        zip: skatepark.address?.zip || '',
-      },
-      status: skatepark.status || 'active',
-      isFeatured: skatepark.isFeatured || false,
-      openingYear: skatepark.openingYear ?? null,
-      openingMonth: skatepark.openingMonth ?? null,
-      closingYear: skatepark.closingYear ?? null,
-      closingMonth: skatepark.closingMonth ?? null,
-      image: skatepark.images?.[0]?.url || null,
-      amenities: skatepark.amenities || {},
-      location: skatepark.location || { lat: 0, lng: 0 },
-    }));
+    // If fetching all (for cache), return full data similar to public API
+    // Otherwise return simplified format for admin table
+    const formattedSkateparks = skateparks.map((skatepark: any) => {
+      if (fetchAll) {
+        // Return full data format for caching (includes all fields from model)
+        const [parkLng, parkLat] = skatepark.location?.coordinates || [0, 0];
+        return {
+          _id: skatepark._id.toString(),
+          slug: skatepark.slug,
+          name: skatepark.name || { en: 'Untitled', he: 'ללא כותרת' },
+          address: skatepark.address || { en: '', he: '' },
+          area: skatepark.area || '',
+          location: {
+            type: 'Point',
+            coordinates: [parkLng, parkLat], // [longitude, latitude]
+          },
+          imageUrl: skatepark.images?.[0]?.url || '/placeholder-skatepark.jpg',
+          images: skatepark.images || [],
+          operatingHours: skatepark.operatingHours || {},
+          lightingHours: skatepark.lightingHours || undefined,
+          amenities: skatepark.amenities || {},
+          rating: skatepark.rating || 0,
+          totalReviews: skatepark.totalReviews || 0,
+          is24Hours: skatepark.lightingHours?.is24Hours || false,
+          isFeatured: skatepark.isFeatured || false,
+          openingYear: skatepark.openingYear ?? null,
+          openingMonth: skatepark.openingMonth ?? null,
+          closingYear: skatepark.closingYear ?? null,
+          closingMonth: skatepark.closingMonth ?? null,
+          notes: skatepark.notes || {},
+          mediaLinks: skatepark.mediaLinks || {},
+          status: skatepark.status || 'active',
+          seoMetadata: skatepark.seoMetadata || undefined,
+          qualityRating: skatepark.qualityRating || undefined,
+          createdAt: skatepark.createdAt || null,
+          updatedAt: skatepark.updatedAt || null,
+        };
+      } else {
+        // Return simplified format for admin table
+        return {
+          id: skatepark._id.toString(),
+          name: {
+            en: skatepark.name?.en || 'Untitled',
+            he: skatepark.name?.he || 'ללא כותרת',
+          },
+          area: skatepark.area || skatepark.address?.area || '',
+          address: {
+            en: skatepark.address?.en || skatepark.address?.street || '',
+            he: skatepark.address?.he || skatepark.address?.city || '',
+            street: skatepark.address?.street || '',
+            city: skatepark.address?.city || '',
+            zip: skatepark.address?.zip || '',
+          },
+          status: skatepark.status || 'active',
+          isFeatured: skatepark.isFeatured || false,
+          openingYear: skatepark.openingYear ?? null,
+          openingMonth: skatepark.openingMonth ?? null,
+          closingYear: skatepark.closingYear ?? null,
+          closingMonth: skatepark.closingMonth ?? null,
+          image: skatepark.images?.[0]?.url || null,
+          amenities: skatepark.amenities || {},
+          location: skatepark.location || { lat: 0, lng: 0 },
+        };
+      }
+    });
 
     return NextResponse.json({
       skateparks: formattedSkateparks,

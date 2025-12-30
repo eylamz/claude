@@ -791,136 +791,174 @@ export default function SkateparkPage() {
       const cachedVersion = localStorage.getItem(versionKey);
 
       // Check cache first - if it exists and has the skatepark, use it immediately
+      // Also check inactive parks cache
+      let cachedSkatepark: Skatepark | null = null;
+      let cachedSkateparks: Skatepark[] = [];
+      
       if (cachedData && cachedVersion) {
         try {
-          const cachedSkateparks = JSON.parse(cachedData);
-          if (Array.isArray(cachedSkateparks)) {
-            const cachedSkatepark = cachedSkateparks.find((park: Skatepark) => park.slug === slug);
-            if (cachedSkatepark) {
-              // Use cached data immediately
-              setSkatepark(cachedSkatepark);
+          const parsedData = JSON.parse(cachedData);
+          if (Array.isArray(parsedData)) {
+            cachedSkateparks = parsedData;
+            cachedSkatepark = parsedData.find((park: Skatepark) => park.slug === slug) || null;
+          }
+        } catch (e) {
+          // Failed to parse active parks cache
+        }
+      }
+      
+      // If not found in active parks, check inactive parks cache
+      if (!cachedSkatepark) {
+        try {
+          const inactiveCacheKey = 'skateparks_cache_inactive';
+          const inactiveCachedData = localStorage.getItem(inactiveCacheKey);
+          if (inactiveCachedData) {
+            const inactiveParks = JSON.parse(inactiveCachedData);
+            if (Array.isArray(inactiveParks)) {
+              cachedSkatepark = inactiveParks.find((park: Skatepark) => park.slug === slug) || null;
+            }
+          }
+        } catch (e) {
+          // Failed to parse inactive parks cache
+        }
+      }
+      
+      if (cachedSkatepark) {
+        // Use cached data immediately
+        setSkatepark(cachedSkatepark);
+        
+        // Helper function to calculate distance (Haversine formula)
+        const calcDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+          const R = 6371; // Earth's radius in km
+          const dLat = ((lat2 - lat1) * Math.PI) / 180;
+          const dLng = ((lng2 - lng1) * Math.PI) / 180;
+          const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos((lat1 * Math.PI) / 180) *
+              Math.cos((lat2 * Math.PI) / 180) *
+              Math.sin(dLng / 2) *
+              Math.sin(dLng / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return R * c;
+        };
+        
+        // Calculate nearby parks from cache (sorted by distance, limit 4, excluding current)
+        // Extract current park coordinates - handle multiple formats
+        let currentCoords = { lat: 0, lng: 0 };
+        
+        if (cachedSkatepark.location) {
+          // Try GeoJSON format first: { coordinates: [lng, lat] }
+          if (cachedSkatepark.location.coordinates && Array.isArray(cachedSkatepark.location.coordinates)) {
+            const coords = cachedSkatepark.location.coordinates;
+            if (coords.length >= 2) {
+              currentCoords = { lat: coords[1], lng: coords[0] };
+            }
+          }
+          // Try { lat, lng } format
+          else if ('lat' in cachedSkatepark.location && 'lng' in cachedSkatepark.location) {
+            currentCoords = {
+              lat: (cachedSkatepark.location as any).lat,
+              lng: (cachedSkatepark.location as any).lng
+            };
+          }
+        }
+        
+        // Only proceed if current park has valid coordinates
+        if (currentCoords.lat !== 0 && currentCoords.lng !== 0) {
+          // Get inactive parks from cache and merge with active parks
+          let allCachedParks = [...cachedSkateparks];
+          try {
+            const inactiveCacheKey = 'skateparks_cache_inactive';
+            const inactiveCachedData = localStorage.getItem(inactiveCacheKey);
+            if (inactiveCachedData) {
+              const inactiveParks = JSON.parse(inactiveCachedData);
+              if (Array.isArray(inactiveParks)) {
+                // Merge inactive parks, avoiding duplicates by slug
+                const activeSlugs = new Set(cachedSkateparks.map((p: Skatepark) => p.slug));
+                const uniqueInactiveParks = inactiveParks.filter((p: Skatepark) => !activeSlugs.has(p.slug));
+                allCachedParks = [...cachedSkateparks, ...uniqueInactiveParks];
+              }
+            }
+          } catch (e) {
+            // Failed to merge inactive parks, continue with active parks only
+          }
+          
+          // Filter parks (now includes both active and inactive)
+          const filteredParks = allCachedParks.filter((park: Skatepark) => {
+            const hasValidSlug = park.slug !== slug;
+            const hasValidLocation = park.location && (
+              (park.location.coordinates && Array.isArray(park.location.coordinates) && park.location.coordinates.length >= 2) ||
+              (park.location && 'lat' in park.location && 'lng' in park.location)
+            );
+            
+            return hasValidSlug && hasValidLocation;
+          });
+          
+          const nearbyFromCache = filteredParks
+            .map((park: Skatepark) => {
+              // Extract coordinates - handle both formats
+              let parkCoords = { lat: 0, lng: 0 };
               
-              // Helper function to calculate distance (Haversine formula)
-              const calcDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-                const R = 6371; // Earth's radius in km
-                const dLat = ((lat2 - lat1) * Math.PI) / 180;
-                const dLng = ((lng2 - lng1) * Math.PI) / 180;
-                const a =
-                  Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos((lat1 * Math.PI) / 180) *
-                    Math.cos((lat2 * Math.PI) / 180) *
-                    Math.sin(dLng / 2) *
-                    Math.sin(dLng / 2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                return R * c;
-              };
-              
-              // Calculate nearby parks from cache (sorted by distance, limit 4, excluding current)
-              // Extract current park coordinates - handle multiple formats
-              let currentCoords = { lat: 0, lng: 0 };
-              
-              if (cachedSkatepark.location) {
+              if (park.location) {
                 // Try GeoJSON format first: { coordinates: [lng, lat] }
-                if (cachedSkatepark.location.coordinates && Array.isArray(cachedSkatepark.location.coordinates)) {
-                  const coords = cachedSkatepark.location.coordinates;
+                if (park.location.coordinates && Array.isArray(park.location.coordinates)) {
+                  const coords = park.location.coordinates;
                   if (coords.length >= 2) {
-                    currentCoords = { lat: coords[1], lng: coords[0] };
+                    parkCoords = { lat: coords[1], lng: coords[0] };
                   }
                 }
                 // Try { lat, lng } format
-                else if ('lat' in cachedSkatepark.location && 'lng' in cachedSkatepark.location) {
-                  currentCoords = {
-                    lat: (cachedSkatepark.location as any).lat,
-                    lng: (cachedSkatepark.location as any).lng
+                else if ('lat' in park.location && 'lng' in park.location) {
+                  parkCoords = {
+                    lat: (park.location as any).lat,
+                    lng: (park.location as any).lng
                   };
                 }
               }
               
-              // Only proceed if current park has valid coordinates
-              if (currentCoords.lat !== 0 && currentCoords.lng !== 0) {
-                // Filter to only show active parks (inactive parks are hidden from users)
-                const filteredParks = cachedSkateparks.filter((park: Skatepark) => {
-                  const hasValidSlug = park.slug !== slug;
-                  const hasValidLocation = park.location && (
-                    (park.location.coordinates && Array.isArray(park.location.coordinates) && park.location.coordinates.length >= 2) ||
-                    (park.location && 'lat' in park.location && 'lng' in park.location)
-                  );
-                  // Only show active parks - if status is undefined, treat as inactive for safety
-                  const isActive = park.status === 'active';
-                  
-                  return hasValidSlug && hasValidLocation && isActive;
-                });
-                
-                const nearbyFromCache = filteredParks
-                  .map((park: Skatepark) => {
-                    // Extract coordinates - handle both formats
-                    let parkCoords = { lat: 0, lng: 0 };
-                    
-                    if (park.location) {
-                      // Try GeoJSON format first: { coordinates: [lng, lat] }
-                      if (park.location.coordinates && Array.isArray(park.location.coordinates)) {
-                        const coords = park.location.coordinates;
-                        if (coords.length >= 2) {
-                          parkCoords = { lat: coords[1], lng: coords[0] };
-                        }
-                      }
-                      // Try { lat, lng } format
-                      else if ('lat' in park.location && 'lng' in park.location) {
-                        parkCoords = {
-                          lat: (park.location as any).lat,
-                          lng: (park.location as any).lng
-                        };
-                      }
-                    }
-                    
-                    // Skip parks with invalid coordinates
-                    if (parkCoords.lat === 0 && parkCoords.lng === 0) {
-                      return null;
-                    }
-                    
-                    const distance = calcDistance(
-                      currentCoords.lat,
-                      currentCoords.lng,
-                      parkCoords.lat,
-                      parkCoords.lng
-                    );
-                    
-                    return {
-                      _id: park._id,
-                      slug: park.slug,
-                      name: park.name,
-                      imageUrl: getValidImageUrl(park.images?.[0]?.url),
-                      area: park.area,
-                      rating: (park as any).rating || 0, // Use rating from cache if available
-                      totalReviews: (park as any).totalReviews || 0, // Use totalReviews from cache if available
-                      closingYear: (park as any).closingYear || null, // Include closingYear from cache
-                      location: {
-                        lat: parkCoords.lat,
-                        lng: parkCoords.lng,
-                      },
-                      distance,
-                    };
-                  })
-                  .filter((park): park is NonNullable<typeof park> => park !== null) // Remove null entries
-                  .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
-                  .slice(0, 4) // Get top 4 closest
-                  .map(({ distance, ...park }) => park); // Remove distance from final result
-                
-                setNearbyParks(nearbyFromCache);
-                setLoading(false);
-                
-                // Only fetch reviews (not cached)
-                await fetchReviews();
-                
-                return;
-              } else {
-                // Don't return - continue to fetch from API
-                // But still set the skatepark from cache for faster display
+              // Skip parks with invalid coordinates
+              if (parkCoords.lat === 0 && parkCoords.lng === 0) {
+                return null;
               }
-            }
-          }
-        } catch (e) {
-          // If cache is corrupted, continue to fetch fresh data
+              
+              const distance = calcDistance(
+                currentCoords.lat,
+                currentCoords.lng,
+                parkCoords.lat,
+                parkCoords.lng
+              );
+              
+              return {
+                _id: park._id,
+                slug: park.slug,
+                name: park.name,
+                imageUrl: getValidImageUrl(park.images?.[0]?.url),
+                area: park.area,
+                rating: (park as any).rating || 0, // Use rating from cache if available
+                totalReviews: (park as any).totalReviews || 0, // Use totalReviews from cache if available
+                closingYear: (park as any).closingYear || null, // Include closingYear from cache
+                location: {
+                  lat: parkCoords.lat,
+                  lng: parkCoords.lng,
+                },
+                distance,
+              };
+            })
+            .filter((park): park is NonNullable<typeof park> => park !== null) // Remove null entries
+            .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
+            .slice(0, 4) // Get top 4 closest
+            .map(({ distance, ...park }) => park); // Remove distance from final result
+          
+          setNearbyParks(nearbyFromCache);
+          setLoading(false);
+          
+          // Only fetch reviews (not cached)
+          await fetchReviews();
+          
+          return;
+        } else {
+          // Don't return - continue to fetch from API
+          // But still set the skatepark from cache for faster display
         }
       }
 
@@ -1042,21 +1080,41 @@ export default function SkateparkPage() {
       // Error fetching skatepark
       
       // Try to use cache as fallback even if version doesn't match
+      // Check both active and inactive parks cache
       const cacheKey = 'skateparks_cache';
       const cachedData = localStorage.getItem(cacheKey);
+      let fallbackSkatepark: Skatepark | null = null;
+      
       if (cachedData) {
         try {
           const allSkateparks = JSON.parse(cachedData);
           if (Array.isArray(allSkateparks)) {
-            const cachedSkatepark = allSkateparks.find((park: Skatepark) => park.slug === slug);
-            if (cachedSkatepark) {
-              setSkatepark(cachedSkatepark);
-              setNearbyParks([]); // Nearby parks not available from cache
+            fallbackSkatepark = allSkateparks.find((park: Skatepark) => park.slug === slug) || null;
+          }
+        } catch (e) {
+          // Failed to parse active parks cache
+        }
+      }
+      
+      // If not found in active parks, check inactive parks cache
+      if (!fallbackSkatepark) {
+        try {
+          const inactiveCacheKey = 'skateparks_cache_inactive';
+          const inactiveCachedData = localStorage.getItem(inactiveCacheKey);
+          if (inactiveCachedData) {
+            const inactiveParks = JSON.parse(inactiveCachedData);
+            if (Array.isArray(inactiveParks)) {
+              fallbackSkatepark = inactiveParks.find((park: Skatepark) => park.slug === slug) || null;
             }
           }
         } catch (e) {
-          // Failed to use cached data as fallback
+          // Failed to parse inactive parks cache
         }
+      }
+      
+      if (fallbackSkatepark) {
+        setSkatepark(fallbackSkatepark);
+        setNearbyParks([]); // Nearby parks not available from cache
       }
     } finally {
       setLoading(false);
@@ -1944,6 +2002,7 @@ export default function SkateparkPage() {
                         </div>
                       )}
                       <iframe
+
                         src={iframeSrc}
                         width="100%"
                         height="100%"
@@ -1952,7 +2011,7 @@ export default function SkateparkPage() {
                         loading="lazy"
                         referrerPolicy="no-referrer-when-downgrade"
                         title={`${parkName} ${tCommon('location')} ${tCommon('map')}`}
-                        className="w-full h-full"
+                        className="w-full h-full map"
                         onLoad={() => setIsMapLoading(false)}
                         onError={() => setIsMapLoading(false)}
                       />
