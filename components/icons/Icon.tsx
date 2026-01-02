@@ -464,7 +464,7 @@ export type IconName =
   | 'archive'
   | 'featured'
   | 'new'
-  | 'sparks'
+  | 'sparks' | 'sparksBold'
   | 'searchQuest'
   | 'bulkImage'
   | 'imageBold'

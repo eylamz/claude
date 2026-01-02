@@ -282,7 +282,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         {/* === HEADER === */}
         <div className="flex-none border-b border-border dark:border-border-dark bg-header dark:bg-header-dark transition-colors duration-200">
           {/* Header */}
-          <div className="flex items-start justify-between pb-2 mx-2 pt-6 flex-shrink-0">
+          <div className="flex flex-row-reverse items-start justify-between pb-2 mx-2 pt-6 flex-shrink-0">
             <div className="flex flex-wrap items-center gap-1 top-0">
               <button
                 onClick={() => {
@@ -418,9 +418,9 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           </div>
 
           {/* Loading Bar Animation - shown when searching */}
-          {searchLoading && (
-            <div className="w-full h-[1px] -mt-1 bg-sidebar-hover dark:bg-sidebar-hover-dark overflow-hidden">
-              <div className="h-full bg-sidebar-text-brand dark:bg-sidebar-text-brand-dark animate-loading-bar" />
+          {!searchLoading && (
+            <div className="w-full h-[1px] -mt-1 bg-sidebar-hover dark:bg-sidebar-hover-dark overflow-hidden relative">
+              <div className="bg-sidebar-text-brand/30 dark:bg-sidebar-text-brand-dark/30 loading-bar w-full h-full" />
             </div>
           )}
         </div>

@@ -166,20 +166,8 @@ const GuideCard = memo(({
   const [isClicked, setIsClicked] = useState(false);
   const [showNameSection, setShowNameSection] = useState(false);
   const [showGuideName, setShowGuideName] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
-
-  // Detect touch device
-  useEffect(() => {
-    const checkTouchDevice = () => {
-      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      setIsTouchDevice(isTouch);
-    };
-    checkTouchDevice();
-    window.addEventListener('resize', checkTouchDevice);
-    return () => window.removeEventListener('resize', checkTouchDevice);
-  }, []);
 
   // Show name section after 0.3s delay when card appears
   useEffect(() => {
@@ -251,34 +239,10 @@ const GuideCard = memo(({
           photoUrl={guide.coverImage || ''}
           guideTitle={guide.title}
         />
-
-        {/* Hover Overlay - Only on non-touch devices */}
-        {!isTouchDevice && (
-          <div className={`absolute -bottom-1 z-20 pointer-events-none ${
-            locale === 'he' ? 'right-0' : 'left-0'
-          }`}>
-            {/* Guide Name & Description Overlay */}
-            <div className={`relative border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark px-3 pt-2 pb-3 shadow-[-2px_1px_8px_3px_rgba(0,0,0,0.2)] max-w-[90%] ${
-              locale === 'he'
-                ? 'rounded-tl-lg opacity-0 group-hover:opacity-100 translate-x-[36%] translate-y-[22%] rotate-[-1deg] group-hover:translate-x-[3%] group-hover:translate-y-[3%] group-hover:rotate-[2deg]'
-                : 'rounded-tr-xl opacity-0 group-hover:opacity-100 translate-x-[-6%] translate-y-[12%] rotate-[1deg] group-hover:translate-x-[-3%] group-hover:translate-y-[3%] group-hover:rotate-[-2deg]'
-            } transition-[opacity,transform] duration-[200ms,300ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)]`}>
-              <h3 className="text-sm font-semibold text-text dark:text-text-dark mb-1">
-                {guide.title}
-              </h3>
-              {description && (
-                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
-                  {description}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Name Section - Only on touch devices */}
-      {isTouchDevice && (
-        <div 
+      {/* Name Section */}
+      <div 
           className="px-3 space-y-1 overflow-hidden transition-all duration-300 ease-out"
           style={{
             maxHeight: showNameSection ? '200px' : '0',
@@ -320,7 +284,6 @@ const GuideCard = memo(({
             )}
           </div>
         </div>
-      )}
     </div>
   );
 });

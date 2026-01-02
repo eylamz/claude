@@ -254,12 +254,12 @@ export const colors = {
     light: 'hsl(354, 85%, 45%)',
     dark: 'hsl(354, 89%, 59%)',
     bg: {
-      light: 'hsl(354, 85%, 92%)',
-      dark: 'hsl(0, 100%, 8%)',
+      light: 'hsl(354, 85%, 50%)',
+      dark: 'hsl(354, 89%, 59%)',
     },
     border: {
-      light: 'hsl(0, 59%, 52%)',
-      dark: 'hsl(1, 69%, 14%)',
+      light: '#f89e9e67',
+      dark: '#c54c4c4d',
     }
   },
   warning: {
@@ -275,17 +275,17 @@ export const colors = {
     }
   },
   info: {
-    light: 'hsl(199, 85%, 42%)',
-    dark: 'hsl(199, 95%, 60%)',
-    bg: {
-      light: 'hsl(185, 93%, 21%)',
-      dark: 'hsl(185, 93%, 21%)',
-    },
-    border: {
-      light: 'hsl(205, 90%, 40%)',
-      dark: 'hsl(205, 85%, 70%)',
-    }
-  }
+    light: 'hsl(204, 64%, 24%)', 
+    dark: 'hsl(199, 77%, 73%)', 
+      bg: { 
+        light: 'hsl(212, 83%, 93%)', 
+        dark: 'hsl(199, 61%, 20%)', 
+        }, 
+      border: { 
+        light: 'hsl(210,77%,73%)', 
+        dark: 'hsl(199, 63%, 27%)', 
+      } 
+   }
 } as const;
 
 

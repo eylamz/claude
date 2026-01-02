@@ -576,7 +576,7 @@ const SkateparkThumbnail = memo(({
           ref={imgRef}
           src={optimizedUrl}
           alt={parkName}
-          className={`w-full h-full rounded-xl object-cover transition-all duration-200 select-none ${
+          className={`w-full h-full  object-cover transition-all duration-200 select-none ${
             alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
           } ${
             isLoaded ? 'opacity-100' : 'opacity-0'
@@ -601,11 +601,13 @@ SkateparkThumbnail.displayName = 'SkateparkThumbnail';
 const ParkAmenities = memo(({ 
   amenities, 
   locale,
-  alwaysVisible = false
+  alwaysVisible = false,
+  variant = 'overlay' // 'overlay' | 'inline'
 }: { 
   amenities: Skatepark['amenities'], 
   locale: string,
-  alwaysVisible?: boolean
+  alwaysVisible?: boolean,
+  variant?: 'overlay' | 'inline'
 }) => {
   const amenityEntries = Object.entries(amenities)
     .filter(([key, value]) => value && AMENITY_ICON_MAP[key])
@@ -613,6 +615,28 @@ const ParkAmenities = memo(({
 
   if (amenityEntries.length === 0) return null;
 
+  if (variant === 'inline') {
+    // Inline variant: no background, horizontal layout
+    return (
+      <div className="flex flex-wrap gap-2 items-center">
+        {amenityEntries.map(([key]) => {
+          const iconName = AMENITY_ICON_MAP[key];
+          if (!iconName) return null;
+          return (
+            <div
+              key={key}
+              className="flex items-center"
+              title={getAmenityLabel(key, locale)}
+            >
+              <Icon name={iconName as any} className="w-4 h-4 text-text dark:text-text-dark" />
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Overlay variant: with background (default)
   return (
     <div className={`absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 ${alwaysVisible ? 'opacity-100' : 'md:opacity-0 md:group-hover:opacity-100'}`}>
       {amenityEntries.map(([key]) => {
@@ -764,7 +788,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
     <div
       ref={cardRef}
       onClick={handleCardClick}
-      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02]  bg-card dark:bg-card-dark rounded-xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02] border border-card dark:border-card-dark bg-card dark:bg-card-dark rounded-2xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
       style={{ animationDelay: `${animationDelay}ms` }}
       aria-label={name}
     >
@@ -782,7 +806,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`}>
                 {park.openingYear}
               </span>
-              <Icon name="sparksBold" className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name='sparksBold' className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -890,11 +914,11 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
       {/* Name Section - Only on touch devices */}
       {isTouchDevice && (
         <div 
-          className="px-3 space-y-1 overflow-hidden transition-all duration-300 ease-out"
+          className="px-2 space-y-1 overflow-hidden transition-all duration-300 ease-out"
           style={{
             maxHeight: showNameSection ? '200px' : '0',
-            paddingTop: showNameSection ? '0.5rem' : '0',
-            paddingBottom: showNameSection ? '0.5rem' : '0',
+            paddingTop: showNameSection ? '0.25rem' : '0',
+            paddingBottom: showNameSection ? '0.3rem' : '0',
           }}
 
         >
@@ -965,6 +989,7 @@ export default function SkateparksPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [wasDragging, setWasDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isTouchDeviceMap, setIsTouchDeviceMap] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const prevSelectedAmenitiesRef = useRef<string[]>([]);
@@ -1454,6 +1479,17 @@ export default function SkateparksPage() {
     fetchAllSkateparks();
   }, [fetchAllSkateparks]);
 
+  // Detect touch device for map view
+  useEffect(() => {
+    const checkTouchDevice = () => {
+      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsTouchDeviceMap(isTouch);
+    };
+    checkTouchDevice();
+    window.addEventListener('resize', checkTouchDevice);
+    return () => window.removeEventListener('resize', checkTouchDevice);
+  }, []);
+
   // Reset card position when selected park changes
   useEffect(() => {
     if (selectedPark && mapContainerRef.current) {
@@ -1840,7 +1876,7 @@ export default function SkateparksPage() {
             </div>
 
             {/* Selected Park Detail Panel - Bottom */}
-            {selectedPark && !(userLocation && sortBy === 'nearest') && (() => {
+            {selectedPark && (() => {
               const name = typeof selectedPark.name === 'string' 
                 ? selectedPark.name 
                 : (locale === 'he' ? selectedPark.name.he : selectedPark.name.en) || selectedPark.name.en || selectedPark.name.he;
@@ -1875,7 +1911,7 @@ export default function SkateparksPage() {
               return (
                 <div
                   ref={cardRef}
-                  className="absolute w-[calc(100%-2rem)] max-w-[20rem] z-40 bg-card dark:bg-card-dark rounded-3xl border-2 border-card dark:border-card-dark overflow-hidden"
+                  className="absolute w-1/2 md:w-[calc(100%-2rem)] max-w-[20rem] z-40 bg-card dark:bg-card-dark rounded-3xl border-2 border-card dark:border-card-dark overflow-hidden"
                   style={{
                     left: `${cardPosition.x}px`,
                     top: `${cardPosition.y}px`,
@@ -1907,7 +1943,8 @@ export default function SkateparksPage() {
                         }
                       }}
                     >
-                      {selectedPark.amenities && Object.values(selectedPark.amenities).some(Boolean) && (
+                      {/* Amenities - Top overlay for non-touch devices */}
+                      {!isTouchDeviceMap && selectedPark.amenities && Object.values(selectedPark.amenities).some(Boolean) && (
                         <ParkAmenities amenities={selectedPark.amenities} locale={locale} alwaysVisible={true} />
                       )}
 
@@ -1969,30 +2006,37 @@ export default function SkateparksPage() {
                           parkName={name}
                           alwaysSaturated={true}
                         />
+
+                        {/* Park Name Overlay - Touch devices: always visible, positioned like non-touch overlay */}
+                        {isTouchDeviceMap && (
+                          <div className={`absolute -bottom-1 z-20 pointer-events-none ${
+                            locale === 'he' ? 'right-0' : 'left-0'
+                          }`}>
+                            <div className={`relative border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark px-3 pt-2 pb-3 shadow-[-2px_1px_8px_3px_rgba(0,0,0,0.2)] ${
+                              locale === 'he'
+                                ? 'rounded-tl-lg translate-x-[3%] translate-y-[3%] rotate-[2deg]'
+                                : 'rounded-tr-xl translate-x-[-3%] translate-y-[3%] rotate-[-2deg]'
+                            }`}>
+                              <h3 className="text-sm font-semibold text-text dark:text-text-dark">
+                                {name}
+                              </h3>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
+                      {/* Amenities Section - Touch devices: where park name used to be */}
                       <div className="px-4 py-3 space-y-1">
-                        <h3 className="text-sm font-semibold truncate">
-                          {name}
-                        </h3>
+                        {isTouchDeviceMap && selectedPark.amenities && Object.values(selectedPark.amenities).some(Boolean) && (
+                          <ParkAmenities amenities={selectedPark.amenities} locale={locale} alwaysVisible={true} variant="inline" />
+                        )}
+                        {!isTouchDeviceMap && (
+                          <h3 className="text-sm font-semibold truncate">
+                            {name}
+                          </h3>
+                        )}
                       </div>
                     </Link>
-
-                    {/* Drag Handle Button - Next to Location Info */}
-                    <div className="absolute bottom-2 end-2 z-30 flex items-center gap-2">
-                      <button
-                        onMouseDown={handleDragHandleMouseDown}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        className="flex items-center justify-center p-1.5 rounded-ful transition-colors cursor-move"
-                        aria-label={tr('Drag to move card', 'גרור כדי להזיז את הכרטיס')}
-                        title={tr('Drag to move card', 'גרור כדי להזיז את הכרטיס')}
-                      >
-                        <Icon name="dragBold" className="w-5 h-5 overflow-visible navMdShadow"  />
-                      </button>
-                    </div>
                   </div>
                 </div>
               );

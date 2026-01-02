@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex border-transparent items-center justify-center rounded-custom text-xs sm:text-sm font-medium outlineTab disabled:pointer-events-none disabled:opacity-50 transition-all duration-200",
+  "inline-flex border border-transparent items-center justify-center rounded-custom text-xs sm:text-sm font-medium outlineTab disabled:pointer-events-none disabled:opacity-50 transition-all duration-200",
   {
     variants: {
       variant: {
@@ -13,12 +13,12 @@ const buttonVariants = cva(
         primaryBtn: "bg-header-dark text-header-text dark:text-header-text-dark hover:bg-brand-main/80 dark:bg-brand-main dark:hover:bg-brand-main/80",
         primary: "bg-brand-main text-white dark:text-text hover:bg-brand-main/80 dark:bg-brand-dark dark:hover:bg-brand-dark/80",
         success: "rounded-xl bg-success/10 dark:bg-success-dark/15 text-success dark:text-success-dark   hover:bg-success/15 dark:hover:bg-success-dark/20",
-        brand: "rounded-xl bg-brand-main/25 dark:bg-brand-dark/15 text-brand-text dark:text-brand-main   hover:bg-brand-main/35 dark:hover:bg-brand-dark/20",
+        brand: "border-brand-main/40 dark:border-brand-dark/20 bg-brand-main/25 dark:bg-brand-dark/15 text-brand-text dark:text-brand-main   hover:bg-brand-main/35 dark:hover:bg-brand-dark/20",
         brandOutline: "border text-[#16641a] dark:text-[#85ef8a] bg-[#defce0] dark:bg-[#1452174d] border-[#85ef8a] dark:border-[#1452174d]",
         header: "rounded-xl bg-header-dark/15 dark:bg-header-dark/15 text-header-text dark:text-header-main   hover:bg-header-main/35 dark:hover:bg-header-dark/20",
         save: "rounded-custom bg-brand-main dark:bg-brand-main text-white dark:text-success-dark   hover:bg-success/15 dark:hover:bg-success-dark/15",
         warning: "bg-warning-bg/20 text-warning dark:bg-warning-bg-dark/10 dark:text-warning",
-        info: "bg-info-bg/10 dark:bg-info-bg-dark/10 text-info dark:text-info-dark",
+        info: "bg-info-bg dark:bg-info-bg-dark text-info dark:text-info-dark border-info-border dark:border-info-border-dark",
         destructive: "bg-destructive/80 text-destructive-foreground hover:bg-destructive/70",
         outline: "bord bg-white/5 hover:bg-black/5 hover:text-text-hover   dark:bg-black/10 dark:hover:bg-white/5 dark:hover:text-text-hover-dark",
         none: "text-text/80 dark:text-text-dark/80 hover:bg-black/5 hover:text-text-hover dark:hover:bg-white/5 dark:hover:text-text-hover-dark",
@@ -32,7 +32,8 @@ const buttonVariants = cva(
         popover: "bg-trasnsparent hover:bg-black/5 hover:text-text-hover   dark:bg-black/10 dark:hover:bg-white/10 dark:hover:text-text-hover-dark",
         ghost: "bg-black/[2.5%] hover:bg-black/5 hover:text-text-hover   dark:bg-btn-secondary-dark dark:hover:bg-white/15 dark:hover:text-text-hover-dark",
         link: "text-primary underline-offset-4 hover:underline",
-        error: "rounded-xl bg-error/10 dark:bg-error-dark/15 text-error dark:text-error-dark   hover:bg-error/15 dark:hover:bg-error-dark/20",
+        error: "bg-error-bg dark:bg-error-bg-dark text-white dark:text-black hover:bg-error-dark/80 dark:hover:bg-error-dark/80",
+        purple: "bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d]"
       },
       size: {
         default: "h-9 sm:h-10 px-3 sm:px-4 py-1.5 sm:py-2",

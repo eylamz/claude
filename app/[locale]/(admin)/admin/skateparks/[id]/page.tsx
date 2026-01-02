@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Skeleton } from '@/components/ui';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ImageUploader } from '@/components/admin/image-uploader';
 
 interface Skatepark {
@@ -76,8 +77,8 @@ interface Skatepark {
   totalReviews: number;
   seoMetadata?: {
     keywords?: {
-      en?: string;
-      he?: string;
+      en?: string | string[];
+      he?: string | string[];
     };
     description?: {
       en?: string;
@@ -103,6 +104,8 @@ export default function SkateparkDetailPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showImageEditor, setShowImageEditor] = useState(false);
+  const [keywordInputEn, setKeywordInputEn] = useState('');
+  const [keywordInputHe, setKeywordInputHe] = useState('');
 
   const fetchSkatepark = useCallback(async () => {
     if (!id) return;
@@ -207,10 +210,28 @@ export default function SkateparkDetailPage() {
             }
             if (!skateparkData.seoMetadata) {
               skateparkData.seoMetadata = {
-                keywords: { en: '', he: '' },
+                keywords: { en: [], he: [] },
                 description: { en: '', he: '' },
                 ogImage: '',
               };
+            } else {
+              // Convert string keywords to arrays if needed
+              if (skateparkData.seoMetadata.keywords) {
+                if (skateparkData.seoMetadata.keywords.en && typeof skateparkData.seoMetadata.keywords.en === 'string') {
+                  skateparkData.seoMetadata.keywords.en = skateparkData.seoMetadata.keywords.en.trim()
+                    ? skateparkData.seoMetadata.keywords.en.split(/,|×\s+/).map((k: string) => k.trim()).filter((k: string) => k)
+                    : [];
+                } else if (!skateparkData.seoMetadata.keywords.en) {
+                  skateparkData.seoMetadata.keywords.en = [];
+                }
+                if (skateparkData.seoMetadata.keywords.he && typeof skateparkData.seoMetadata.keywords.he === 'string') {
+                  skateparkData.seoMetadata.keywords.he = skateparkData.seoMetadata.keywords.he.trim()
+                    ? skateparkData.seoMetadata.keywords.he.split(/,|×\s+/).map((k: string) => k.trim()).filter((k: string) => k)
+                    : [];
+                } else if (!skateparkData.seoMetadata.keywords.he) {
+                  skateparkData.seoMetadata.keywords.he = [];
+                }
+              }
             }
             if (!skateparkData.qualityRating) {
               skateparkData.qualityRating = {
@@ -309,10 +330,28 @@ export default function SkateparkDetailPage() {
       // Initialize SEO metadata and quality rating if missing
       if (!skateparkData.seoMetadata) {
         skateparkData.seoMetadata = {
-          keywords: { en: '', he: '' },
+          keywords: { en: [], he: [] },
           description: { en: '', he: '' },
           ogImage: '',
         };
+      } else {
+        // Convert string keywords to arrays if needed
+        if (skateparkData.seoMetadata.keywords) {
+          if (skateparkData.seoMetadata.keywords.en && typeof skateparkData.seoMetadata.keywords.en === 'string') {
+            skateparkData.seoMetadata.keywords.en = skateparkData.seoMetadata.keywords.en.trim()
+              ? skateparkData.seoMetadata.keywords.en.split(/,|×\s+/).map((k: string) => k.trim()).filter((k: string) => k)
+              : [];
+          } else if (!skateparkData.seoMetadata.keywords.en) {
+            skateparkData.seoMetadata.keywords.en = [];
+          }
+          if (skateparkData.seoMetadata.keywords.he && typeof skateparkData.seoMetadata.keywords.he === 'string') {
+            skateparkData.seoMetadata.keywords.he = skateparkData.seoMetadata.keywords.he.trim()
+              ? skateparkData.seoMetadata.keywords.he.split(/,|×\s+/).map((k: string) => k.trim()).filter((k: string) => k)
+              : [];
+          } else if (!skateparkData.seoMetadata.keywords.he) {
+            skateparkData.seoMetadata.keywords.he = [];
+          }
+        }
       }
       if (!skateparkData.qualityRating) {
         skateparkData.qualityRating = {
@@ -342,6 +381,81 @@ export default function SkateparkDetailPage() {
   useEffect(() => {
     fetchSkatepark();
   }, [fetchSkatepark]);
+
+  // Helper function to split keywords by comma or "× "
+  const splitKeywords = (input: string): string[] => {
+    if (!input || !input.trim()) return [];
+    // Split by both comma and "× " (multiplication symbol + space)
+    return input
+      .split(/,|×\s+/)
+      .map(k => k.trim())
+      .filter(k => k);
+  };
+
+  // Helper function to get keywords as array
+  const getKeywordsArray = (keywords: string | string[] | undefined): string[] => {
+    if (!keywords) return [];
+    if (Array.isArray(keywords)) return keywords;
+    if (typeof keywords === 'string' && keywords.trim()) {
+      return splitKeywords(keywords);
+    }
+    return [];
+  };
+
+  // Helper function to add keywords
+  const addKeywords = (lang: 'en' | 'he', inputValue: string) => {
+    if (!skatepark) return;
+    
+    const trimmedValue = inputValue.trim();
+    if (!trimmedValue) return;
+
+    // Split by comma or "× " and filter empty strings
+    const newKeywords = splitKeywords(trimmedValue);
+
+    if (newKeywords.length === 0) return;
+
+    const currentKeywords = getKeywordsArray(skatepark.seoMetadata?.keywords?.[lang]);
+    const updatedKeywords = [...currentKeywords, ...newKeywords].filter(
+      (keyword, index, self) => self.indexOf(keyword) === index // Remove duplicates
+    );
+
+    setSkatepark({
+      ...skatepark,
+      seoMetadata: {
+        ...skatepark.seoMetadata,
+        keywords: {
+          ...skatepark.seoMetadata?.keywords,
+          [lang]: updatedKeywords,
+        },
+      },
+    });
+
+    // Clear input
+    if (lang === 'en') {
+      setKeywordInputEn('');
+    } else {
+      setKeywordInputHe('');
+    }
+  };
+
+  // Helper function to remove a keyword
+  const removeKeyword = (lang: 'en' | 'he', index: number) => {
+    if (!skatepark) return;
+    
+    const currentKeywords = getKeywordsArray(skatepark.seoMetadata?.keywords?.[lang]);
+    const updatedKeywords = currentKeywords.filter((_, i) => i !== index);
+
+    setSkatepark({
+      ...skatepark,
+      seoMetadata: {
+        ...skatepark.seoMetadata,
+        keywords: {
+          ...skatepark.seoMetadata?.keywords,
+          [lang]: updatedKeywords.length > 0 ? updatedKeywords : undefined,
+        },
+      },
+    });
+  };
 
   const handleSave = async () => {
     if (!skatepark) return;
@@ -410,7 +524,17 @@ export default function SkateparkDetailPage() {
         status: skatepark.status,
         mediaLinks: skatepark.mediaLinks,
         is24Hours: skatepark.lightingHours?.is24Hours || false,
-        seoMetadata: skatepark.seoMetadata,
+        seoMetadata: skatepark.seoMetadata ? {
+          ...skatepark.seoMetadata,
+          keywords: {
+            en: Array.isArray(skatepark.seoMetadata.keywords?.en)
+              ? (skatepark.seoMetadata.keywords.en.length > 0 ? skatepark.seoMetadata.keywords.en.join(', ') : '')
+              : (skatepark.seoMetadata.keywords?.en || ''),
+            he: Array.isArray(skatepark.seoMetadata.keywords?.he)
+              ? (skatepark.seoMetadata.keywords.he.length > 0 ? skatepark.seoMetadata.keywords.he.join(', ') : '')
+              : (skatepark.seoMetadata.keywords?.he || ''),
+          },
+        } : undefined,
         qualityRating: skatepark.qualityRating,
       };
       
@@ -513,7 +637,7 @@ export default function SkateparkDetailPage() {
   if (!skatepark) return null;
 
   return (
-    <div className="pt-16 space-y-6 min-h-screen bg-background dark:bg-background-dark">
+    <div className="pt-16 space-y-6 min-h-screen bg-background dark:bg-background-dark max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -526,9 +650,9 @@ export default function SkateparkDetailPage() {
         </div>
         <div className="flex items-center space-x-3">
           <Link href={`/${locale}/admin/skateparks`}>
-            <Button variant="secondary">Back</Button>
+            <Button variant="ghost">Back</Button>
           </Link>
-          <Button variant="destructive" onClick={handleDelete} disabled={saving}>
+          <Button variant="error" onClick={handleDelete} disabled={saving}>
             Delete
           </Button>
           <Button variant="primary" onClick={handleSave} disabled={saving}>
@@ -601,17 +725,14 @@ export default function SkateparkDetailPage() {
                 { value: 'south', label: 'South' },
               ]}
             />
-            <div className="flex items-center space-x-2 pt-6">
-              <input
-                type="checkbox"
+            <div className="pt-6">
+              <Checkbox
+              variant="brand"
                 id="isFeatured"
                 checked={skatepark.isFeatured}
-                onChange={(e) => setSkatepark({ ...skatepark, isFeatured: e.target.checked })}
-                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                onChange={(checked) => setSkatepark({ ...skatepark, isFeatured: checked })}
+                label="Featured"
               />
-              <label htmlFor="isFeatured" className="text-sm font-medium text-text dark:text-text-dark">
-                Featured
-              </label>
             </div>
           </div>
         </CardContent>
@@ -623,7 +744,7 @@ export default function SkateparkDetailPage() {
           <div className="flex items-center justify-between">
             <CardTitle>Images</CardTitle>
             <Button
-              variant="secondary"
+              variant="ghost"
               onClick={() => setShowImageEditor(!showImageEditor)}
             >
               {showImageEditor ? 'Hide Image Editor' : 'Edit Images'}
@@ -867,23 +988,20 @@ export default function SkateparkDetailPage() {
           <CardTitle>Operating Hours</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center space-x-2 mb-4">
-            <input
-              type="checkbox"
+          <div className="mb-4">
+            <Checkbox
+            variant="brand"
               id="is24Hours"
               checked={skatepark.lightingHours?.is24Hours || false}
-              onChange={(e) => setSkatepark({ 
+              onChange={(checked) => setSkatepark({ 
                 ...skatepark, 
                 lightingHours: { 
                   endTime: skatepark.lightingHours?.endTime || '',
-                  is24Hours: e.target.checked,
+                  is24Hours: checked,
                 } 
               })}
-              className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+              label="Open 24 Hours"
             />
-            <label htmlFor="is24Hours" className="text-sm font-medium text-text dark:text-text-dark">
-              Open 24 Hours
-            </label>
           </div>
           {skatepark.lightingHours?.is24Hours ? (
             <div className="pt-2">
@@ -899,6 +1017,7 @@ export default function SkateparkDetailPage() {
                   } 
                 })}
                 placeholder="22:00"
+                className="max-w-[200px]"
               />
               <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-2">
                 When 24 hours is enabled, enter the time when lighting ends.
@@ -924,26 +1043,24 @@ export default function SkateparkDetailPage() {
                   };
                   return (
                     <div key={day.key} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-text dark:text-text-dark">
-                          {day.label}
-                        </label>
-                        <input
-                          type="checkbox"
+                      <div className="flex items-center justify-end">
+                        <Checkbox
+                        variant="brand"
+                          id={`${day.key}-isOpen`}
                           checked={dayHours.isOpen}
-                          onChange={(e) => {
+                          onChange={(checked) => {
                             const newHours = {
                               ...skatepark.operatingHours,
                               [day.key]: {
                                 ...dayHours,
-                                isOpen: e.target.checked,
-                                openingTime: e.target.checked ? dayHours.openingTime : '',
-                                closingTime: e.target.checked ? dayHours.closingTime : '',
+                                isOpen: checked,
+                                openingTime: checked ? dayHours.openingTime : '',
+                                closingTime: checked ? dayHours.closingTime : '',
                               },
                             };
                             setSkatepark({ ...skatepark, operatingHours: newHours });
                           }}
-                          className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                          label={day.label}
                         />
                       </div>
                       {dayHours.isOpen && (
@@ -1030,29 +1147,22 @@ export default function SkateparkDetailPage() {
               { key: 'noWax', label: 'No Wax Policy' },
               { key: 'nearbyRestaurants', label: 'Nearby Restaurants' },
             ].map((amenity) => (
-              <div key={amenity.key} className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id={amenity.key}
-                  checked={skatepark.amenities[amenity.key as keyof typeof skatepark.amenities] || false}
-                  onChange={(e) => {
-                    setSkatepark({
-                      ...skatepark,
-                      amenities: {
-                        ...skatepark.amenities,
-                        [amenity.key]: e.target.checked,
-                      },
-                    });
-                  }}
-                  className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                />
-                <label
-                  htmlFor={amenity.key}
-                  className="text-sm font-medium text-text dark:text-text-dark cursor-pointer"
-                >
-                  {amenity.label}
-                </label>
-              </div>
+              <Checkbox
+              variant="brand"
+                key={amenity.key}
+                id={amenity.key}
+                checked={skatepark.amenities[amenity.key as keyof typeof skatepark.amenities] || false}
+                onChange={(checked) => {
+                  setSkatepark({
+                    ...skatepark,
+                    amenities: {
+                      ...skatepark.amenities,
+                      [amenity.key]: checked,
+                    },
+                  });
+                }}
+                label={amenity.label}
+              />
             ))}
           </div>
         </CardContent>
@@ -1174,7 +1284,8 @@ export default function SkateparkDetailPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* English Notes */}
-          <div className="space-y-3">
+          <div className="w-full flex flex-col md:flex-row gap-2">
+            <div className="space-y-3 w-full">
             <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
               Notes (English)
             </label>
@@ -1190,7 +1301,7 @@ export default function SkateparkDetailPage() {
                   placeholder={`Note ${index + 1}`}
                 />
                 <Button
-                  variant="destructive"
+                  variant="error"
                   size="sm"
                   onClick={() => {
                     const newNotes = [...(skatepark.notes.en || [])];
@@ -1215,7 +1326,7 @@ export default function SkateparkDetailPage() {
           </div>
 
           {/* Hebrew Notes */}
-          <div className="space-y-3">
+          <div className="space-y-3 w-full">
             <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
               Notes (Hebrew)
             </label>
@@ -1231,7 +1342,7 @@ export default function SkateparkDetailPage() {
                   placeholder={`הערה ${index + 1}`}
                 />
                 <Button
-                  variant="destructive"
+                  variant="error"
                   size="sm"
                   onClick={() => {
                     const newNotes = [...(skatepark.notes.he || [])];
@@ -1254,6 +1365,8 @@ export default function SkateparkDetailPage() {
               + Add Hebrew Note
             </Button>
           </div>
+          </div>
+
         </CardContent>
       </Card>
 
@@ -1266,23 +1379,40 @@ export default function SkateparkDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-text dark:text-text-dark">English</h3>
-              <Input
-                label="Keywords (English)"
-                value={skatepark.seoMetadata?.keywords?.en || ''}
-                onChange={(e) =>
-                  setSkatepark({
-                    ...skatepark,
-                    seoMetadata: {
-                      ...skatepark.seoMetadata,
-                      keywords: {
-                        ...skatepark.seoMetadata?.keywords,
-                        en: e.target.value,
-                      },
-                    },
-                  })
-                }
-                placeholder="skatepark, skateboarding, ramps, rails"
-              />
+              <div className="space-y-2">
+                <Input
+                  label="Keywords (English)"
+                  value={keywordInputEn}
+                  onChange={(e) => setKeywordInputEn(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addKeywords('en', keywordInputEn);
+                    }
+                  }}
+                  placeholder="Type keyword and press Enter (use comma to add multiple)"
+                />
+                {getKeywordsArray(skatepark.seoMetadata?.keywords?.en).length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {getKeywordsArray(skatepark.seoMetadata?.keywords?.en).map((keyword, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1.5 uppercase px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] transition-colors"
+                      >
+                        {keyword}
+                        <button
+                          type="button"
+                          onClick={() => removeKeyword('en', index)}
+                          className="hover:text-blue-600 dark:hover:text-blue-300 focus:outline-none"
+                          aria-label={`Remove ${keyword}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
               <Input
                 label="Description (English)"
                 value={skatepark.seoMetadata?.description?.en || ''}
@@ -1303,23 +1433,40 @@ export default function SkateparkDetailPage() {
             </div>
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-text dark:text-text-dark">Hebrew</h3>
-              <Input
-                label="Keywords (Hebrew)"
-                value={skatepark.seoMetadata?.keywords?.he || ''}
-                onChange={(e) =>
-                  setSkatepark({
-                    ...skatepark,
-                    seoMetadata: {
-                      ...skatepark.seoMetadata,
-                      keywords: {
-                        ...skatepark.seoMetadata?.keywords,
-                        he: e.target.value,
-                      },
-                    },
-                  })
-                }
-                placeholder="סקייטפארק, סקייטבורדינג"
-              />
+              <div className="space-y-2">
+                <Input
+                  label="Keywords (Hebrew)"
+                  value={keywordInputHe}
+                  onChange={(e) => setKeywordInputHe(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addKeywords('he', keywordInputHe);
+                    }
+                  }}
+                  placeholder="הקלד מילת מפתח ולחץ Enter (השתמש בפסיק להוספת מספר)"
+                />
+                {getKeywordsArray(skatepark.seoMetadata?.keywords?.he).length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {getKeywordsArray(skatepark.seoMetadata?.keywords?.he).map((keyword, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm"
+                      >
+                        {keyword}
+                        <button
+                          type="button"
+                          onClick={() => removeKeyword('he', index)}
+                          className="hover:text-blue-600 dark:hover:text-blue-300 focus:outline-none"
+                          aria-label={`Remove ${keyword}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
               <Input
                 label="Description (Hebrew)"
                 value={skatepark.seoMetadata?.description?.he || ''}

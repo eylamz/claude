@@ -74,7 +74,7 @@ const Card = React.forwardRef(
 
         className={cn(
 
-          "rounded-3xl p-2 md:p-6 overflow-hidden text-card-foreground shadow-container",
+          "rounded-3xl p-2 md:p-6 overflow-hidden text-card-foreground",
 
           className
 

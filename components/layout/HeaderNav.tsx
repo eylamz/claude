@@ -263,7 +263,10 @@ export default function HeaderNav() {
                       {tAdmin('trainers')}
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" soon>
+                  <TooltipContent 
+                      soon 
+                      side="bottom" 
+                      className='font-semibold'>
                     {locale === 'he' ? 'בשלבי סיום' : 'Almost Done'}
                   </TooltipContent>
                 </Tooltip>
@@ -325,7 +328,10 @@ export default function HeaderNav() {
                       {tShop('title')}
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" soon>
+                  <TooltipContent 
+                    soon 
+                    side="bottom"
+                    className='font-semibold'>
                     {locale === 'he' ? 'מסדרים מדפים' : 'Restocking Items'}
                   </TooltipContent>
                 </Tooltip>

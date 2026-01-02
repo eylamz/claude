@@ -399,7 +399,7 @@ function SkateparkDetailMap({
 /**
  * Image Gallery helper to convert SkateparkImage format to ImageSlider format
  */
-function getImageSliderImages(images: SkateparkImage[], locale: string, parkName: string): { url: string; alt?: string }[] {
+function getImageSliderImages(images: SkateparkImage[], parkName: string): { url: string; alt?: string }[] {
   return images
     .sort((a, b) => a.orderNumber - b.orderNumber)
     .map((img, index) => ({
@@ -514,7 +514,7 @@ function FormattedHours({
             <h4 className="text-base font-semibold">{t('lightingHours')}: </h4>
           </div>
           <div>
-            <p className="ps-7 xsm:ps-0 text-base text-gray-500">{t('notApplicable')}</p>
+            <p className="ps-7 sm:ps-0 text-base text-gray-500">{t('notApplicable')}</p>
           </div>
         </div>
       </div>
@@ -540,7 +540,7 @@ function FormattedHours({
         </div>
         
         {/* ALWAYS show lighting hours for 24/7 parks when is24Hours is true */}
-        <div className="flex ltr:flex-col xsm:ltr:flex-row items-start gap-2">
+        <div className={`flex  items-start gap-2 ${locale === 'he' ? 'flex-col xsm:flex-row' : ''}`}>
           <div className="flex items-center gap-2">
             <Icon name="sunset" className={`w-5 h-5 ${lightingHours?.endTime ? 'text-yellow-500 dark:text-yellow-300' : 'text-gray-500'}`} />
             <h4 className="text-base font-semibold">{t('lightingHours')}: </h4>
@@ -1617,7 +1617,7 @@ export default function SkateparkPage() {
                   {skatepark.openingYear && (
                     <p className="text-base">
                       {skatepark.openingMonth 
-                        ? `${t('openedDate')} ${getMonthName(skatepark.openingMonth, locale)} ${skatepark.openingYear}`
+                        ? `${t('openedDate')}${getMonthName(skatepark.openingMonth, locale)} ${skatepark.openingYear}`
                         : `${t('opened')} ${skatepark.openingYear}`
                       }.
                     </p>
@@ -1661,8 +1661,8 @@ export default function SkateparkPage() {
                               className={`border border-transparent rounded-lg p-2 h-full cursor-pointer transition-all duration-300 ease-out ${
                                 amenitiesActive
                                   ? isParkClosed
-                                    ? 'bg-[#fcdede] dark:bg-[#812828] border-[#f89e9e67] dark:border-[#c54c4c4d]'
-                                    : 'bg-[#defce0] dark:bg-[#1452174d] border-[#85ef8a] dark:border-[#1452174d]'
+                                    ? 'bg-[#fcdede] dark:bg-[#812828] !border-[#f89e9e67] dark:border-[#c54c4c4d]'
+                                    : 'bg-[#defce0] dark:bg-[#1452174d] !border-[#85ef8a44] dark:!border-[#145217a4]'
                                   : ' bg-black/[3%] dark:bg-black/[5%] dark:shadow-inner'
                               }`}
                             >
@@ -1674,7 +1674,7 @@ export default function SkateparkPage() {
                                       amenitiesActive
                                         ? isParkClosed
                                           ? 'text-[#e72727] dark:text-[#fdb6b6]'
-                                          : 'text-[#16641a] dark:text-[#85ef8a] shadow-sm'
+                                          : 'text-[#1c7a21] dark:text-[#85ef8a]'
                                         : 'text-gray-400 dark:text-[#405e4e]'
                                     }`}
                                   />
@@ -2148,12 +2148,15 @@ export default function SkateparkPage() {
                     <LoadingSpinner className="h-5" />
                   </div>
                 ) : session?.user ? (
-                  <Button variant="primary" onClick={() => setShowAddReview(true)}>
+                  <Button 
+                  variant={skatepark.closingYear && skatepark.closingYear <= new Date().getFullYear() ? 'error' : 'primary'}
+                  onClick={() => setShowAddReview(true)}
+                  >
                     {t('addReview')}
                   </Button>
                 ) : (
                   <Link href={`/${locale}/login`}>
-                    <Button variant="primary">
+                    <Button variant={skatepark.closingYear && skatepark.closingYear <= new Date().getFullYear() ? 'error' : 'primary'}>
                       {tCommon('signInToReview')}
                     </Button>
                   </Link>

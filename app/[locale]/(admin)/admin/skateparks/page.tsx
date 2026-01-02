@@ -3,7 +3,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { Button, Card, CardContent, Input, Select, Skeleton, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui';
+import { Button, Card, CardContent, SelectWrapper, Skeleton, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui';
+import { SearchInput } from '@/components/common/SearchInput';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { NumberInput } from '@/components/ui/number-input';
 import {
   BarChart,
@@ -770,7 +773,7 @@ export default function SkateparksPage() {
         </div>
         <div className="flex items-center space-x-3">
           <Button
-            variant="secondary"
+            variant="ghost"
             onClick={async () => {
               // Clear localStorage cache
               const cacheKey = 'skateparks_cache';
@@ -803,21 +806,21 @@ export default function SkateparksPage() {
             {t('admin.refresh') || 'Refresh'}
           </Button>
           <Button
-            variant="secondary"
+            variant="purple"
             onClick={() => {
               setShowStatistics(true);
             }}
           >
             {t('admin.viewStatistics')}
           </Button>
-          <Button variant="primary" onClick={() => router.push(`/${locale}/admin/skateparks/new`)}>
+          <Button variant="brand" onClick={() => router.push(`/${locale}/admin/skateparks/new`)}>
             {t('admin.addSkatepark')}
           </Button>
         </div>
       </div>
 
       {/* Cache Version Control */}
-      <Card>
+      <Card className="bg-card dark:bg-card-dark">
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
             <div className="flex-1">
@@ -836,7 +839,7 @@ export default function SkateparksPage() {
               </p>
             </div>
             <Button
-              variant="primary"
+              variant="info"
               onClick={handleSaveVersion}
               disabled={savingVersion}
             >
@@ -847,19 +850,32 @@ export default function SkateparksPage() {
       </Card>
 
       {/* Filters */}
-      <Card>
+      <Card className="!p-0 bg-card dark:bg-card-dark">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-64">
-              <Input
-                type="text"
-                placeholder={t('admin.searchPlaceholder')}
+              <SearchInput
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onClear={() => setSearch('')}
+                placeholder={t('admin.searchPlaceholder')}
+                className="!max-w-full"
               />
             </div>
-            <div className="w-48">
-              <Select
+            <div className="flex gap-2">
+            <div className="">
+              <SelectWrapper
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                options={[
+                  { value: '', label: t('admin.allStatuses') },
+                  { value: 'active', label: t('admin.status.active') },
+                  { value: 'inactive', label: t('admin.status.inactive') },
+                ]}
+              />
+            </div>
+            <div className="">
+              <SelectWrapper
                 value={area}
                 onChange={(e) => setArea(e.target.value)}
                 options={[
@@ -870,19 +886,9 @@ export default function SkateparksPage() {
                 ]}
               />
             </div>
-            <div className="w-48">
-              <Select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                options={[
-                  { value: '', label: t('admin.allStatuses') },
-                  { value: 'active', label: t('admin.status.active') },
-                  { value: 'inactive', label: t('admin.status.inactive') },
-                ]}
-              />
-            </div>
-            <div className="w-48">
-              <Select
+
+            <div className="">
+              <SelectWrapper
                 value={amenities}
                 onChange={(e) => setAmenities(e.target.value)}
                 options={[
@@ -897,13 +903,14 @@ export default function SkateparksPage() {
               />
             </div>
           </div>
+          </div>
         </CardContent>
       </Card>
 
       {/* Bulk Actions */}
       {selectedItems.size > 0 && (
-        <Card>
-          <CardContent className="p-4">
+        <Card className="bg-card dark:bg-card-dark">
+          <CardContent className="p-4 ">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {t('admin.selected', { count: selectedItems.size })}
@@ -934,227 +941,232 @@ export default function SkateparksPage() {
       )}
 
       {/* Skateparks Table */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-6 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.size === skateparks.length && skateparks.length > 0}
-                      onChange={toggleSelectAll}
-                      className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
-                    />
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    {t('admin.table.image')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    {t('admin.table.name')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    {t('admin.table.slug')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    {t('admin.table.address')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    {t('admin.table.openingYear')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    {t('admin.table.featured')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    {t('admin.table.status')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    {t('admin.table.actions')}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {loading ? (
-                  Array.from({ length: 10 }).map((_, i) => (
-                    <tr key={i}>
-                      {Array.from({ length: 9 }).map((_, j) => (
-                        <td key={j} className="px-6 py-4 whitespace-nowrap">
-                          <Skeleton className="h-4 w-full" />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : skateparks.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                      {t('admin.table.noSkateparksFound')}
-                    </td>
-                  </tr>
-                ) : (
-                  skateparks.map((skatepark) => {
-                    const skateparkId = skatepark._id || skatepark.id || '';
-                    const isDeleting = deleting.has(skateparkId);
-                    return (
-                    <tr 
-                      key={skateparkId} 
-                      className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${isDeleting ? 'opacity-50' : ''}`}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.has(skateparkId)}
-                          onChange={() => toggleSelection(skateparkId)}
-                          disabled={isDeleting}
-                          className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700 disabled:opacity-50"
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded overflow-hidden flex items-center justify-center">
-                          {(() => {
-                            const imageUrl = skatepark.image || skatepark.images?.[0]?.url;
-                            if (imageUrl) {
-                              return (
-                                <img
-                                  src={imageUrl}
-                                  alt={skatepark.name.en}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    // Prevent infinite loop by hiding the image on error
-                                    const img = e.target as HTMLImageElement;
-                                    if (!img.dataset.errorHandled) {
-                                      img.dataset.errorHandled = 'true';
-                                      img.style.display = 'none';
-                                    }
-                                  }}
-                                />
-                              );
-                            }
-                            return (
-                              <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
-                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div>
-                          <button
-                            onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkId}`)}
-                            className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
-                          >
-                            {skatepark.name.en}
-                          </button>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{skatepark.name.he}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {skatepark.slug}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
-                        {formatAddress(skatepark.address)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {formatOpeningYear(skatepark.openingYear, skatepark.openingMonth)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {skatepark.isFeatured ? (
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
-                            {t('admin.table.featured')}
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 dark:text-gray-500">—</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(skatepark.status)}`}>
-                          {t(`admin.status.${skatepark.status}`)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                              </svg>
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem onClick={() => window.open(`/${locale}/skateparks/${skatepark.slug}`, '_blank')}>
-                              {t('admin.table.view') || 'View'}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkId}`)}>
-                              {t('admin.table.edit')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleDelete(skateparkId, skatepark.name.en)}
-                              disabled={deleting.has(skateparkId)}
-                            >
-                              {deleting.has(skateparkId) ? 'Deleting...' : t('admin.table.delete')}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                {t('admin.table.showing', {
-                  from: (pagination.currentPage - 1) * pagination.limit + 1,
-                  to: Math.min(pagination.currentPage * pagination.limit, pagination.totalCount),
-                  total: pagination.totalCount
-                })}
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage - 1 })}
-                  disabled={pagination.currentPage === 1}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>
+              <Checkbox
+                variant="brand"
+                id="select-all"
+                checked={selectedItems.size === skateparks.length && skateparks.length > 0}
+                onChange={() => toggleSelectAll()}
+                label=""
+              />
+            </TableHead>
+            <TableHead>
+              {t('admin.table.image')}
+            </TableHead>
+            <TableHead className="hidden md:table-cell">
+              {t('admin.table.name')}
+            </TableHead>
+            <TableHead>
+              {t('admin.table.slug')}
+            </TableHead>
+            <TableHead className="hidden md:table-cell">
+              {t('admin.table.address')}
+            </TableHead>
+            <TableHead className="hidden md:table-cell">
+              {t('admin.table.openingYear')}
+            </TableHead>
+            <TableHead className="hidden md:table-cell">
+              {t('admin.table.featured')}
+            </TableHead>
+            <TableHead className="hidden md:table-cell">
+              {t('admin.table.status')}
+            </TableHead>
+            <TableHead>
+              {t('admin.table.actions')}
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {loading ? (
+            Array.from({ length: 10 }).map((_, i) => (
+              <TableRow key={i}>
+                {Array.from({ length: 9 }).map((_, j) => (
+                  <TableCell key={j} className="whitespace-nowrap">
+                    <Skeleton className="h-4 w-full" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : skateparks.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={9} className="text-center py-12 text-text-secondary dark:text-text-secondary-dark">
+                {t('admin.table.noSkateparksFound')}
+              </TableCell>
+            </TableRow>
+          ) : (
+            skateparks.map((skatepark) => {
+              const skateparkId = skatepark._id || skatepark.id || '';
+              const isDeleting = deleting.has(skateparkId);
+              return (
+                <TableRow 
+                  key={skateparkId} 
+                  className={isDeleting ? 'opacity-50' : ''}
                 >
-                  {t('admin.table.previous')}
-                </Button>
-                <div className="flex items-center space-x-1">
-                  {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => i + 1)
-                    .map((page) => (
+                  <TableCell className="whitespace-nowrap px-4 md:px-6 md:py-3">
+                    {!isDeleting ? (
+                      <Checkbox
+                        variant="brand"
+                        id={`select-${skateparkId}`}
+                        checked={selectedItems.has(skateparkId)}
+                        onChange={() => toggleSelection(skateparkId)}
+                        label=""
+                      />
+                    ) : (
+                      <Checkbox
+                        variant="brand"
+                        id={`select-${skateparkId}-disabled`}
+                        checked={selectedItems.has(skateparkId)}
+                        onChange={() => {}}
+                        label=""
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap px-4 py-2 md:px-6 md:py-3 w-12 md:w-16">
+                    <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-100 dark:bg-gray-700 rounded overflow-hidden flex items-center justify-center">
+                      {(() => {
+                        const imageUrl = skatepark.image || skatepark.images?.[0]?.url;
+                        if (imageUrl) {
+                          return (
+                            <img
+                              src={imageUrl}
+                              alt={skatepark.name.en}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Prevent infinite loop by hiding the image on error
+                                const img = e.target as HTMLImageElement;
+                                if (!img.dataset.errorHandled) {
+                                  img.dataset.errorHandled = 'true';
+                                  img.style.display = 'none';
+                                }
+                              }}
+                            />
+                          );
+                        }
+                        return (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <div>
                       <button
-                        key={page}
-                        onClick={() => setPagination({ ...pagination, currentPage: page })}
-                        className={`px-3 py-1 text-sm rounded ${
-                          page === pagination.currentPage
-                            ? 'bg-blue-600 dark:bg-blue-500 text-white'
-                            : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-                        }`}
+                        onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkId}`)}
+                        className="text-sm font-medium text-brand-main dark:text-brand-dark hover:underline"
                       >
-                        {page}
+                        {skatepark.name.en}
                       </button>
-                    ))}
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage + 1 })}
-                  disabled={pagination.currentPage === pagination.totalPages}
-                >
-                  {t('admin.table.next')}
-                </Button>
-              </div>
-            </div>
+                      <div className="text-xs text-text-secondary dark:text-text-secondary-dark">{skatepark.name.he}</div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-sm text-text-secondary dark:text-text-secondary-dark">
+                    {skatepark.slug}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-sm text-text-secondary dark:text-text-secondary-dark max-w-xs truncate">
+                    {formatAddress(skatepark.address)}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell whitespace-nowrap text-sm text-text-secondary dark:text-text-secondary-dark">
+                    {formatOpeningYear(skatepark.openingYear, skatepark.openingMonth)}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell whitespace-nowrap">
+                    {skatepark.isFeatured ? (
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
+                        {t('admin.table.featured')}
+                      </span>
+                    ) : (
+                      <span className="text-text-secondary dark:text-text-secondary-dark">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(skatepark.status)}`}>
+                      {t(`admin.status.${skatepark.status}`)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-sm font-medium">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                          </svg>
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => window.open(`/${locale}/skateparks/${skatepark.slug}`, '_blank')}>
+                          {t('admin.table.view') || 'View'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkId}`)}>
+                          {t('admin.table.edit')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDelete(skateparkId, skatepark.name.en)}
+                          disabled={deleting.has(skateparkId)}
+                        >
+                          {deleting.has(skateparkId) ? 'Deleting...' : t('admin.table.delete')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })
           )}
-        </CardContent>
-      </Card>
+        </TableBody>
+      </Table>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            {t('admin.table.showing', {
+              from: (pagination.currentPage - 1) * pagination.limit + 1,
+              to: Math.min(pagination.currentPage * pagination.limit, pagination.totalCount),
+              total: pagination.totalCount
+            })}
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage - 1 })}
+              disabled={pagination.currentPage === 1}
+            >
+              {t('admin.table.previous')}
+            </Button>
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => i + 1)
+                .map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setPagination({ ...pagination, currentPage: page })}
+                    className={`px-3 py-1 text-sm rounded ${
+                      page === pagination.currentPage
+                        ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage + 1 })}
+              disabled={pagination.currentPage === pagination.totalPages}
+            >
+              {t('admin.table.next')}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Statistics Modal */}
       {showStatistics && (

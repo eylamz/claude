@@ -7,7 +7,7 @@ interface CheckboxProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label: string;
-  variant?: 'sign' | 'default';
+  variant?: 'sign' | 'default' | 'brand';
 }
 
 export const Checkbox: FC<CheckboxProps> = ({ id, checked, onChange, label, variant = 'default' }) => {
@@ -72,6 +72,136 @@ export const Checkbox: FC<CheckboxProps> = ({ id, checked, onChange, label, vari
             </svg>
             <span>{label}</span>
           </label>
+        </div>
+      </>
+    );
+  }
+
+  if (variant === 'brand') {
+    return (
+      <>
+        <style jsx>{`
+          .checkbox-wrapper-brand * {
+            box-sizing: border-box;
+          }
+          .checkbox-wrapper-brand .cbx {
+            -webkit-user-select: none;
+            user-select: none;
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: 6px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            display: inline-block;
+          }
+          .checkbox-wrapper-brand .cbx:not(:last-child) {
+            margin-right: 6px;
+          }
+          .checkbox-wrapper-brand .cbx:hover {
+            background: hsla(123, 48%, 45%, 0.06);
+          }
+          .dark .checkbox-wrapper-brand .cbx:hover {
+            background: hsla(123, 44%, 50%, 0.1);
+          }
+          .checkbox-wrapper-brand .cbx span {
+            float: left;
+            vertical-align: middle;
+            transform: translate3d(0, 0, 0);
+          }
+          .checkbox-wrapper-brand .cbx span:first-child {
+            position: relative;
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            transform: scale(1);
+            border: 1px solid #cccfdb;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 1px rgba(0, 16, 75, 0.05);
+          }
+          .dark .checkbox-wrapper-brand .cbx span:first-child {
+            border-color: #4b5563;
+          }
+          .checkbox-wrapper-brand .cbx span:first-child svg {
+            position: absolute;
+            top: 3px;
+            left: 2px;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 16px;
+            stroke-dashoffset: 16px;
+            transition: all 0.3s ease;
+            transition-delay: 0.1s;
+            transform: translate3d(0, 0, 0);
+          }
+          .checkbox-wrapper-brand .cbx span:last-child {
+            padding-left: 8px;
+            line-height: 18px;
+          }
+          .checkbox-wrapper-brand .cbx:hover span:first-child {
+            border-color: hsl(123, 48%, 45%);
+          }
+          .dark .checkbox-wrapper-brand .cbx:hover span:first-child {
+            border-color: hsl(123, 44%, 50%);
+          }
+          .checkbox-wrapper-brand .inp-cbx {
+            position: absolute;
+            visibility: hidden;
+          }
+          .checkbox-wrapper-brand .inp-cbx:checked + .cbx span:first-child {
+            background: hsl(123, 48%, 45%);
+            border-color: hsl(123, 48%, 45%);
+            animation: wave-brand 0.4s ease;
+          }
+          .dark .checkbox-wrapper-brand .inp-cbx:checked + .cbx span:first-child {
+            background: hsl(123, 44%, 50%);
+            border-color: hsl(123, 44%, 50%);
+          }
+          .checkbox-wrapper-brand .inp-cbx:checked + .cbx span:first-child svg {
+            stroke-dashoffset: 0;
+          }
+          .checkbox-wrapper-brand .inline-svg {
+            position: absolute;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            user-select: none;
+          }
+          @media screen and (max-width: 640px) {
+            .checkbox-wrapper-brand .cbx {
+              width: 100%;
+              display: inline-block;
+            }
+          }
+          @keyframes wave-brand {
+            50% {
+              transform: scale(0.9);
+            }
+          }
+        `}</style>
+        <div className="checkbox-wrapper-brand">
+          <input
+            className="inp-cbx"
+            id={id}
+            type="checkbox"
+            checked={checked}
+            onChange={(e) => onChange(e.target.checked)}
+          />
+          <label className="cbx" htmlFor={id}>
+            <span>
+              <svg width="12px" height="10px">
+                <use href={`#check-brand-${id}`}></use>
+              </svg>
+            </span>
+            <span>{label}</span>
+          </label>
+          <svg className="inline-svg">
+            <symbol id={`check-brand-${id}`} viewBox="0 0 12 10">
+              <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
+            </symbol>
+          </svg>
         </div>
       </>
     );
