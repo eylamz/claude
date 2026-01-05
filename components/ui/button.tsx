@@ -30,10 +30,16 @@ const buttonVariants = cva(
         secondary: "btn text-text dark:text-text-dark hover:text-text/80 dark:hover:text-text-dark/80",
         ghost2: "bg-trasnsparent hover:bg-black/5  hover:text-text-hover   dark:bg-black/10 dark:hover:bg-white/5 dark:hover:text-text-hover-dark",
         popover: "bg-trasnsparent hover:bg-black/5 hover:text-text-hover   dark:bg-black/10 dark:hover:bg-white/10 dark:hover:text-text-hover-dark",
-        ghost: "bg-black/[2.5%] hover:bg-black/5 hover:text-text-hover   dark:bg-btn-secondary-dark dark:hover:bg-white/15 dark:hover:text-text-hover-dark",
+        ghost: "border-[#e6e6e6] dark:border-[#494949] bg-black/[2.5%] hover:bg-black/5 hover:text-text-hover   dark:bg-btn-secondary-dark dark:hover:bg-white/15 dark:hover:text-text-hover-dark",
         link: "text-primary underline-offset-4 hover:underline",
         error: "bg-error-bg dark:bg-error-bg-dark text-white dark:text-black hover:bg-error-dark/80 dark:hover:bg-error-dark/80",
-        purple: "bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d]"
+        purple: "bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d]",
+        red: "border-[#ffc5c5] dark:border-[#f3394c3b] bg-[#ffe6e6] dark:bg-[#311c1c] text-[#cc2a2a] dark:text-[#f3394c]   hover:bg-[#ffdbdb] dark:hover:bg-[#3e2323]",
+        orange: "border-[#ffe0bb] dark:border-[#f39d393b] bg-[#fff1e0] dark:bg-[#31271c] text-[#e49a43] dark:text-[#f39d39]   hover:bg-[#ffead1] dark:hover:bg-[#3e3123]",
+        green: "border-[#baf0bb] dark:border-[#235725] bg-[#e3f6e4] dark:bg-[#0f2f10] text-brand-text dark:text-brand-main   hover:bg-[#dcf4dd] dark:hover:bg-[#0d2b0e]",
+        grey: "border-[#e6e6e6] dark:border-[#494949] text-[#424242] dark:text-[#afafaf] bg-black/[2.5%] hover:bg-black/5 dark:bg-[#262626] dark:hover:bg-[#2c2c2c] ",
+
+
       },
       size: {
         default: "h-9 sm:h-10 px-3 sm:px-4 py-1.5 sm:py-2",

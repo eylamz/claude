@@ -7,7 +7,9 @@ import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Dropdo
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ImageUploader } from '@/components/admin';
-import { Moon, Sun } from 'lucide-react';
+import { Moon, Sun, ChevronLeft, ExternalLink } from 'lucide-react';
+import Image from 'next/image';
+import { Icon } from '@/components/icons';
 
 interface ContentBlock {
   id: string;
@@ -761,7 +763,7 @@ export default function EditGuidePage() {
             <h1 className="text-3xl font-bold text-gray-900">Edit Guide</h1>
             <p className="text-sm text-red-500 mt-1">{error}</p>
           </div>
-          <Button variant="secondary" onClick={() => router.back()}>
+          <Button variant="grey" onClick={() => router.back()}>
             Back
           </Button>
         </div>
@@ -810,7 +812,7 @@ export default function EditGuidePage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="pt-16 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Edit Guide</h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -819,13 +821,13 @@ export default function EditGuidePage() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button type="button" variant="secondary" onClick={() => router.back()}>
+          <Button type="button" variant="red" onClick={() => router.back()}>
             Cancel
           </Button>
-          <Button type="button" variant="secondary" onClick={() => setPreviewMode(!previewMode)}>
+          <Button type="button" variant="info" onClick={() => setPreviewMode(!previewMode)}>
             {previewMode ? 'Edit' : 'Preview'}
           </Button>
-          <Button type="button" variant="primary" onClick={(e) => {
+          <Button type="button" variant="green" onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             handleSubmit();

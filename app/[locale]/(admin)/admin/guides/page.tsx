@@ -3,10 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardContent, Input, Skeleton } from '@/components/ui';
+import { Button, Card, CardContent, Skeleton, SelectWrapper, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui';
+import { SearchInput } from '@/components/common/SearchInput';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 
 interface Guide {
   id: string;
@@ -406,81 +408,76 @@ export default function GuidesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="pt-16 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Guides</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <h1 className="text-3xl font-bold text-text dark:text-text-dark">Guides</h1>
+          <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">
             Manage guides and tutorials
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button variant="primary" onClick={() => router.push(`/${locale}/admin/guides/new`)}>
+          <Button variant="green" onClick={() => router.push(`/${locale}/admin/guides/new`)}>
             Create Guide
           </Button>
         </div>
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="!p-0 bg-card dark:bg-card-dark">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-64">
-              <Input
-                type="text"
-                placeholder="Search by title..."
+              <SearchInput
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onClear={() => setSearch('')}
+                placeholder="Search by title..."
+                className="!max-w-full"
               />
             </div>
-            <div className="w-48">
-              <Select value={sport} onValueChange={setSport}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Sports" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sports</SelectItem>
-                  {SPORTS.map(s => (
-                    <SelectItem key={s.toLowerCase()} value={s.toLowerCase()}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-48">
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="published">Published</SelectItem>
-                  <SelectItem value="archived">Archived</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="w-48">
-              <Select
-                value={`${sortBy}-${sortOrder}`}
-                onValueChange={(value) => {
-                  const [field, order] = value.split('-');
-                  setSortBy(field);
-                  setSortOrder(order);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="viewsCount-desc">Most Views</SelectItem>
-                  <SelectItem value="viewsCount-asc">Least Views</SelectItem>
-                  <SelectItem value="rating-desc">Highest Rated</SelectItem>
-                  <SelectItem value="rating-asc">Lowest Rated</SelectItem>
-                  <SelectItem value="createdAt-desc">Newest First</SelectItem>
-                  <SelectItem value="createdAt-asc">Oldest First</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex gap-2">
+              <div className="">
+                <SelectWrapper
+                  value={sport}
+                  onChange={(e) => setSport(e.target.value)}
+                  options={[
+                    { value: 'all', label: 'All Sports' },
+                    ...SPORTS.map(s => ({ value: s.toLowerCase(), label: s }))
+                  ]}
+                />
+              </div>
+              <div className="">
+                <SelectWrapper
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  options={[
+                    { value: 'all', label: 'All Statuses' },
+                    { value: 'draft', label: 'Draft' },
+                    { value: 'published', label: 'Published' },
+                    { value: 'archived', label: 'Archived' },
+                  ]}
+                />
+              </div>
+              <div className="">
+                <SelectWrapper
+                  value={`${sortBy}-${sortOrder}`}
+                  onChange={(e) => {
+                    const [field, order] = e.target.value.split('-');
+                    setSortBy(field);
+                    setSortOrder(order);
+                  }}
+                  options={[
+                    { value: 'viewsCount-desc', label: 'Most Views' },
+                    { value: 'viewsCount-asc', label: 'Least Views' },
+                    { value: 'rating-desc', label: 'Highest Rated' },
+                    { value: 'rating-asc', label: 'Lowest Rated' },
+                    { value: 'createdAt-desc', label: 'Newest First' },
+                    { value: 'createdAt-asc', label: 'Oldest First' },
+                  ]}
+                />
+              </div>
             </div>
           </div>
         </CardContent>
@@ -488,29 +485,29 @@ export default function GuidesPage() {
 
       {/* Bulk Actions */}
       {selectedItems.size > 0 && (
-        <Card>
+        <Card className="bg-card dark:bg-card-dark">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-text dark:text-text-dark">
                 {selectedItems.size} guide(s) selected
               </p>
               <div className="flex items-center space-x-2">
                 <Button 
-                  variant="secondary" 
+                  variant="orange" 
                   onClick={() => handleBulkAction('publish')}
                   disabled={!!bulkOperation}
                 >
                   {bulkOperation === 'publish' ? 'Publishing...' : 'Publish'}
                 </Button>
                 <Button 
-                  variant="secondary" 
+                  variant="grey" 
                   onClick={() => handleBulkAction('archive')}
                   disabled={!!bulkOperation}
                 >
                   {bulkOperation === 'archive' ? 'Archiving...' : 'Archive'}
                 </Button>
                 <Button 
-                  variant="destructive" 
+                  variant="red" 
                   onClick={() => handleBulkAction('delete')}
                   disabled={!!bulkOperation}
                 >
@@ -523,401 +520,388 @@ export default function GuidesPage() {
       )}
 
       {/* Guides Table */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  <th className="px-6 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.size === guides.length && guides.length > 0}
-                      onChange={toggleSelectAll}
-                      className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
-                    />
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Cover
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Title
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Sports
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Tags
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Rating
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Views
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Featured
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {loading ? (
-                  Array.from({ length: 10 }).map((_, i) => (
-                    <tr key={i}>
-                      {Array.from({ length: 10 }).map((_, j) => (
-                        <td key={j} className="px-6 py-4 whitespace-nowrap">
-                          <Skeleton className="h-4 w-full" />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : guides.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                      No guides found
-                    </td>
-                  </tr>
-                ) : (
-                  guides.map((guide) => (
-                    <tr key={guide.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.has(guide.id)}
-                          onChange={() => toggleSelection(guide.id)}
-                          className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:bg-gray-700"
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded overflow-hidden flex items-center justify-center">
-                          {guide.coverImage ? (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>
+              <Checkbox
+                variant="brand"
+                id="select-all"
+                checked={selectedItems.size === guides.length && guides.length > 0}
+                onChange={() => toggleSelectAll()}
+                label=""
+              />
+            </TableHead>
+            <TableHead>
+              Cover
+            </TableHead>
+            <TableHead>
+              Title
+            </TableHead>
+            <TableHead className="hidden md:table-cell">
+            Sports
+            </TableHead>
+              <TableHead className="hidden md:table-cell">
+              Tags
+            </TableHead>
+            <TableHead className="hidden md:table-cell">
+              Rating
+            </TableHead>
+            <TableHead className="hidden md:table-cell">
+              Views
+            </TableHead>
+            <TableHead className="hidden md:table-cell">
+              Status
+            </TableHead>
+            <TableHead className="hidden md:table-cell">
+              Featured
+            </TableHead>
+            <TableHead>
+              Actions
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {loading ? (
+            Array.from({ length: 10 }).map((_, i) => (
+              <TableRow key={i}>
+                {Array.from({ length: 10 }).map((_, j) => (
+                  <TableCell key={j} className="whitespace-nowrap">
+                    <Skeleton className="h-4 w-full" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : guides.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={10} className="text-center py-12 text-text-secondary dark:text-text-secondary-dark">
+                No guides found
+              </TableCell>
+            </TableRow>
+          ) : (
+            guides.map((guide) => (
+              <TableRow key={guide.id}>
+                <TableCell className="whitespace-nowrap px-4 md:px-6 md:py-3">
+                  <Checkbox
+                    variant="brand"
+                    id={`select-${guide.id}`}
+                    checked={selectedItems.has(guide.id)}
+                    onChange={() => toggleSelection(guide.id)}
+                    label=""
+                  />
+                </TableCell>
+                <TableCell className="whitespace-nowrap px-4 py-2 md:px-6 md:py-3 w-12 md:w-16">
+                  <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-100 dark:bg-gray-700 rounded overflow-hidden flex items-center justify-center">
+                    {guide.coverImage ? (
+                      <img
+                        src={guide.coverImage}
+                        alt={guide.title.en}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          if (!img.dataset.errorHandled) {
+                            img.dataset.errorHandled = 'true';
+                            img.style.display = 'none';
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div>
+                    <button
+                      onClick={() => router.push(`/${locale}/admin/guides/${guide.id}/edit`)}
+                      className="text-sm font-medium text-brand-main dark:text-brand-dark hover:underline"
+                    >
+                      {guide.title.en}
+                    </button>
+                    <div className="text-xs text-text-secondary dark:text-text-secondary-dark">{guide.title.he}</div>
+                    {guide.isFeatured && (
+                      <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
+                        Featured
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  <div className="flex flex-wrap gap-1">
+                    {guide.relatedSports.slice(0, 2).map((sport) => (
+                      <span key={sport} className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded">
+                        {sport}
+                      </span>
+                    ))}
+                    {guide.relatedSports.length > 2 && (
+                      <span className="text-xs text-text-secondary dark:text-text-secondary-dark">+{guide.relatedSports.length - 2}</span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="hidden md:table-cell text-sm text-text-secondary dark:text-text-secondary-dark max-w-xs truncate">
+                  {(() => {
+                    const tags = getTagsForLocale(guide.tags, locale);
+                    return tags.slice(0, 3).join(', ') + (tags.length > 3 ? '...' : '');
+                  })()}
+                </TableCell>
+                <TableCell className="hidden md:table-cell whitespace-nowrap">
+                  <div className="flex items-center space-x-2">
+                    {renderStars(guide.rating)}
+                    <span className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                      {guide.rating.toFixed(1)}
+                    </span>
+                    <span className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                      ({guide.ratingCount})
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell className="hidden md:table-cell whitespace-nowrap text-sm text-text-secondary dark:text-text-secondary-dark">
+                  {guide.viewsCount.toLocaleString()}
+                </TableCell>
+                <TableCell className="hidden md:table-cell whitespace-nowrap">
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(guide.status)}`}>
+                    {guide.status}
+                  </span>
+                </TableCell>
+                <TableCell className="hidden md:table-cell whitespace-nowrap">
+                  {guide.isFeatured ? (
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
+                      Featured
+                    </span>
+                  ) : (
+                    <span className="text-text-secondary dark:text-text-secondary-dark">—</span>
+                  )}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-sm font-medium">
+                  <Popover open={viewPopoverOpen === guide.id} onOpenChange={(open) => setViewPopoverOpen(open ? guide.id : null)}>
+                    <PopoverContent className="w-96 p-0" align="end">
+                      <div className="p-4 space-y-4">
+                        {/* Cover Image */}
+                        {guide.coverImage && (
+                          <div className="w-full h-48 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
                             <img
                               src={guide.coverImage}
                               alt={guide.title.en}
                               className="w-full h-full object-cover"
                               onError={(e) => {
-                                const img = e.target as HTMLImageElement;
-                                if (!img.dataset.errorHandled) {
-                                  img.dataset.errorHandled = 'true';
-                                  img.style.display = 'none';
-                                }
+                                (e.target as HTMLImageElement).src = '/placeholder-guide.jpg';
                               }}
                             />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
-                              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div>
-                          <button
-                            onClick={() => router.push(`/${locale}/admin/guides/${guide.id}`)}
-                            className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
-                          >
-                            {guide.title.en}
-                          </button>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{guide.title.he}</div>
-                          {guide.isFeatured && (
-                            <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
-                              Featured
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {guide.relatedSports.slice(0, 2).map((sport) => (
-                            <span key={sport} className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded">
-                              {sport}
-                            </span>
-                          ))}
-                          {guide.relatedSports.length > 2 && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">+{guide.relatedSports.length - 2}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
-                        {(() => {
-                          const tags = getTagsForLocale(guide.tags, locale);
-                          return tags.slice(0, 3).join(', ') + (tags.length > 3 ? '...' : '');
-                        })()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-2">
-                          {renderStars(guide.rating)}
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {guide.rating.toFixed(1)}
-                          </span>
-                          <span className="text-xs text-gray-400 dark:text-gray-500">
-                            ({guide.ratingCount})
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {guide.viewsCount.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(guide.status)}`}>
-                          {guide.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {guide.isFeatured ? (
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
-                            Featured
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 dark:text-gray-500">—</span>
+                          </div>
                         )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-2">
-                          <Popover open={viewPopoverOpen === guide.id} onOpenChange={(open) => setViewPopoverOpen(open ? guide.id : null)}>
-                            <PopoverTrigger asChild>
-                              <Button type="button" variant="secondary" size="sm">
-                                View
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-96 p-0" align="end">
-                              <div className="p-4 space-y-4">
-                                {/* Cover Image */}
-                                {guide.coverImage && (
-                                  <div className="w-full h-48 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-                                    <img
-                                      src={guide.coverImage}
-                                      alt={guide.title.en}
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).src = '/placeholder-guide.jpg';
-                                      }}
-                                    />
-                                  </div>
-                                )}
-                                
-                                {/* Title */}
-                                <div>
-                                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{guide.title.en}</h3>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{guide.title.he}</p>
-                                </div>
+                        
+                        {/* Title */}
+                        <div>
+                          <h3 className="text-lg font-semibold text-text dark:text-text-dark">{guide.title.en}</h3>
+                          <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">{guide.title.he}</p>
+                        </div>
 
-                                {/* Description */}
-                                <div>
-                                  <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-3">{guide.description.en}</p>
-                                </div>
+                        {/* Description */}
+                        <div>
+                          <p className="text-sm text-text-secondary dark:text-text-secondary-dark line-clamp-3">{guide.description.en}</p>
+                        </div>
 
-                                {/* Stats */}
-                                <div className="grid grid-cols-3 gap-4 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                  <div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Views</p>
-                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{guide.viewsCount.toLocaleString()}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Likes</p>
-                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{guide.likesCount.toLocaleString()}</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Rating</p>
-                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{guide.rating.toFixed(1)} ({guide.ratingCount})</p>
-                                  </div>
-                                </div>
+                        {/* Stats */}
+                        <div className="grid grid-cols-3 gap-4 pt-2 border-t border-border dark:border-border-dark">
+                          <div>
+                            <p className="text-xs text-text-secondary dark:text-text-secondary-dark">Views</p>
+                            <p className="text-sm font-medium text-text dark:text-text-dark">{guide.viewsCount.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-text-secondary dark:text-text-secondary-dark">Likes</p>
+                            <p className="text-sm font-medium text-text dark:text-text-dark">{guide.likesCount.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-text-secondary dark:text-text-secondary-dark">Rating</p>
+                            <p className="text-sm font-medium text-text dark:text-text-dark">{guide.rating.toFixed(1)} ({guide.ratingCount})</p>
+                          </div>
+                        </div>
 
-                                {/* Sports & Tags */}
-                                <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                  <div>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Sports</p>
-                                    <div className="flex flex-wrap gap-1">
-                                      {guide.relatedSports.slice(0, 3).map((sport) => (
-                                        <span key={sport} className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded">
-                                          {sport}
-                                        </span>
-                                      ))}
-                                      {guide.relatedSports.length > 3 && (
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">+{guide.relatedSports.length - 3}</span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  {(() => {
-                                    const tags = getTagsForLocale(guide.tags, locale);
-                                    return tags.length > 0 && (
-                                      <div>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Tags</p>
-                                        <div className="flex flex-wrap gap-1">
-                                          {tags.slice(0, 5).map((tag) => (
-                                            <span key={tag} className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
-                                              {tag}
-                                            </span>
-                                          ))}
-                                          {tags.length > 5 && (
-                                            <span className="text-xs text-gray-500 dark:text-gray-400">+{tags.length - 5}</span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    );
-                                  })()}
-                                </div>
-
-                                {/* Status Change */}
-                                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Status
-                                  </label>
-                                  <Select
-                                    value={guide.status}
-                                    onValueChange={(value) => handleStatusChange(guide.id, value)}
-                                    disabled={updatingStatus === guide.id}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="draft">Draft</SelectItem>
-                                      <SelectItem value="published">Published</SelectItem>
-                                      <SelectItem value="archived">Archived</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                  {updatingStatus === guide.id && (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Updating...</p>
+                        {/* Sports & Tags */}
+                        <div className="space-y-2 pt-2 border-t border-border dark:border-border-dark">
+                          <div>
+                            <p className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">Sports</p>
+                            <div className="flex flex-wrap gap-1">
+                              {guide.relatedSports.slice(0, 3).map((sport) => (
+                                <span key={sport} className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded">
+                                  {sport}
+                                </span>
+                              ))}
+                              {guide.relatedSports.length > 3 && (
+                                <span className="text-xs text-text-secondary dark:text-text-secondary-dark">+{guide.relatedSports.length - 3}</span>
+                              )}
+                            </div>
+                          </div>
+                          {(() => {
+                            const tags = getTagsForLocale(guide.tags, locale);
+                            return tags.length > 0 && (
+                              <div>
+                                <p className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">Tags</p>
+                                <div className="flex flex-wrap gap-1">
+                                  {tags.slice(0, 5).map((tag) => (
+                                    <span key={tag} className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
+                                      {tag}
+                                    </span>
+                                  ))}
+                                  {tags.length > 5 && (
+                                    <span className="text-xs text-text-secondary dark:text-text-secondary-dark">+{tags.length - 5}</span>
                                   )}
                                 </div>
-
-                                {/* Actions */}
-                                <div className="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      type="button"
-                                      variant="secondary"
-                                      size="sm"
-                                      className="flex-1"
-                                      onClick={() => {
-                                        setViewPopoverOpen(null);
-                                        router.push(`/${locale}/admin/guides/${guide.id}/edit`);
-                                      }}
-                                    >
-                                      Edit Guide
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="secondary"
-                                      size="sm"
-                                      onClick={() => {
-                                        setViewPopoverOpen(null);
-                                        router.push(`/${locale}/guides/${guide.slug}`);
-                                      }}
-                                    >
-                                      View Public
-                                    </Button>
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="destructive"
-                                    size="sm"
-                                    className="w-full"
-                                    onClick={() => {
-                                      setViewPopoverOpen(null);
-                                      handleDeleteGuide(guide.id, guide.title.en);
-                                    }}
-                                    disabled={updatingStatus === guide.id}
-                                  >
-                                    {updatingStatus === guide.id ? 'Deleting...' : 'Delete Guide'}
-                                  </Button>
-                                </div>
                               </div>
-                            </PopoverContent>
-                          </Popover>
-                          
+                            );
+                          })()}
+                        </div>
+
+                        {/* Status Change */}
+                        <div className="pt-2 border-t border-border dark:border-border-dark">
+                          <label className="block text-xs font-medium text-text-secondary dark:text-text-secondary-dark mb-2">
+                            Status
+                          </label>
+                          <Select
+                            value={guide.status}
+                            onValueChange={(value) => handleStatusChange(guide.id, value)}
+                            disabled={updatingStatus === guide.id}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="draft">Draft</SelectItem>
+                              <SelectItem value="published">Published</SelectItem>
+                              <SelectItem value="archived">Archived</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {updatingStatus === guide.id && (
+                            <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">Updating...</p>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-col gap-2 pt-2 border-t border-border dark:border-border-dark">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => {
+                                setViewPopoverOpen(null);
+                                router.push(`/${locale}/admin/guides/${guide.id}/edit`);
+                              }}
+                            >
+                              Edit Guide
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => {
+                                setViewPopoverOpen(null);
+                                router.push(`/${locale}/guides/${guide.slug}`);
+                              }}
+                            >
+                              View Public
+                            </Button>
+                          </div>
                           <Button
                             type="button"
-                            variant="secondary"
+                            variant="destructive"
                             size="sm"
-                            onClick={() => router.push(`/${locale}/admin/guides/${guide.id}/edit`)}
+                            className="w-full"
+                            onClick={() => {
+                              setViewPopoverOpen(null);
+                              handleDeleteGuide(guide.id, guide.title.en);
+                            }}
+                            disabled={updatingStatus === guide.id}
                           >
-                            Edit
+                            {updatingStatus === guide.id ? 'Deleting...' : 'Delete Guide'}
                           </Button>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button type="button" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                </svg>
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleToggleFeature(guide.id)}>
-                                {guide.isFeatured ? 'Unfeature' : 'Feature'}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => console.log('Duplicate:', guide.id)}>
-                                Duplicate
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDeleteGuide(guide.id, guide.title.en)}>
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
                         </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {pagination.totalPages > 1 && (
-            <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                Showing {(pagination.currentPage - 1) * pagination.limit + 1} to{' '}
-                {Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} of{' '}
-                {pagination.totalCount} guides
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage - 1 })}
-                  disabled={pagination.currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center space-x-1">
-                  {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => i + 1)
-                    .map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => setPagination({ ...pagination, currentPage: page })}
-                        className={`px-3 py-1 text-sm rounded ${
-                          page === pagination.currentPage
-                            ? 'bg-blue-600 dark:bg-blue-500 text-white'
-                            : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        {page}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" className="text-text-secondary dark:text-text-secondary-dark hover:text-text dark:hover:text-text-dark">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
                       </button>
-                    ))}
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage + 1 })}
-                  disabled={pagination.currentPage === pagination.totalPages}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setViewPopoverOpen(guide.id)}>
+                        View
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/guides/${guide.id}/edit`)}>
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleToggleFeature(guide.id)}>
+                        {guide.isFeatured ? 'Unfeature' : 'Feature'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => console.log('Duplicate:', guide.id)}>
+                        Duplicate
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDeleteGuide(guide.id, guide.title.en)}>
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))
           )}
-        </CardContent>
-      </Card>
+        </TableBody>
+      </Table>
+
+      {/* Pagination */}
+      {pagination.totalPages > 1 && (
+        <div className="bg-gray-50 dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
+            Showing {(pagination.currentPage - 1) * pagination.limit + 1} to{' '}
+            {Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} of{' '}
+            {pagination.totalCount} guides
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage - 1 })}
+              disabled={pagination.currentPage === 1}
+            >
+              Previous
+            </Button>
+            <div className="flex items-center space-x-1">
+              {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => i + 1)
+                .map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setPagination({ ...pagination, currentPage: page })}
+                    className={`px-3 py-1 text-sm rounded ${
+                      page === pagination.currentPage
+                        ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                        : 'bg-white dark:bg-gray-700 text-text-secondary dark:text-text-secondary-dark hover:bg-gray-100 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage + 1 })}
+              disabled={pagination.currentPage === pagination.totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

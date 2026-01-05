@@ -21,11 +21,15 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
     const status = searchParams.get('status') || 'pending'; // Filter by status, default to pending
     const search = searchParams.get('search') || '';
+    const entityType = searchParams.get('entityType') || ''; // Filter by entity type
 
     // Build query
     const query: any = {};
     if (status && status !== 'all') {
       query.status = status;
+    }
+    if (entityType) {
+      query.entityType = entityType.toLowerCase();
     }
     if (search) {
       query.$or = [
@@ -35,15 +39,33 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [reviews, total] = await Promise.all([
-      Review.find(query)
+    // Fetch reviews and populate entityId with area field for skateparks
+    let reviews;
+    try {
+      reviews = await Review.find(query)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate('entityId', 'name slug')
-        .lean(),
-      Review.countDocuments(query),
-    ]);
+        .populate({
+          path: 'entityId',
+          select: 'name slug area',
+        })
+        .lean();
+    } catch (populateError) {
+      // If populate fails (e.g., area field doesn't exist for some models), try without area
+      console.warn('Populate with area failed, trying without area:', populateError);
+      reviews = await Review.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate({
+          path: 'entityId',
+          select: 'name slug',
+        })
+        .lean();
+    }
+
+    const total = await Review.countDocuments(query);
 
     return NextResponse.json({
       reviews,
@@ -160,6 +182,11 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+
+
+
+
 
 
 
