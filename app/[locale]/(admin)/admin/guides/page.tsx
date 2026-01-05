@@ -553,9 +553,6 @@ export default function GuidesPage() {
             <TableHead className="hidden md:table-cell">
               Status
             </TableHead>
-            <TableHead className="hidden md:table-cell">
-              Featured
-            </TableHead>
             <TableHead>
               Actions
             </TableHead>
@@ -666,15 +663,6 @@ export default function GuidesPage() {
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(guide.status)}`}>
                     {guide.status}
                   </span>
-                </TableCell>
-                <TableCell className="hidden md:table-cell whitespace-nowrap">
-                  {guide.isFeatured ? (
-                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
-                      Featured
-                    </span>
-                  ) : (
-                    <span className="text-text-secondary dark:text-text-secondary-dark">—</span>
-                  )}
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-sm font-medium">
                   <Popover open={viewPopoverOpen === guide.id} onOpenChange={(open) => setViewPopoverOpen(open ? guide.id : null)}>

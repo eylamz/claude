@@ -10,6 +10,7 @@ import { ImageUploader } from '@/components/admin';
 import { Moon, Sun, ChevronLeft, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import { Icon } from '@/components/icons';
+import { Label } from '@radix-ui/react-dropdown-menu';
 
 interface ContentBlock {
   id: string;
@@ -838,26 +839,111 @@ export default function EditGuidePage() {
       </div>
 
       {previewMode ? (
-        /* Preview Mode */
-        <div className="space-y-6">
-          <Card>
-            <div className="relative w-full h-64 bg-gray-100 rounded-t-lg overflow-hidden">
-              {formData.coverImage && (
-                <img src={formData.coverImage} alt="Cover" className="w-full h-full object-cover" />
-              )}
+        /* Preview Mode - Matching Public Guide Page Layout */
+        <div className="min-h-screen bg-white dark:bg-gray-950">
+          {/* Sticky Back Navigation */}
+          <div className="sticky top-0 z-40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3">
+              <Button
+                variant="info"
+                onClick={() => setPreviewMode(false)}
+                className="inline-flex items-center gap-1 font-medium text-sm transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back to Edit
+              </Button>
             </div>
-            <CardHeader>
-              <CardTitle>{formData.title[activeTab] || 'Untitled Guide'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-gray-600">{formData.description[activeTab]}</p>
-                {formData.contentBlocks[activeTab].map((block, index) => (
-                  <RenderContentBlock key={block.id} block={block} lang={activeTab} />
-                ))}
+          </div>
+
+          <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+            {/* Article Header */}
+            <header className="mb-8">
+              {/* Title - Large and bold */}
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mb-4">
+                {formData.title[activeTab] || 'Untitled Guide'}
+              </h1>
+
+              {/* Description/Subtitle */}
+              <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+                {formData.description[activeTab] || ''}
+              </p>
+            </header>
+
+            {/* Cover Image - Full width with rounded corners */}
+            {formData.coverImage && (
+              <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-10">
+                <Image
+                  src={formData.coverImage}
+                  alt={formData.title[activeTab] || 'Cover'}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+                />
               </div>
-            </CardContent>
-          </Card>
+            )}
+
+            {/* Article Content */}
+            <article className="mb-12">
+              <div className="space-y-6">
+                {formData.contentBlocks[activeTab]
+                  .sort((a, b) => a.order - b.order)
+                  .map((block) => (
+                    <RenderContentBlock key={block.id} block={block} lang={activeTab} />
+                  ))}
+              </div>
+            </article>
+
+            {/* Tags Section */}
+            {formData.tags[activeTab].length > 0 && (
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <Icon name="tagBold" className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tags</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {formData.tags[activeTab].map((tag) => (
+                    <span
+                      key={tag}
+                      className="uppercase px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] transition-colors"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Related Sports */}
+            {formData.relatedSports.length > 0 && (
+              <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 mb-8">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                  Related Sports
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {formData.relatedSports.map((sport) => (
+                    <span
+                      key={sport}
+                      className="px-3 py-1.5 rounded-full text-sm font-medium bg-brand-main/10 text-brand-main dark:bg-brand-main/20 dark:text-brand-dark"
+                    >
+                      {sport}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Back to Edit - Bottom CTA */}
+            <div className="text-center pt-8">
+              <Button
+                variant="info"
+                onClick={() => setPreviewMode(false)}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-main hover:bg-brand-main/90 text-white font-semibold transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                {activeTab === 'he' ? 'חזרה לעריכה' : 'Back to Edit'}
+              </Button>
+            </div>
+          </main>
         </div>
       ) : (
         /* Edit Mode */
@@ -977,7 +1063,8 @@ export default function EditGuidePage() {
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {SPORTS.map((sport) => (
-                    <button
+                    <Button
+                      variant={formData.relatedSports.includes(sport.toLowerCase()) ? 'info' : 'grey'}
                       key={sport}
                       type="button"
                       onClick={() =>
@@ -985,14 +1072,10 @@ export default function EditGuidePage() {
                           ? handleRemoveSport(sport.toLowerCase())
                           : handleAddSport(sport.toLowerCase())
                       }
-                      className={`px-3 py-1 rounded ${
-                        formData.relatedSports.includes(sport.toLowerCase())
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-700'
-                      }`}
+                      className={`px-3 py-1 rounded`}
                     >
                       {sport}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -1009,19 +1092,20 @@ export default function EditGuidePage() {
                 </div>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {formData.tags[activeTab].map((tag) => (
-                    <span
+                    <Button
+                      variant="purple"
                       key={tag}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                      onClick={() => handleRemoveTag(tag)}
+
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm"
                     >
                       {tag}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveTag(tag)}
-                        className="ml-2 text-blue-600 hover:text-blue-800"
+                      <p
+                        className="ms-2"
                       >
                         ×
-                      </button>
-                    </span>
+                      </p>
+                    </Button>
                   ))}
                 </div>
                 <Input
@@ -1047,35 +1131,29 @@ export default function EditGuidePage() {
                   <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600">
                     <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Editing:</span>
                     <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                      variant={activeTab === 'en' ? 'info' : 'grey'}
                       type="button"
                       onClick={() => handleTabChange('en')}
-                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                        activeTab === 'en'
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                      }`}
+                      className={`!rounded text-xs font-medium`}
                     >
-                      🇬🇧 English
-                    </button>
-                    <button
+                      English
+                    </Button>
+                    <Button
+                      variant={activeTab === 'he' ? 'info' : 'grey'}
                       type="button"
                       onClick={() => handleTabChange('he')}
-                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                        activeTab === 'he'
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                      }`}
+                      className={`!rounded text-xs font-medium`}
                       dir="rtl"
                     >
-                      🇮🇱 עברית
-                    </button>
+                      עברית
+                    </Button>
                     </div>
                   </div>
                 </div>
                 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                   <PopoverTrigger asChild>
-                    <Button type="button" variant="primary" size="sm" className="gap-2">
+                    <Button type="button" variant="grey" className="gap-2">
                       <span className="text-lg">+</span>
                       Add Content Block
                     </Button>
@@ -1673,84 +1751,142 @@ export default function EditGuidePage() {
   );
 }
 
-// Helper component to render content blocks in preview
+/**
+ * YouTube Video Embed Component
+ */
+function YouTubeEmbed({ url }: { url: string }) {
+  const getVideoId = (url: string): string | null => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : null;
+  };
+
+  const videoId = getVideoId(url);
+  if (!videoId) return null;
+
+  return (
+    <div className="relative w-full my-8" style={{ paddingBottom: '56.25%' }}>
+      <iframe
+        className="absolute top-0 left-0 w-full h-full rounded-2xl"
+        src={`https://www.youtube.com/embed/${videoId}`}
+        title="YouTube video player"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  );
+}
+
+// Helper component to render content blocks in preview - Matching Public Guide Page Style
 function RenderContentBlock({ block, lang }: { block: ContentBlock; lang: 'en' | 'he' }) {
+  const parseTextWithLinks = (text: string) => {
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const parts: (string | React.ReactElement)[] = [];
+    let lastIndex = 0;
+    let match;
+    let key = 0;
+
+    while ((match = linkRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      parts.push(
+        <a
+          key={key++}
+          href={match[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-brand-main dark:text-brand-dark font-medium underline decoration-2 underline-offset-2 hover:decoration-brand-main/50 transition-all"
+        >
+          {match[1]}
+        </a>
+      );
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+    return parts.length > 0 ? parts : [text];
+  };
+
   switch (block.type) {
+    case 'heading':
+      const HeadingTag = block.headingLevel || 'h2';
+      const headingText = block.heading || '';
+      
+      // Duolingo-style heading classes - clean and bold
+      const headingClasses = {
+        h2: 'text-[1.225rem] sm:text-3xl font-extrabold mt-12 mb-4 text-gray-900 dark:text-white',
+        h3: 'text-xl sm:text-[1.225rem] font-bold mt-10 mb-3 text-gray-900 dark:text-white',
+        h4: 'text-lg sm:text-xl font-bold mt-8 mb-2 text-gray-900 dark:text-white',
+      };
+      return (
+        <HeadingTag
+          className={headingClasses[HeadingTag as 'h2' | 'h3' | 'h4'] || headingClasses.h2}
+        >
+          {headingText}
+        </HeadingTag>
+      );
+
     case 'text':
       const textContent = block.text || '';
-      // Parse markdown-style links [text](url)
-      const parseTextWithLinks = (text: string) => {
-        const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-        const parts: (string | React.ReactElement)[] = [];
-        let lastIndex = 0;
-        let match;
-        let key = 0;
-
-        while ((match = linkRegex.exec(text)) !== null) {
-          // Add text before the link
-          if (match.index > lastIndex) {
-            parts.push(text.substring(lastIndex, match.index));
-          }
-          // Add the link
-          parts.push(
-            <a
-              key={key++}
-              href={match[2]}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 underline"
-            >
-              {match[1]}
-            </a>
-          );
-          lastIndex = match.index + match[0].length;
-        }
-        // Add remaining text
-        if (lastIndex < text.length) {
-          parts.push(text.substring(lastIndex));
-        }
-        return parts.length > 0 ? parts : [text];
-      };
       
       return (
-        <p className="text-base leading-relaxed">
+        <p className="text-[1rem] leading-relaxed text-gray-700 dark:text-gray-300">
           {parseTextWithLinks(textContent)}
         </p>
       );
-    
-    case 'heading':
-      const HeadingTag = block.headingLevel || 'h2';
-      return React.createElement(HeadingTag, { className: 'font-bold' }, block.heading || '');
-    
+
     case 'list':
-      const listItems = block.listItems || [];
       const ListTag = block.listType === 'numbered' ? 'ol' : 'ul';
-      const listClassName = block.listType === 'numbered' ? 'list-decimal pl-5' : 'list-disc pl-5';
+      const isNumbered = block.listType === 'numbered';
+      const isRTL = lang === 'he';
+      const listItems = block.listItems || [];
       
       return (
-        <ListTag className={listClassName}>
+        <ListTag 
+          className={`my-6 space-y-3 ${isNumbered ? 'list-decimal' : 'list-none'} ${isRTL ? 'pr-0' : 'pl-0'}`}
+        >
           {listItems.filter(Boolean).map((item: any, i: number) => (
-            <li key={i} className="mb-2">
-              {item.title && <strong className="font-semibold">{item.title}: </strong>}
-              <span>{item.content}</span>
+            <li 
+              key={i} 
+              className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}
+            >
+              {!isNumbered && (
+                <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              )}
+              <div>
+                {item.title && (
+                  <span className="font-bold text-gray-900 dark:text-white">{item.title} </span>
+                )}
+                {item.content}
+              </div>
             </li>
           ))}
         </ListTag>
       );
-    
+
     case 'image':
       if (!block.imageUrl) return null;
+      
       const imageElement = (
-        <img src={block.imageUrl} alt={block.imageAlt || ''} className="w-full rounded" />
+        <Image
+          src={block.imageUrl}
+          alt={block.imageAlt || block.imageCaption || 'Guide image'}
+          width={800}
+          height={450}
+          className={`w-full h-auto rounded-2xl ${block.imageLinkUrl ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''}`}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+        />
       );
+      
       return (
-        <div className="my-4">
+        <figure className="my-8">
           {block.imageLinkUrl ? (
             <a
               href={block.imageLinkUrl}
               target={block.imageLinkExternal ? '_blank' : '_self'}
               rel={block.imageLinkExternal ? 'noopener noreferrer' : undefined}
-              className="block"
             >
               {imageElement}
             </a>
@@ -1758,47 +1894,65 @@ function RenderContentBlock({ block, lang }: { block: ContentBlock; lang: 'en' |
             imageElement
           )}
           {block.imageCaption && (
-            <p className="text-sm text-gray-500 text-center mt-2">{block.imageCaption}</p>
+            <figcaption className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3 italic">
+              {block.imageCaption}
+            </figcaption>
+          )}
+        </figure>
+      );
+
+    case 'video':
+      if (!block.videoUrl) return null;
+      
+      return (
+        <div className="my-8">
+          {block.videoUrl.includes('youtube.com') || block.videoUrl.includes('youtu.be') ? (
+            <YouTubeEmbed url={block.videoUrl} />
+          ) : (
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+              <video
+                src={block.videoUrl}
+                controls
+                className="w-full h-full"
+              >
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          )}
+          {block.videoTitle && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 text-center italic">{block.videoTitle}</p>
           )}
         </div>
       );
-    
-    case 'video':
-      if (!block.videoUrl) return null;
-      return (
-        <div className="my-4">
-          <div className="w-full h-64 bg-gray-100 rounded flex items-center justify-center">
-            <p className="text-gray-500">Video: {block.videoUrl}</p>
-          </div>
-        </div>
-      );
-    
+
     case 'link':
       if (!block.linkUrl) return null;
+      
       return (
-        <a
-          href={block.linkUrl}
-          target={block.linkExternal ? '_blank' : undefined}
-          rel={block.linkExternal ? 'noopener noreferrer' : undefined}
-          className="text-blue-600 hover:underline"
-        >
-          {block.linkText || block.linkUrl}
-        </a>
+        <p className="my-6">
+          <a
+            href={block.linkUrl}
+            target={block.linkExternal ? '_blank' : '_self'}
+            rel={block.linkExternal ? 'noopener noreferrer' : undefined}
+            className="inline-flex items-center gap-1 text-brand-main dark:text-brand-dark font-semibold underline decoration-2 underline-offset-2 hover:decoration-brand-main/50 transition-colors"
+          >
+            {block.linkText || block.linkUrl}
+            {block.linkExternal && <ExternalLink className="w-4 h-4" />}
+          </a>
+        </p>
       );
-    
+
     case 'code':
       if (!block.code) return null;
       return (
-        <div className="my-4">
-          <pre className="bg-gray-100 p-4 rounded overflow-x-auto">
-            <code>{block.code}</code>
-          </pre>
-        </div>
+        <pre className="bg-gray-900 text-gray-100 rounded-2xl p-6 overflow-x-auto my-8">
+          <code className="text-sm font-mono">{block.code}</code>
+        </pre>
       );
-    
+
     case 'divider':
-      return <hr className="border-gray-300 my-4" />;
-    
+      return <hr className="my-12 border-t-2 border-gray-200 dark:border-gray-700" />;
+
     default:
       return null;
   }
