@@ -4,13 +4,34 @@ import { useEffect, useState, useCallback, memo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { X, TrendingUp } from 'lucide-react';
-import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui';
+import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SegmentedControls } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Icon } from '@/components/icons';
 import type { GuideData, FiltersData } from '@/lib/api/guides';
 
 interface Guide extends GuideData {}
+
+// Sport to Icon Mapping - Easy to edit and extend
+// Add or modify sports here with their corresponding icon names
+const SPORT_ICON_MAP: Record<string, string> = {
+  'Skateboarding': 'Skate',
+  'Skating': 'Skate',
+  'BMX': 'bmx-icon',
+  'BMXing': 'bmx-icon',
+  'Scooter': 'scooter',
+  'Scootering': 'scooter',
+  'Roller Skating': 'Roller',
+  'Rollerblading': 'Roller',
+  'Longboarding': 'Skate', // Using Skate icon as fallback
+  'Ski': 'Skate', // Using Skate icon as fallback
+  'Snowboard': 'Skate', // Using Skate icon as fallback
+};
+
+// Helper function to get icon for a sport
+const getSportIcon = (sport: string): string => {
+  return SPORT_ICON_MAP[sport] || 'Skate'; // Default to Skate icon if not found
+};
 
 interface GuidesPageProps {
   initialData?: {
@@ -303,6 +324,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   );
   const [loading, setLoading] = useState(!initialData);
   const [totalResults, setTotalResults] = useState(initialData?.pagination?.total || 0);
+  const [cacheInitialized, setCacheInitialized] = useState(false);
   
   // Filters
   const [selectedSports, setSelectedSports] = useState<string[]>(
@@ -347,17 +369,221 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fetch guides only when filters/pagination change
+  // Check version and cache on mount
   useEffect(() => {
-    if (initialData && page === 1 && selectedSports.length === 0 && !difficulty && minRating === 0 && !searchQuery && sortBy === 'newest') {
+    const checkVersionAndCache = async () => {
+      const cacheKey = 'guides_cache';
+      const versionKey = 'guides_version';
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedVersion = localStorage.getItem(versionKey);
+
+      // If no cache or version, fetch and cache all guides
+      if (!cachedData || !cachedVersion) {
+        try {
+          const response = await fetch('/api/guides?limit=100');
+          if (response.ok) {
+            const data = await response.json();
+            const currentVersion = data.version || 1;
+            const allGuides = data.guides || [];
+            
+            // Store in cache
+            localStorage.setItem(cacheKey, JSON.stringify(allGuides));
+            localStorage.setItem(versionKey, currentVersion.toString());
+          }
+        } catch (error) {
+          console.error('Error fetching guides for cache:', error);
+        }
+      } else {
+        // Cache exists, check version in background
+        try {
+          const versionResponse = await fetch('/api/guides?versionOnly=true');
+          if (versionResponse.ok) {
+            const versionData = await versionResponse.json();
+            const currentVersion = versionData.version || 1;
+            const storedVersion = parseInt(cachedVersion);
+
+            // If versions don't match, update cache
+            if (storedVersion !== currentVersion) {
+              const response = await fetch('/api/guides?limit=100');
+              if (response.ok) {
+                const data = await response.json();
+                const newVersion = data.version || 1;
+                const allGuides = data.guides || [];
+                
+                // Update cache
+                localStorage.setItem(cacheKey, JSON.stringify(allGuides));
+                localStorage.setItem(versionKey, newVersion.toString());
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to check guides version', error);
+        }
+      }
+      
+      setCacheInitialized(true);
+    };
+
+    checkVersionAndCache();
+  }, []);
+
+  // Fetch guides only when filters/pagination change (wait for cache to initialize)
+  useEffect(() => {
+    if (!cacheInitialized) return; // Wait for cache check to complete
+    
+    // For initial load with no filters, try to use cache first
+    const isInitialLoad = page === 1 && selectedSports.length === 0 && !difficulty && minRating === 0 && !searchQuery && sortBy === 'newest';
+    
+    if (isInitialLoad && initialData) {
+      // Check if cache exists and is valid
+      const cacheKey = 'guides_cache';
+      const versionKey = 'guides_version';
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedVersion = localStorage.getItem(versionKey);
+      
+      if (cachedData && cachedVersion) {
+        // Use cached data for initial render
+        try {
+          const allCachedGuides = JSON.parse(cachedData);
+          if (Array.isArray(allCachedGuides) && allCachedGuides.length > 0) {
+            // Apply pagination
+            const limit = 12;
+            const paginatedGuides = allCachedGuides.slice(0, limit);
+            
+            setGuides(paginatedGuides);
+            setTotalResults(allCachedGuides.length);
+            
+            // Extract filters from cached data
+            const sportsSet = new Set<string>();
+            allCachedGuides.forEach((guide: Guide) => {
+              guide.relatedSports?.forEach(sport => sportsSet.add(sport));
+            });
+            setFiltersData({
+              sports: Array.from(sportsSet).sort(),
+              difficulties: ['Beginner', 'Intermediate', 'Advanced', 'Expert'].filter(diff =>
+                allCachedGuides.some((guide: Guide) => guide.difficulty?.toLowerCase() === diff.toLowerCase())
+              ),
+            });
+            
+            return; // Use cache, don't fetch
+          }
+        } catch (e) {
+          console.warn('Failed to use cached guides on initial load', e);
+        }
+      }
+      
+      // No valid cache, use initialData (already set in state)
       return;
     }
+    
+    // For filtered/searched/paginated views, always fetch (or use cache in fetchGuides)
     fetchGuides();
-  }, [selectedSports, difficulty, minRating, searchQuery, sortBy, page, locale]);
+  }, [cacheInitialized, selectedSports, difficulty, minRating, searchQuery, sortBy, page, locale, initialData]);
 
   const fetchGuides = async () => {
     setLoading(true);
     try {
+      const cacheKey = 'guides_cache';
+      const versionKey = 'guides_version';
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedVersion = localStorage.getItem(versionKey);
+
+      // Try to use cache first if available
+      if (cachedData && cachedVersion) {
+        try {
+          const allCachedGuides = JSON.parse(cachedData);
+          
+          // Check version to ensure cache is valid
+          const versionResponse = await fetch('/api/guides?versionOnly=true');
+          if (versionResponse.ok) {
+            const versionData = await versionResponse.json();
+            const currentVersion = versionData.version || 1;
+            const storedVersion = parseInt(cachedVersion);
+
+            // If version matches, filter cached guides client-side
+            if (storedVersion === currentVersion && Array.isArray(allCachedGuides)) {
+              let filteredGuides = [...allCachedGuides];
+
+              // Apply filters
+              if (searchQuery) {
+                const searchLower = searchQuery.toLowerCase();
+                filteredGuides = filteredGuides.filter((guide: Guide) => {
+                  const title = guide.title || '';
+                  const description = guide.description || '';
+                  return title.toLowerCase().includes(searchLower) || 
+                         description.toLowerCase().includes(searchLower);
+                });
+              }
+
+              if (selectedSports.length > 0) {
+                filteredGuides = filteredGuides.filter((guide: Guide) => 
+                  guide.relatedSports?.some(sport => selectedSports.includes(sport))
+                );
+              }
+
+              if (difficulty) {
+                filteredGuides = filteredGuides.filter((guide: Guide) => 
+                  guide.difficulty?.toLowerCase() === difficulty.toLowerCase()
+                );
+              }
+
+              if (minRating > 0) {
+                filteredGuides = filteredGuides.filter((guide: Guide) => 
+                  (guide.rating || 0) >= minRating
+                );
+              }
+
+              // Apply sorting
+              filteredGuides.sort((a: Guide, b: Guide) => {
+                switch (sortBy) {
+                  case 'rating':
+                    return (b.rating || 0) - (a.rating || 0);
+                  case 'views':
+                    return (b.viewsCount || 0) - (a.viewsCount || 0);
+                  case 'title':
+                    return (a.title || '').localeCompare(b.title || '');
+                  case 'newest':
+                  default:
+                    return 0; // Already sorted by newest in cache
+                }
+              });
+
+              // Apply pagination
+              const limit = 12;
+              const startIndex = (page - 1) * limit;
+              const paginatedGuides = filteredGuides.slice(startIndex, startIndex + limit);
+
+              setGuides(paginatedGuides);
+              setTotalResults(filteredGuides.length);
+              
+              // Extract filters from cached data if needed
+              if (filtersData.sports.length === 0 && allCachedGuides.length > 0) {
+                const sportsSet = new Set<string>();
+                allCachedGuides.forEach((guide: Guide) => {
+                  guide.relatedSports?.forEach(sport => sportsSet.add(sport));
+                });
+                setFiltersData({
+                  sports: Array.from(sportsSet).sort(),
+                  difficulties: ['Beginner', 'Intermediate', 'Advanced', 'Expert'].filter(diff =>
+                    allCachedGuides.some((guide: Guide) => guide.difficulty?.toLowerCase() === diff.toLowerCase())
+                  ),
+                });
+              }
+
+              setLoading(false);
+              return; // Exit early, used cache
+            } else {
+              // Version mismatch, fetch fresh data
+              console.log('Guides version mismatch, fetching fresh data');
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to use cached guides data', e);
+          // Continue to fetch from API
+        }
+      }
+
+      // Fetch from API (no cache or cache invalid)
       const params = new URLSearchParams();
       params.set('sports', selectedSports.join(','));
       params.set('difficulty', difficulty);
@@ -377,6 +603,19 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
         setTotalResults(data.pagination?.total || 0);
         if (data.filters) {
           setFiltersData(data.filters);
+        }
+
+        // Update cache if we got all guides (limit=100)
+        if (data.version) {
+          const allGuidesResponse = await fetch('/api/guides?limit=100');
+          if (allGuidesResponse.ok) {
+            const allGuidesData = await allGuidesResponse.json();
+            const currentVersion = allGuidesData.version || 1;
+            const allGuides = allGuidesData.guides || [];
+            
+            localStorage.setItem(cacheKey, JSON.stringify(allGuides));
+            localStorage.setItem(versionKey, currentVersion.toString());
+          }
         }
       }
     } catch (error) {
@@ -482,33 +721,33 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             </div>
 
             {/* Right: Filters + Sort */}
-            <div className="flex items-center gap-0 xsm:gap-1">
-              {/* Sports Filter */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-1">
+              {/* Sports Filter - Segmented Controls */}
               {filtersData.sports.length > 0 && (
-                <div className="flex-shrink-0">
-                  <Select
+                <div className="flex-shrink-0 w-full sm:w-auto min-w-0">
+                  <SegmentedControls
+                    options={[
+                      { value: 'all', label: tr('All Sports', 'כל הספורט'), icon: undefined },
+                      ...filtersData.sports.map((sport) => ({
+                        value: sport,
+                        label: sport,
+                        icon: getSportIcon(sport),
+                      })),
+                    ]}
                     value={selectedSports.length > 0 ? selectedSports[0] : 'all'}
-                    onValueChange={(value) => {
-                      if (value === 'all') {
+                    onChange={(value) => {
+                      const sportValue = Array.isArray(value) ? value[0] : value;
+                      if (sportValue === 'all') {
                         setSelectedSports([]);
                       } else {
-                        setSelectedSports([value]);
+                        setSelectedSports([sportValue]);
                       }
                       setPage(1);
                     }}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder={tr('All Sports', 'כל הספורט')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{tr('All Sports', 'כל הספורט')}</SelectItem>
-                      {filtersData.sports.map((sport) => (
-                        <SelectItem key={sport} value={sport}>
-                          {sport}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    size="md"
+                    variant="default"
+                    className="w-full sm:w-auto"
+                  />
                 </div>
               )}
 

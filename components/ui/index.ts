@@ -16,5 +16,6 @@ export { Badge } from './badge';
 export { Separator } from './separator';
 export { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './tooltip';
 export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from './table';
+export { SegmentedControls, type SegmentedControlOption, type SegmentedControlsProps } from './segmented-controls';
 
 

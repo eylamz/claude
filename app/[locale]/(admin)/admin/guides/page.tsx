@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Button, Card, CardContent, Skeleton, SelectWrapper, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui';
@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Popover, PopoverContent } from '@/components/ui/popover';
+import { NumberInput } from '@/components/ui/number-input';
 
 interface Guide {
   id: string;
@@ -77,18 +78,226 @@ export default function GuidesPage() {
 
   // Filters
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [sport, setSport] = useState('all');
   const [sortBy, setSortBy] = useState('viewsCount');
   const [sortOrder, setSortOrder] = useState('desc');
 
-  const fetchGuides = useCallback(async () => {
+  // Cache version control
+  const [guidesVersion, setGuidesVersion] = useState<number>(1);
+  const [savingVersion, setSavingVersion] = useState(false);
+  
+  // Refs to prevent duplicate API calls
+  const isFetchingRef = useRef(false);
+  const versionCheckInProgressRef = useRef(false);
+  const lastVersionCheckRef = useRef<number>(0);
+
+  // Fetch settings on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/admin/settings');
+        if (response.ok) {
+          const data = await response.json();
+          setGuidesVersion(data.settings?.guidesVersion || 1);
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  // Save version
+  const handleSaveVersion = async () => {
     try {
-      setLoading(true);
+      setSavingVersion(true);
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guidesVersion }),
+      });
+      if (!response.ok) throw new Error('Failed to save version');
+      alert('Version updated successfully!');
+    } catch (error) {
+      console.error('Error updating version:', error);
+      alert('Failed to update version');
+    } finally {
+      setSavingVersion(false);
+    }
+  };
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      // Reset to page 1 when search changes
+      setPagination(prev => ({ ...prev, currentPage: 1 }));
+    }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset to page 1 when filters change (except search, which is handled above)
+  useEffect(() => {
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  }, [status, sport, sortBy, sortOrder]);
+
+  // Check version and update cache if needed (debounced)
+  // Using ref to avoid circular dependency
+  const fetchGuidesRef = useRef<(() => Promise<void>) | null>(null);
+
+  const fetchGuides = useCallback(async () => {
+    // Prevent duplicate concurrent calls
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    isFetchingRef.current = true;
+    const cacheKey = 'guides_cache_all'; // Use all guides cache for admin view
+    const versionKey = 'guides_version';
+    const cachedData = localStorage.getItem(cacheKey);
+    const cachedVersion = localStorage.getItem(versionKey);
+
+    // If cache exists, use it and apply filters/pagination on client side
+    if (cachedData) {
+      try {
+        const parsedData = JSON.parse(cachedData);
+        let filteredGuides = [...parsedData];
+
+        // Apply filters
+        if (debouncedSearch) {
+          const searchLower = debouncedSearch.toLowerCase();
+          filteredGuides = filteredGuides.filter((guide: any) => {
+            const titleEn = guide.title?.en || '';
+            const titleHe = guide.title?.he || '';
+            return titleEn.toLowerCase().includes(searchLower) || 
+                   titleHe.toLowerCase().includes(searchLower);
+          });
+        }
+
+        if (status && status !== 'all') {
+          filteredGuides = filteredGuides.filter((guide: any) => guide.status === status);
+        }
+
+        if (sport && sport !== 'all') {
+          filteredGuides = filteredGuides.filter((guide: any) => 
+            guide.relatedSports?.includes(sport)
+          );
+        }
+
+        // Apply sorting
+        filteredGuides.sort((a: any, b: any) => {
+          let aValue: any;
+          let bValue: any;
+
+          switch (sortBy) {
+            case 'viewsCount':
+              aValue = a.viewsCount || 0;
+              bValue = b.viewsCount || 0;
+              return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+            case 'rating':
+              aValue = a.rating || 0;
+              bValue = b.rating || 0;
+              return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+            case 'createdAt':
+            default:
+              aValue = new Date(a.createdAt || 0).getTime();
+              bValue = new Date(b.createdAt || 0).getTime();
+              return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+          }
+        });
+
+        // Apply pagination
+        const totalCount = filteredGuides.length;
+        const totalPages = Math.ceil(totalCount / pagination.limit);
+        const startIndex = (pagination.currentPage - 1) * pagination.limit;
+        const paginatedGuides = filteredGuides.slice(startIndex, startIndex + pagination.limit);
+
+        setGuides(paginatedGuides);
+        setPagination({
+          currentPage: pagination.currentPage,
+          totalPages,
+          totalCount,
+          limit: pagination.limit,
+        });
+        setLoading(false);
+        isFetchingRef.current = false;
+
+        // Check version in background (debounced, non-blocking)
+        // Only check if at least 5 seconds have passed since last check
+        const now = Date.now();
+        if (now - lastVersionCheckRef.current >= 5000 && !versionCheckInProgressRef.current) {
+          versionCheckInProgressRef.current = true;
+          lastVersionCheckRef.current = now;
+          
+          (async () => {
+            try {
+              const versionResponse = await fetch('/api/guides?versionOnly=true');
+              if (versionResponse.ok) {
+                const versionData = await versionResponse.json();
+                const currentVersion = versionData.version || 1;
+                const storedVersion = cachedVersion ? parseInt(cachedVersion) : 0;
+
+                // If versions don't match, update cache
+                if (storedVersion !== currentVersion) {
+                  // Fetch and cache all guides (including non-published) for admin view
+                  try {
+                    const allResponse = await fetch('/api/admin/guides?limit=10000');
+                    if (allResponse.ok) {
+                      const allData = await allResponse.json();
+                      const allGuides = allData.guides || [];
+                      localStorage.setItem('guides_cache_all', JSON.stringify(allGuides));
+                      localStorage.setItem(versionKey, currentVersion.toString());
+                    }
+                  } catch (e) {
+                    console.warn('Failed to fetch all guides during version check', e);
+                  }
+                  
+                  // Also update public cache
+                  try {
+                    const publicResponse = await fetch('/api/guides?limit=100');
+                    if (publicResponse.ok) {
+                      const publicData = await publicResponse.json();
+                      localStorage.setItem('guides_cache', JSON.stringify(publicData.guides || []));
+                    }
+                  } catch (e) {
+                    console.warn('Failed to update public guides cache during version check', e);
+                  }
+                  
+                  // Only trigger refetch if we're not already fetching
+                  if (!isFetchingRef.current && fetchGuidesRef.current) {
+                    setTimeout(() => {
+                      fetchGuidesRef.current?.();
+                    }, 100);
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('Failed to check version', e);
+            } finally {
+              versionCheckInProgressRef.current = false;
+            }
+          })();
+        }
+
+        return; // Exit early since we used cache
+      } catch (e) {
+        // If cache is corrupted, continue to fetch fresh data
+        console.warn('Failed to parse cached guides data', e);
+        localStorage.removeItem(cacheKey);
+        localStorage.removeItem(versionKey);
+      }
+    }
+
+    // No cache exists or cache was corrupted, fetch fresh data
+    setLoading(true);
+    try {
       const params = new URLSearchParams({
         page: pagination.currentPage.toString(),
         limit: pagination.limit.toString(),
-        ...(search && { search }),
+        ...(debouncedSearch && { search: debouncedSearch }),
         ...(status && status !== 'all' && { status }),
         ...(sport && sport !== 'all' && { sport }),
         sortBy,
@@ -101,12 +310,40 @@ export default function GuidesPage() {
       const data = await response.json();
       setGuides(data.guides);
       setPagination(data.pagination);
+
+      // Update cache in background (non-blocking)
+      try {
+        // Fetch and cache all guides (including non-published) for admin view
+        const allResponse = await fetch('/api/admin/guides?limit=10000');
+        if (allResponse.ok) {
+          const allData = await allResponse.json();
+          const allGuides = allData.guides || [];
+          localStorage.setItem('guides_cache_all', JSON.stringify(allGuides));
+        }
+        
+        // Also update public cache and version
+        const publicResponse = await fetch('/api/guides?limit=10000');
+        if (publicResponse.ok) {
+          const publicData = await publicResponse.json();
+          const currentVersion = publicData.version || 1;
+          localStorage.setItem('guides_cache', JSON.stringify(publicData.guides || []));
+          localStorage.setItem(versionKey, currentVersion.toString());
+        }
+      } catch (e) {
+        console.warn('Failed to update cache', e);
+      }
     } catch (error) {
       console.error('Error fetching guides:', error);
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [pagination.currentPage, pagination.limit, search, status, sport, sortBy, sortOrder]);
+  }, [pagination.currentPage, pagination.limit, debouncedSearch, status, sport, sortBy, sortOrder]);
+
+  // Store fetchGuides in ref for version check callback
+  useEffect(() => {
+    fetchGuidesRef.current = fetchGuides;
+  }, [fetchGuides]);
 
   useEffect(() => {
     fetchGuides();
@@ -257,6 +494,14 @@ export default function GuidesPage() {
         alert(`Successfully ${actionLabel}ed ${results.success} guide(s).`);
       }
 
+      // Clear cache to force refresh
+      const cacheKey = 'guides_cache';
+      const versionKey = 'guides_version';
+      const allCacheKey = 'guides_cache_all';
+      localStorage.removeItem(cacheKey);
+      localStorage.removeItem(versionKey);
+      localStorage.removeItem(allCacheKey);
+
       // Refresh the list
       fetchGuides();
     } catch (error) {
@@ -281,6 +526,14 @@ export default function GuidesPage() {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to update status');
       }
+
+      // Clear cache to force refresh
+      const cacheKey = 'guides_cache';
+      const versionKey = 'guides_version';
+      const allCacheKey = 'guides_cache_all';
+      localStorage.removeItem(cacheKey);
+      localStorage.removeItem(versionKey);
+      localStorage.removeItem(allCacheKey);
 
       // Update the guide in the local state
       setGuides(prevGuides =>
@@ -313,6 +566,14 @@ export default function GuidesPage() {
         throw new Error(errorData.error || 'Failed to update guide');
       }
 
+      // Clear cache to force refresh
+      const cacheKey = 'guides_cache';
+      const versionKey = 'guides_version';
+      const allCacheKey = 'guides_cache_all';
+      localStorage.removeItem(cacheKey);
+      localStorage.removeItem(versionKey);
+      localStorage.removeItem(allCacheKey);
+
       // Update the guide in the local state
       setGuides(prevGuides =>
         prevGuides.map(g =>
@@ -342,6 +603,14 @@ export default function GuidesPage() {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to delete guide');
       }
+
+      // Clear cache to force refresh
+      const cacheKey = 'guides_cache';
+      const versionKey = 'guides_version';
+      const allCacheKey = 'guides_cache_all';
+      localStorage.removeItem(cacheKey);
+      localStorage.removeItem(versionKey);
+      localStorage.removeItem(allCacheKey);
 
       // Remove the guide from the local state
       setGuides(prevGuides => prevGuides.filter(guide => guide.id !== guideId));
@@ -417,12 +686,76 @@ export default function GuidesPage() {
             Manage guides and tutorials
           </p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="grey"
+            className='flex items-center gap-1'
+            onClick={async () => {
+              // Clear localStorage cache
+              const cacheKey = 'guides_cache';
+              const versionKey = 'guides_version';
+              const allCacheKey = 'guides_cache_all';
+              localStorage.removeItem(cacheKey);
+              localStorage.removeItem(versionKey);
+              localStorage.removeItem(allCacheKey);
+              
+              // Fetch and cache all guides
+              try {
+                const allResponse = await fetch('/api/admin/guides?limit=10000');
+                if (allResponse.ok) {
+                  const allData = await allResponse.json();
+                  const allGuides = allData.guides || [];
+                  localStorage.setItem(allCacheKey, JSON.stringify(allGuides));
+                }
+              } catch (error) {
+                console.warn('Failed to fetch all guides for cache', error);
+              }
+              
+              // Trigger refetch
+              fetchGuides();
+            }}
+            title="Refresh and clear cache"
+          >
+            Refresh
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </Button>
           <Button variant="green" onClick={() => router.push(`/${locale}/admin/guides/new`)}>
             Create Guide
           </Button>
         </div>
       </div>
+
+      {/* Cache Version Control */}
+      <Card className="bg-card dark:bg-card-dark">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Guides Cache Version
+              </label>
+              <NumberInput
+                value={guidesVersion}
+                onChange={(e) => setGuidesVersion(parseInt(e.target.value) || 1)}
+                min={1}
+                className="w-32"
+                showSpinner={true}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Increment this version to invalidate all client caches
+              </p>
+            </div>
+            <Button
+              variant="info"
+              onClick={handleSaveVersion}
+              disabled={savingVersion}
+            >
+              {savingVersion ? 'Saving...' : 'Save Version'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card className="!p-0 bg-card dark:bg-card-dark">
@@ -491,7 +824,7 @@ export default function GuidesPage() {
               <p className="text-sm font-medium text-text dark:text-text-dark">
                 {selectedItems.size} guide(s) selected
               </p>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 <Button 
                   variant="orange" 
                   onClick={() => handleBulkAction('publish')}
@@ -646,7 +979,7 @@ export default function GuidesPage() {
                   })()}
                 </TableCell>
                 <TableCell className="hidden md:table-cell whitespace-nowrap">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     {renderStars(guide.rating)}
                     <span className="text-sm text-text-secondary dark:text-text-secondary-dark">
                       {guide.rating.toFixed(1)}
@@ -854,7 +1187,7 @@ export default function GuidesPage() {
             {Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} of{' '}
             {pagination.totalCount} guides
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="secondary"
               size="sm"
@@ -863,7 +1196,7 @@ export default function GuidesPage() {
             >
               Previous
             </Button>
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center gap-1">
               {Array.from({ length: Math.min(pagination.totalPages, 5) }, (_, i) => i + 1)
                 .map((page) => (
                   <button

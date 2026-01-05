@@ -59,6 +59,9 @@ export async function PUT(request: NextRequest) {
     if (body.skateparksVersion !== undefined) {
       settings.skateparksVersion = body.skateparksVersion;
     }
+    if (body.guidesVersion !== undefined) {
+      settings.guidesVersion = body.guidesVersion;
+    }
     
     await settings.save();
     
