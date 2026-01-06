@@ -110,7 +110,7 @@ const TooltipContent = React.forwardRef<
         className={cn(
           "z-50 overflow-hidden rounded-lg border  text-xs px-3 py-1.5 whitespace-nowrap",
           soon 
-            ? "bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d]" 
+            ? "border-purple-border dark:border-purple-border-dark bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark" 
             : "bg-tooltip dark:bg-tooltip-dark text-text-dark dark:text-white border-border dark:border-border-dark",
           openAnimation,
           closeAnimation,

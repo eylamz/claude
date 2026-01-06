@@ -314,7 +314,7 @@ export default function GuidesPage() {
       // Update cache in background (non-blocking)
       try {
         // Fetch and cache all guides (including non-published) for admin view
-        const allResponse = await fetch('/api/admin/guides?limit=10000');
+        const allResponse = await fetch('/api/admin/guides?limit=1000');
         if (allResponse.ok) {
           const allData = await allResponse.json();
           const allGuides = allData.guides || [];
@@ -322,7 +322,7 @@ export default function GuidesPage() {
         }
         
         // Also update public cache and version
-        const publicResponse = await fetch('/api/guides?limit=10000');
+        const publicResponse = await fetch('/api/guides?limit=1000');
         if (publicResponse.ok) {
           const publicData = await publicResponse.json();
           const currentVersion = publicData.version || 1;

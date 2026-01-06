@@ -80,7 +80,7 @@ const textVariants = cva('transition-colors duration-150 delay-150', {
     {
       variant: 'red',
       isSelected: true,
-      className: 'text-[#cc2a2a] dark:text-[#f3394c]',
+      className: 'text-red dark:text-red-dark',
     },
     {
       variant: 'red',
@@ -90,17 +90,17 @@ const textVariants = cva('transition-colors duration-150 delay-150', {
     {
       variant: 'blue',
       isSelected: true,
-      className: 'text-info dark:text-info-dark',
+      className: 'text-blue dark:text-blue-dark',
     },
     {
       variant: 'blue',
       isSelected: false,
-      className: 'text-[#424242] dark:text-[#afafaf]',
+      className: 'text-[#424242] dark:text-blue-dark',
     },
     {
       variant: 'green',
       isSelected: true,
-      className: 'text-brand-text dark:text-brand-main',
+      className: 'text-green dark:text-green-dark',
     },
     {
       variant: 'green',
@@ -110,7 +110,7 @@ const textVariants = cva('transition-colors duration-150 delay-150', {
     {
       variant: 'purple',
       isSelected: true,
-      className: 'text-[#915bf5] dark:text-[#c5b6fd]',
+      className: 'text-purple dark:text-purple-dark',
     },
     {
       variant: 'purple',
@@ -120,7 +120,7 @@ const textVariants = cva('transition-colors duration-150 delay-150', {
     {
       variant: 'orange',
       isSelected: true,
-      className: 'text-[#e49a43] dark:text-[#f39d39]',
+      className: 'text-orange dark:text-orange-dark',
     },
     {
       variant: 'orange',

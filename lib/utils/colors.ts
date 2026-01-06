@@ -285,7 +285,104 @@ export const colors = {
         light: 'hsl(210,77%,73%)', 
         dark: 'hsl(199, 63%, 27%)', 
       } 
-   }
+   },
+
+   grey: {
+    light: '#424242',
+    dark: '#afafaf',
+    bg: {
+      light: '#efefef',
+      dark: '#262626',
+    },
+    border: {
+      light: '#e6e6e6',
+      dark: '#494949',
+    },
+    hover: {
+      bg: {
+        light: '#e8e8e8',
+        dark: '#2c2c2c',
+      },
+    },
+  },
+
+  green: {
+    light: 'hsl(123, 48%, 45%)',
+    dark: 'hsl(123, 44%, 50%)',
+    bg: {
+      light: '#e3f6e4',
+      dark: '#0f2f10',
+    },
+    border: {
+      light: '#baf0bb',
+      dark: '#235725',
+    },
+    hover: {
+      bg: {
+        light: '#dcf4dd',
+        dark: '#123a14',
+      },
+    },
+  },
+
+  orange: {
+    light: '#e49a43',
+    dark: '#f39d39',
+    bg: {
+      light: '#fff1e0',
+      dark: '#31271c',
+    },
+    border: {
+      light: '#ffe0bb',
+      dark: '#f39d393b',
+    },
+    hover: {
+      bg: {
+        light: '#ffead1',
+        dark: '#3e3123',
+      },
+    },
+  },
+
+  red: {
+    light: '#cc2a2a',
+    dark: '#f3394c',
+    bg: {
+      light: '#ffe6e6',
+      dark: '#311c1c',
+    },
+    border: {
+      light: '#ffc5c5',
+      dark: '#f3394c3b',
+    },
+    hover: {
+      bg: {
+        light: '#ffdbdb',
+        dark: '#3e2323',
+      },
+    },
+  },
+
+  purple: {
+    light: '#915bf5',
+    dark: '#c5b6fd',
+    bg: {
+      light: '#e7defc',
+      dark: '#2f1a56',
+    },
+    border: {
+      light: '#b99ef867',
+      dark: '#6e40c4',
+    },
+    hover: {
+      bg: {
+        light: '#ddd0fb',
+        dark: '#381e66',
+      },
+    },
+  },
+
+  
 } as const;
 
 

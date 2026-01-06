@@ -346,6 +346,103 @@ const config: Config = {
                   dark: colors.info.border.dark
                 },
             },
+
+            grey: {
+              DEFAULT: colors.grey.light,
+              dark: colors.grey.dark,
+              bg: {
+                DEFAULT: colors.grey.bg.light,
+                dark: colors.grey.bg.dark,
+              },
+              border: {
+                DEFAULT: colors.grey.border.light,
+                dark: colors.grey.border.dark,
+              },
+              hover: {
+                bg: {
+                  DEFAULT: colors.grey.hover.bg.light,
+                  dark: colors.grey.hover.bg.dark,
+                },
+              },
+            },
+
+            green: {
+              DEFAULT: colors.green.light,
+              dark: colors.green.dark,
+              bg: {
+                DEFAULT: colors.green.bg.light,
+                dark: colors.green.bg.dark,
+              },
+              border: {
+                DEFAULT: colors.green.border.light,
+                dark: colors.green.border.dark,
+              },
+              hover: {
+                bg: {
+                  DEFAULT: colors.green.hover.bg.light,
+                  dark: colors.green.hover.bg.dark,
+                },
+              },
+            },
+
+            orange: {
+              DEFAULT: colors.orange.light,
+              dark: colors.orange.dark,
+              bg: {
+                DEFAULT: colors.orange.bg.light,
+                dark: colors.orange.bg.dark,
+              },
+              border: {
+                DEFAULT: colors.orange.border.light,
+                dark: colors.orange.border.dark,
+              },
+              hover: {
+                bg: {
+                  DEFAULT: colors.orange.hover.bg.light,
+                  dark: colors.orange.hover.bg.dark,
+                },
+              },
+            },
+
+            red: {
+              DEFAULT: colors.red.light,
+              dark: colors.red.dark,
+              bg: {
+                DEFAULT: colors.red.bg.light,
+                dark: colors.red.bg.dark,
+              },
+              border: {
+                DEFAULT: colors.red.border.light,
+                dark: colors.red.border.dark,
+              },
+              hover: {
+                bg: {
+                  DEFAULT: colors.red.hover.bg.light,
+                  dark: colors.red.hover.bg.dark,
+                },
+              },
+            },
+
+            purple: {
+              DEFAULT: colors.purple.light,
+              dark: colors.purple.dark,
+              bg: {
+                DEFAULT: colors.purple.bg.light,
+                dark: colors.purple.bg.dark,
+              },
+              border: {
+                DEFAULT: colors.purple.border.light,
+                dark: colors.purple.border.dark,
+              },
+              hover: {
+                bg: {
+                  DEFAULT: colors.purple.hover.bg.light,
+                  dark: colors.purple.hover.bg.dark,
+                },
+              },
+            },
+
+
         ring: {
           DEFAULT: colors.brand.main,
           dark: colors.brand[400]

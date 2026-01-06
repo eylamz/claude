@@ -6,6 +6,8 @@ import { useLocale } from 'next-intl';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Dropdown, Skeleton } from '@/components/ui';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ImageUploader } from '@/components/admin';
 import { Moon, Sun, ChevronLeft, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
@@ -759,7 +761,7 @@ export default function EditGuidePage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Edit Guide</h1>
+            <h1 className="text-3xl font-bold text-text dark:text-text-dark">Edit Guide</h1>
             <p className="text-sm text-red-500 mt-1">{error}</p>
           </div>
           <Button variant="grey" onClick={() => router.back()}>
@@ -813,8 +815,8 @@ export default function EditGuidePage() {
       {/* Header */}
       <div className="pt-16 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Edit Guide</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-3xl font-bold text-text dark:text-text-dark">Edit Guide</h1>
+          <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">
             {lastSaved && `Last saved: ${lastSaved.toLocaleTimeString()}`}
             {error && <span className="text-red-500 ml-2">{error}</span>}
           </p>
@@ -895,8 +897,8 @@ export default function EditGuidePage() {
             {formData.tags[activeTab].length > 0 && (
               <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-8">
                 <div className="flex items-center gap-2 mb-4">
-                  <Icon name="tagBold" className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tags</span>
+                  <Icon name="tagBold" className="w-4 h-4 text-text-secondary dark:text-text-secondary-dark" />
+                  <span className="text-sm font-bold text-text-secondary dark:text-text-secondary-dark dark:text-gray-400 uppercase tracking-wide">Tags</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {formData.tags[activeTab].map((tag) => (
@@ -914,7 +916,7 @@ export default function EditGuidePage() {
             {/* Related Sports */}
             {formData.relatedSports.length > 0 && (
               <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 mb-8">
-                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                <h3 className="text-sm font-medium text-text-secondary dark:text-text-secondary-dark dark:text-gray-400 uppercase tracking-wide mb-3">
                   Related Sports
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -949,7 +951,7 @@ export default function EditGuidePage() {
           {/* Basic Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle className="text-grey dark:text-grey-dark">Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Language Tabs */}
@@ -959,8 +961,8 @@ export default function EditGuidePage() {
                   onClick={() => handleTabChange('en')}
                   className={`px-4 py-2 font-medium ${
                     activeTab === 'en'
-                      ? 'border-b-2 border-blue-600 text-blue-600'
-                      : 'text-gray-500'
+                      ? 'border-b-2 border-blue-border dark:border-blue-border-dark text-blue dark:text-blue-dark'
+                      : 'text-text-secondary dark:text-text-secondary-dark'
                   }`}
                 >
                   English
@@ -970,8 +972,8 @@ export default function EditGuidePage() {
                   onClick={() => handleTabChange('he')}
                   className={`px-4 py-2 font-medium ${
                     activeTab === 'he'
-                      ? 'border-b-2 border-blue-600 text-blue-600'
-                      : 'text-gray-500'
+                      ? 'border-b-2 border-blue-border dark:border-blue-border-dark text-blue dark:text-blue-dark'
+                      : 'text-text-secondary dark:text-text-secondary-dark'
                   }`}
                 >
                   Hebrew
@@ -1004,10 +1006,8 @@ export default function EditGuidePage() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
+                <Textarea
+                  label="Description"
                   value={formData.description[activeTab]}
                   onChange={(e) =>
                     setFormData(prev => ({
@@ -1016,7 +1016,6 @@ export default function EditGuidePage() {
                     }))
                   }
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder={activeTab === 'en' ? 'Guide description' : 'תיאור המדריך'}
                   required
                 />
@@ -1024,7 +1023,7 @@ export default function EditGuidePage() {
 
               {/* Cover Image */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2">
                   Cover Image
                 </label>
                 <Input
@@ -1056,7 +1055,7 @@ export default function EditGuidePage() {
             <CardContent className="space-y-4">
               {/* Related Sports */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2">
                   Related Sports
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -1081,7 +1080,7 @@ export default function EditGuidePage() {
               {/* Tags */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
                     Tags
                   </label>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
@@ -1126,8 +1125,8 @@ export default function EditGuidePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <CardTitle>Content Builder</CardTitle>
-                  <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600">
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Editing:</span>
+                  <div className="flex items-center gap-2 bg-gray-bg dark:bg-gray-bg-dark px-3 py-1.5 rounded-lg border border-gray-border dark:border-grey-border-dark">
+                    <span className="text-xs font-semibold text-gray dark:text-grey-dark">Editing:</span>
                     <div className="flex items-center gap-2">
                     <Button
                       variant={activeTab === 'en' ? 'blue' : 'grey'}
@@ -1169,10 +1168,10 @@ export default function EditGuidePage() {
                             handleAddContentBlock(blockType);
                             setPopoverOpen(false);
                           }}
-                          className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-blue-300 transition-colors text-left"
+                          className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bord text-left"
                         >
                           <span className="text-2xl">{type.icon}</span>
-                          <span className="text-xs font-medium text-gray-700">{type.label}</span>
+                          <span className="text-xs font-medium text-text-secondary dark:text-text-secondary-dark">{type.label}</span>
                         </button>
                       ))}
                     </div>
@@ -1187,7 +1186,7 @@ export default function EditGuidePage() {
                 English: {formData.contentBlocks.en?.length || 0} | Hebrew: {formData.contentBlocks.he?.length || 0}
               </div>
               {(!formData.contentBlocks[activeTab] || formData.contentBlocks[activeTab].length === 0) ? (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-text-secondary dark:text-text-secondary-dark">
                   No {activeTab === 'en' ? 'English' : 'Hebrew'} content blocks yet. Add one to get started.
                 </div>
               ) : (
@@ -1198,12 +1197,12 @@ export default function EditGuidePage() {
                     return (
                       <div
                         key={`${activeTab}-${block.id}`}
-                        className={`border-2 rounded-lg p-4 transition-all ${
+                        className={`bord rounded-lg p-4 transition-all ${
                           selectedBlock === block.id
-                            ? 'border-blue-500 bg-blue-50'
+                            ? 'border-blue-border bg-blue-bg dark:bg-blue-bg-dark'
                             : draggedOverId === block.id
-                            ? 'border-blue-400 bg-blue-100 border-dashed'
-                            : 'border-gray-300'
+                            ? 'border-blue-border dark:border-blue-border-dark bg-blue-bg dark:bg-blue-bg-dark border-dashed'
+                            : 'border-border dark:border-border-dark'
                         } ${draggedBlockRef.current?.id === block.id ? 'opacity-50' : ''}`}
                         draggable
                         onDragStart={(e) => {
@@ -1265,7 +1264,7 @@ export default function EditGuidePage() {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                                 </svg>
                               </button>
-                              <span className="text-xs text-gray-500 font-medium">{index + 1}</span>
+                              <span className="text-xs text-text-secondary dark:text-text-secondary-dark font-medium">{index + 1}</span>
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -1285,14 +1284,14 @@ export default function EditGuidePage() {
                               <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
                               </svg>
-                              <span className="text-sm font-medium text-gray-700">
+                              <span className="text-sm font-medium text-text dark:text-text-dark">
                                 {blockType?.icon} {blockType?.label}
                               </span>
                             </div>
                           </div>
                           <Button
                             type="button"
-                            variant="danger"
+                            variant="red"
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1315,7 +1314,7 @@ export default function EditGuidePage() {
                                     {activeTab === 'en' ? 'EN' : 'HE'}
                                   </span>
                                 </div>
-                                <textarea
+                                <Textarea
                                   value={block.text || ''}
                                   onChange={(e) =>
                                     handleUpdateContentBlock(block.id, {
@@ -1323,11 +1322,11 @@ export default function EditGuidePage() {
                                     })
                                   }
                                   rows={6}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
+                                  className="font-mono text-sm"
                                   placeholder={activeTab === 'en' ? 'Enter text... Use [link text](url) for links' : 'הכנס טקסט... השתמש ב-[טקסט קישור](url) לקישורים'}
                                   dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                 />
-                                <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded border">
+                                <div className="text-xs text-text-secondary dark:text-text-secondary-dark bg-gray-50 p-2 rounded border">
                                   <p className="font-semibold mb-1">Link Format:</p>
                                   <p className="font-mono">[link text](https://example.com)</p>
                                   <p className="mt-1 text-gray-400">Example: Check out our [shop](https://example.com/shop) for more products.</p>
@@ -1396,7 +1395,7 @@ export default function EditGuidePage() {
                                     {items.map((item, itemIndex) => (
                                       <div key={itemIndex} className="border border-gray-200 rounded-lg p-3 space-y-2">
                                         <div className="flex items-center justify-between">
-                                          <span className="text-xs text-gray-500">Item {itemIndex + 1}</span>
+                                          <span className="text-xs text-text-secondary dark:text-text-secondary-dark">Item {itemIndex + 1}</span>
                                           <Button
                                             type="button"
                                             variant="danger"
@@ -1415,13 +1414,12 @@ export default function EditGuidePage() {
                                           placeholder={activeTab === 'en' ? 'Item title...' : 'כותרת פריט...'}
                                           dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                         />
-                                        <textarea
+                                        <Textarea
                                           value={item.content || ''}
                                           onChange={(e) =>
                                             handleUpdateListItem(block.id, itemIndex, 'content', e.target.value)
                                           }
                                           rows={3}
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                           placeholder={activeTab === 'en' ? 'Item content...' : 'תוכן פריט...'}
                                           dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                         />
@@ -1429,7 +1427,7 @@ export default function EditGuidePage() {
                                     ))}
                                     <Button
                                       type="button"
-                                      variant="secondary"
+                                      variant="purple"
                                       size="sm"
                                       onClick={() => handleAddListItem(block.id)}
                                     >
@@ -1452,7 +1450,7 @@ export default function EditGuidePage() {
                                 />
                                 <div>
                                   <div className="flex items-center justify-between mb-1">
-                                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                    <label className="text-xs font-medium text-text-secondary dark:text-text-secondary-dark">
                                       {activeTab === 'en' ? 'Alt Text' : 'טקסט חלופי'}
                                     </label>
                                     <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
@@ -1472,7 +1470,7 @@ export default function EditGuidePage() {
                                 </div>
                                 <div>
                                   <div className="flex items-center justify-between mb-1">
-                                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                    <label className="text-xs font-medium text-text-secondary dark:text-text-secondary-dark">
                                       {activeTab === 'en' ? 'Caption' : 'כיתוב'}
                                     </label>
                                     <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
@@ -1490,8 +1488,8 @@ export default function EditGuidePage() {
                                     dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                   />
                                 </div>
-                                <div className="border-t pt-2 mt-2">
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <div className="border-t border-border dark:border-border-dark pt-2 mt-2">
+                                  <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1">
                                     Make Image Clickable (Optional)
                                   </label>
                                   <Input
@@ -1502,19 +1500,16 @@ export default function EditGuidePage() {
                                     }
                                     placeholder={activeTab === 'en' ? 'https://... (leave empty for no link)' : 'https://... (השאר ריק ללא קישור)'}
                                   />
-                                  <div className="flex items-center space-x-3 mt-2">
-                                    <input
-                                      type="checkbox"
+                                  <div className="mt-2">
+                                    <Checkbox
+                                      variant="brand"
                                       id={`image-link-external-${block.id}`}
                                       checked={block.imageLinkExternal || false}
-                                      onChange={(e) =>
-                                        handleUpdateContentBlock(block.id, { imageLinkExternal: e.target.checked })
+                                      onChange={(checked) =>
+                                        handleUpdateContentBlock(block.id, { imageLinkExternal: checked })
                                       }
-                                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                      label="Open in new tab"
                                     />
-                                    <label htmlFor={`image-link-external-${block.id}`} className="text-sm text-gray-700">
-                                      Open in new tab
-                                    </label>
                                   </div>
                                 </div>
                                 {block.imageUrl && (
@@ -1581,10 +1576,10 @@ export default function EditGuidePage() {
                               <div className="space-y-2">
                                 <div>
                                   <div className="flex items-center justify-between mb-1">
-                                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                    <label className="text-xs font-medium text-grey dark:text-gray-400">
                                       {activeTab === 'en' ? 'Link Text' : 'טקסט קישור'}
                                     </label>
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark">
                                       {activeTab === 'en' ? 'EN' : 'HE'}
                                     </span>
                                   </div>
@@ -1607,19 +1602,16 @@ export default function EditGuidePage() {
                                   }
                                   placeholder="https://..."
                                 />
-                                <div className="flex items-center space-x-3">
-                                  <input
-                                    type="checkbox"
+                                <div>
+                                  <Checkbox
+                                    variant="brand"
                                     id={`link-external-${block.id}`}
                                     checked={block.linkExternal || false}
-                                    onChange={(e) =>
-                                      handleUpdateContentBlock(block.id, { linkExternal: e.target.checked })
+                                    onChange={(checked) =>
+                                      handleUpdateContentBlock(block.id, { linkExternal: checked })
                                     }
-                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    label="Open in new tab"
                                   />
-                                  <label htmlFor={`link-external-${block.id}`} className="text-sm text-gray-700">
-                                    Open in new tab
-                                  </label>
                                 </div>
                               </div>
                             )}
@@ -1633,20 +1625,20 @@ export default function EditGuidePage() {
                                   }
                                   options={CODE_LANGUAGES.map(lang => ({ value: lang, label: lang }))}
                                 />
-                                <textarea
+                                <Textarea
                                   value={block.code || ''}
                                   onChange={(e) =>
                                     handleUpdateContentBlock(block.id, { code: e.target.value })
                                   }
                                   rows={10}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
+                                  className="font-mono text-sm"
                                   placeholder={activeTab === 'en' ? 'Enter code...' : 'הכנס קוד...'}
                                 />
                               </div>
                             )}
 
                             {block.type === 'divider' && (
-                              <div className="text-gray-500 text-sm italic">
+                              <div className="text-text-secondary dark:text-text-secondary-dark text-sm italic">
                                 Divider - no configuration needed
                               </div>
                             )}
@@ -1667,7 +1659,7 @@ export default function EditGuidePage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1">Status</label>
                   <Select
                     value={formData.status}
                     onChange={(e) => handleInputChange('status', e.target.value)}
@@ -1678,17 +1670,14 @@ export default function EditGuidePage() {
                     ]}
                   />
                 </div>
-                <div className="flex items-center space-x-3 pt-8">
-                  <input
-                    type="checkbox"
+                <div className="pt-8">
+                  <Checkbox
+                  variant="brand"
                     id="isFeatured"
                     checked={formData.isFeatured}
-                    onChange={(e) => handleInputChange('isFeatured', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    onChange={(checked) => handleInputChange('isFeatured', checked)}
+                    label="Featured Guide"
                   />
-                  <label htmlFor="isFeatured" className="text-sm font-medium text-gray-700">
-                    Featured Guide
-                  </label>
                 </div>
               </div>
 
@@ -1705,14 +1694,12 @@ export default function EditGuidePage() {
                   placeholder={activeTab === 'en' ? 'SEO title' : 'כותרת SEO'}
                   maxLength={70}
                 />
-                <p className="text-xs text-gray-500">{formData.metaTitle[activeTab].length}/70 characters</p>
+                <p className="text-xs text-text-secondary dark:text-text-secondary-dark">{formData.metaTitle[activeTab].length}/70 characters</p>
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Meta Description
-                </label>
-                <textarea
+                <Textarea
+                  label="Meta Description"
                   value={formData.metaDescription[activeTab]}
                   onChange={(e) =>
                     setFormData(prev => ({
@@ -1721,11 +1708,10 @@ export default function EditGuidePage() {
                     }))
                   }
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                   placeholder={activeTab === 'en' ? 'SEO description' : 'תיאור SEO'}
                   maxLength={160}
                 />
-                <p className="text-xs text-gray-500">{formData.metaDescription[activeTab].length}/160 characters</p>
+                <p className="text-xs text-text-secondary dark:text-text-secondary-dark">{formData.metaDescription[activeTab].length}/160 characters</p>
               </div>
 
               <div>
@@ -1830,7 +1816,7 @@ function RenderContentBlock({ block, lang }: { block: ContentBlock; lang: 'en' |
       const textContent = block.text || '';
       
       return (
-        <p className="text-[1rem] leading-relaxed text-gray-700 dark:text-gray-300">
+        <p className="text-[1rem] leading-relaxed text-text-secondary dark:text-text-secondary-dark dark:text-gray-300">
           {parseTextWithLinks(textContent)}
         </p>
       );
@@ -1848,7 +1834,7 @@ function RenderContentBlock({ block, lang }: { block: ContentBlock; lang: 'en' |
           {listItems.filter(Boolean).map((item: any, i: number) => (
             <li 
               key={i} 
-              className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}
+              className={`text-lg text-text-secondary dark:text-text-secondary-dark dark:text-gray-300 leading-relaxed flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}
             >
               {!isNumbered && (
                 <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
@@ -1892,7 +1878,7 @@ function RenderContentBlock({ block, lang }: { block: ContentBlock; lang: 'en' |
             imageElement
           )}
           {block.imageCaption && (
-            <figcaption className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3 italic">
+            <figcaption className="text-center text-sm text-text-secondary dark:text-text-secondary-dark dark:text-gray-400 mt-3 italic">
               {block.imageCaption}
             </figcaption>
           )}
@@ -1918,7 +1904,7 @@ function RenderContentBlock({ block, lang }: { block: ContentBlock; lang: 'en' |
             </div>
           )}
           {block.videoTitle && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 text-center italic">{block.videoTitle}</p>
+            <p className="text-sm text-text-secondary dark:text-text-secondary-dark dark:text-gray-400 mt-3 text-center italic">{block.videoTitle}</p>
           )}
         </div>
       );

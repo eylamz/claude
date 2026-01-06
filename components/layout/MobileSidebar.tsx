@@ -418,7 +418,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           </div>
 
           {/* Loading Bar Animation - shown when searching */}
-          {!searchLoading && (
+          {searchLoading && (
             <div className="w-full h-[1px] -mt-1 bg-sidebar-hover dark:bg-sidebar-hover-dark overflow-hidden relative">
               <div className="bg-sidebar-text-brand/30 dark:bg-sidebar-text-brand-dark/30 loading-bar w-full h-full" />
             </div>
@@ -570,7 +570,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                         </div>
                         <div className="h-full flex items-start justify-end">
                       {card.comingSoon && (
-                          <span className="inline-block text-xs xsm:text-sm font-semibold px-1.5 py-0.5 bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] rounded">
+                          <span className="inline-block text-xs xsm:text-sm font-semibold px-1.5 py-0.5 bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark rounded">
                             {card.href.includes('/trainers') 
                               ? (locale === 'he' ? 'בשלבי סיום' : 'Almost Done')
                               : card.href.includes('/shop')
