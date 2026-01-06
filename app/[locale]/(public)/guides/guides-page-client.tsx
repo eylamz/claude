@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, memo, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { X, TrendingUp } from 'lucide-react';
 import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SegmentedControls } from '@/components/ui';
@@ -11,27 +11,6 @@ import { Icon } from '@/components/icons';
 import type { GuideData, FiltersData } from '@/lib/api/guides';
 
 interface Guide extends GuideData {}
-
-// Sport to Icon Mapping - Easy to edit and extend
-// Add or modify sports here with their corresponding icon names
-const SPORT_ICON_MAP: Record<string, string> = {
-  'Skateboarding': 'Skate',
-  'Skating': 'Skate',
-  'BMX': 'bmx-icon',
-  'BMXing': 'bmx-icon',
-  'Scooter': 'scooter',
-  'Scootering': 'scooter',
-  'Roller Skating': 'Roller',
-  'Rollerblading': 'Roller',
-  'Longboarding': 'Skate', // Using Skate icon as fallback
-  'Ski': 'Skate', // Using Skate icon as fallback
-  'Snowboard': 'Skate', // Using Skate icon as fallback
-};
-
-// Helper function to get icon for a sport
-const getSportIcon = (sport: string): string => {
-  return SPORT_ICON_MAP[sport] || 'Skate'; // Default to Skate icon if not found
-};
 
 interface GuidesPageProps {
   initialData?: {
@@ -45,6 +24,42 @@ interface GuidesPageProps {
     filters: FiltersData;
   };
 }
+
+// Sport mapping configuration - easy to edit
+// Add or remove sports here, update the iconName to match available icons, and set variant for colors
+// Available variants: 'default' | 'red' | 'blue' | 'green' | 'purple' | 'orange' | 'yellow' | 'teal' | 'pink'
+const SPORT_CONFIG = [
+  {
+    value: '', // Empty value means "all sports"
+    iconName: 'filter' as const,
+    displayName: 'All',
+    variant: 'default' as const,
+  },
+  {
+    value: 'Roller',
+    iconName: 'Roller' as const,
+    displayName: 'Rollerblading',
+    variant: 'red' as const,
+  },
+  {
+    value: 'Skate',
+    iconName: 'Skate' as const,
+    displayName: 'Skating',
+    variant: 'blue' as const,
+  },
+  {
+    value: 'Scoot',
+    iconName: 'scooter' as const,
+    displayName: 'Scootering',
+    variant: 'green' as const,
+  },
+  {
+    value: 'BMX',
+    iconName: 'bmx-icon' as const,
+    displayName: 'BMXing',
+    variant: 'purple' as const,
+  },
+] as const;
 
 // Utility function to optimize image URLs
 const getOptimizedImageUrl = (originalUrl: string): string | null => {
@@ -311,7 +326,6 @@ const GuideCard = memo(({
 GuideCard.displayName = 'GuideCard';
 
 export default function GuidesPageClient({ initialData }: GuidesPageProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations('guides');
@@ -324,6 +338,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   );
   const [loading, setLoading] = useState(!initialData);
   const [totalResults, setTotalResults] = useState(initialData?.pagination?.total || 0);
+  const [totalGuidesCount, setTotalGuidesCount] = useState(initialData?.pagination?.total || 0); // Unfiltered total
   const [cacheInitialized, setCacheInitialized] = useState(false);
   
   // Filters
@@ -452,6 +467,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             
             setGuides(paginatedGuides);
             setTotalResults(allCachedGuides.length);
+            setTotalGuidesCount(allCachedGuides.length); // Set unfiltered total
             
             // Extract filters from cached data
             const sportsSet = new Set<string>();
@@ -555,6 +571,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
 
               setGuides(paginatedGuides);
               setTotalResults(filteredGuides.length);
+              setTotalGuidesCount(allCachedGuides.length); // Always set unfiltered total
               
               // Extract filters from cached data if needed
               if (filtersData.sports.length === 0 && allCachedGuides.length > 0) {
@@ -615,6 +632,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             
             localStorage.setItem(cacheKey, JSON.stringify(allGuides));
             localStorage.setItem(versionKey, currentVersion.toString());
+            setTotalGuidesCount(allGuides.length); // Set unfiltered total
           }
         }
       }
@@ -624,17 +642,6 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
       setLoading(false);
     }
   };
-
-  const updateURL = useCallback(() => {
-    const params = new URLSearchParams();
-    if (selectedSports.length > 0) params.set('sports', selectedSports.join(','));
-    if (difficulty) params.set('difficulty', difficulty);
-    if (minRating > 0) params.set('minRating', minRating.toString());
-    if (searchQuery) params.set('search', searchQuery);
-    if (sortBy && sortBy !== 'newest') params.set('sort', sortBy);
-    
-    router.push(`/${locale}/guides?${params.toString()}`);
-  }, [selectedSports, difficulty, minRating, searchQuery, sortBy, locale, router]);
 
   const handleClearFilters = () => {
     setSelectedSports([]);
@@ -651,6 +658,14 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   const showingTo = Math.min(currentPage * 12, totalResults);
 
   const hasAnyFilter = selectedSports.length > 0 || difficulty || minRating > 0 || searchQuery.trim();
+
+  // Filter sport buttons to only show those with available guides
+  const availableSportButtons = SPORT_CONFIG.filter(sport => {
+    // Always show "All" button
+    if (sport.value === '') return true;
+    // Show button only if this sport exists in filtersData
+    return filtersData.sports.includes(sport.value);
+  });
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark" dir={locale === 'he' ? 'rtl' : 'ltr'}>
@@ -676,7 +691,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
               <div className="flex items-center gap-2 text-sm">
                 <div className="w-2 h-2 rounded-full bg-brand-main animate-pulse" />
                 <span className="text-gray-600 dark:text-gray-400">
-                  {totalResults} {totalResults === 1 ? t('guide') : t('guides')}
+                  {totalGuidesCount} {totalGuidesCount === 1 ? t('guide') : t('guides')}
                 </span>
               </div>
               <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
@@ -721,35 +736,29 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             </div>
 
             {/* Right: Filters + Sort */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-1">
+            <div className="flex items-center gap-0 xsm:gap-1">
               {/* Sports Filter - Segmented Controls */}
-              {filtersData.sports.length > 0 && (
-                <div className="flex-shrink-0 w-full sm:w-auto min-w-0">
-                  <SegmentedControls
-                    options={[
-                      { value: 'all', label: tr('All Sports', 'כל הספורט'), icon: undefined },
-                      ...filtersData.sports.map((sport) => ({
-                        value: sport,
-                        label: sport,
-                        icon: getSportIcon(sport),
-                      })),
-                    ]}
-                    value={selectedSports.length > 0 ? selectedSports[0] : 'all'}
-                    onChange={(value) => {
-                      const sportValue = Array.isArray(value) ? value[0] : value;
-                      if (sportValue === 'all') {
-                        setSelectedSports([]);
-                      } else {
-                        setSelectedSports([sportValue]);
-                      }
-                      setPage(1);
-                    }}
-                    size="md"
-                    variant="default"
-                    className="w-full sm:w-auto"
-                  />
-                </div>
-              )}
+              <div className="flex-shrink-0">
+                <SegmentedControls
+                  options={availableSportButtons.map((sport) => ({
+                    value: sport.value,
+                    icon: <Icon name={sport.iconName} className="w-5 h-5" />,
+                    variant: sport.variant,
+                  }))}
+                  value={selectedSports.length > 0 ? selectedSports[0] : ''}
+                  onValueChange={(value: string) => {
+                    if (value === '') {
+                      setSelectedSports([]);
+                    } else {
+                      setSelectedSports([value]);
+                    }
+                    setPage(1);
+                  }}
+                  name="sports-filter"
+                  size="md"
+                  className="w-fit"
+                />
+              </div>
 
               {/* Difficulty Filter */}
               {filtersData.difficulties.length > 0 && (

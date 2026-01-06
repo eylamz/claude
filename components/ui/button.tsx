@@ -36,8 +36,10 @@ const buttonVariants = cva(
         purple: "bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d]",
         red: "border-[#ffc5c5] dark:border-[#f3394c3b] bg-[#ffe6e6] dark:bg-[#311c1c] text-[#cc2a2a] dark:text-[#f3394c]   hover:bg-[#ffdbdb] dark:hover:bg-[#3e2323]",
         orange: "border-[#ffe0bb] dark:border-[#f39d393b] bg-[#fff1e0] dark:bg-[#31271c] text-[#e49a43] dark:text-[#f39d39]   hover:bg-[#ffead1] dark:hover:bg-[#3e3123]",
-        green: "border-[#baf0bb] dark:border-[#235725] bg-[#e3f6e4] dark:bg-[#0f2f10] text-brand-text dark:text-brand-main   hover:bg-[#dcf4dd] dark:hover:bg-[#0d2b0e]",
-        grey: "border-[#e6e6e6] dark:border-[#494949] text-[#424242] dark:text-[#afafaf] bg-black/[2.5%] hover:bg-black/5 dark:bg-[#262626] dark:hover:bg-[#2c2c2c] ",
+        green: "border-[#baf0bb] dark:border-[#235725] bg-[#e3f6e4] dark:bg-[#0f2f10] text-brand-text dark:text-brand-main   hover:bg-[#dcf4dd] dark:hover:bg-[#123a14]",
+        grey: "border-[#e6e6e6] dark:border-[#494949] text-[#424242] dark:text-[#afafaf] bg-[#efefef] hover:bg-[#e8e8e8] dark:bg-[#262626] dark:hover:bg-[#2c2c2c] ",
+        blue: "bg-info-bg dark:bg-[#12384a] text-info dark:text-info-dark border-[#b6d9fd] dark:border-info-border-dark hover:bg-[#d0e4fb] dark:hover:bg-[#16455a]",
+
 
 
       },

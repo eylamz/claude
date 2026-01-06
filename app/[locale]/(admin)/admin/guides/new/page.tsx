@@ -59,13 +59,11 @@ const CONTENT_BLOCK_TYPES: { value: ContentBlockType; label: string; icon: strin
 ];
 
 const SPORTS = [
-  'Skateboarding',
+  'Roller',
+  'Skate',
+  'Scoot',
   'BMX',
-  'Scooter',
-  'Longboarding',
-  'Roller Skating',
-  'Ski',
-  'Snowboard',
+  'Longboard',
 ];
 
 const CODE_LANGUAGES = [

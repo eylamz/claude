@@ -64,13 +64,11 @@ const CONTENT_BLOCK_TYPES: { value: ContentBlockType; label: string; icon: strin
 ];
 
 const SPORTS = [
-  'Skateboarding',
+  'Roller',
+  'Skate',
+  'Scoot',
   'BMX',
-  'Scooter',
-  'Longboarding',
-  'Roller Skating',
-  'Ski',
-  'Snowboard',
+  'Longboard',
 ];
 
 const CODE_LANGUAGES = [
@@ -825,7 +823,7 @@ export default function EditGuidePage() {
           <Button type="button" variant="red" onClick={() => router.back()}>
             Cancel
           </Button>
-          <Button type="button" variant="info" onClick={() => setPreviewMode(!previewMode)}>
+          <Button type="button" variant="blue" onClick={() => setPreviewMode(!previewMode)}>
             {previewMode ? 'Edit' : 'Preview'}
           </Button>
           <Button type="button" variant="green" onClick={(e) => {
@@ -845,7 +843,7 @@ export default function EditGuidePage() {
           <div className="sticky top-0 z-40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3">
               <Button
-                variant="info"
+                variant="blue"
                 onClick={() => setPreviewMode(false)}
                 className="inline-flex items-center gap-1 font-medium text-sm transition-colors"
               >
@@ -935,7 +933,7 @@ export default function EditGuidePage() {
             {/* Back to Edit - Bottom CTA */}
             <div className="text-center pt-8">
               <Button
-                variant="info"
+                variant="blue"
                 onClick={() => setPreviewMode(false)}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-main hover:bg-brand-main/90 text-white font-semibold transition-colors"
               >
@@ -1064,7 +1062,7 @@ export default function EditGuidePage() {
                 <div className="flex flex-wrap gap-2">
                   {SPORTS.map((sport) => (
                     <Button
-                      variant={formData.relatedSports.includes(sport.toLowerCase()) ? 'info' : 'grey'}
+                      variant={formData.relatedSports.includes(sport.toLowerCase()) ? 'blue' : 'grey'}
                       key={sport}
                       type="button"
                       onClick={() =>
@@ -1132,7 +1130,7 @@ export default function EditGuidePage() {
                     <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Editing:</span>
                     <div className="flex items-center gap-2">
                     <Button
-                      variant={activeTab === 'en' ? 'info' : 'grey'}
+                      variant={activeTab === 'en' ? 'blue' : 'grey'}
                       type="button"
                       onClick={() => handleTabChange('en')}
                       className={`!rounded text-xs font-medium`}
@@ -1140,7 +1138,7 @@ export default function EditGuidePage() {
                       English
                     </Button>
                     <Button
-                      variant={activeTab === 'he' ? 'info' : 'grey'}
+                      variant={activeTab === 'he' ? 'blue' : 'grey'}
                       type="button"
                       onClick={() => handleTabChange('he')}
                       className={`!rounded text-xs font-medium`}

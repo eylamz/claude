@@ -747,7 +747,7 @@ export default function GuidesPage() {
               </p>
             </div>
             <Button
-              variant="info"
+              variant="blue"
               onClick={handleSaveVersion}
               disabled={savingVersion}
             >
