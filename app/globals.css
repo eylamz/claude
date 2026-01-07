@@ -217,8 +217,8 @@ input{
 
 /* Dark mode */
 .dark ::selection {
-  color: theme('colors.text.DEFAULT');
-  background-color: theme('colors.brand.main'); /* Uses your Tailwind theme color */
+  color: hsl(123, 60%, 48%);
+  background-color: hsla(123, 60%, 48%, 0.289); /* Uses your Tailwind theme color */
 }
 
 

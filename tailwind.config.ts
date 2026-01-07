@@ -347,21 +347,21 @@ const config: Config = {
                 },
             },
 
-            grey: {
-              DEFAULT: colors.grey.light,
-              dark: colors.grey.dark,
+            gray: {
+              DEFAULT: colors.gray.light,
+              dark: colors.gray.dark,
               bg: {
-                DEFAULT: colors.grey.bg.light,
-                dark: colors.grey.bg.dark,
+                DEFAULT: colors.gray.bg.light,
+                dark: colors.gray.bg.dark,
               },
               border: {
-                DEFAULT: colors.grey.border.light,
-                dark: colors.grey.border.dark,
+                DEFAULT: colors.gray.border.light,
+                dark: colors.gray.border.dark,
               },
               hover: {
                 bg: {
-                  DEFAULT: colors.grey.hover.bg.light,
-                  dark: colors.grey.hover.bg.dark,
+                  DEFAULT: colors.gray.hover.bg.light,
+                  dark: colors.gray.hover.bg.dark,
                 },
               },
             },
@@ -700,7 +700,7 @@ const config: Config = {
             '100%': { opacity: '0.5' },
           },
           'popUp': {
-            '0%': { opacity: '0.2', transform: 'scale(1) translateY(35px)' },
+            '0%': { opacity: '0.2', transform: 'scale(1) translateY(25px)' },
             '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
           },
           popDown: {

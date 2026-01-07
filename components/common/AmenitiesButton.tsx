@@ -79,7 +79,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
           <TooltipTrigger asChild>
             <PopoverTrigger asChild>
               <Button
-                variant={isActive ? "infoIcon" : "none"}
+                variant={isActive ? "blue" : "gray"}
                 size="sm"
                 className={`relative active:scale-95 transition-all duration-200 ${className || ''}`}
                 aria-label={tSkateparks('amenities.filterBy') || 'Filter by amenities'}

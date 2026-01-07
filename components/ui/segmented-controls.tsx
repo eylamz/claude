@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { cva } from 'class-variance-authority';
+import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 
 export type SegmentedControlVariant = 
   | 'default'
@@ -20,12 +21,13 @@ export interface SegmentedControlOption {
   icon?: React.ReactNode;
   label?: string;
   variant?: SegmentedControlVariant;
+  tooltip?: string;
 }
 
 // Variant styles for the sliding background indicator
 // Note: transform transition is handled separately, colors transition with delay
 const indicatorVariants = cva(
-  'absolute top-0 bottom-1.5 left-0 rounded-[10px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.04)] pointer-events-none z-0 border border-transparent',
+  'absolute top-1 bottom-1 left-1 rounded-[10px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.04)] pointer-events-none z-0 border border-transparent',
   {
     variants: {
       variant: {
@@ -70,12 +72,12 @@ const textVariants = cva('transition-colors duration-150 delay-150', {
     {
       variant: 'default',
       isSelected: true,
-      className: 'text-text dark:text-text-dark',
+      className: 'text-gray dark:text-gray-dark',
     },
     {
       variant: 'default',
       isSelected: false,
-      className: 'text-[#424242] dark:text-[#afafaf]',
+      className: 'text-text-secondary dark:text-text-secondary-dark',
     },
     {
       variant: 'red',
@@ -85,7 +87,7 @@ const textVariants = cva('transition-colors duration-150 delay-150', {
     {
       variant: 'red',
       isSelected: false,
-      className: 'text-[#424242] dark:text-[#afafaf]',
+      className: 'text-text-secondary dark:text-text-secondary-dark',
     },
     {
       variant: 'blue',
@@ -95,7 +97,7 @@ const textVariants = cva('transition-colors duration-150 delay-150', {
     {
       variant: 'blue',
       isSelected: false,
-      className: 'text-[#424242] dark:text-blue-dark',
+      className: 'text-text-secondary dark:text-text-secondary-dark',
     },
     {
       variant: 'green',
@@ -105,7 +107,7 @@ const textVariants = cva('transition-colors duration-150 delay-150', {
     {
       variant: 'green',
       isSelected: false,
-      className: 'text-[#424242] dark:text-[#afafaf]',
+      className: 'text-text-secondary dark:text-text-secondary-dark',
     },
     {
       variant: 'purple',
@@ -115,7 +117,7 @@ const textVariants = cva('transition-colors duration-150 delay-150', {
     {
       variant: 'purple',
       isSelected: false,
-      className: 'text-[#424242] dark:text-[#afafaf]',
+      className: 'text-text-secondary dark:text-text-secondary-dark',
     },
     {
       variant: 'orange',
@@ -125,7 +127,7 @@ const textVariants = cva('transition-colors duration-150 delay-150', {
     {
       variant: 'orange',
       isSelected: false,
-      className: 'text-[#424242] dark:text-[#afafaf]',
+      className: 'text-text-secondary dark:text-text-secondary-dark',
     },
     {
       variant: 'yellow',
@@ -240,16 +242,6 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
           sizeClasses[size],
           className
         )}
-      >
-        <div
-        ref={ref}
-        className={cn(
-          'relative flex w-full rounded-xl',
-          'overflow-visible', // This is 2px padding (0.125rem)
-          'transition-all duration-300 ease-in-out',
-          sizeClasses[size],
-          className
-        )}
         {...props}
       >
         {/* Sliding Background - transform slides immediately, colors transition smoothly */}
@@ -260,11 +252,11 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
           style={{
             // 2. Width is the segment percentage minus the container's total horizontal padding (2px + 2px = 4px) 
             // divided by the number of segments to keep it proportional.
-            width: `calc(${optionWidthPercent}% - 0px / ${options.length})`,
-            // 3. Translate uses the index * 100% of the segment width.
+            width: `calc(${optionWidthPercent}% - 1rem / ${options.length})`,
+            // 3. Translate uses the index * 100% of the segment width minus 1rem per index.
             // Since the slider is positioned 'absolute' relative to the padded container,
-            // 100% translation moves it exactly one segment over.
-            transform: `translateX(${actualIndex * 100}%)`,
+            // 100% translation moves it exactly one segment over, minus the rem offset.
+            transform: `translateX(calc(${actualIndex * 100}% + ${actualIndex}* 0.3rem))`,
             // Transform transitions immediately (300ms)
             // Colors transition faster (150ms) with shorter delay (150ms)
             transition: 'transform 200ms ease-in-out, background-color 150ms ease-in-out 150ms, border-color 150ms ease-in-out 150ms',
@@ -275,6 +267,29 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
           const isSelected = option.value === currentValue;
           const inputId = `${name}-${option.value}-${index}`;
           const optionVariant = option.variant || 'default';
+          
+          const labelContent = (
+            <>
+              {option.icon && (
+                <span
+                  className={cn(iconSizeClasses[size], 'flex items-center justify-center')}
+                  style={{
+                    transition: 'color 200ms ease-in-out, fill 200ms ease-in-out',
+                  }}
+                >
+                  {option.icon}
+                </span>
+              )}
+              {option.label && (
+                <span className={cn(
+                  'font-semibold text-sm',
+                  option.icon && 'ms-2'
+                )}>
+                  {option.label}
+                </span>
+              )}
+            </>
+          );
           
           return (
             <React.Fragment key={`${option.value}-${index}`}>
@@ -287,41 +302,47 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
                 onChange={() => handleChange(option.value)}
                 className="sr-only"
               />
-              <label
-                htmlFor={inputId}
-                className={cn(
-                  'relative -mt-1 px-3 flex-1 flex items-center justify-center',
-                  'cursor-pointer select-none transition-all duration-200',
-                  'z-[2]',
-                  textVariants({ variant: optionVariant, isSelected })
-                )}
-                style={{
-                  transition: 'color 300ms ease-in-out 250ms',
-                }}
-              >
-                {option.icon && (
-                  <span
-                    className={cn(iconSizeClasses[size], 'flex items-center justify-center')}
-                    style={{
-                      transition: 'color 200ms ease-in-out, fill 200ms ease-in-out',
-                    }}
-                  >
-                    {option.icon}
-                  </span>
-                )}
-                {option.label && (
-                  <span className={cn(
-                    'font-semibold text-sm',
-                    option.icon && 'ms-2'
-                  )}>
-                    {option.label}
-                  </span>
-                )}
-              </label>
+              {option.tooltip ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <label
+                      htmlFor={inputId}
+                      className={cn(
+                        'relative px-3 flex-1 flex items-center justify-center',
+                        'cursor-pointer select-none transition-all duration-200',
+                        'z-[2]',
+                        textVariants({ variant: optionVariant, isSelected })
+                      )}
+                      style={{
+                        transition: 'color 300ms ease-in-out 250ms',
+                      }}
+                    >
+                      {labelContent}
+                    </label>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" variant={optionVariant}>
+                    {option.tooltip}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <label
+                  htmlFor={inputId}
+                  className={cn(
+                    'relative px-3 flex-1 flex items-center justify-center',
+                    'cursor-pointer select-none transition-all duration-200',
+                    'z-[2]',
+                    textVariants({ variant: optionVariant, isSelected })
+                  )}
+                  style={{
+                    transition: 'color 300ms ease-in-out 250ms',
+                  }}
+                >
+                  {labelContent}
+                </label>
+              )}
             </React.Fragment>
           );
         })}
-      </div>
       </div>
     );
   }

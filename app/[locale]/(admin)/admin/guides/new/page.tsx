@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Dropdown } from '@/components/ui';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ImageUploader } from '@/components/admin';
 
 interface ContentBlock {
@@ -583,28 +585,28 @@ export default function NewGuidePage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="pt-16 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Create New Guide</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-3xl font-bold text-text dark:text-text-dark">Create New Guide</h1>
+          <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">
             {lastSaved && `Last saved: ${lastSaved.toLocaleTimeString()}`}
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button type="button" variant="secondary" onClick={() => router.back()}>
+          <Button type="button" variant="red" onClick={() => router.back()}>
             Cancel
           </Button>
-          <Button type="button" variant="secondary" onClick={() => setPreviewMode(!previewMode)}>
+          <Button type="button" variant="blue" onClick={() => setPreviewMode(!previewMode)}>
             {previewMode ? 'Edit' : 'Preview'}
           </Button>
-          <Button type="button" variant="secondary" onClick={(e) => {
+          <Button type="button" variant="orange" onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             handleSubmit(undefined, true);
           }} disabled={isSubmitting}>
             {isSubmitting ? 'Saving...' : 'Save Draft'}
           </Button>
-          <Button type="button" variant="primary" onClick={(e) => {
+          <Button type="button" variant="green" onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             handleSubmit();
@@ -642,7 +644,7 @@ export default function NewGuidePage() {
           {/* Basic Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle className="text-gray dark:text-gray-dark">Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Language Tabs */}
@@ -652,8 +654,8 @@ export default function NewGuidePage() {
                   onClick={() => handleTabChange('en')}
                   className={`px-4 py-2 font-medium ${
                     activeTab === 'en'
-                      ? 'border-b-2 border-blue-600 text-blue-600'
-                      : 'text-gray-500'
+                      ? 'border-b-2 border-blue-border dark:border-blue-border-dark text-blue dark:text-blue-dark'
+                      : 'text-text-secondary dark:text-text-secondary-dark'
                   }`}
                 >
                   English
@@ -663,8 +665,8 @@ export default function NewGuidePage() {
                   onClick={() => handleTabChange('he')}
                   className={`px-4 py-2 font-medium ${
                     activeTab === 'he'
-                      ? 'border-b-2 border-blue-600 text-blue-600'
-                      : 'text-gray-500'
+                      ? 'border-b-2 border-blue-border dark:border-blue-border-dark text-blue dark:text-blue-dark'
+                      : 'text-text-secondary dark:text-text-secondary-dark'
                   }`}
                 >
                   Hebrew
@@ -697,10 +699,8 @@ export default function NewGuidePage() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
+                <Textarea
+                  label="Description"
                   value={formData.description[activeTab]}
                   onChange={(e) =>
                     setFormData(prev => ({
@@ -709,7 +709,6 @@ export default function NewGuidePage() {
                     }))
                   }
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder={activeTab === 'en' ? 'Guide description' : 'תיאור המדריך'}
                   required
                 />
@@ -717,7 +716,7 @@ export default function NewGuidePage() {
 
               {/* Cover Image */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2">
                   Cover Image
                 </label>
                 <Input
@@ -749,12 +748,13 @@ export default function NewGuidePage() {
             <CardContent className="space-y-4">
               {/* Related Sports */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2">
                   Related Sports
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {SPORTS.map((sport) => (
-                    <button
+                    <Button
+                      variant={formData.relatedSports.includes(sport.toLowerCase()) ? 'blue' : 'gray'}
                       key={sport}
                       type="button"
                       onClick={() =>
@@ -762,14 +762,10 @@ export default function NewGuidePage() {
                           ? handleRemoveSport(sport.toLowerCase())
                           : handleAddSport(sport.toLowerCase())
                       }
-                      className={`px-3 py-1 rounded ${
-                        formData.relatedSports.includes(sport.toLowerCase())
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-200 text-gray-700'
-                      }`}
+                      className={`px-3 py-1 rounded`}
                     >
                       {sport}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -777,7 +773,7 @@ export default function NewGuidePage() {
               {/* Tags */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark">
                     Tags
                   </label>
                   <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
@@ -786,19 +782,19 @@ export default function NewGuidePage() {
                 </div>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {formData.tags[activeTab].map((tag) => (
-                    <span
+                    <Button
+                      variant="purple"
                       key={tag}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm"
                     >
                       {tag}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveTag(tag)}
-                        className="ml-2 text-blue-600 hover:text-blue-800"
+                      <p
+                        className="ms-2"
                       >
                         ×
-                      </button>
-                    </span>
+                      </p>
+                    </Button>
                   ))}
                 </div>
                 <Input
@@ -821,43 +817,37 @@ export default function NewGuidePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <CardTitle>Content Builder</CardTitle>
-                  <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600">
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Editing:</span>
+                  <div className="flex items-center gap-2 bg-gray-bg dark:bg-gray-bg-dark px-3 py-1.5 rounded-lg border border-gray-border dark:border-gray-border-dark">
+                    <span className="text-xs font-semibold text-gray dark:text-gray-dark">Editing:</span>
                     <div className="flex items-center gap-2">
-                    <button
+                    <Button
+                      variant={activeTab === 'en' ? 'blue' : 'gray'}
                       type="button"
                       onClick={() => handleTabChange('en')}
-                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                        activeTab === 'en'
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                      }`}
+                      className={`!rounded text-xs font-medium`}
                     >
-                      🇬🇧 English
-                    </button>
-                    <button
+                      English
+                    </Button>
+                    <Button
+                      variant={activeTab === 'he' ? 'blue' : 'gray'}
                       type="button"
                       onClick={() => handleTabChange('he')}
-                      className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                        activeTab === 'he'
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                      }`}
+                      className={`!rounded text-xs font-medium`}
                       dir="rtl"
                     >
-                      🇮🇱 עברית
-                    </button>
+                      עברית
+                    </Button>
                     </div>
                   </div>
                 </div>
                 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                   <PopoverTrigger asChild>
-                    <Button type="button" variant="primary" size="sm" className="gap-2">
+                    <Button type="button" variant="gray" className="gap-2">
                       <span className="text-lg">+</span>
                       Add Content Block
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-64 p-2" align="end">
+                  <PopoverContent className="w-64 p-2 bg-siderbar-bg dark:bg-siderbar-bg-dark" align="end">
                     <div className="grid grid-cols-2 gap-2">
                       {CONTENT_BLOCK_TYPES.map(type => (
                         <button
@@ -870,10 +860,10 @@ export default function NewGuidePage() {
                             handleAddContentBlock(blockType);
                             setPopoverOpen(false);
                           }}
-                          className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-blue-300 transition-colors text-left"
+                          className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bord text-left"
                         >
                           <span className="text-2xl">{type.icon}</span>
-                          <span className="text-xs font-medium text-gray-700">{type.label}</span>
+                          <span className="text-xs font-medium text-text-secondary dark:text-text-secondary-dark">{type.label}</span>
                         </button>
                       ))}
                     </div>
@@ -884,11 +874,11 @@ export default function NewGuidePage() {
             <CardContent className="space-y-4">
               {/* Debug info - remove after testing */}
               <div className="text-xs text-gray-400 mb-2 px-2">
-                Showing {formData.contentBlocks[activeTab].length} {activeTab === 'en' ? 'English' : 'Hebrew'} block(s) | 
-                English: {formData.contentBlocks.en.length} | Hebrew: {formData.contentBlocks.he.length}
+                Showing {formData.contentBlocks[activeTab]?.length || 0} {activeTab === 'en' ? 'English' : 'Hebrew'} block(s) | 
+                English: {formData.contentBlocks.en?.length || 0} | Hebrew: {formData.contentBlocks.he?.length || 0}
               </div>
-              {formData.contentBlocks[activeTab].length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
+              {(!formData.contentBlocks[activeTab] || formData.contentBlocks[activeTab].length === 0) ? (
+                <div className="text-center py-12 text-text-secondary dark:text-text-secondary-dark">
                   No {activeTab === 'en' ? 'English' : 'Hebrew'} content blocks yet. Add one to get started.
                 </div>
               ) : (
@@ -899,12 +889,12 @@ export default function NewGuidePage() {
                     return (
                       <div
                         key={`${activeTab}-${block.id}`}
-                        className={`border-2 rounded-lg p-4 transition-all ${
+                        className={`bord rounded-lg p-4 transition-all ${
                           selectedBlock === block.id
-                            ? 'border-blue-500 bg-blue-50'
+                            ? 'border-blue-border bg-blue-bg dark:bg-blue-bg-dark'
                             : draggedOverId === block.id
-                            ? 'border-blue-400 bg-blue-100 border-dashed'
-                            : 'border-gray-300'
+                            ? 'border-blue-border dark:border-blue-border-dark bg-blue-bg dark:bg-blue-bg-dark border-dashed'
+                            : 'border-border dark:border-border-dark'
                         } ${draggedBlockRef.current?.id === block.id ? 'opacity-50' : ''}`}
                         draggable
                         onDragStart={(e) => {
@@ -966,7 +956,7 @@ export default function NewGuidePage() {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                                 </svg>
                               </button>
-                              <span className="text-xs text-gray-500 font-medium">{index + 1}</span>
+                              <span className="text-xs text-text-secondary dark:text-text-secondary-dark font-medium">{index + 1}</span>
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -986,14 +976,14 @@ export default function NewGuidePage() {
                               <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
                               </svg>
-                              <span className="text-sm font-medium text-gray-700">
+                              <span className="text-sm font-medium text-text dark:text-text-dark">
                                 {blockType?.icon} {blockType?.label}
                               </span>
                             </div>
                           </div>
                           <Button
                             type="button"
-                            variant="danger"
+                            variant="red"
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -1016,7 +1006,7 @@ export default function NewGuidePage() {
                                     {activeTab === 'en' ? 'EN' : 'HE'}
                                   </span>
                                 </div>
-                                <textarea
+                                <Textarea
                                   value={block.text || ''}
                                   onChange={(e) =>
                                     handleUpdateContentBlock(block.id, {
@@ -1024,11 +1014,11 @@ export default function NewGuidePage() {
                                     })
                                   }
                                   rows={6}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
+                                  className="font-mono text-sm"
                                   placeholder={activeTab === 'en' ? 'Enter text... Use [link text](url) for links' : 'הכנס טקסט... השתמש ב-[טקסט קישור](url) לקישורים'}
                                   dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                 />
-                                <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded border">
+                                <div className="text-xs text-text-secondary dark:text-text-secondary-dark bg-gray-50 p-2 rounded border">
                                   <p className="font-semibold mb-1">Link Format:</p>
                                   <p className="font-mono">[link text](https://example.com)</p>
                                   <p className="mt-1 text-gray-400">Example: Check out our [shop](https://example.com/shop) for more products.</p>
@@ -1097,7 +1087,7 @@ export default function NewGuidePage() {
                                     {items.map((item, itemIndex) => (
                                       <div key={itemIndex} className="border border-gray-200 rounded-lg p-3 space-y-2">
                                         <div className="flex items-center justify-between">
-                                          <span className="text-xs text-gray-500">Item {itemIndex + 1}</span>
+                                          <span className="text-xs text-text-secondary dark:text-text-secondary-dark">Item {itemIndex + 1}</span>
                                           <Button
                                             type="button"
                                             variant="danger"
@@ -1116,13 +1106,12 @@ export default function NewGuidePage() {
                                           placeholder={activeTab === 'en' ? 'Item title...' : 'כותרת פריט...'}
                                           dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                         />
-                                        <textarea
+                                        <Textarea
                                           value={item.content || ''}
                                           onChange={(e) =>
                                             handleUpdateListItem(block.id, itemIndex, 'content', e.target.value)
                                           }
                                           rows={3}
-                                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                           placeholder={activeTab === 'en' ? 'Item content...' : 'תוכן פריט...'}
                                           dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                         />
@@ -1130,7 +1119,7 @@ export default function NewGuidePage() {
                                     ))}
                                     <Button
                                       type="button"
-                                      variant="secondary"
+                                      variant="purple"
                                       size="sm"
                                       onClick={() => handleAddListItem(block.id)}
                                     >
@@ -1191,8 +1180,8 @@ export default function NewGuidePage() {
                                     dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                   />
                                 </div>
-                                <div className="border-t pt-2 mt-2">
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <div className="border-t border-border dark:border-border-dark pt-2 mt-2">
+                                  <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1">
                                     Make Image Clickable (Optional)
                                   </label>
                                   <Input
@@ -1203,19 +1192,16 @@ export default function NewGuidePage() {
                                     }
                                     placeholder={activeTab === 'en' ? 'https://... (leave empty for no link)' : 'https://... (השאר ריק ללא קישור)'}
                                   />
-                                  <div className="flex items-center space-x-3 mt-2">
-                                    <input
-                                      type="checkbox"
+                                  <div className="mt-2">
+                                    <Checkbox
+                                      variant="brand"
                                       id={`image-link-external-${block.id}`}
                                       checked={block.imageLinkExternal || false}
-                                      onChange={(e) =>
-                                        handleUpdateContentBlock(block.id, { imageLinkExternal: e.target.checked })
+                                      onChange={(checked) =>
+                                        handleUpdateContentBlock(block.id, { imageLinkExternal: checked })
                                       }
-                                      className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                      label="Open in new tab"
                                     />
-                                    <label htmlFor={`image-link-external-${block.id}`} className="text-sm text-gray-700">
-                                      Open in new tab
-                                    </label>
                                   </div>
                                 </div>
                                 {block.imageUrl && (
@@ -1282,10 +1268,10 @@ export default function NewGuidePage() {
                               <div className="space-y-2">
                                 <div>
                                   <div className="flex items-center justify-between mb-1">
-                                    <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                    <label className="text-xs font-medium text-gray dark:text-gray-400">
                                       {activeTab === 'en' ? 'Link Text' : 'טקסט קישור'}
                                     </label>
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark">
                                       {activeTab === 'en' ? 'EN' : 'HE'}
                                     </span>
                                   </div>
@@ -1308,19 +1294,16 @@ export default function NewGuidePage() {
                                   }
                                   placeholder="https://..."
                                 />
-                                <div className="flex items-center space-x-3">
-                                  <input
-                                    type="checkbox"
+                                <div>
+                                  <Checkbox
+                                    variant="brand"
                                     id={`link-external-${block.id}`}
                                     checked={block.linkExternal || false}
-                                    onChange={(e) =>
-                                      handleUpdateContentBlock(block.id, { linkExternal: e.target.checked })
+                                    onChange={(checked) =>
+                                      handleUpdateContentBlock(block.id, { linkExternal: checked })
                                     }
-                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    label="Open in new tab"
                                   />
-                                  <label htmlFor={`link-external-${block.id}`} className="text-sm text-gray-700">
-                                    Open in new tab
-                                  </label>
                                 </div>
                               </div>
                             )}
@@ -1334,20 +1317,20 @@ export default function NewGuidePage() {
                                   }
                                   options={CODE_LANGUAGES.map(lang => ({ value: lang, label: lang }))}
                                 />
-                                <textarea
+                                <Textarea
                                   value={block.code || ''}
                                   onChange={(e) =>
                                     handleUpdateContentBlock(block.id, { code: e.target.value })
                                   }
                                   rows={10}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
+                                  className="font-mono text-sm"
                                   placeholder={activeTab === 'en' ? 'Enter code...' : 'הכנס קוד...'}
                                 />
                               </div>
                             )}
 
                             {block.type === 'divider' && (
-                              <div className="text-gray-500 text-sm italic">
+                              <div className="text-text-secondary dark:text-text-secondary-dark text-sm italic">
                                 Divider - no configuration needed
                               </div>
                             )}
@@ -1368,7 +1351,7 @@ export default function NewGuidePage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1">Status</label>
                   <Select
                     value={formData.status}
                     onChange={(e) => handleInputChange('status', e.target.value)}
@@ -1379,17 +1362,14 @@ export default function NewGuidePage() {
                     ]}
                   />
                 </div>
-                <div className="flex items-center space-x-3 pt-8">
-                  <input
-                    type="checkbox"
+                <div className="pt-8">
+                  <Checkbox
+                    variant="brand"
                     id="isFeatured"
                     checked={formData.isFeatured}
-                    onChange={(e) => handleInputChange('isFeatured', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    onChange={(checked) => handleInputChange('isFeatured', checked)}
+                    label="Featured Guide"
                   />
-                  <label htmlFor="isFeatured" className="text-sm font-medium text-gray-700">
-                    Featured Guide
-                  </label>
                 </div>
               </div>
 
@@ -1406,14 +1386,12 @@ export default function NewGuidePage() {
                   placeholder={activeTab === 'en' ? 'SEO title' : 'כותרת SEO'}
                   maxLength={70}
                 />
-                <p className="text-xs text-gray-500">{formData.metaTitle[activeTab].length}/70 characters</p>
+                <p className="text-xs text-text-secondary dark:text-text-secondary-dark">{formData.metaTitle[activeTab].length}/70 characters</p>
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Meta Description
-                </label>
-                <textarea
+                <Textarea
+                  label="Meta Description"
                   value={formData.metaDescription[activeTab]}
                   onChange={(e) =>
                     setFormData(prev => ({
@@ -1422,11 +1400,10 @@ export default function NewGuidePage() {
                     }))
                   }
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                   placeholder={activeTab === 'en' ? 'SEO description' : 'תיאור SEO'}
                   maxLength={160}
                 />
-                <p className="text-xs text-gray-500">{formData.metaDescription[activeTab].length}/160 characters</p>
+                <p className="text-xs text-text-secondary dark:text-text-secondary-dark">{formData.metaDescription[activeTab].length}/160 characters</p>
               </div>
 
               <div>

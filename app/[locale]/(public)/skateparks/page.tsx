@@ -1660,7 +1660,7 @@ export default function SkateparksPage() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      variant={userLocation ? "brandIcon" : "none"}
+                      variant={userLocation ? "green" : "gray"}
                       size="sm"
                       onClick={requestLocation}
                       className=''
@@ -1682,7 +1682,7 @@ export default function SkateparksPage() {
                   <TooltipTrigger asChild>
                     <div className="relative">
                       <Button
-                        variant={viewMode === 'map' ? "warningIcon" : "none"}
+                        variant={viewMode === 'map' ? "orange" : "gray"}
                         size="sm"
                         onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
                         className=''

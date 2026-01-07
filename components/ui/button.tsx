@@ -9,7 +9,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         headerBtn: "bg-transparent text-text dark:text-text-dark hover:bg-header-main/80 dark:bg-transparent dark:hover:bg-header-main/80",
-        default: "bg-black/5 text-brand-900 hover:bg-btn-secondary dark:bg-btn-dark/50 dark:hover:bg-btnHover-dark/50",
+        default: "bg-btn dark:bg-btn-dark text-brand-900 hover:bg-btn-hover dark:hover:bg-btn-hover-dark",
         primaryBtn: "bg-header-dark text-header-text dark:text-header-text-dark hover:bg-brand-main/80 dark:bg-brand-main dark:hover:bg-brand-main/80",
         primary: "bg-brand-main text-white dark:text-text hover:bg-brand-main/80 dark:bg-brand-dark dark:hover:bg-brand-dark/80",
         success: "rounded-xl bg-success/10 dark:bg-success-dark/15 text-success dark:text-success-dark   hover:bg-success/15 dark:hover:bg-success-dark/20",
@@ -37,7 +37,7 @@ const buttonVariants = cva(
         red: "border-red-border dark:border-red-border-dark bg-red-bg dark:bg-red-bg-dark text-red dark:text-red-dark hover:bg-red-hover-bg dark:hover:bg-red-hover-bg-dark",
         orange: "border-orange-border dark:border-orange-border-dark bg-orange-bg dark:bg-orange-bg-dark text-orange dark:text-orange-dark hover:bg-orange-hover-bg dark:hover:bg-orange-hover-bg-dark",
         green: "border-green-border dark:border-green-border-dark bg-green-bg dark:bg-green-bg-dark text-green dark:text-green-dark hover:bg-green-hover-bg dark:hover:bg-green-hover-bg-dark",
-        grey: "border-grey-border dark:border-grey-border-dark bg-grey-bg dark:bg-grey-bg-dark text-grey dark:text-grey-dark hover:bg-grey-hover-bg dark:hover:bg-grey-hover-bg-dark",
+        gray: "border-gray-border dark:border-gray-border-dark bg-gray-bg dark:bg-gray-bg-dark text-gray dark:text-gray-dark hover:bg-gray-hover-bg dark:hover:bg-gray-hover-bg-dark",
         blue: "bg-info-bg dark:bg-[#12384a] text-info dark:text-info-dark border-[#b6d9fd] dark:border-info-border-dark hover:bg-[#d0e4fb] dark:hover:bg-[#16455a]",
 
 

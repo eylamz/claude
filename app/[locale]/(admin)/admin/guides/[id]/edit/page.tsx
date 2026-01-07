@@ -764,7 +764,7 @@ export default function EditGuidePage() {
             <h1 className="text-3xl font-bold text-text dark:text-text-dark">Edit Guide</h1>
             <p className="text-sm text-red-500 mt-1">{error}</p>
           </div>
-          <Button variant="grey" onClick={() => router.back()}>
+          <Button variant="gray" onClick={() => router.back()}>
             Back
           </Button>
         </div>
@@ -951,7 +951,7 @@ export default function EditGuidePage() {
           {/* Basic Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-grey dark:text-grey-dark">Basic Information</CardTitle>
+              <CardTitle className="text-gray dark:text-gray-dark">Basic Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Language Tabs */}
@@ -1061,7 +1061,7 @@ export default function EditGuidePage() {
                 <div className="flex flex-wrap gap-2">
                   {SPORTS.map((sport) => (
                     <Button
-                      variant={formData.relatedSports.includes(sport.toLowerCase()) ? 'blue' : 'grey'}
+                      variant={formData.relatedSports.includes(sport.toLowerCase()) ? 'blue' : 'gray'}
                       key={sport}
                       type="button"
                       onClick={() =>
@@ -1125,11 +1125,11 @@ export default function EditGuidePage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <CardTitle>Content Builder</CardTitle>
-                  <div className="flex items-center gap-2 bg-gray-bg dark:bg-gray-bg-dark px-3 py-1.5 rounded-lg border border-gray-border dark:border-grey-border-dark">
-                    <span className="text-xs font-semibold text-gray dark:text-grey-dark">Editing:</span>
+                  <div className="flex items-center gap-2 bg-gray-bg dark:bg-gray-bg-dark px-3 py-1.5 rounded-lg border border-gray-border dark:border-gray-border-dark">
+                    <span className="text-xs font-semibold text-gray dark:text-gray-dark">Editing:</span>
                     <div className="flex items-center gap-2">
                     <Button
-                      variant={activeTab === 'en' ? 'blue' : 'grey'}
+                      variant={activeTab === 'en' ? 'blue' : 'gray'}
                       type="button"
                       onClick={() => handleTabChange('en')}
                       className={`!rounded text-xs font-medium`}
@@ -1137,7 +1137,7 @@ export default function EditGuidePage() {
                       English
                     </Button>
                     <Button
-                      variant={activeTab === 'he' ? 'blue' : 'grey'}
+                      variant={activeTab === 'he' ? 'blue' : 'gray'}
                       type="button"
                       onClick={() => handleTabChange('he')}
                       className={`!rounded text-xs font-medium`}
@@ -1150,12 +1150,12 @@ export default function EditGuidePage() {
                 </div>
                 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                   <PopoverTrigger asChild>
-                    <Button type="button" variant="grey" className="gap-2">
+                    <Button type="button" variant="gray" className="gap-2">
                       <span className="text-lg">+</span>
                       Add Content Block
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-64 p-2" align="end">
+                  <PopoverContent className="w-64 p-2 bg-siderbar-bg dark:bg-siderbar-bg-dark "  align="end">
                     <div className="grid grid-cols-2 gap-2">
                       {CONTENT_BLOCK_TYPES.map(type => (
                         <button
@@ -1576,7 +1576,7 @@ export default function EditGuidePage() {
                               <div className="space-y-2">
                                 <div>
                                   <div className="flex items-center justify-between mb-1">
-                                    <label className="text-xs font-medium text-grey dark:text-gray-400">
+                                    <label className="text-xs font-medium text-gray dark:text-gray-400">
                                       {activeTab === 'en' ? 'Link Text' : 'טקסט קישור'}
                                     </label>
                                     <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark">

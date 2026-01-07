@@ -34,30 +34,40 @@ const SPORT_CONFIG = [
     iconName: 'filter' as const,
     displayName: 'All',
     variant: 'default' as const,
+    tooltipEn: 'Show all sports',
+    tooltipHe: 'הצג את כל הספורטים',
   },
   {
     value: 'roller',
     iconName: 'Roller' as const,
     displayName: 'Rollerblading',
     variant: 'red' as const,
+    tooltipEn: 'Filter by Rollerblading guides',
+    tooltipHe: 'סנן לפי מדריכי רולרבליידינג',
   },
   {
     value: 'skate',
     iconName: 'Skate' as const,
     displayName: 'Skating',
     variant: 'blue' as const,
+    tooltipEn: 'Filter by Skating guides',
+    tooltipHe: 'סנן לפי מדריכי החלקה',
   },
   {
     value: 'scoot',
     iconName: 'scooter' as const,
     displayName: 'Scootering',
     variant: 'green' as const,
+    tooltipEn: 'Filter by Scootering guides',
+    tooltipHe: 'סנן לפי מדריכי קורקינט',
   },
   {
     value: 'bmx',
     iconName: 'bmx-icon' as const,
     displayName: 'BMXing',
     variant: 'purple' as const,
+    tooltipEn: 'Filter by BMX guides',
+    tooltipHe: 'סנן לפי מדריכי BMX',
   },
 ] as const;
 
@@ -744,6 +754,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                     value: sport.value,
                     icon: <Icon name={sport.iconName} className="w-5 h-5" />,
                     variant: sport.variant,
+                    tooltip: tr(sport.tooltipEn, sport.tooltipHe),
                   }))}
                   value={selectedSports.length > 0 ? selectedSports[0] : ''}
                   onValueChange={(value: string) => {

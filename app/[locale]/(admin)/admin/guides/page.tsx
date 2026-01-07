@@ -688,7 +688,7 @@ export default function GuidesPage() {
         </div>
         <div className="flex items-center gap-3">
           <Button
-            variant="grey"
+            variant="gray"
             className='flex items-center gap-1'
             onClick={async () => {
               // Clear localStorage cache
@@ -833,7 +833,7 @@ export default function GuidesPage() {
                   {bulkOperation === 'publish' ? 'Publishing...' : 'Publish'}
                 </Button>
                 <Button 
-                  variant="grey" 
+                  variant="gray" 
                   onClick={() => handleBulkAction('archive')}
                   disabled={!!bulkOperation}
                 >

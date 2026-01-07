@@ -191,12 +191,31 @@ export default function HomePage() {
 
 
   return (
-    <main className="w-full bg-background dark:bg-background-dark">
+    <main className="pt-20 w-full bg-background dark:bg-background-dark">
+            {/* Final CTA Section */}
+            <section className="py-32 sm:py-40 px-4 sm:px-6 lg:px-8 bg-background dark:bg-background-dark text-center">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-8 leading-tight text-text dark:text-text-dark">
+            {t('nextSessionAwaits').split('<br/>').map((line, i, arr) => (
+              <span key={i}>
+                {line}
+                {i < arr.length - 1 && <br />}
+              </span>
+            ))}
+          </h2>
+          <Link href={`/${locale}/skateparks`}>
+            <Button size="lg" className="px-12 py-6 text-lg font-semibold text-[#212621] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              {t('getStarted')}
+            </Button>
+          </Link>
+        </div>
+      </section>
 
       {/* Hero Carousel Section */}
       {homepageSettings?.heroCarouselImages && homepageSettings.heroCarouselImages.length > 0 && (
         <HeroCarousel images={homepageSettings.heroCarouselImages} />
       )}
+
       
       {/* Featured Products Section - only show if ecommerce is enabled */}
       {ecommerceEnabled && (
@@ -483,24 +502,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section className="py-32 sm:py-40 px-4 sm:px-6 lg:px-8 bg-background dark:bg-background-dark text-center">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-8 leading-tight text-text dark:text-text-dark">
-            {t('nextSessionAwaits').split('<br/>').map((line, i, arr) => (
-              <span key={i}>
-                {line}
-                {i < arr.length - 1 && <br />}
-              </span>
-            ))}
-          </h2>
-          <Link href={`/${locale}/skateparks`}>
-            <Button size="lg" className="px-12 py-6 text-lg font-semibold bg-[#32CD32] hover:bg-[#2ECC71] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-              {t('getStartedFree')}
-            </Button>
-          </Link>
-        </div>
-      </section>
 
       {/* Footer Section */}
       <footer className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 text-center">

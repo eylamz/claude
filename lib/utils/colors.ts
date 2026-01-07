@@ -185,11 +185,11 @@ export const colors = {
     },
   },
   btn: {
-    light: 'hsl(171, 100%, 38%)',
-    dark: 'hsl(171, 100%, 45%)',
+    light: 'hsl(123, 100%, 44%)',
+    dark: 'hsl(123, 60%, 48%)',
     hover: {
-      light: '#e2e8f0',
-      dark: '#3e516c',
+      light: 'hsl(123, 100%, 45%)',
+      dark: 'hsl(123, 57%, 45%)',
     },
     secondary: {
       light: 'hsl(0, 0%, 100%)',
@@ -287,7 +287,7 @@ export const colors = {
       } 
    },
 
-   grey: {
+   gray: {
     light: '#424242',
     dark: '#afafaf',
     bg: {

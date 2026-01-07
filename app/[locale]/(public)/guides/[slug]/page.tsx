@@ -202,16 +202,22 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
                       return item.listItems.map((listItem: { title?: string; content: string }, itemIndex: number) => (
                         <li 
                           key={itemIndex} 
-                          className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}
+                          className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3`}
                         >
                           {!isNumbered && (
                             <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
                           )}
                           <div>
-                            {listItem.title && (
-                              <span className="font-bold text-gray-900 dark:text-white">{listItem.title} </span>
-                            )}
-                            {listItem.content}
+                          {listItem.title && (
+                            <>
+                              <span className="font-semibold text-gray-900 dark:text-white">
+                                {listItem.title}
+                              </span>
+                              <br />
+                            </>
+                          )}
+                          {listItem.content}
+
                           </div>
                         </li>
                       ));
@@ -227,7 +233,7 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
                       return (listItems as ILocalizedField[]).map((listItem: ILocalizedField, itemIndex: number) => (
                         <li 
                           key={itemIndex} 
-                          className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}
+                          className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3`}
                         >
                           {!isNumbered && (
                             <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
@@ -243,7 +249,7 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
                     return items.map((listItem: any, itemIndex: number) => (
                       <li 
                         key={itemIndex} 
-                        className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}
+                        className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3 ${isRTL ? '' : ''}`}
                       >
                         {!isNumbered && (
                           <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
@@ -252,7 +258,7 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
                           {typeof listItem === 'object' && 'content' in listItem ? (
                             <>
                               {listItem.title && (
-                                <span className="font-bold text-gray-900 dark:text-white">{listItem.title} </span>
+                                <span className="font-bold text-gray-900 dark:text-white ">{listItem.title} /n </span>
                               )}
                               {listItem.content}
                             </>
@@ -668,34 +674,11 @@ export default function GuidePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
 
-      <div className="min-h-screen bg-white dark:bg-gray-950">
+      <div className="min-h-screen bg-background dark:bg-background-dark">
         {/* Sticky Back Navigation - Duolingo style */}
-        <div className="sticky top-0 z-40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3">
-            <Link
-              href={`/${locale}/guides`}
-              className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium text-sm transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              {tCommon('guides') || 'Guides'}
-            </Link>
-          </div>
-        </div>
-
         <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           {/* Article Header - Duolingo Style */}
-          <header className="mb-8">
-            {/* Date and Author - First appearance (small, above title) */}
-            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
-              {publishedDate && <span>{publishedDate}</span>}
-              {publishedDate && guide.authorName && <span>•</span>}
-              {guide.authorName && (
-                <Link href="#" className="hover:text-brand-main dark:hover:text-brand-dark transition-colors">
-                  {guide.authorName}
-                </Link>
-              )}
-            </div>
-
+          <header className="my-10">
             {/* Title - Large and bold */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mb-4">
               {guideTitle}
@@ -749,7 +732,7 @@ export default function GuidePage() {
                   <Link
                     key={tag}
                     href={`/${locale}/guides?tag=${encodeURIComponent(tag)}`}
-                    className="uppercase px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] transition-colors"
+                    className="capitalize px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] transition-colors"
                   >
                     {tag}
                   </Link>
@@ -768,11 +751,11 @@ export default function GuidePage() {
 
           {/* Related Sports - Subtle display */}
           {guide.relatedSports.length > 0 && (
-            <div className="bg-gray-50 dark:bg-gray-900 rounded-2xl p-6 mb-8">
+            <div className="bg-card dark:bg-card-dark rounded-2xl p-6 mb-8">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
                 Related Sports
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 capitalize">
                 {guide.relatedSports.map((sport) => (
                   <span
                     key={sport}
