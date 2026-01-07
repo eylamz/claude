@@ -1664,7 +1664,7 @@ export default function SkateparksPage() {
                       size="sm"
                       onClick={requestLocation}
                       className=''
-                      aria-label={tr('Use My Location', 'השתמש במיקומי')}
+                      aria-label={userLocation ? tr('Disable Location', 'כבה מיקום') : tr('Use My Location', 'השתמש במיקומי')}
                     >
                       <Icon 
                         name={userLocation ? "locationOffBold" : "locationBold"}
@@ -1672,8 +1672,12 @@ export default function SkateparksPage() {
                       />
                     </Button>
                   </TooltipTrigger> 
-                  <TooltipContent side="bottom" className="text-center">
-                    {tr('Use My Location', 'השתמש במיקומי')}
+                  <TooltipContent 
+                  side="bottom" 
+                  className="text-center"
+                  variant={userLocation ? "green" : "gray"}
+                  >
+                    {userLocation ? tr('Disable Location', 'כבה מיקום') : tr('Use My Location', 'השתמש במיקומי')}
                   </TooltipContent>
                 </Tooltip>
 
@@ -1704,7 +1708,11 @@ export default function SkateparksPage() {
                       )}
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="text-center">
+                  <TooltipContent 
+                    variant={viewMode === 'grid' ? 'default' : 'orange'}
+                    side="bottom" 
+                    className="text-center"
+                  >
                     {viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
                   </TooltipContent>
                 </Tooltip>

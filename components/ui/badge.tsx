@@ -20,6 +20,12 @@ export function Badge({ children, variant = 'default', className = '' }: BadgePr
     info: 'text-info dark:text-info-dark',
     primary: 'bg-brand-main dark:bg-brand-dark text-white',
     ghost: 'bg-transparent text-text dark:text-text-dark text-brand-main dark:text-brand-dark',
+    blue: 'bg-blue-border dark:bg-blue-border-dark text-blue dark:text-blue-dark',
+    green: 'bg-green-bg dark:bg-green-bg-dark text-green dark:text-green-dark',
+    gray: 'bg-gray-bg dark:bg-gray-bg-dark text-gray dark:text-gray-dark',
+    orange: 'bg-orange-bg dark:bg-orange-bg-dark text-orange dark:text-orange-dark',
+    red: 'bg-red-bg dark:bg-red-bg-dark text-red dark:text-red-dark',
+    purple: 'bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark',
   };
 
   return (

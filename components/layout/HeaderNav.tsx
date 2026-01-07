@@ -264,7 +264,7 @@ export default function HeaderNav() {
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent 
-                      soon 
+                      variant="purple"
                       side="bottom" 
                       className='font-semibold'>
                     {locale === 'he' ? 'בשלבי סיום' : 'Almost Done'}
@@ -329,7 +329,7 @@ export default function HeaderNav() {
                     </Link>
                   </TooltipTrigger>
                   <TooltipContent 
-                    soon 
+                    variant="purple"
                     side="bottom"
                     className='font-semibold'>
                     {locale === 'he' ? 'מסדרים מדפים' : 'Restocking Items'}

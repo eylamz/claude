@@ -347,6 +347,25 @@ const config: Config = {
                 },
             },
 
+            blue: {
+              DEFAULT: colors.blue.light,
+              dark: colors.blue.dark,
+              bg: {
+                DEFAULT: colors.blue.bg.light,
+                dark: colors.blue.bg.dark,
+              },
+              border: {
+                DEFAULT: colors.blue.border.light,
+                dark: colors.blue.border.dark,
+              },
+              hover: {
+                bg: {
+                  DEFAULT: colors.blue.hover.bg.light,
+                  dark: colors.blue.hover.bg.dark,
+                },
+              },
+            },
+
             gray: {
               DEFAULT: colors.gray.light,
               dark: colors.gray.dark,
@@ -740,6 +759,22 @@ const config: Config = {
               transform: 'scale(0.9) translateY(-8px)'
             }
           },
+          'borderFadeIn': {
+            '0%': { 
+              borderColor: 'transparent',
+            },
+            '100%': { 
+              borderColor: '#4a4a4a',
+            }
+          },
+          'borderFadeOut': {
+            '0%': { 
+              borderColor: '#4a4a4a',
+            },
+            '100%': { 
+              borderColor: 'transparent',
+            }
+          },
       },
       animation: {
         'popUp': 'popUp 0.2s',
@@ -780,6 +815,8 @@ const config: Config = {
         'popoverIn': 'popoverIn 0.2s forwards',
         'popoverOut': 'popoverOut 0.15s forwards',
         'selectClose': 'selectClose 0.25s ease-out forwards',
+        'borderFadeIn': 'borderFadeIn 0.2s ease-out forwards',
+        'borderFadeOut': 'borderFadeOut 0.1s ease-out forwards',
       },
     },
   },

@@ -7,6 +7,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 
 export type SegmentedControlVariant = 
   | 'default'
+  | 'gray'
   | 'red'
   | 'blue'
   | 'green'
@@ -27,13 +28,14 @@ export interface SegmentedControlOption {
 // Variant styles for the sliding background indicator
 // Note: transform transition is handled separately, colors transition with delay
 const indicatorVariants = cva(
-  'absolute top-1 bottom-1 left-1 rounded-[10px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.04)] pointer-events-none z-0 border border-transparent',
+  'absolute top-0.5 bottom-0.5   rounded-[10px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.04)] pointer-events-none z-0 border border-transparent',
   {
     variants: {
       variant: {
         default: 'border-[#e6e6e6] dark:border-[#494949] bg-black/[2.5%] hover:bg-black/5',
+        gray: 'border-gray-border dark:border-gray-border-dark bg-gray-bg dark:bg-gray-bg-dark',
         red: 'border-[#ffc5c5] dark:border-[#f3394c3b] bg-[#ffe6e6] dark:bg-[#311c1c]',
-        blue: 'border-info-border dark:border-info-border-dark bg-info-bg dark:bg-info-bg-dark',
+        blue: 'border-blue-border dark:border-blue-border-dark bg-blue-bg dark:bg-blue-bg-dark',
         green: 'border-[#baf0bb] dark:border-[#235725] bg-[#e3f6e4] dark:bg-[#0f2f10]',
         purple: 'border-[#b99ef867] dark:border-[#5f4cc54d] bg-[#e7defc] dark:bg-[#472881]',
         orange: 'border-[#ffe0bb] dark:border-[#f39d393b] bg-[#fff1e0] dark:bg-[#31271c]',
@@ -53,6 +55,7 @@ const textVariants = cva('transition-colors duration-150 delay-150', {
   variants: {
     variant: {
       default: '',
+      gray: '',
       red: '',
       blue: '',
       green: '',
@@ -76,6 +79,16 @@ const textVariants = cva('transition-colors duration-150 delay-150', {
     },
     {
       variant: 'default',
+      isSelected: false,
+      className: 'text-text-secondary dark:text-text-secondary-dark',
+    },
+    {
+      variant: 'gray',
+      isSelected: true,
+      className: 'text-gray dark:text-gray-dark',
+    },
+    {
+      variant: 'gray',
       isSelected: false,
       className: 'text-text-secondary dark:text-text-secondary-dark',
     },
@@ -267,6 +280,9 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
           const isSelected = option.value === currentValue;
           const inputId = `${name}-${option.value}-${index}`;
           const optionVariant = option.variant || 'default';
+          const nextOption = options[index + 1];
+          const isNextSelected = nextOption?.value === currentValue;
+          const shouldShowBorder = index < options.length - 1 && !isSelected && !isNextSelected;
           
           const labelContent = (
             <>
@@ -308,9 +324,11 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
                     <label
                       htmlFor={inputId}
                       className={cn(
-                        'relative px-3 flex-1 flex items-center justify-center',
+                        'relative px-3 flex-1 flex items-center justify-center h-fit my-auto',
                         'cursor-pointer select-none transition-all duration-200',
                         'z-[2]',
+                        index < options.length - 1 && 'border-r border-red-500',
+                        shouldShowBorder ? 'animate-borderFadeIn' : 'animate-borderFadeOut',
                         textVariants({ variant: optionVariant, isSelected })
                       )}
                       style={{
@@ -320,7 +338,7 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
                       {labelContent}
                     </label>
                   </TooltipTrigger>
-                  <TooltipContent side="top" variant={optionVariant}>
+                  <TooltipContent side="bottom" variant={optionVariant}>
                     {option.tooltip}
                   </TooltipContent>
                 </Tooltip>
@@ -331,6 +349,8 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
                     'relative px-3 flex-1 flex items-center justify-center',
                     'cursor-pointer select-none transition-all duration-200',
                     'z-[2]',
+                    index < options.length - 1 && 'border-r border-red-500',
+                    shouldShowBorder ? 'animate-borderFadeIn' : 'animate-borderFadeOut',
                     textVariants({ variant: optionVariant, isSelected })
                   )}
                   style={{

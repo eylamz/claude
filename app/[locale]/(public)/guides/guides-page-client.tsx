@@ -41,7 +41,7 @@ const SPORT_CONFIG = [
     value: 'roller',
     iconName: 'Roller' as const,
     displayName: 'Rollerblading',
-    variant: 'red' as const,
+    variant: 'blue' as const,
     tooltipEn: 'Filter by Rollerblading guides',
     tooltipHe: 'סנן לפי מדריכי רולרבליידינג',
   },
@@ -382,13 +382,13 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
       }
       
       prevScrollYRef.current = currentScrollY;
-      setIsScrolled(currentScrollY > 260);
+      setIsScrolled(currentScrollY > 240);
     };
 
     const initialScrollY = window.scrollY;
     prevScrollYRef.current = initialScrollY;
     setIsHeaderVisible(initialScrollY < 10);
-    setIsScrolled(initialScrollY > 200);
+    setIsScrolled(initialScrollY > 2600);
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);

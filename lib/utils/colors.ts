@@ -287,6 +287,25 @@ export const colors = {
       } 
    },
 
+   blue: {
+    light: '#1d4ed8',
+    dark: '#93c5fd',
+    bg: {
+      light: '#deecfc',
+      dark: '#12384a',
+    },
+    border: {
+      light: '#b6d9fd',
+      dark: '#195570',
+    },
+    hover: {
+      bg: {
+        light: '#d0e4fb',
+        dark: '#16455a',
+      },
+    },
+  },
+
    gray: {
     light: '#424242',
     dark: '#afafaf',
@@ -330,16 +349,16 @@ export const colors = {
     dark: '#f39d39',
     bg: {
       light: '#fff1e0',
-      dark: '#31271c',
+      dark: 'hsl(32, 89%, 9%)',
     },
     border: {
       light: '#ffe0bb',
-      dark: '#f39d393b',
+      dark: 'hsl(32, 89%, 25%)',
     },
     hover: {
       bg: {
         light: '#ffead1',
-        dark: '#3e3123',
+        dark: 'hsl(32, 89%,11%)',
       },
     },
   },
@@ -353,7 +372,7 @@ export const colors = {
     },
     border: {
       light: '#ffc5c5',
-      dark: '#f3394c3b',
+      dark: 'hsl(355, 46%, 25%)',
     },
     hover: {
       bg: {

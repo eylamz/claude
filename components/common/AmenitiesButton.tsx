@@ -93,7 +93,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                 />
                 {isActive && (
                   <Badge 
-                    variant="info" 
+                    variant="blue" 
                     className="rounded-full text-info dark:text-info-dark poppins absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]"
                   >
                     {selectedAmenities.length}
@@ -102,18 +102,22 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
               </Button>
             </PopoverTrigger>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-center">
-            {tSkateparks('amenities.filterBy') || 'Filter by amenities'}
+          <TooltipContent 
+          side="bottom" 
+          className="text-center"
+          variant={isActive ? "blue" : "gray"}
+       >
+            {isActive ? tSkateparks('amenities.filterBy') || 'Filter by amenities' : 'Disable amenities filtering'}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
       <PopoverContent className="w-fit min-w-[330px] p-2">
         <div className="space-y-2">
-          <div className={`flex ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'} items-center justify-between h-[32px]`}>
-            <h4 className={`text-sm font-medium w-full ${selectedAmenities.length > 0 ? 'text-right' : 'text-center'}`}>{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
+          <div className={`flex gap-4 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'} items-center justify-between h-[32px]`}>
+            <h4 className={`text-sm font-medium w-full ${selectedAmenities.length > 0 ? (locale === 'he' ? 'text-right' : 'text-left') : 'text-center'}`}>{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
             {selectedAmenities.length > 0 && (
               <Button
-                variant="error"
+                variant="red"
                 size="sm"
                 onClick={clearAll}
                 className=" h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"

@@ -38,8 +38,7 @@ const buttonVariants = cva(
         orange: "border-orange-border dark:border-orange-border-dark bg-orange-bg dark:bg-orange-bg-dark text-orange dark:text-orange-dark hover:bg-orange-hover-bg dark:hover:bg-orange-hover-bg-dark",
         green: "border-green-border dark:border-green-border-dark bg-green-bg dark:bg-green-bg-dark text-green dark:text-green-dark hover:bg-green-hover-bg dark:hover:bg-green-hover-bg-dark",
         gray: "border-gray-border dark:border-gray-border-dark bg-gray-bg dark:bg-gray-bg-dark text-gray dark:text-gray-dark hover:bg-gray-hover-bg dark:hover:bg-gray-hover-bg-dark",
-        blue: "bg-info-bg dark:bg-[#12384a] text-info dark:text-info-dark border-[#b6d9fd] dark:border-info-border-dark hover:bg-[#d0e4fb] dark:hover:bg-[#16455a]",
-
+        blue: "border-blue-border dark:border-blue-border-dark bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark",
 
 
       },

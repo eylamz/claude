@@ -13,6 +13,7 @@ export type TooltipVariant =
   | 'default'
   | 'red'
   | 'blue'
+  | 'gray'
   | 'green'
   | 'purple'
   | 'orange'
@@ -99,36 +100,49 @@ const tooltipVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-tooltip dark:bg-tooltip-dark text-text-dark dark:text-white border-border dark:border-border-dark",
-        red: "border-[#ffc5c5] dark:border-[#f3394c3b] bg-[#ffe6e6] dark:bg-[#311c1c] text-red-700 dark:text-red-300",
-        blue: "border-info-border dark:border-info-border-dark bg-info-bg dark:bg-info-bg-dark text-blue-700 dark:text-blue-300",
-        green: "border-[#baf0bb] dark:border-[#235725] bg-[#e3f6e4] dark:bg-[#0f2f10] text-green-700 dark:text-green-300",
-        purple: "border-[#b99ef867] dark:border-[#5f4cc54d] bg-[#e7defc] dark:bg-[#472881] text-purple-700 dark:text-purple-300",
-        orange: "border-[#ffe0bb] dark:border-[#f39d393b] bg-[#fff1e0] dark:bg-[#31271c] text-orange-700 dark:text-orange-300",
-        yellow: "bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-300",
-        teal: "bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300",
-        pink: "bg-pink-50 dark:bg-pink-900/30 border border-pink-200 dark:border-pink-800 text-pink-700 dark:text-pink-300",
-      },
-      soon: {
-        true: "",
-        false: "",
+        default: "bg-tooltip dark:bg-tooltip-dark text-text-dark dark:text-white border-gray-border dark:border-gray-border-dark",
+        gray: "border-gray-border dark:border-gray-border-dark bg-gray-bg dark:bg-gray-bg-dark text-gray dark:text-gray-dark",
+        red: "border-red-border dark:border-red-border-dark bg-red-bg dark:bg-red-bg-dark text-red dark:text-red-dark",
+        blue: "border-blue-border dark:border-blue-border-dark bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark",
+        green: "border-green-border dark:border-green-border-dark bg-green-bg dark:bg-green-bg-dark text-green dark:text-green-dark",
+        purple: "border-purple-border dark:border-purple-border-dark bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark",
+        orange: "border-orange-border dark:border-orange-border-dark bg-orange-bg dark:bg-orange-bg-dark text-orange dark:text-orange-dark",
+        yellow: "bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 text-yellow dark:text-yellow-dark",
+        teal: "bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800 text-teal dark:text-teal-dark",
+        pink: "bg-pink-50 dark:bg-pink-900/30 border border-pink-200 dark:border-pink-800 text-pink dark:text-pink-dark",
       },
     },
-    compoundVariants: [
-      {
-        soon: true,
-        className: "border-purple-border dark:border-purple-border-dark bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark",
-      },
-    ],
     defaultVariants: {
       variant: 'default',
-      soon: false,
+    },
+  }
+);
+
+// Variant styles for tooltip arrow
+const tooltipArrowVariants = cva(
+  "fill-current rounded-sm",
+  {
+    variants: {
+      variant: {
+        default: "text-gray-border dark:text-gray-border-dark",
+        red: "text-red-border dark:text-red-border-dark",
+        blue: "text-blue-border dark:text-blue-border-dark",
+        gray: "text-gray-border dark:text-gray-border-dark",
+        green: "text-green-border dark:text-green-border-dark",
+        purple: "text-purple-border dark:text-purple-border-dark",
+        orange: "text-orange-border dark:text-orange-border-dark",
+        yellow: "text-yellow-50 dark:text-yellow-900/30",
+        teal: "text-teal-50 dark:text-teal-900/30",
+        pink: "text-pink-50 dark:text-pink-900/30",
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
     },
   }
 );
 
 interface TooltipContentProps extends React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> {
-  soon?: boolean;
   variant?: TooltipVariant;
 }
 
@@ -137,7 +151,7 @@ const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   TooltipContentProps
 
->(({ className, sideOffset = 8, side, soon, variant = 'default', ...props }, ref) => {
+>(({ className, sideOffset = 12, side, variant = 'default', children, ...props }, ref) => {
   const locale = useLocale();
   const isRTL = locale === 'he';
   const dir = isRTL ? 'rtl' : 'ltr';
@@ -155,13 +169,23 @@ const TooltipContent = React.forwardRef<
         side={side}
         dir={dir}
         className={cn(
-          tooltipVariants({ variant, soon }),
+          tooltipVariants({ variant }),
           openAnimation,
           closeAnimation,
           className
         )}
         {...props}
-      />
+      >
+        {children}
+        <TooltipPrimitive.Arrow
+          className={cn(
+            tooltipArrowVariants({ variant }),
+            "rounded-sm -mt-[1px]"
+          )}
+          width={11}
+          height={5}
+        />
+      </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   );
 })
