@@ -390,7 +390,7 @@ export const colors = {
       dark: '#2f1a56',
     },
     border: {
-      light: '#b99ef867',
+      light: 'hsl(259, 84%, 87%)',
       dark: '#6e40c4',
     },
     hover: {

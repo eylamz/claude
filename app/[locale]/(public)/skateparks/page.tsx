@@ -662,8 +662,6 @@ ParkAmenities.displayName = 'ParkAmenities';
  */
 const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLocation }: { park: Skatepark; locale: string; animationDelay?: number; sortBy?: SortOption; userLocation?: UserLocation | null }) => {
   const [isClicked, setIsClicked] = useState(false);
-  const [showNameSection, setShowNameSection] = useState(false);
-  const [showParkName, setShowParkName] = useState(false);
   const [isInViewport, setIsInViewport] = useState(false);
   const [showBadgeContainer, setShowBadgeContainer] = useState<Record<string, boolean>>({});
   const [showBadgeContent, setShowBadgeContent] = useState<Record<string, boolean>>({});
@@ -705,17 +703,6 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
     return () => observer.disconnect();
   }, []);
 
-  // Show name section after 0.3s delay when card appears
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowNameSection(true);
-      // Show park name with pop animation after height starts growing
-      setTimeout(() => {
-        setShowParkName(true);
-      }, 0); // Small delay to let height transition start
-    }, 300 + animationDelay);
-    return () => clearTimeout(timer);
-  }, [animationDelay]);
 
   // Animate badges when card enters viewport
   useEffect(() => {
@@ -876,69 +863,45 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
           parkName={name}
         />
 
-        {/* Hover Overlay - Only on non-touch devices */}
-        {!isTouchDevice && (
+        {/* Hover Overlay - Only on non-touch devices (Distance only) */}
+        {!isTouchDevice && distanceText && (
           <div className={`absolute -bottom-1 z-20 pointer-events-none ${
             locale === 'he' ? 'right-0' : 'left-0'
           }`}>
-            {/* Distance Overlay - Behind park name */}
-            {distanceText && (
-              <div 
-                className={`border border-transparent dark:border-[#686868] max-w-[110%] min-w-[105px] absolute bottom-[calc(60%+0.5rem)] bg-card dark:bg-card-dark px-3 py-2 shadow-[-2px_1px_12px_3px_rgba(0,0,0,0.15)] ${
-                  locale === 'he'
-                    ? 'rounded-l-lg opacity-0 group-hover:opacity-100 translate-x-[8%] translate-y-[54%] rotate-[-2deg] group-hover:translate-x-[5%] group-hover:translate-y-[5%] group-hover:rotate-[1deg]'
-                    : 'rounded-r-xl opacity-0 group-hover:opacity-100 translate-x-[-8%] translate-y-[54%] rotate-[2deg] group-hover:translate-x-[-5%] group-hover:translate-y-[5%] group-hover:rotate-[-1deg]'
-                } transition-[opacity,transform] duration-[200ms,500ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)] [transition-delay:0ms,0ms] group-hover:[transition-delay:200ms,0ms]`}
-              >
-                <div className="flex items-center gap-1.5 text-text dark:text-text-dark text-xs">
-                  <Icon name="locationBold" className="w-3 h-3 shrink-0" />
-                  <span>{distanceText}</span>
-                </div>
+            {/* Distance Overlay */}
+            <div 
+              className={`border border-transparent dark:border-[#686868] max-w-[110%] min-w-[105px] absolute bottom-[calc(60%+0.5rem)] bg-card dark:bg-card-dark px-3 py-2 shadow-[-2px_1px_12px_3px_rgba(0,0,0,0.15)] ${
+                locale === 'he'
+                  ? 'rounded-l-lg opacity-0 group-hover:opacity-100 translate-x-[8%] translate-y-[54%] rotate-[-2deg] group-hover:translate-x-[5%] group-hover:translate-y-[5%] group-hover:rotate-[1deg]'
+                  : 'rounded-r-xl opacity-0 group-hover:opacity-100 translate-x-[-8%] translate-y-[54%] rotate-[2deg] group-hover:translate-x-[-5%] group-hover:translate-y-[5%] group-hover:rotate-[-1deg]'
+              } transition-[opacity,transform] duration-[200ms,500ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)] [transition-delay:0ms,0ms] group-hover:[transition-delay:200ms,0ms]`}
+            >
+              <div className="flex items-center gap-1.5 text-text dark:text-text-dark text-xs">
+                <Icon name="locationBold" className="w-3 h-3 shrink-0" />
+                <span>{distanceText}</span>
               </div>
-            )}
-            
-            {/* Park Name Overlay - In front */}
-            <div className={`relative border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark px-3 pt-2 pb-3 shadow-[-2px_1px_8px_3px_rgba(0,0,0,0.2)]   ${
-              locale === 'he'
-                ? 'rounded-tl-lg opacity-0 group-hover:opacity-100 translate-x-[36%] translate-y-[22%] rotate-[-1deg] group-hover:translate-x-[3%] group-hover:translate-y-[3%] group-hover:rotate-[2deg]'
-                : 'rounded-tr-xl opacity-0 group-hover:opacity-100 translate-x-[-6%] translate-y-[12%] rotate-[1deg] group-hover:translate-x-[-3%] group-hover:translate-y-[3%] group-hover:rotate-[-2deg]'
-            } transition-[opacity,transform] duration-[200ms,300ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)]`}>
-              <h3 className="text-sm font-semibold text-text dark:text-text-dark ">
-                {name}
-              </h3>
             </div>
           </div>
         )}
       </div>
 
-      {/* Name Section - Only on touch devices */}
-      {isTouchDevice && (
-        <div 
-          className="px-2 space-y-1 overflow-hidden transition-all duration-300 ease-out"
-          style={{
-            maxHeight: showNameSection ? '200px' : '0',
-            paddingTop: showNameSection ? '0.25rem' : '0',
-            paddingBottom: showNameSection ? '0.3rem' : '0',
-          }}
-
-        >
-          <h3 
-            className={`text-sm font-semibold truncate ${showParkName ? 'animate-fadeInDown animation-delay-[1s]' : 'opacity-0'}`}
-          >
-            {name}
-          </h3>
-          {distanceText && (
-            <div className="opacity-0 animate-fadeInDown animation-delay-[4s] flex items-center justify-between">
-              <div className="flex items-center text-gray-600 dark:text-gray-400 gap-2">
-                <Icon name="locationBold" className="w-3.5 h-3.5 shrink-0" />
-                <span className="text-sm truncate">
-                  {distanceText}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Name Section - For all devices */}
+      <div className={`px-3 py-2 border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark shadow-[-2px_1px_12px_3px_rgba(0,0,0,0.15)] ${
+        locale === 'he' ? 'rounded-l-lg' : 'rounded-r-xl'
+      }`}>
+        <h3 className="text-sm font-semibold truncate text-text dark:text-text-dark">
+          {name}
+        </h3>
+        {/* Distance - Only shown on touch devices below the name */}
+        {isTouchDevice && distanceText && (
+          <div className="flex items-center gap-1.5 mt-1">
+            <Icon name="locationBold" className="w-3 h-3 shrink-0 text-text dark:text-text-dark" />
+            <span className="text-xs text-text dark:text-text-dark truncate">
+              {distanceText}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 });

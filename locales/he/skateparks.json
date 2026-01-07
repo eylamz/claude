@@ -51,7 +51,8 @@
     "nearbyRestaurants": "מסעדות קרובות",
     "nearbyRestaurantsDescription": "ישנם מסעדות בקרבת מקום",
     "available": "זמין",
-    "filterBy": "סנן לפי שירותים / חוקים"
+    "filterBy": "סנן לפי שירותים / חוקים",
+    "filterByDisable": "כבה סינון לפי שירותים"
   },
   "getDirections": "ניווט",
   "googleMaps": "גוגל מפות",

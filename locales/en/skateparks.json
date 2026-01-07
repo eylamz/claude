@@ -51,7 +51,8 @@
     "nearbyRestaurants": "Nearby Restaurants",
     "nearbyRestaurantsDescription": "There are restaurants or food options nearby",
     "available": "Available",
-    "filterBy": "Filter by amenities"
+    "filterBy": "Filter by amenities",
+    "filterByDisable": "Disable amenities filtering"
   },
   "getDirections": "Get Directions",
   "googleMaps": "Google Maps",
