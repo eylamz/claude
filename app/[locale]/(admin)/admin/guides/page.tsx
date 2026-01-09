@@ -3,13 +3,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardContent, Skeleton, SelectWrapper, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui';
+import { Button, Card, CardContent, Skeleton, SelectWrapper, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, Toaster } from '@/components/ui';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { NumberInput } from '@/components/ui/number-input';
+import { useToast } from '@/hooks/use-toast';
 
 interface Guide {
   id: string;
@@ -88,6 +89,12 @@ export default function GuidesPage() {
   const [guidesVersion, setGuidesVersion] = useState<number>(1);
   const [savingVersion, setSavingVersion] = useState(false);
   
+  // Refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Toast hook
+  const { toast } = useToast();
+  
   // Refs to prevent duplicate API calls
   const isFetchingRef = useRef(false);
   const versionCheckInProgressRef = useRef(false);
@@ -119,10 +126,18 @@ export default function GuidesPage() {
         body: JSON.stringify({ guidesVersion }),
       });
       if (!response.ok) throw new Error('Failed to save version');
-      alert('Version updated successfully!');
+      toast({
+        title: 'Success',
+        description: 'Version updated successfully!',
+        variant: 'info',
+      });
     } catch (error) {
       console.error('Error updating version:', error);
-      alert('Failed to update version');
+      toast({
+        title: 'Error',
+        description: 'Failed to update version',
+        variant: 'error',
+      });
     } finally {
       setSavingVersion(false);
     }
@@ -489,9 +504,17 @@ export default function GuidesPage() {
 
       // Show results
       if (results.failed > 0) {
-        alert(`Completed: ${results.success} succeeded, ${results.failed} failed.\n\nFailed guides: ${errors.join(', ')}`);
+        toast({
+          title: 'Partial Success',
+          description: `Completed: ${results.success} succeeded, ${results.failed} failed. Failed guides: ${errors.join(', ')}`,
+          variant: 'warning',
+        });
       } else {
-        alert(`Successfully ${actionLabel}ed ${results.success} guide(s).`);
+        toast({
+          title: 'Success',
+          description: `Successfully ${actionLabel}ed ${results.success} guide(s).`,
+          variant: 'success',
+        });
       }
 
       // Clear cache to force refresh
@@ -506,7 +529,11 @@ export default function GuidesPage() {
       fetchGuides();
     } catch (error) {
       console.error('Error performing bulk action:', error);
-      alert(`Error performing bulk action: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast({
+        title: 'Error',
+        description: `Error performing bulk action: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        variant: 'error',
+      });
     } finally {
       setBulkOperation(null);
       setSelectedItems(new Set());
@@ -543,7 +570,11 @@ export default function GuidesPage() {
       );
     } catch (error) {
       console.error('Error updating status:', error);
-      alert(error instanceof Error ? error.message : 'Failed to update status');
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to update status',
+        variant: 'error',
+      });
     } finally {
       setUpdatingStatus(null);
     }
@@ -582,7 +613,11 @@ export default function GuidesPage() {
       );
     } catch (error) {
       console.error('Error toggling featured status:', error);
-      alert(error instanceof Error ? error.message : 'Failed to update guide');
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to update guide',
+        variant: 'error',
+      });
     } finally {
       setUpdatingStatus(null);
     }
@@ -624,7 +659,11 @@ export default function GuidesPage() {
       fetchGuides();
     } catch (error) {
       console.error('Error deleting guide:', error);
-      alert(error instanceof Error ? error.message : 'Failed to delete guide');
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to delete guide',
+        variant: 'error',
+      });
     } finally {
       setUpdatingStatus(null);
     }
@@ -678,6 +717,7 @@ export default function GuidesPage() {
 
   return (
     <div className="pt-16 space-y-6">
+      <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -691,6 +731,7 @@ export default function GuidesPage() {
             variant="gray"
             className='flex items-center gap-1'
             onClick={async () => {
+              setIsRefreshing(true);
               // Clear localStorage cache
               const cacheKey = 'guides_cache';
               const versionKey = 'guides_version';
@@ -712,12 +753,25 @@ export default function GuidesPage() {
               }
               
               // Trigger refetch
-              fetchGuides();
+              await fetchGuides();
+              
+              setIsRefreshing(false);
+              toast({
+                title: 'Success',
+                description: 'Data has been refreshed successfully!',
+                variant: 'success',
+              });
             }}
             title="Refresh and clear cache"
+            disabled={isRefreshing}
           >
             Refresh
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg 
+              className={`w-4 h-4 transition-transform ${isRefreshing ? 'animate-spin' : ''}`} 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </Button>

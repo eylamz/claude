@@ -17,5 +17,17 @@ export { Separator } from './separator';
 export { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from './tooltip';
 export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from './table';
 export { SegmentedControls } from './segmented-controls';
+export {
+  type ToastProps,
+  type ToastActionElement,
+  ToastProvider,
+  ToastViewport,
+  Toast,
+  ToastTitle,
+  ToastDescription,
+  ToastClose,
+  ToastAction,
+} from './toast';
+export { Toaster } from './toaster';
 
 
