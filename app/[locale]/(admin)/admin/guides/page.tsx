@@ -1155,7 +1155,7 @@ export default function GuidesPage() {
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setViewPopoverOpen(guide.id)}>
+                      <DropdownMenuItem onClick={() => window.open(`/${locale}/guides/${guide.slug}`, '_blank')}>
                         View
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/guides/${guide.id}/edit`)}>

@@ -96,7 +96,7 @@ TooltipTrigger.displayName = TooltipPrimitive.Trigger.displayName;
 
 // Variant styles for tooltip that match segmented control variants
 const tooltipVariants = cva(
-  "z-50 overflow-hidden rounded-lg border text-xs px-3 py-1.5 whitespace-nowrap",
+  "z-50 overflow-hidden rounded-lg border text-xs px-3 py-1.5 whitespace-nowrap font-semibold",
   {
     variants: {
       variant: {
@@ -151,7 +151,7 @@ const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   TooltipContentProps
 
->(({ className, sideOffset = 12, side, variant = 'default', children, ...props }, ref) => {
+>(({ className, sideOffset = 6, side, variant = 'default', children, ...props }, ref) => {
   const locale = useLocale();
   const isRTL = locale === 'he';
   const dir = isRTL ? 'rtl' : 'ltr';

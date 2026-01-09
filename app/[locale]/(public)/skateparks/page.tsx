@@ -576,7 +576,7 @@ const SkateparkThumbnail = memo(({
           ref={imgRef}
           src={optimizedUrl}
           alt={parkName}
-          className={`w-full h-full  object-cover transition-all duration-200 select-none ${
+          className={`w-full h-full  object-cover transition-all duration-200 select-none  bg-card dark:bg-card-dark rounded-2xl overflow-hidden shadow-lg shadow-[rgba(0,0,0,0.05)] group-hover:shadow-lg dark:group-hover:!scale-[1.02] ${
             alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
           } ${
             isLoaded ? 'opacity-100' : 'opacity-0'
@@ -775,7 +775,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
     <div
       ref={cardRef}
       onClick={handleCardClick}
-      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02] border border-card dark:border-card-dark bg-card dark:bg-card-dark rounded-2xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+      className={`h-fit cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
       style={{ animationDelay: `${animationDelay}ms` }}
       aria-label={name}
     >
@@ -783,7 +783,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
         <ParkAmenities amenities={park.amenities} locale={locale} />
       )}
 
-      <div className="relative h-[10.5rem] overflow-hidden">
+      <div className="relative h-[10.5rem]">
         {/* Opening Year Badge */}
         {hasOpeningYear && (
           <div className={`absolute bottom-2 left-0 z-10 ${
@@ -886,10 +886,10 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
       </div>
 
       {/* Name Section - For all devices */}
-      <div className={`px-3 py-2 border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark shadow-[-2px_1px_12px_3px_rgba(0,0,0,0.15)] ${
-        locale === 'he' ? 'rounded-l-lg' : 'rounded-r-xl'
+      <div className={`w-fit relative opacity-0 z-[-1] -mt-2 px-3 pt-4 pb-1 border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark shadow-[-2px_1px_12px_3px_rgba(0,0,0,0.15)] ${
+        locale === 'he' ? 'rounded-b-lg animate-parkNameHoverRtl' : 'rounded-b-lg animate-parkNameHover'
       }`}>
-        <h3 className="text-sm font-semibold truncate text-text dark:text-text-dark">
+        <h3 className="rotate-[3deg] text-base font-semibold truncate text-text dark:text-text-dark">
           {name}
         </h3>
         {/* Distance - Only shown on touch devices below the name */}
@@ -1608,7 +1608,7 @@ export default function SkateparksPage() {
             </div>
 
             {/* Right: Location + View Toggle */}
-            <div className="flex items-center gap-0 xsm:gap-1">
+            <div className="flex items-center gap-2 xsm:gap-3">
                    {/* Amenities Button */}
                    <div className="flex-shrink-0">
                 <AmenitiesButton
@@ -1626,19 +1626,19 @@ export default function SkateparksPage() {
                       variant={userLocation ? "green" : "gray"}
                       size="sm"
                       onClick={requestLocation}
-                      className=''
+                      className='overflow-hidden'
                       aria-label={userLocation ? tr('Disable Location', 'כבה מיקום') : tr('Use My Location', 'השתמש במיקומי')}
                     >
                       <Icon 
                         name={userLocation ? "locationOffBold" : "locationBold"}
-                        className="w-5 h-5"
+                        className={`w-5 h-5 ${userLocation ? '' : 'animate-locationPin'}`}
                       />
                     </Button>
                   </TooltipTrigger> 
                   <TooltipContent 
                   side="bottom" 
                   className="text-center"
-                  variant={userLocation ? "green" : "gray"}
+                  variant={userLocation ? "red" : "gray"}
                   >
                     {userLocation ? tr('Disable Location', 'כבה מיקום') : tr('Use My Location', 'השתמש במיקומי')}
                   </TooltipContent>
@@ -1661,14 +1661,6 @@ export default function SkateparksPage() {
                           <Icon name="categoryBold" className="w-5 h-5" />
                         )}
                       </Button>
-
-                      {/* Pulsing indicator when map is active */}
-                      {viewMode === 'grid' && (
-                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-main dark:bg-brand-dark opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-main dark:bg-brand-dark"></span>
-                        </span>
-                      )}
                     </div>
                   </TooltipTrigger>
                   <TooltipContent 
@@ -1919,10 +1911,10 @@ export default function SkateparksPage() {
                         <ParkAmenities amenities={selectedPark.amenities} locale={locale} alwaysVisible={true} />
                       )}
 
-                      <div className="relative bg-black/25 h-[10.5rem] overflow-hidden">
+                      <div className="relative bg-black/25 h-[10.5rem]">
                         {/* Opening Year Badge */}
                         {hasOpeningYear && (
-                          <div className="absolute bottom-2 left-0 z-10">
+                          <div className="absolute bottom-2 left-0 z-10 overflow-hidden">
                             <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-end-full shadow-lg animate-pop">
                               {selectedPark.openingYear}
                               <Icon name="sparksBold" className="w-3 h-3" />
@@ -1932,10 +1924,10 @@ export default function SkateparksPage() {
 
                         {/* Closed Badge */}
                         {isClosed && (
-                          <div className={`absolute bottom-2 z-10 ${
+                          <div className={`absolute bottom-2 z-10 overflow-hidden ${
                             hasOpeningYear ? 'right-0' : 'left-0'
                           }`}>
-                            <div className={`flex gap-1 justify-center items-center bg-red-500 dark:bg-red-600 text-white text-xs px-2 py-1 shadow-lg ${
+                            <div className={`flex gap-1 justify-center items-center bg-red-500 dark:bg-red-600 text-white text-xs xs:text-base px-2 py-1 shadow-lg ${
                               hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
                             }`}>
                               {tr('Closed', 'סגור')}
@@ -2016,7 +2008,7 @@ export default function SkateparksPage() {
         ) : (
           /* GRID VIEW */
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {skateparks.map((park, index) => (
                 <SkateparkCard 
                   key={park._id} 

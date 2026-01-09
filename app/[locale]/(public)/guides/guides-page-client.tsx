@@ -350,6 +350,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   const [totalResults, setTotalResults] = useState(initialData?.pagination?.total || 0);
   const [totalGuidesCount, setTotalGuidesCount] = useState(initialData?.pagination?.total || 0); // Unfiltered total
   const [cacheInitialized, setCacheInitialized] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState<number | null>(null);
   
   // Filters
   const [selectedSports, setSelectedSports] = useState<string[]>(
@@ -424,11 +425,12 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
           const versionResponse = await fetch('/api/guides?versionOnly=true');
           if (versionResponse.ok) {
             const versionData = await versionResponse.json();
-            const currentVersion = versionData.version || 1;
+            const fetchedVersion = versionData.version || 1;
+            setCurrentVersion(fetchedVersion);
             const storedVersion = parseInt(cachedVersion);
 
             // If versions don't match, update cache
-            if (storedVersion !== currentVersion) {
+            if (storedVersion !== fetchedVersion) {
               const response = await fetch('/api/guides?limit=100');
               if (response.ok) {
                 const data = await response.json();
@@ -438,6 +440,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                 // Update cache
                 localStorage.setItem(cacheKey, JSON.stringify(allGuides));
                 localStorage.setItem(versionKey, newVersion.toString());
+                setCurrentVersion(newVersion);
               }
             }
           }
@@ -518,16 +521,26 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
       if (cachedData && cachedVersion) {
         try {
           const allCachedGuides = JSON.parse(cachedData);
+          const storedVersion = parseInt(cachedVersion);
           
-          // Check version to ensure cache is valid
-          const versionResponse = await fetch('/api/guides?versionOnly=true');
-          if (versionResponse.ok) {
-            const versionData = await versionResponse.json();
-            const currentVersion = versionData.version || 1;
-            const storedVersion = parseInt(cachedVersion);
+          // Use the version from state if available (from initial check), otherwise trust cache
+          // Only check version if we haven't checked it yet (currentVersion is null)
+          let versionMatches = true;
+          if (currentVersion !== null) {
+            versionMatches = storedVersion === currentVersion;
+          } else {
+            // Fallback: if version wasn't checked yet, check it now (shouldn't happen normally)
+            const versionResponse = await fetch('/api/guides?versionOnly=true');
+            if (versionResponse.ok) {
+              const versionData = await versionResponse.json();
+              const fetchedVersion = versionData.version || 1;
+              setCurrentVersion(fetchedVersion);
+              versionMatches = storedVersion === fetchedVersion;
+            }
+          }
 
             // If version matches, filter cached guides client-side
-            if (storedVersion === currentVersion && Array.isArray(allCachedGuides)) {
+            if (versionMatches && Array.isArray(allCachedGuides)) {
               let filteredGuides = [...allCachedGuides];
 
               // Apply filters
@@ -603,7 +616,6 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
               // Version mismatch, fetch fresh data
               console.log('Guides version mismatch, fetching fresh data');
             }
-          }
         } catch (e) {
           console.warn('Failed to use cached guides data', e);
           // Continue to fetch from API
@@ -637,11 +649,12 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
           const allGuidesResponse = await fetch('/api/guides?limit=100');
           if (allGuidesResponse.ok) {
             const allGuidesData = await allGuidesResponse.json();
-            const currentVersion = allGuidesData.version || 1;
+            const fetchedVersion = allGuidesData.version || 1;
             const allGuides = allGuidesData.guides || [];
             
             localStorage.setItem(cacheKey, JSON.stringify(allGuides));
-            localStorage.setItem(versionKey, currentVersion.toString());
+            localStorage.setItem(versionKey, fetchedVersion.toString());
+            setCurrentVersion(fetchedVersion);
             setTotalGuidesCount(allGuides.length); // Set unfiltered total
           }
         }

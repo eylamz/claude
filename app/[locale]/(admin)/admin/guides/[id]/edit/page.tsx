@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Dropdown, Skeleton } from '@/components/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Skeleton, SegmentedControls } from '@/components/ui';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
@@ -773,7 +773,7 @@ export default function EditGuidePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Toast Notification */}
       {toast && (
         <div
@@ -1354,17 +1354,24 @@ export default function EditGuidePage() {
                                   placeholder={activeTab === 'en' ? 'Enter heading...' : 'הכנס כותרת...'}
                                   dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                 />
-                                <Select
-                                  value={block.headingLevel}
-                                  onChange={(e) =>
-                                    handleUpdateContentBlock(block.id, { headingLevel: e.target.value as 'h2' | 'h3' | 'h4' })
-                                  }
-                                  options={[
-                                    { value: 'h2', label: 'H2' },
-                                    { value: 'h3', label: 'H3' },
-                                    { value: 'h4', label: 'H4' },
-                                  ]}
-                                />
+                                <div>
+                                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                    {activeTab === 'en' ? 'Heading Level' : 'רמת כותרת'}
+                                  </label>
+                                  <SegmentedControls
+                                    value={block.headingLevel || 'h2'}
+                                    onValueChange={(value) =>
+                                      handleUpdateContentBlock(block.id, { headingLevel: value as 'h2' | 'h3' | 'h4' })
+                                    }
+                                    options={[
+                                      { value: 'h2', label: 'H2' },
+                                      { value: 'h3', label: 'H3' },
+                                      { value: 'h4', label: 'H4' },
+                                    ]}
+                                    size="sm"
+                                    className="max-w-[200px]"
+                                  />
+                                </div>
                               </div>
                             )}
 
@@ -1373,16 +1380,23 @@ export default function EditGuidePage() {
                               
                               return (
                                 <div>
-                                  <Select
-                                    value={block.listType}
-                                    onChange={(e) =>
-                                      handleUpdateContentBlock(block.id, { listType: e.target.value as 'bullet' | 'numbered' })
-                                    }
-                                    options={[
-                                      { value: 'bullet', label: 'Bullet List' },
-                                      { value: 'numbered', label: 'Numbered List' },
-                                    ]}
-                                  />
+                                  <div className="mb-3">
+                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                      {activeTab === 'en' ? 'List Type' : 'סוג רשימה'}
+                                    </label>
+                                    <SegmentedControls
+                                      value={block.listType || 'bullet'}
+                                      onValueChange={(value) =>
+                                        handleUpdateContentBlock(block.id, { listType: value as 'bullet' | 'numbered' })
+                                      }
+                                      options={[
+                                        { value: 'bullet', label: 'Bullet' },
+                                        { value: 'numbered', label: 'Numbered' },
+                                      ]}
+                                      size="sm"
+                                      className="max-w-[200px]"
+                                    />
+                                  </div>
                                   <div className="mt-2 space-y-3">
                                     <div className="flex items-center justify-between mb-2">
                                       <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
@@ -1398,7 +1412,7 @@ export default function EditGuidePage() {
                                           <span className="text-xs text-text-secondary dark:text-text-secondary-dark">Item {itemIndex + 1}</span>
                                           <Button
                                             type="button"
-                                            variant="danger"
+                                            variant="red"
                                             size="sm"
                                             onClick={() => handleRemoveListItem(block.id, itemIndex)}
                                           >
@@ -1618,7 +1632,7 @@ export default function EditGuidePage() {
 
                             {block.type === 'code' && (
                               <div className="space-y-2">
-                                <Select
+                                <SelectWrapper
                                   value={block.language}
                                   onChange={(e) =>
                                     handleUpdateContentBlock(block.id, { language: e.target.value })
@@ -1660,7 +1674,7 @@ export default function EditGuidePage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1">Status</label>
-                  <Select
+                  <SelectWrapper
                     value={formData.status}
                     onChange={(e) => handleInputChange('status', e.target.value)}
                     options={[

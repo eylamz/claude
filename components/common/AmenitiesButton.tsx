@@ -105,7 +105,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
           <TooltipContent 
           side="bottom" 
           className="text-center"
-          variant={isActive ? "blue" : "gray"}
+          variant={isActive ? "red" : "gray"}
        >
             {!isActive ? tSkateparks('amenities.filterBy') || 'Filter by amenities' : tSkateparks('amenities.filterByDisable') || 'Disable amenities filtering'}
           </TooltipContent>

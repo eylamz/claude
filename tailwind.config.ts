@@ -775,6 +775,26 @@ const config: Config = {
               borderColor: 'transparent',
             }
           },
+          'parkNameHover': {
+            '0%': { 
+              opacity: '0',
+              transform: 'translateX(7%) translateY(-31%) rotate(0deg)'
+            },
+            '100%': { 
+              opacity: '1',
+              transform: 'translateX(7%) translateY(-10%) rotate(3deg)'
+            }
+          },
+          'parkNameHoverRtl': {
+            '0%': { 
+              opacity: '0',
+              transform: 'translateX(-7%) translateY(-31%) rotate(0deg)'
+            },
+            '100%': { 
+              opacity: '1',
+              transform: 'translateX(-7%) translateY(-11%) rotate(-3deg)'
+            }
+          },
       },
       animation: {
         'popUp': 'popUp 0.2s',
@@ -817,6 +837,8 @@ const config: Config = {
         'selectClose': 'selectClose 0.25s ease-out forwards',
         'borderFadeIn': 'borderFadeIn 0.2s ease-out forwards',
         'borderFadeOut': 'borderFadeOut 0.1s ease-out forwards',
+        'parkNameHover': 'parkNameHover 0.5s cubic-bezier(0.76, 0, 0.24, 1) forwards 0.5s',
+        'parkNameHoverRtl': 'parkNameHoverRtl 0.5s cubic-bezier(0.76, 0, 0.24, 1) forwards 0.5s',
       },
     },
   },
