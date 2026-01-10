@@ -30,6 +30,8 @@ interface SearchInputProps {
 
   id?: string;
 
+  tabIndex?: number;
+
 }
 
 
@@ -50,7 +52,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
 
   label,
 
-  id = 'search-input'
+  id = 'search-input',
+
+  tabIndex
 
 }, ref) => {
 
@@ -144,6 +148,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
 
         aria-label={label || placeholder}
 
+        tabIndex={tabIndex}
+
       />
 
       <div className="absolute top-2.5 ltr:right-0 rtl:left-0 flex items-center px-3">
@@ -153,6 +159,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
           <button
 
             onClick={onClear}
+
+            tabIndex={tabIndex}
 
             className={`p-1 -mt-1 rounded-full transition-colors duration-300 hover:bg-black/5 dark:hover:bg-white/5 ${defaultIconColor}`}
 

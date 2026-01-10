@@ -767,7 +767,7 @@ export default function SkateparksPage() {
   };
 
   return (
-    <div className="pt-16 space-y-6">
+    <div className="pt-16 space-y-6 w-full max-w-6xl mx-auto">
       <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between">

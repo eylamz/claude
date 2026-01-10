@@ -10,7 +10,7 @@ export default function PublicLayout({
   return (
     <>
       <HeaderNav />
-      <main className="min-h-screen ">{children}</main>
+      <main className="min-h-screen max-w-full overflow-hidden">{children}</main>
       <Footer />
       <MobileNav />
     </>

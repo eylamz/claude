@@ -1,16 +1,18 @@
 'use client';
 
-import React from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ParkCardSkeleton = () => {
   return (
-    <div className="h-fit bg-card dark:bg-card-dark rounded-3xl overflow-hidden relative group select-none transform-gpu transition-all duration-200 animate-pulse">
-      {/* Image skeleton */}
-      <div className="relative bg-black/25 h-[10.5rem] overflow-hidden">
-        <div className="absolute inset-0 bg-text-secondary-dark/50 dark:bg-background-dark/50 transition-all duration-200" />
-      </div>
-      
+    <div className="h-fit cursor-pointer relative group select-none transform-gpu transition-all duration-300">
+   
+      {/* Image container with drop-shadow (matching SkateparkCard) */}
+      <div 
+        className="relative h-[12rem] lg:h-[14rem] overflow-hidden rounded-2xl opacity-60">
+        {/* Main image skeleton */}
+        <Skeleton className="absolute inset-0 w-full h-full rounded-2xl" />
 
+      </div>
     </div>
   );
 };

@@ -60,7 +60,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
             "placeholder:text-muted-foreground",
 
-            "rounded-xl px-3 py-2 text-sm ring-offset-background focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-200",
+            "rounded-xl px-3 py-2 text-sm ring-offset-background focus:outline-none focus-visible:outline-2 focus-visible:outline-brand-main focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors duration-200",
 
             // Default variant
 
@@ -68,7 +68,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
               "bg-input dark:bg-input-dark",
 
-              "border border-input-border dark:border-input-border-dark focus:border-opacity-40",
+              "border border-input-border dark:border-input-border-dark focus-visible:border-brand-main dark:focus-visible:border-brand-main",
 
               "hover:bg-input-hover dark:hover:bg-input-hover-dark",
 
@@ -78,7 +78,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
               "text-text dark:text-text-dark",
 
-              "dark:focus:ring-offset-background-dark",
+              "dark:focus-visible:ring-offset-background-dark",
 
             ],
 
@@ -94,7 +94,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
               "text-text dark:text-text-dark",
 
-              "dark:focus:ring-offset-background-dark",
+              "dark:focus-visible:ring-offset-background-dark",
 
               "!rounded-full !border-none",
 
@@ -106,13 +106,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
               "bg-transparent dark:bg-black/5 hover:bg-black/[2.5%] dark:hover:bg-white/[2.5%]",
 
-              "border border-gray-300 dark:border-gray-600",
+              "border border-gray-300 dark:border-gray-600 focus-visible:border-brand-main dark:focus-visible:border-brand-main",
 
               "placeholder:text-input-text dark:placeholder:text-input-text-dark",
 
               "text-text dark:text-text-dark",
 
-              "dark:focus:ring-offset-background-dark",
+              "dark:focus-visible:ring-offset-background-dark",
 
             ],
 

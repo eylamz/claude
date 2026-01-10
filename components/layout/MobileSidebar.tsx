@@ -283,7 +283,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         <div className="flex-none border-b border-border dark:border-border-dark bg-header dark:bg-header-dark transition-colors duration-200">
           {/* Header */}
           <div className="flex flex-row-reverse items-start justify-between pb-2 mx-2 pt-6 flex-shrink-0">
-            <div className="flex flex-row-reverse flex-wrap items-center gap-1 top-0">
+            <div className="flex flex-wrap items-center gap-1 top-0">
               <button
                 onClick={() => {
                   if (isSearchOpen) {
@@ -299,10 +299,10 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                      searchInputRef.current?.focus();
                   }
                 }}
-                className="p-2 flex flex-col items-center gap-3 text-sm text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
                 aria-label={isSearchOpen ? "Close Search" : "Open Search"}
               >
-                <Icon name={isSearchOpen ? "searchClose" : "searchBold"} className="w-5 h-5" />
+                <Icon name={isSearchOpen ? "searchClose" : "searchBold"} className="w-4 h-4" />
                 <span>{tCommon('search') || 'Search'}</span>
               </button>
 
@@ -310,10 +310,10 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               {!session && (
                 <Link
                   href={`/${locale}/login`}
-                  className="p-2 flex flex-col items-center gap-3 text-sm text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
                   onClick={onClose}
                 >
-                  <Icon name="accountBold" className="w-5 h-5" />
+                  <Icon name="accountBold" className="w-4 h-4" />
                   <span>{tCommon('login') || 'Login'}</span>
                 </Link>
               )}
@@ -322,10 +322,10 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               {session && !isAdmin && (
                 <Link
                   href={`/${locale}/account`}
-                  className="p-2 flex flex-col items-center gap-3 text-sm text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
                   onClick={onClose}
                 >
-                  <Icon name="accountBold" className="w-5 h-5" />
+                  <Icon name="accountBold" className="w-4 h-4" />
                   <span>{tCommon('profile') || 'Profile'}</span>
                 </Link>
               )}
@@ -333,7 +333,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           {session && isAdmin && (
                 <Link
                   href={`/${locale}/account`}
-                  className="p-2 flex flex-col items-center gap-3 text-sm text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
                   onClick={onClose}
                 >
                   <Icon name="adminBold" className="w-5 h-5" />
@@ -344,13 +344,13 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               {/* Theme Toggle Button */}
               <button
                 onClick={handleThemeToggle}
-                className="p-2 flex flex-col items-center gap-3 text-sm text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
                 aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
               >
                 {theme === 'dark' ? (
-                  <Icon name="sunBold" className={`w-5 h-5 ${shouldAnimate ? 'animate-pop' : ''}`} />
+                  <Icon name="sunBold" className={`w-4 h-4 ${shouldAnimate ? 'animate-pop' : ''}`} />
                 ) : (
-                  <Icon name="moonBold" className={`w-5 h-5 ${shouldAnimate ? 'animate-pop' : ''}`} />
+                  <Icon name="moonBold" className={`w-4 h-4 ${shouldAnimate ? 'animate-pop' : ''}`} />
                 )}
                 <span>{theme === 'dark' ? tCommon('light_mode') || 'Light Mode' : tCommon('dark_mode') || 'Dark Mode'}</span>
               </button>
@@ -358,13 +358,13 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               {/* Language Switcher Button */}
               <button
                 onClick={handleLanguageToggle}
-                className="p-2 flex flex-col items-center gap-3 text-sm text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
                 aria-label={tCommon('toggle_language') || 'Toggle language'}
               >
                 {locale === 'en' ? (
-                  <Icon name="hebrewBold" className="w-5 h-5" />
+                  <Icon name="hebrewBold" className="w-4 h-4" />
                 ) : (
-                  <Icon name="englishBold" className="w-5 h-5" />
+                  <Icon name="englishBold" className="w-4 h-4" />
                 )}
                 <span>{locale === 'en' ? 'עברית' : 'English'}</span>
               </button>
@@ -376,9 +376,9 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                     handleLogout();
                     onClose();
                   }}
-                  className="flex flex-col items-center justify-between gap-3 px-3 py-2 text-sm text-error/70 dark:text-error-dark/70 hover:text-error dark:hover:text-error-dark transition-colors duration-200"
+                  className="flex flex-col items-center justify-between gap-3 px-3 py-2 text-xs text-error/70 dark:text-error-dark/70 hover:text-error dark:hover:text-error-dark transition-colors duration-200"
                 >
-                  <Icon name="logoutBold" className="w-5 h-5" />
+                  <Icon name="logoutBold" className="w-4 h-4" />
                   <span>{tCommon('logout') || 'Logout'}</span>
                 </button>
               )}
@@ -419,8 +419,8 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
           {/* Loading Bar Animation - shown when searching */}
           {searchLoading && (
-            <div className="w-full h-[1px] -mt-1 bg-sidebar-hover dark:bg-sidebar-hover-dark overflow-hidden relative">
-              <div className="bg-sidebar-text-brand/30 dark:bg-sidebar-text-brand-dark/30 loading-bar w-full h-full" />
+            <div className="w-full h-[1px] -mt-1 bg-sidebar-hover dark:bg-sidebar-hover-dark overflow-hidden">
+              <div className="bg-sidebar-text-brand dark:bg-sidebar-text-brand-dark loading-bar" />
             </div>
           )}
         </div>
@@ -570,7 +570,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                         </div>
                         <div className="h-full flex items-start justify-end">
                       {card.comingSoon && (
-                          <span className="inline-block text-xs xsm:text-sm font-semibold px-1.5 py-0.5 bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark rounded">
+                          <span className="inline-block text-xs xsm:text-sm font-semibold px-1.5 py-0.5 bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] rounded">
                             {card.href.includes('/trainers') 
                               ? (locale === 'he' ? 'בשלבי סיום' : 'Almost Done')
                               : card.href.includes('/shop')

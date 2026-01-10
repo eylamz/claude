@@ -638,7 +638,7 @@ export default function SkateparkDetailPage() {
   if (!skatepark) return null;
 
   return (
-    <div className="pt-16 space-y-6 min-h-screen bg-background dark:bg-background-dark max-w-4xl mx-auto">
+    <div className="pt-16 space-y-6 min-h-screen bg-background dark:bg-background-dark max-w-6xl mx-auto">
       <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -652,12 +652,12 @@ export default function SkateparkDetailPage() {
         </div>
         <div className="flex items-center space-x-3">
           <Link href={`/${locale}/admin/skateparks`}>
-            <Button variant="ghost">Back</Button>
+            <Button variant="gray">Back</Button>
           </Link>
-          <Button variant="error" onClick={handleDelete} disabled={saving}>
+          <Button variant="red" onClick={handleDelete} disabled={saving}>
             Delete
           </Button>
-          <Button variant="primary" onClick={handleSave} disabled={saving}>
+          <Button variant="green" onClick={handleSave} disabled={saving}>
             {saving ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
@@ -746,7 +746,7 @@ export default function SkateparkDetailPage() {
           <div className="flex items-center justify-between">
             <CardTitle>Images</CardTitle>
             <Button
-              variant="ghost"
+              variant="gray"
               onClick={() => setShowImageEditor(!showImageEditor)}
             >
               {showImageEditor ? 'Hide Image Editor' : 'Edit Images'}
@@ -1399,13 +1399,12 @@ export default function SkateparkDetailPage() {
                     {getKeywordsArray(skatepark.seoMetadata?.keywords?.en).map((keyword, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center gap-1.5 uppercase px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] transition-colors"
+                        className="inline-flex items-center gap-1.5 uppercase px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark border-purple-border dark:border-purple-border-dark transition-colors"
                       >
                         {keyword}
                         <button
                           type="button"
                           onClick={() => removeKeyword('en', index)}
-                          className="hover:text-blue-600 dark:hover:text-blue-300 focus:outline-none"
                           aria-label={`Remove ${keyword}`}
                         >
                           ×
@@ -1453,7 +1452,7 @@ export default function SkateparkDetailPage() {
                     {getKeywordsArray(skatepark.seoMetadata?.keywords?.he).map((keyword, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark text-sm"
                       >
                         {keyword}
                         <button

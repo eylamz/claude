@@ -742,6 +742,16 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
     }, 300);
   }, [park.slug, locale]);
 
+  const handleCardKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setIsClicked(true);
+      setTimeout(() => {
+        window.location.href = `/${locale}/skateparks/${park.slug}`;
+      }, 300);
+    }
+  }, [park.slug, locale]);
+
   const photoUrl = park.images && park.images.length > 0 
     ? park.images.find(img => img.isFeatured)?.url || park.images[0]?.url 
     : park.imageUrl;
@@ -763,9 +773,12 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
     <div
       ref={cardRef}
       onClick={handleCardClick}
-      className={`h-fit cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+      onKeyDown={handleCardKeyDown}
+      tabIndex={0}
+      role="button"
+      className={`h-fit cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 focus:outline-none focus:ring-2 focus:ring-brand-main focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-2xl ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
       style={{ animationDelay: `${animationDelay}ms` }}
-      aria-label={name}
+      aria-label={`${name}${distanceText ? `, ${distanceText}` : ''}`}
     >
       {park.amenities && Object.values(park.amenities).some(Boolean) && (
         <ParkAmenities amenities={park.amenities} locale={locale} />
@@ -782,10 +795,10 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
             showBadgeContainer.openingYear ? 'animate-slideRight animation-delay-[2s]' : 'opacity-0 translate-x-[-30px]'
           }`}>
             <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-orange dark:bg-orange-dark text-orange-bg dark:text-orange-bg-dark text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
-              <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`}>
+              <span className={`text-sm md:text-md transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`}>
                 {park.openingYear}
               </span>
-              <Icon name='sparksBold' className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name='sparksBold' className={`w-3 h-3 md:w-4 md:h-4 transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -802,10 +815,10 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
             <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-red dark:bg-red-dark text-red-bg dark:text-red-bg-dark text-xs ps-1 md:ps-3 pe-1 md:pe-2 py-1 shadow-lg ${
               hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
-              <span className={`text-[0.5rem] md:text-sm font-medium transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
+              <span className={`text-xs md:text-sm font-medium transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('Permanently Closed', 'נסגר לצמיתות')}
               </span>
-              <Icon name="closedPark" className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name="closedPark" className={`w-4 h-4 md:w-5 md:h-5 transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -822,8 +835,8 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
             <div className={`flex gap-0.5 md:gap-1 justify-center items-center  bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark text-xs md:text-sm px-1 md:px-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
-              <Icon name="trees" className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
-              <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`}>
+              <Icon name="trees" className={`w-3 h-3 md:w-4 md:h-4 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
+              <span className={`text-sm md:text-base transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('New', 'חדש')}
               </span>
             </div>
@@ -842,10 +855,10 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
             <div className={`flex gap-0.5 md:gap-1 justify-center items-center  bg-green-bg dark:bg-green-dark text-green dark:text-green-bg-dark text-xs md:text-sm font-medium px-1 md:px-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
-              <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`}>
+              <span className={`text-sm md:text-base transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('Featured', 'מומלץ')}
               </span>
-              <Icon name="featured" className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`} />
+              <Icon name="featured" className={`w-4 h-4 md:w-4 md:h-4 transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -858,7 +871,9 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
 
       {/* Name Section - Always visible below image */}
       <div className={`w-full py-2 `}>
-        <h3 className={`text-xl font-semibold truncate text-text dark:text-text-dark`}>
+        <h3 className={`text-xl font-semibold truncate text-text dark:text-text-dark opacity-0 animate-fadeInDown`}
+          style={{ animationDelay: `400ms` }}
+        >
           {name}
         </h3>
         {/* Distance - Always shown below the name if available */}
@@ -1768,14 +1783,18 @@ export default function SkateparksPage() {
       ======================================== */}
       <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <ParkCardSkeleton key={i} />
             ))}
           </div>
         ) : viewMode === 'map' ? (
           /* MAP VIEW */
-          <div className="relative h-[calc(100vh-280px)] min-h-[600px]" ref={mapContainerRef}>
+          <section 
+            aria-label={tr('Skatepark map', 'מפת פארקים')}
+            className="relative h-[calc(100vh-280px)] min-h-[600px]" 
+            ref={mapContainerRef}
+          >
             <div className="h-full rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 shadow-xl">
               <GoogleMapView
                 skateparks={skateparks}
@@ -1855,7 +1874,7 @@ export default function SkateparksPage() {
 
                     <Link 
                       href={`/${locale}/skateparks/${selectedPark.slug}`}
-                      className="block"
+                      className="block focus:outline-none focus:ring-2 focus:ring-brand-main focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-3xl"
                       onClick={(e) => {
                         // Don't navigate if dragging or just finished dragging
                         if (isDragging || wasDragging) {
@@ -1936,7 +1955,7 @@ export default function SkateparksPage() {
 
                       {/* Name Section - Always visible below image */}
                       <div className="px-4 py-3 space-y-1">
-                        <h3 className="text-sm font-semibold truncate text-text dark:text-text-dark">
+                        <h3 className="text-sm font-semibold truncate text-text dark:text-text-dark opacity-0 animate-fadeInDown">
                           {name}
                         </h3>
                         {/* Distance - Always shown below the name if available */}
@@ -1954,11 +1973,14 @@ export default function SkateparksPage() {
                 </div>
               );
             })()}
-          </div>
+          </section>
         ) : (
           /* GRID VIEW */
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <section 
+              aria-label={tr('Skatepark listings', 'רשימת פארקים')}
+              className=" grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6"
+            >
               {skateparks.map((park, index) => (
                 <SkateparkCard 
                   key={park._id} 
@@ -1969,7 +1991,7 @@ export default function SkateparksPage() {
                   userLocation={userLocation}
                 />
               ))}
-            </div>
+            </section>
 
             {/* Empty State */}
             {skateparks.length === 0 && !loading && (
