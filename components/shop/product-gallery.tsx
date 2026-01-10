@@ -181,7 +181,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({
             </svg>
           </button>
           <div
-            className="relative max-w-7xl max-h-[90vh] w-full h-full flex items-center justify-center p-4"
+            className="relative max-w-6xl max-h-[90vh] w-full h-full flex items-center justify-center p-4"
             onClick={(e) => e.stopPropagation()}
           >
             <img

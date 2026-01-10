@@ -1288,7 +1288,7 @@ export default function SkateparkPage() {
   if (loading) {
     return (
       <div className="pt-14 min-h-screen">
-        <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 overflow-visible">
+        <div className="max-w-6xl mx-auto p-4 lg:p-6 space-y-6 overflow-visible">
           {/* Breadcrumb Skeleton */}
           <div className="mb-4 opacity-40">
             <Skeleton className="h-4 w-48" />
@@ -1542,7 +1542,7 @@ export default function SkateparkPage() {
           ]}
         />
 
-        <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 overflow-x-hidden">
+        <div className="max-w-6xl mx-auto p-4 lg:p-6 space-y-6 overflow-x-hidden">
           {/* Header */}
           <h1 className="mb-5 mt-5 text-3xl font-bold text-center text-black dark:text-white">
                     {/* Mobile version - splits on hyphens */}

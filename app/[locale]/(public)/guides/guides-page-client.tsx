@@ -683,7 +683,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
           HERO SECTION - Brand Messaging  
       ======================================== */}
       <div className="relative pt-14 bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5">
-        <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
+        <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
               {t('title')}
@@ -727,7 +727,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             : 'py-4'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           {/* Main Filter Row */}
           <div className="flex flex-col xxs:flex-row items-stretch md:items-center gap-3">
             
@@ -920,7 +920,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
       {/* ========================================
           MAIN CONTENT AREA
       ======================================== */}
-      <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
+      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (

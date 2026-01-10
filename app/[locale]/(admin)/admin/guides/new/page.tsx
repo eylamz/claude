@@ -550,7 +550,7 @@ export default function NewGuidePage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <Toaster />
       {/* Header */}
       <div className="pt-16 flex items-center justify-between">

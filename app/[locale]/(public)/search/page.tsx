@@ -467,7 +467,7 @@ export default function SearchPage() {
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]" />
         
-        <div className="relative max-w-7xl mx-auto px-4 py-12 lg:py-16">
+        <div className="relative max-w-6xl mx-auto px-4 py-12 lg:py-16">
           <div className="text-center space-y-6">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -544,7 +544,7 @@ export default function SearchPage() {
           'sticky top-16 md:top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-all duration-300',
           isScrolled ? 'shadow-md py-3' : 'py-4'
         )}>
-          <div className="max-w-7xl mx-auto px-4">
+          <div className="max-w-6xl mx-auto px-4">
             <div className="flex items-center justify-between gap-4">
               
               {/* Tabs */}
@@ -636,7 +636,7 @@ export default function SearchPage() {
       {/* ========================================
           MAIN CONTENT
       ======================================== */}
-      <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
+      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
         {query ? (
           <div className="flex gap-8">
             {/* Desktop Sidebar */}

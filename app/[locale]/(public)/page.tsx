@@ -220,7 +220,7 @@ export default function HomePage() {
       {/* Featured Products Section - only show if ecommerce is enabled */}
       {ecommerceEnabled && (
         <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <div className="flex justify-between items-center mb-2 px-4 xl:px-0 select-none">
               <h2 className="text-header-text dark:text-text-secondary-dark text-lg font-bold">{t('newArrivals')}</h2>
               <Link href={`/${locale}/shop`}>
@@ -245,7 +245,7 @@ export default function HomePage() {
 
       {/* Skateparks Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-2 px-4 select-none">
             <h2 
               className="text-text dark:text-text-dark text-lg font-bold opacity-0 animate-fadeIn"
@@ -273,7 +273,7 @@ export default function HomePage() {
 
       {/* Photo Collage Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900 overflow-visible">
-        <div className="max-w-7xl mx-auto overflow-visible">
+        <div className="max-w-6xl mx-auto overflow-visible">
           {loading || !skateparks || skateparks.length === 0 ? (
             <SkeletonSection />
           ) : (
@@ -291,7 +291,7 @@ export default function HomePage() {
 
       {/* Featured Guides Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-2 px-4 xl:px-0 select-none">
             <h2
               className="text-text dark:text-text-dark text-lg font-bold opacity-0 animate-fadeIn"
@@ -412,7 +412,7 @@ export default function HomePage() {
 
       {/* Features Section */}
       <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-4 text-text dark:text-text-dark">
             {t('whyEnboss')}
           </h2>
@@ -450,7 +450,7 @@ export default function HomePage() {
 
       {/* Community Section */}
       <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-4 text-text dark:text-text-dark">
             {t('togetherWeRide')}
           </h2>

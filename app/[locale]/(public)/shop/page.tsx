@@ -312,7 +312,7 @@ export default function ShopPage() {
           HERO SECTION - Brand Messaging
       ======================================== */}
       <div className="relative pt-14 bg-gradient-to-br from-green-500/10 via-transparent to-brand-main/10 dark:from-green-500/5 dark:to-brand-main/5 border-b border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12">
+        <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
               {t('title') || 'Shop'}
@@ -360,7 +360,7 @@ export default function ShopPage() {
           isScrolled ? 'shadow-md py-3' : 'py-4'
         )}
       >
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           {/* Main Controls Row */}
           <div className="flex items-center justify-between gap-4">
             
@@ -535,7 +535,7 @@ export default function ShopPage() {
       {/* ========================================
           MAIN CONTENT
       ======================================== */}
-      <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
+      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
         <div className="flex gap-8">
           
           {/* Desktop Sidebar */}

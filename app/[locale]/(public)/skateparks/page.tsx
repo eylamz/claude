@@ -576,7 +576,7 @@ const SkateparkThumbnail = memo(({
           ref={imgRef}
           src={optimizedUrl}
           alt={parkName}
-          className={`absolute left-1/2 -translate-x-1/2 w-[110%] h-full object-cover transition-all duration-200 select-none bg-card dark:bg-card-dark rounded-2xl shadow-lg shadow-[rgba(0,0,0,0.05)] group-hover:shadow-lg dark:group-hover:!scale-[1.02] ${
+          className={`absolute left-1/2 -translate-x-1/2 w-[110%] h-full object-cover transition-all duration-200 select-none bg-card dark:bg-card-dark shadow-lg shadow-[rgba(0,0,0,0.05)] group-hover:shadow-lg dark:group-hover:!scale-[1.02] ${
             alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
           } ${
             isLoaded ? 'opacity-100' : 'opacity-0'
@@ -771,7 +771,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
         <ParkAmenities amenities={park.amenities} locale={locale} />
       )}
 
-      <div className="relative h-[12rem] overflow-hidden rounded-2xl" 
+      <div className="relative h-[12rem] lg:h-[14rem] overflow-hidden rounded-2xl" 
         style={{
           filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
         }}
@@ -781,7 +781,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
           <div className={`absolute bottom-2 left-0 z-10 ${
             showBadgeContainer.openingYear ? 'animate-slideRight animation-delay-[2s]' : 'opacity-0 translate-x-[-30px]'
           }`}>
-            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
+            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-orange dark:bg-orange-dark text-orange-bg dark:text-orange-bg-dark text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
               <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`}>
                 {park.openingYear}
               </span>
@@ -799,10 +799,10 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? (hasOpeningYear ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${hasOpeningYear ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-error dark:bg-error-dark text-white text-xs ps-1 md:ps-3 pe-1 md:pe-2 py-1 shadow-lg ${
+            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-red dark:bg-red-dark text-red-bg dark:text-red-bg-dark text-xs ps-1 md:ps-3 pe-1 md:pe-2 py-1 shadow-lg ${
               hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
-              <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
+              <span className={`text-[0.5rem] md:text-sm font-medium transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('Permanently Closed', 'נסגר לצמיתות')}
               </span>
               <Icon name="closedPark" className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`} />
@@ -819,13 +819,13 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? ((hasOpeningYear || isClosed) ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${(hasOpeningYear || isClosed) ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex rtl:flex-row-reverse gap-0.5 md:gap-1 justify-center items-center bg-blue-500 dark:bg-blue-600 text-white text-xs md:text-sm pe-1 md:pe-3 ps-1 md:ps-2 py-1 shadow-lg ${
+            <div className={`flex gap-0.5 md:gap-1 justify-center items-center  bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark text-xs md:text-sm px-1 md:px-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
+              <Icon name="trees" className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
               <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('New', 'חדש')}
               </span>
-              <Icon name="trees" className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
             </div>
           </div>
         )}
@@ -839,7 +839,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? ((hasOpeningYear || isClosed || isNew) ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${(hasOpeningYear || isClosed || isNew) ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-brand-dark text-black text-xs md:text-sm font-bold px-1 md:px-2 py-1 shadow-lg ${
+            <div className={`flex gap-0.5 md:gap-1 justify-center items-center  bg-green-bg dark:bg-green-dark text-green dark:text-green-bg-dark text-xs md:text-sm font-medium px-1 md:px-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
               <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`}>
@@ -1500,17 +1500,17 @@ export default function SkateparksPage() {
           HERO SECTION - Brand Messaging  
       ======================================== */}
       <div className="relative pt-14   bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5">
-        <div className="max-w-7xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
+        <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
               {tr('Find Your Park', 'מצא את הבית שלך')}
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <h2 className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               {tr(
                 'Where wheels meet concrete, community happens.',
                 'פה הגלגלים והחברים נפגשים.'
               )}
-            </p>
+            </h2>
 
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
@@ -1544,7 +1544,7 @@ export default function SkateparksPage() {
             : 'py-4'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           {/* Main Filter Row */}
           <div className="flex flex-col xxs:flex-row items-stretch md:items-center gap-3">
 
@@ -1766,7 +1766,7 @@ export default function SkateparksPage() {
       {/* ========================================
           MAIN CONTENT AREA
       ======================================== */}
-      <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
+      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-3">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -1872,23 +1872,27 @@ export default function SkateparksPage() {
                         {/* Opening Year Badge */}
                         {hasOpeningYear && (
                           <div className="absolute bottom-2 left-0 z-10 overflow-hidden">
-                            <div className="flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs md:text-sm font-semibold px-2 py-1 rounded-end-full shadow-lg animate-pop">
+                          <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-orange dark:bg-orange-dark text-orange-bg dark:text-orange-bg-dark text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
+                            <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200`}>
                               {selectedPark.openingYear}
-                              <Icon name="sparksBold" className="w-3 h-3" />
-                            </div>
+                            </span>
+                            <Icon name='sparksBold' className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200`} />
                           </div>
-                        )}
+                        </div>
+                      )}
 
                         {/* Closed Badge */}
                         {isClosed && (
                           <div className={`absolute bottom-2 z-10 overflow-hidden ${
                             hasOpeningYear ? 'right-0' : 'left-0'
                           }`}>
-                            <div className={`flex gap-1 justify-center items-center bg-red-500 dark:bg-red-600 text-white text-xs xs:text-base px-2 py-1 shadow-lg ${
+                            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-red dark:bg-red-dark text-red-bg dark:text-red-bg-dark text-xs md:text-sm px-1 md:px-2 py-1 shadow-lg ${
                               hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
                             }`}>
-                              {tr('Closed', 'סגור')}
-                              <Icon name="close" className="w-3 h-3" />
+                              <span className={`text-[0.5rem] md:text-sm font-medium transition-opacity duration-200`}>
+                                {tr('Closed', 'סגור')}
+                              </span>
+                              <Icon name="closedPark" className="w-2 h-2 md:w-3 md:h-3" />
                             </div>
                           </div>
                         )}
@@ -1898,11 +1902,11 @@ export default function SkateparksPage() {
                           <div className={`absolute bottom-2 z-10 ${
                             hasOpeningYear || isClosed ? 'right-0' : 'left-0'
                           }`}>
-                            <div className={`flex gap-1 justify-center items-center bg-blue-500 dark:bg-blue-600 text-white text-xs md:text-sm px-2 py-1 shadow-lg ${
+                            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark text-xs md:text-sm px-1 md:px-2 py-1 shadow-lg ${
                               hasOpeningYear || isClosed ? 'rounded-l-3xl' : 'rounded-r-3xl'
                             }`}>
+                              <Icon name="trees" className="w-2 h-2 md:w-3 md:h-3" />
                               {tr('New', 'חדש')}
-                              <Badge className="w-4 h-4" />
                             </div>
                           </div>
                         )}
@@ -1912,11 +1916,13 @@ export default function SkateparksPage() {
                           <div className={`absolute bottom-2 z-10 ${
                             hasOpeningYear || isClosed || isNew ? 'right-0' : 'left-0'
                           }`}>
-                            <div className={`flex gap-1 justify-center items-center bg-yellow-400 dark:bg-yellow-500 text-black text-xs font-bold px-2 py-1 shadow-lg ${
+                            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-green-bg dark:bg-green-dark text-green dark:text-green-bg-dark text-xs md:text-sm px-1 md:px-2 py-1 shadow-lg ${
                               hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
                             }`}>
-                              {tr('Featured', 'מומלץ')}
-                              <Award className="w-3 h-3" />
+                              <span className={`text-[0.5rem] md:text-sm font-medium transition-opacity duration-200`}>
+                                {tr('Featured', 'מומלץ')}
+                              </span>
+                              <Icon name="featured" className="w-2 h-2 md:w-3 md:h-3" />
                             </div>
                           </div>
                         )}

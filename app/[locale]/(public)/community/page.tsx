@@ -154,7 +154,7 @@ export default function CommunityPage() {
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(13,115,119,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_30%_50%,rgba(13,115,119,0.05)_0%,transparent_50%)]" />
         
-        <div className="relative max-w-7xl mx-auto px-4 py-12 lg:py-20">
+        <div className="relative max-w-6xl mx-auto px-4 py-12 lg:py-20">
           <div className="text-center space-y-6">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -193,7 +193,7 @@ export default function CommunityPage() {
           COMMUNITY STATS BAR
       ======================================== */}
       <div className="bg-gradient-to-r from-brand-main to-green-500 dark:from-brand-main/90 dark:to-green-500/90 text-white">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto px-4 py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {/* Total Riders */}
             <div className="text-center">
@@ -254,7 +254,7 @@ export default function CommunityPage() {
           FEATURED MEMBERS
       ======================================== */}
       <section className="py-16 lg:py-20 bg-white dark:bg-gray-950">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           {/* Section Header */}
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-full mb-4">
@@ -359,7 +359,7 @@ export default function CommunityPage() {
           COMMUNITY FEED
       ======================================== */}
       <section className="py-16 lg:py-20 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           {/* Section Header */}
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-full mb-4">
@@ -486,7 +486,7 @@ export default function CommunityPage() {
           WHY JOIN SECTION
       ======================================== */}
       <section className="py-16 lg:py-20 bg-white dark:bg-gray-950">
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               {t('community.whyJoin.title')}

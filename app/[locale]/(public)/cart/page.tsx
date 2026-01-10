@@ -241,7 +241,7 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen  py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-8">
           Shopping Cart ({totals.itemCount} {totals.itemCount === 1 ? 'item' : 'items'})
         </h1>

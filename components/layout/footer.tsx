@@ -58,7 +58,7 @@ export function Footer() {
       {/* ========================================
           MAIN FOOTER CONTENT
       ======================================== */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-12">
           
           {/* ========================================
@@ -348,7 +348,7 @@ export function Footer() {
           BOTTOM BAR (Legal Links + Copyright)
       ======================================== */}
       <div className="border-t border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             
             {/* Copyright + Brand Statement */}
@@ -402,7 +402,7 @@ export function Footer() {
           OPTIONAL: CONTACT INFO BAR (Mobile-Friendly)
       ======================================== */}
       <div className="bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
             <a
               href={`mailto:${t('footer.contactEmail')}`}

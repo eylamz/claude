@@ -226,7 +226,7 @@ export default function HeaderNav() {
           isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
-        <div className={`mx-auto  border-header-border dark:border-header-border-dark w-full max-w-7xl px-2 overflow-visible text-header-text-dark dark:text-header-text transition-colors duration-200`}>
+        <div className={`mx-auto  border-header-border dark:border-header-border-dark w-full max-w-6xl px-2 overflow-visible text-header-text-dark dark:text-header-text transition-colors duration-200`}>
           <div className="flex items-center justify-between h-16">
             {/* LEFT: Logo*/}
             <div className="flex items-center gap-4">

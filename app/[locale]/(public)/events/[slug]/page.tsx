@@ -329,7 +329,7 @@ export default function EventDetailPage() {
     return (
       <div className="min-h-screen ">
         <Skeleton className="h-96 w-full" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Skeleton className="h-8 w-3/4 mb-4" />
           <Skeleton className="h-4 w-full mb-2" />
           <Skeleton className="h-4 w-2/3" />
@@ -434,7 +434,7 @@ export default function EventDetailPage() {
           
           {/* Overlay Content */}
           <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto w-full">
+            <div className="max-w-6xl mx-auto w-full">
               {isHappeningNow && (
                 <div className="mb-4 inline-block bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
                   {t('happeningNow')}
@@ -500,7 +500,7 @@ export default function EventDetailPage() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-3 mb-8">
             <Button
