@@ -13,6 +13,9 @@ const config: Config = {
   darkMode: 'class',
   theme: {
     extend: {
+      maxWidth: {
+        '5xxl': '1070px',
+      },
       screens: {
         'xxs': '360px',
         'xsm': '480px',
@@ -778,21 +781,25 @@ const config: Config = {
           'parkNameHover': {
             '0%': { 
               opacity: '0',
+              origin: 'bottom-left',
               transform: 'translateX(7%) translateY(-31%) rotate(0deg)'
             },
             '100%': { 
               opacity: '1',
-              transform: 'translateX(7%) translateY(-10%) rotate(3deg)'
+              origin: 'bottom-left',
+              transform: 'translateX(7%) translateY(-10%) rotate(2deg)'
             }
           },
           'parkNameHoverRtl': {
             '0%': { 
               opacity: '0',
+              origin: 'bottom-right',
               transform: 'translateX(-7%) translateY(-31%) rotate(0deg)'
             },
             '100%': { 
               opacity: '1',
-              transform: 'translateX(-7%) translateY(-11%) rotate(-3deg)'
+              origin: 'bottom-right',
+              transform: 'translateX(-7%) translateY(-11%) rotate(-2deg)'
             }
           },
       },

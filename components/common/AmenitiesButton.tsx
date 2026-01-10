@@ -72,45 +72,55 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
     setIsOpen(false);
   };
 
+  const buttonElement = (
+    <Button
+      variant={isActive ? "blue" : "gray"}
+      size="sm"
+      className={`relative active:scale-95 transition-all duration-200 ${className || ''}`}
+      aria-label={tSkateparks('amenities.filterBy') || 'Filter by amenities'}
+      aria-expanded={isOpen}
+      aria-controls="amenities-popover"
+      style={style}
+    >
+      <Icon 
+        name="filterBold" 
+        className="w-5 h-5"
+      />
+      {isActive && (
+        <Badge 
+          variant="blue" 
+          className="rounded-full text-info dark:text-info-dark poppins absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]"
+        >
+          {selectedAmenities.length}
+        </Badge>
+      )}
+    </Button>
+  );
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <TooltipProvider delayDuration={50}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <PopoverTrigger asChild>
-              <Button
-                variant={isActive ? "blue" : "gray"}
-                size="sm"
-                className={`relative active:scale-95 transition-all duration-200 ${className || ''}`}
-                aria-label={tSkateparks('amenities.filterBy') || 'Filter by amenities'}
-                aria-expanded={isOpen}
-                aria-controls="amenities-popover"
-                style={style}
-              >
-                <Icon 
-                  name="filterBold" 
-                  className="w-5 h-5"
-                />
-                {isActive && (
-                  <Badge 
-                    variant="blue" 
-                    className="rounded-full text-info dark:text-info-dark poppins absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]"
-                  >
-                    {selectedAmenities.length}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-          </TooltipTrigger>
-          <TooltipContent 
-          side="bottom" 
-          className="text-center"
-          variant={isActive ? "red" : "gray"}
-       >
-            {!isActive ? tSkateparks('amenities.filterBy') || 'Filter by amenities' : tSkateparks('amenities.filterByDisable') || 'Disable amenities filtering'}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {!isOpen ? (
+        <TooltipProvider delayDuration={50}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                {buttonElement}
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent 
+              side="bottom" 
+              className="text-center"
+              variant={isActive ? "red" : "gray"}
+            >
+              {!isActive ? tSkateparks('amenities.filterBy') || 'Filter by amenities' : tSkateparks('amenities.filterByDisable') || 'Disable amenities filtering'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <PopoverTrigger asChild>
+          {buttonElement}
+        </PopoverTrigger>
+      )}
       <PopoverContent className="w-fit min-w-[330px] p-2">
         <div className="space-y-2">
           <div className={`flex gap-4 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'} items-center justify-between h-[32px]`}>

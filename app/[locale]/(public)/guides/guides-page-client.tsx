@@ -704,7 +704,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               {tr(
-                'Discover guides to help you learn and improve. Join the community.',
+                'Your Progress is Our Joy.',
                 'גלה מדריכים שיעזרו לך ללמוד ולהשתפר. הצטרף לקהילה.'
               )}
             </p>

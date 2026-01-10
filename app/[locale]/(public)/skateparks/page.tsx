@@ -889,7 +889,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
       <div className={`w-fit relative opacity-0 z-[-1] -mt-2 px-3 pt-4 pb-1 border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark shadow-[-2px_1px_12px_3px_rgba(0,0,0,0.15)] ${
         locale === 'he' ? 'rounded-b-lg animate-parkNameHoverRtl' : 'rounded-b-lg animate-parkNameHover'
       }`}>
-        <h3 className="rotate-[3deg] text-base font-semibold truncate text-text dark:text-text-dark">
+        <h3 className={`text-base font-semibold truncate text-text dark:text-text-dark  ${locale === 'he' ? 'rotate-[2.2deg]' : 'origin-bottom-left rotate-[-2.2deg]'}`}>
           {name}
         </h3>
         {/* Distance - Only shown on touch devices below the name */}
