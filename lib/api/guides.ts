@@ -1,14 +1,24 @@
 import Guide from '@/lib/models/Guide';
 import connectDB from '@/lib/db/mongodb';
 
+export interface ILocalizedField {
+  en: string;
+  he: string;
+}
+
+export interface ILocalizedTags {
+  en: string[];
+  he: string[];
+}
+
 export interface GuideData {
   id: string;
   slug: string;
-  title: string;
-  description?: string;
+  title: ILocalizedField;
+  description?: ILocalizedField;
   coverImage?: string;
   relatedSports?: string[];
-  tags?: string[];
+  tags?: ILocalizedTags | string[]; // Support both localized object and array format
   rating?: number;
   ratingCount?: number;
   viewsCount?: number;
@@ -119,41 +129,65 @@ export async function fetchGuidesData(params: {
     .limit(limit)
     .lean();
 
-  // Format guides data
-  const formattedGuides: GuideData[] = guides.map((guide: any) => ({
-    id: guide._id.toString(),
-    slug: guide.slug,
-    title: guide.title?.[locale as 'en' | 'he'] || guide.title?.en || 'Untitled',
-    description: guide.description?.[locale as 'en' | 'he'] || guide.description?.en || '',
-    coverImage: guide.coverImage || '/placeholder-guide.jpg',
-    relatedSports: guide.relatedSports || [],
-    tags: (() => {
-      // Handle both old format (array) and new format (localized object)
-      if (Array.isArray(guide.tags)) {
-        return guide.tags;
-      } else if (guide.tags && typeof guide.tags === 'object' && 'en' in guide.tags) {
-        // New format: get tags for current locale
-        return guide.tags[locale as 'en' | 'he'] || guide.tags.en || [];
-      }
-      return [];
-    })(),
-    viewsCount: guide.viewsCount || 0,
-    rating: guide.rating || 0,
-    ratingCount: guide.ratingCount || 0,
-    readTime: guide.readTime || 5,
-    difficulty: (() => {
-      // Handle both old format (array) and new format (localized object)
+  // Format guides data - return full localized objects
+  const formattedGuides: GuideData[] = guides.map((guide: any) => {
+    // Handle title - return full localized object
+    const title: ILocalizedField = {
+      en: guide.title?.en || 'Untitled',
+      he: guide.title?.he || guide.title?.en || 'ללא כותרת',
+    };
+
+    // Handle description - return full localized object
+    const description: ILocalizedField | undefined = guide.description
+      ? {
+          en: guide.description.en || '',
+          he: guide.description.he || guide.description.en || '',
+        }
+      : undefined;
+
+    // Handle tags - return full localized object if available, otherwise array
+    let tags: ILocalizedTags | string[] = [];
+    if (Array.isArray(guide.tags)) {
+      // Old format: array - keep as array
+      tags = guide.tags;
+    } else if (guide.tags && typeof guide.tags === 'object' && 'en' in guide.tags) {
+      // New format: localized object - return full object
+      const tagsObj = guide.tags as { en?: string[]; he?: string[] };
+      tags = {
+        en: Array.isArray(tagsObj.en) ? tagsObj.en : [],
+        he: Array.isArray(tagsObj.he) ? tagsObj.he : (Array.isArray(tagsObj.en) ? tagsObj.en : []),
+      } as ILocalizedTags;
+    }
+
+    // Extract difficulty from tags
+    const getDifficulty = (): string | null => {
       let tagsArray: string[] = [];
-      if (Array.isArray(guide.tags)) {
-        tagsArray = guide.tags;
-      } else if (guide.tags && typeof guide.tags === 'object' && 'en' in guide.tags) {
-        tagsArray = guide.tags[locale as 'en' | 'he'] || guide.tags.en || [];
+      if (Array.isArray(tags)) {
+        tagsArray = tags;
+      } else if (typeof tags === 'object' && 'en' in tags) {
+        const localizedTags = tags as ILocalizedTags;
+        tagsArray = localizedTags[locale as 'en' | 'he'] || localizedTags.en || [];
       }
       return tagsArray.find((tag: string) =>
         ['beginner', 'intermediate', 'advanced', 'expert'].includes(tag.toLowerCase())
       ) || null;
-    })(),
-  }));
+    };
+
+    return {
+      id: guide._id.toString(),
+      slug: guide.slug,
+      title,
+      description,
+      coverImage: guide.coverImage || '/placeholder-guide.jpg',
+      relatedSports: guide.relatedSports || [],
+      tags: tags as ILocalizedTags | string[],
+      viewsCount: guide.viewsCount || 0,
+      rating: guide.rating || 0,
+      ratingCount: guide.ratingCount || 0,
+      readTime: guide.readTime || 5,
+      difficulty: getDifficulty(),
+    } as GuideData;
+  });
 
   // Get filters data if requested
   let filters: FiltersData = { sports: [], difficulties: [] };
@@ -177,14 +211,23 @@ export async function fetchGuidesData(params: {
     const difficultyKeywords = ['beginner', 'intermediate', 'advanced', 'expert'];
 
     allPublishedGuides.forEach((guide: any) => {
+      let tagsArray: string[] = [];
       if (guide.tags && Array.isArray(guide.tags)) {
-        guide.tags.forEach((tag: string) => {
-          const lowerTag = tag.toLowerCase();
-          if (difficultyKeywords.includes(lowerTag)) {
-            difficultiesSet.add(lowerTag.charAt(0).toUpperCase() + lowerTag.slice(1));
-          }
-        });
+        // Old format: array
+        tagsArray = guide.tags;
+      } else if (guide.tags && typeof guide.tags === 'object' && 'en' in guide.tags) {
+        // New format: localized object - combine both languages for filter extraction
+        const enTags = guide.tags.en || [];
+        const heTags = guide.tags.he || [];
+        tagsArray = [...enTags, ...heTags];
       }
+      
+      tagsArray.forEach((tag: string) => {
+        const lowerTag = tag.toLowerCase();
+        if (difficultyKeywords.includes(lowerTag)) {
+          difficultiesSet.add(lowerTag.charAt(0).toUpperCase() + lowerTag.slice(1));
+        }
+      });
     });
 
     // Convert sets to sorted arrays

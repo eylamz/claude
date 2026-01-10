@@ -24,6 +24,8 @@ import {
   Line,
 } from 'recharts';
 import { Icon } from '@/components/icons';
+import { toast } from '@/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 // Custom Tooltip for amenities chart
 const AmenitiesTooltip = ({ active, payload, t }: any) => {
@@ -183,9 +185,8 @@ export default function SkateparksPage() {
   const [skateparksVersion, setSkateparksVersion] = useState<number>(1);
   const [savingVersion, setSavingVersion] = useState(false);
   
-  // Refresh and toast state
+  // Refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
   // Refs to prevent duplicate API calls
   const isFetchingRef = useRef(false);
@@ -767,43 +768,7 @@ export default function SkateparksPage() {
 
   return (
     <div className="pt-16 space-y-6">
-      {/* Toast Notification */}
-      {toast && (
-        <div
-          className={`fixed top-4 right-4 z-[9999] flex items-center gap-3 px-4 py-3 rounded-lg shadow-xl border-2 min-w-[300px] animate-in slide-in-from-right ${
-            toast.type === 'success'
-              ? 'bg-green-100 dark:bg-green-900/50 border-green-400 dark:border-green-600'
-              : 'bg-red-100 dark:bg-red-900/50 border-red-400 dark:border-red-600'
-          }`}
-        >
-          {toast.type === 'success' ? (
-            <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-          ) : (
-            <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-          )}
-          <p
-            className={`text-sm font-medium ${
-              toast.type === 'success'
-                ? 'text-green-800 dark:text-green-200'
-                : 'text-red-800 dark:text-red-200'
-            }`}
-          >
-            {toast.message}
-          </p>
-          <button
-            onClick={() => setToast(null)}
-            className="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      )}
+      <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -841,8 +806,11 @@ export default function SkateparksPage() {
               await fetchSkateparks();
               
               setIsRefreshing(false);
-              setToast({ message: 'Data has been refreshed successfully!', type: 'success' });
-              setTimeout(() => setToast(null), 3000);
+              toast({
+                title: 'Success',
+                description: 'Data has been refreshed successfully!',
+                variant: 'success',
+              });
             }}
             title="Refresh and clear cache"
             disabled={isRefreshing}

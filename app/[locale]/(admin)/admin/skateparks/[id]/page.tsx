@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Skeleton } from '@/components/ui';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ImageUploader } from '@/components/admin/image-uploader';
+import { Toaster } from '@/components/ui/toaster';
 
 interface Skatepark {
   _id?: string;
@@ -638,6 +639,7 @@ export default function SkateparkDetailPage() {
 
   return (
     <div className="pt-16 space-y-6 min-h-screen bg-background dark:bg-background-dark max-w-4xl mx-auto">
+      <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

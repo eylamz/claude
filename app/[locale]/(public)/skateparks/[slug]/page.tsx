@@ -497,13 +497,10 @@ function FormattedHours({
     return (
       <div className="space-y-2">
         {/* Header with closed badge */}
-        <div className="flex ltr:flex-col xsm:ltr:flex-row gap-2 text-text dark:text-text-dark">
-          <div className="flex items-center gap-2">
-          <Icon name="clockBold" className="w-5 h-5" />
-          <h3 className="text-base font-semibold">{t('openingHours')}: </h3>
-          </div>
-          <span className="ms-6 xsm:ms-0 inline-flex items-center px-2 py-1 rounded text-sm font-semibold bg-[#fcdede] dark:bg-[#812828] text-[#e72727] dark:text-[#fdb6b6] border border-[#f89e9e67] dark:border-[#c54c4c4d]">
+        <div className="flex text-text dark:text-text-dark">
+          <span className="flex gap-2 items-center px-2 py-1 rounded text-xl font-semibold border border-red-border dark:border-red-border-dark bg-red-bg dark:bg-red-bg-dark text-red dark:text-red-dark">
             {t('permanentlyClosed')}
+          <Icon name="closedPark" className="w-5 h-5" />
           </span>
         </div>
         
@@ -656,11 +653,11 @@ function FormattedHours({
       {/* Header */}
       <div className="flex items-center gap-2 text-text dark:text-text-dark">
         <Icon name="clockBold" className="w-4 h-4" />
-        <h3 className="text-base font-semibold">{t('openingHours')}</h3>
+        <h3 className="text-xl font-semibold">{t('openingHours')}</h3>
       </div>
       
       {/* Hours by group */}
-      <div className="space-y-2 text-text/80 dark:text-text-dark/80">
+      <div className="space-y-2 text-text dark:text-text-dark">
         {sortScheduleKeys(Object.keys(groupedDays)).map(scheduleKey => {
           const days = groupedDays[scheduleKey];
           const schedule = hoursByGroup[scheduleKey];
@@ -674,12 +671,12 @@ function FormattedHours({
           }
           
           return (
-            <div key={scheduleKey} className="flex items-start gap-1">
-              <p className="text-base font-semibold text-text/80 dark:text-text-dark/80 mr-2">
+            <div key={scheduleKey} className="flex items-center gap-1">
+              <p className="text-lg font-semibold text-text dark:text-text-dark mr-2">
                 {daysDisplay} :
               </p>
               
-              <p className={`text-base ${schedule.isOpen ? 'text-gray-900 dark:text-white' : 'font-semibold text-red-600 dark:text-red-400'}`}>
+              <p className={`text-lg ${schedule.isOpen ? 'text-text dark:text-text-dark' : 'font-semibold text-red-600 dark:text-red-400'}`}>
                 {schedule.isOpen 
                   ? (scheduleKey === 'openAllDay' || (schedule.openTime === '00:00' && schedule.closeTime === '00:00'))
                     ? t('openAllDay')
@@ -1547,7 +1544,7 @@ export default function SkateparkPage() {
 
         <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6 overflow-x-hidden">
           {/* Header */}
-          <h1 className="mb-5 mt-5 text-2xl sm:text-3xl font-bold text-center text-black dark:text-white">
+          <h1 className="mb-5 mt-5 text-3xl font-bold text-center text-black dark:text-white">
                     {/* Mobile version - splits on hyphens */}
                     <span className="sm:hidden">
                       {parkName.includes('-') ? 
@@ -1600,22 +1597,22 @@ export default function SkateparkPage() {
               {/* Address Section */}
               <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
                 <div className="flex items-center mb-3">
-                  <h3 className="text-base font-semibold flex items-center gap-2 text-text dark:text-text-dark">
+                  <h3 className="text-xl font-semibold flex items-center gap-2 text-text dark:text-text-dark">
                     <Icon name="locationBold" className={`w-4 h-4`} />
                     {t('address')}
                   </h3>
                 </div>
 
-                <div className="flex flex-col gap-2 mb-2">
-                  <p className="text-base" itemProp="address">{address}.</p>
+                <div className="flex flex-col gap-2 mb-2 text-text dark:text-text-dark">
+                  <p className="text-lg" itemProp="address">{address}.</p>
                 </div>
               </div>
 
               {/* Opening/Closing Year Section */}
               <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
-                <div className="flex flex-col flex-wrap gap-2 mb-2">
+                <div className="flex flex-col flex-wrap gap-2 mb-2 text-text dark:text-text-dark">
                   {skatepark.openingYear && (
-                    <p className="text-base">
+                    <p className="text-lg">
                       {skatepark.openingMonth 
                         ? `${t('openedDate')}${getMonthName(skatepark.openingMonth, locale)} ${skatepark.openingYear}`
                         : `${t('opened')} ${skatepark.openingYear}`
@@ -1623,7 +1620,7 @@ export default function SkateparkPage() {
                     </p>
                   )}
                   {skatepark.closingYear && (
-                    <p className="text-base text-red-600 dark:text-red-400">
+                    <p className="text-lg text-red dark:text-red-dark">
                       {skatepark.closingMonth 
                         ? `${t('closedYearDate')} ${getMonthName(skatepark.closingMonth, locale)} ${skatepark.closingYear}`
                         : `${t('closedYear')} ${skatepark.closingYear}`
@@ -1637,7 +1634,7 @@ export default function SkateparkPage() {
             {/* Amenities Card */}
             <Card className="md:p-4 text-clip shadow-none">
               <div className="flex items-center md:justify-center mb-3 text-text dark:text-text-dark">
-                <h2 className="text-base font-medium flex items-center gap-2">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
                   <Icon name="notesBold" className={`w-5 h-5`} />
                   {t('amenities.title')}
                 </h2>
@@ -1658,12 +1655,12 @@ export default function SkateparkPage() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div
-                              className={`border border-transparent rounded-lg p-2 h-full cursor-pointer transition-all duration-300 ease-out ${
+                              className={`border border-transparent dark:border-gray-border-dark rounded-lg p-2 h-full cursor-pointer transition-all duration-300 ease-out ${
                                 amenitiesActive
                                   ? isParkClosed
-                                    ? 'bg-[#fcdede] dark:bg-[#812828] !border-[#f89e9e67] dark:border-[#c54c4c4d]'
-                                    : 'bg-[#defce0] dark:bg-[#1452174d] !border-[#85ef8a44] dark:!border-[#145217a4]'
-                                  : ' bg-black/[3%] dark:bg-black/[5%] dark:shadow-inner'
+                                    ? 'bg-red-bg dark:bg-red-bg-dark !border-red-border dark:!border-red-border-dark'
+                                    : 'bg-green-bg dark:bg-[#1452174d] !border-green-border dark:!border-[#145217a4]'
+                                  : ' bg-gray-bg dark:bg-gray-bg-dark dark:shadow-inner'
                               }`}
                             >
                               <div className={`text-center ${amenitiesActive ? 'animate-pop' : ''}`}>
@@ -1673,36 +1670,41 @@ export default function SkateparkPage() {
                                     className={`w-5 h-5 mx-auto transition-colors duration-300 ease-out overflow-visible ${
                                       amenitiesActive
                                         ? isParkClosed
-                                          ? 'text-[#e72727] dark:text-[#fdb6b6]'
-                                          : 'text-[#1c7a21] dark:text-[#85ef8a]'
+                                          ? 'text-red dark:text-red-dark'
+                                          : 'text-green dark:text-green-dark'
                                         : 'text-gray-400 dark:text-[#405e4e]'
                                     }`}
                                   />
                                 </div>
                                 <p className={`text-xs xsm:text-sm font-thin transition-all duration-300 ${
                                   amenitiesActive
-                                    ? 'text-text dark:text-text-dark'
-                                    : 'text-gray-400 dark:text-text-dark/50 line-through'
+                                  ? isParkClosed
+                                    ? 'text-red dark:text-red-dark'
+                                    : 'text-green dark:text-green-dark'
+                                    : 'text-gray-dark dark:text-gray line-through'
                                 }`}>
                                   {t(`amenities.${key}`) || key.replace(/([A-Z])/g, ' $1').trim()}
                                 </p>
                               </div>
                             </div>
                           </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-[200px] whitespace-normal">
+                          <TooltipContent 
+                          variant={isParkClosed ? 'red' : 'green'}
+                          side="top"
+                           className="max-w-[200px] whitespace-normal">
                             <p className="text-sm">{t(`amenities.${key}Description`)}</p>
                           </TooltipContent>
                         </Tooltip>
                       ) : (
-                        <div className="rounded-lg p-2 h-full bg-black/[3%] dark:bg-black/[5%] dark:shadow-inner">
+                        <div className="border border-gray-border dark:border-gray-border-dark rounded-lg p-2 h-full bg-gray-bg dark:bg-gray-bg-dark dark:shadow-inner">
                           <div className="text-center">
                             <div className="mb-1.5">
                               <Icon
                                 name={iconName as any}
-                                className="w-5 h-5 mx-auto text-gray-400 dark:text-[#404141]"
+                                className="w-5 h-5 mx-auto text-gray-dark dark:text-gray"
                                 />
                             </div>
-                            <p className="text-xs xsm:text-sm font-thin text-gray-400 dark:text-text-dark/50 line-through">
+                            <p className="text-xs xsm:text-sm font-thin text-gray-dark dark:text-gray line-through">
                               {t(`amenities.${key}`) || key.replace(/([A-Z])/g, ' $1').trim()}
                             </p>
                           </div>
@@ -1732,7 +1734,7 @@ export default function SkateparkPage() {
               {notes && notes.trim() !== '' && (
                 <div className="md:p-4">
                   <div className="flex items-center mb-3 text-text dark:text-text-dark">
-                    <h2 className="text-base font-medium flex items-center gap-2">
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
                       <Icon name="infoBold" className={`w-5 h-5`} />
                       {t('notes')}
                     </h2>
@@ -1740,8 +1742,8 @@ export default function SkateparkPage() {
 
                   <div className="space-y-2">
                     {notes.split('\n').filter(note => note.trim()).map((note, index) => (
-                      <div key={index} className="bg-black/[3%] dark:bg-white/[2.5%] w-fit px-2.5 py-1.5 rounded-md text-text/90 dark:text-text-dark/80">
-                        <p className="text-base">
+                      <div key={index} className="w-fit px-2.5 py-1.5 rounded-md text-text dark:text-text-dark">
+                        <p className="text-lg">
                           • {note.trim()}.
                         </p>
                       </div>
@@ -1759,11 +1761,11 @@ export default function SkateparkPage() {
                 ) ? (
                   <div className="md:p-4 space-y-6">
                     <div className="flex items-center justify-center mb-4 text-text dark:text-text-dark">
-                      <h2 className={`text-base font-semibold flex items-center gap-1 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
+                      <h2 className={`text-xl font-semibold flex items-center gap-1 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
                         {tr('Rating', 'דירוג')}
                         <Icon 
                           name="logo" 
-                          className={`w-auto h-3 overflow-visible ${
+                          className={`w-auto h-4 overflow-visible ${
                             skatepark.closingYear 
                               ? 'text-error dark:text-error/80' 
                               : 'text-brand-main dark:text-brand-dark'
@@ -1777,18 +1779,18 @@ export default function SkateparkPage() {
                         <div className="space-y-2 h-full flex flex-col justify-between">
                           <div className="flex md:justify-center gap-2">
                             <Icon name="objectsBold" className="w-4 h-4 overflow-visible" />
-                            <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
+                            <p className="text-md font-medium text-text/80 dark:text-text-dark/80">
                               {tr('Element Diversity', 'מגוון מתקנים')}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-card dark:bg-card-dark rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-orange-bg dark:bg-orange-bg-dark rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-brand-yellow transition-all duration-300"
+                                className="h-full bg-orange dark:bg-orange-dark transition-all duration-300"
                                 style={{ width: `${(skatepark.qualityRating.elementDiversity / 5) * 100}%` }}
                               />
                             </div>
-                            <span className="text-xs font-semibold text-text/80 dark:text-text-dark/80 whitespace-nowrap">
+                            <span className="text-md font-semibold text-text/80 dark:text-text-dark/80 whitespace-nowrap">
                               {formatRating(skatepark.qualityRating.elementDiversity)}/5
                             </span>
                           </div>
@@ -1799,18 +1801,18 @@ export default function SkateparkPage() {
                         <div className="space-y-2 h-full flex flex-col justify-between">
                           <div className="flex md:justify-center gap-2">
                             <Icon name="broomBold" className="w-4 h-4 overflow-visible" />
-                            <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
+                            <p className="text-md font-medium text-text/80 dark:text-text-dark/80">
                               {tr('Cleanliness', 'רמת ניקיון')}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-card dark:bg-card-dark rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-purple-bg dark:bg-purple-bg-dark rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-brand-purple transition-all duration-300"
+                                className="h-full bg-purple dark:bg-purple-dark transition-all duration-300"
                                 style={{ width: `${(skatepark.qualityRating.cleanliness / 5) * 100}%` }}
                               />
                             </div>
-                            <span className="text-xs font-semibold text-text/80 dark:text-text-dark/80 whitespace-nowrap">
+                            <span className="text-md font-semibold text-text/80 dark:text-text-dark/80 whitespace-nowrap">
                               {formatRating(skatepark.qualityRating.cleanliness)}/5
                             </span>
                           </div>
@@ -1821,18 +1823,18 @@ export default function SkateparkPage() {
                         <div className="space-y-2 h-full flex flex-col justify-between max-h-[5rem]">
                           <div className="flex md:justify-center gap-2">
                             <Icon name="wrenchBold" className="w-4 h-4 overflow-visible" />
-                            <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
+                            <p className="text-md font-medium text-text/80 dark:text-text-dark/80">
                               {tr('Maintenance level', 'רמת תחזוקה')}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-card dark:bg-card-dark rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-blue-bg dark:bg-blue-bg-dark rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-brand-blue transition-all duration-300"
+                                className="h-full bg-blue dark:bg-blue-dark transition-all duration-300"
                                 style={{ width: `${(skatepark.qualityRating.maintenance / 5) * 100}%` }}
                               />
                             </div>
-                            <span className="text-xs font-semibold text-text/80 dark:text-text-dark/80 whitespace-nowrap">
+                            <span className="text-md font-semibold text-text/80 dark:text-text-dark/80 whitespace-nowrap">
                               {formatRating(skatepark.qualityRating.maintenance)}/5
                             </span>
                           </div>
@@ -1858,7 +1860,7 @@ export default function SkateparkPage() {
                   <div className="flex flex-col space-y-4 !mt-0">
                     <div className="flex items-center gap-2 justify-start md:justify-center">
                       <Icon name="mapBold" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
-                      <h3 className="font-semibold text-base text-gray-900 dark:text-[#f2f2f2]">
+                      <h3 className="font-semibold text-xl text-gray-900 dark:text-[#f2f2f2]">
                         {t('getDirections')}
                       </h3>
                     </div>
@@ -1883,7 +1885,7 @@ export default function SkateparkPage() {
                             />
                           </a>
                         </TooltipTrigger>
-                        <TooltipContent side="top">
+                        <TooltipContent side="bottom" variant="gray">
                           <p className="text-sm">{t('waze')}</p>
                         </TooltipContent>
                       </Tooltip>
@@ -1900,14 +1902,14 @@ export default function SkateparkPage() {
                           >
                             <Icon 
                               name={theme === 'dark' ? "moovitDark" : "moovit"} 
-                              className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-white dark:text-text overflow-visible"
+                              className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-white dark:text-[#1a1a1a] overflow-visible"
                               style={{
                                 filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
                               }}
                             />
                           </a>
                         </TooltipTrigger>
-                        <TooltipContent side="top">
+                        <TooltipContent side="bottom" variant="orange">
                           <p className="text-sm">{t('moovit')}</p>
                         </TooltipContent>
                       </Tooltip>
@@ -1931,7 +1933,7 @@ export default function SkateparkPage() {
                             />
                           </a>
                         </TooltipTrigger>
-                        <TooltipContent side="top">
+                        <TooltipContent side="bottom" variant="blue">
                           <p className="text-sm">{t('appleMaps')}</p>
                         </TooltipContent>
                       </Tooltip>
@@ -1948,14 +1950,14 @@ export default function SkateparkPage() {
                           >
                             <Icon 
                               name="newGoogleMaps" 
-                              className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-white dark:text-text overflow-visible"
+                              className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-white dark:text-[#1a1a1a] overflow-visible"
                               style={{
                                 filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
                               }}
                             />
                           </a>
                         </TooltipTrigger>
-                        <TooltipContent side="top">
+                        <TooltipContent side="bottom" variant="green">
                           <p className="text-sm">{t('googleMaps')}</p>
                         </TooltipContent>
                       </Tooltip>
@@ -1972,7 +1974,7 @@ export default function SkateparkPage() {
           {skatepark.mediaLinks.youtube && (
             <Card className="!rounded-none !shadow-none !p-0 md:!p-4 w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
               <CardHeader>
-                <CardTitle className="text-base font-medium flex items-center gap-2">
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
                   <Icon name="youtube" className="w-5 h-5" />
                   {t('video')}
                 </CardTitle>
@@ -2038,11 +2040,11 @@ export default function SkateparkPage() {
           ) ? (
             <Card className="md:p-4 shadow-none w-full max-w-6xl mx-auto mb-8">
               <div className="flex items-center md:justify-center mb-4 text-text dark:text-text-dark">
-                <h2 className={`text-base font-medium flex items-center gap-2 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
+                <h2 className={`text-xl font-semibold flex items-center gap-2 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
                 {tr('Rating', 'דירוג')}
                 <Icon 
                   name="logo" 
-                  className={`w-auto h-3 overflow-visible ${
+                  className={`w-auto h-4 overflow-visible ${
                     skatepark.closingYear 
                       ? 'text-error dark:text-error/80' 
                       : 'text-brand-main dark:text-brand-dark'
@@ -2058,21 +2060,21 @@ export default function SkateparkPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Icon name="objectsBold" className="w-4 h-4 overflow-visible" />
-                        <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
+                        <p className="text-md font-medium text-text/80 dark:text-text-dark/80">
                           {tr('Element Diversity', 'מגוון אלמנטים')}
                         </p>
                       </div>
-                     
                     </div>
-                                        <div className="flex items-center justify-between gap-3">
+                     
+                    <div className="flex items-center justify-between gap-3">
 
-                    <div className="w-full bg-card dark:bg-card-dark rounded-full overflow-hidden">
+                    <div className="w-full bg-orange-bg dark:bg-orange-bg-dark rounded-full overflow-hidden">
                       <div
-                        className="h-2 bg-brand-yellow transition-all duration-300"
+                        className="h-2 bg-orange dark:bg-orange-dark transition-all duration-300"
                         style={{ width: `${(skatepark.qualityRating.elementDiversity / 5) * 100}%` }}
                       />
                       </div>
-                       <span className="text-xs font-semibold text-text/80 dark:text-text-dark/80">
+                       <span className="text-sm font-semibold text-text/80 dark:text-text-dark/80">
                         {formatRating(skatepark.qualityRating.elementDiversity)}/5
                       </span>
                     </div>
@@ -2084,20 +2086,20 @@ export default function SkateparkPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Icon name="broomBold" className="w-4 h-4 overflow-visible" />
-                        <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
+                        <p className="text-md font-medium text-text/80 dark:text-text-dark/80">
                           {tr('Cleanliness', 'רמת ניקיון')}
                         </p>
                       </div>
                     </div>
                      <div className="flex items-center justify-between gap-3">
 
-                    <div className="w-full bg-card dark:bg-card-dark rounded-full overflow-hidden">
+                    <div className="w-full bg-purple-bg dark:bg-purple-bg-dark rounded-full overflow-hidden">
                       <div
-                        className="h-2 bg-brand-purple transition-all duration-300"
+                        className="h-2 bg-purple dark:bg-purple-dark transition-all duration-300"
                         style={{ width: `${(skatepark.qualityRating.cleanliness / 5) * 100}%` }}
                       />
                       </div>
-                       <span className="text-xs font-semibold text-text/80 dark:text-text-dark/80">
+                       <span className="text-sm font-semibold text-text/80 dark:text-text-dark/80">
                         {formatRating(skatepark.qualityRating.cleanliness)}/5
                       </span>
                     </div>
@@ -2109,20 +2111,20 @@ export default function SkateparkPage() {
                     <div className="flex items-center justify-between ">
                       <div className="flex items-center gap-2 ">
                         <Icon name="wrenchBold" className="w-4 h-4 overflow-visible" />
-                        <p className="text-sm font-medium text-text/80 dark:text-text-dark/80">
+                        <p className="text-md font-medium text-text/80 dark:text-text-dark/80">
                           {tr('Maintenance level', 'רמת תחזוקה')}
                         </p>
                       </div>
                     </div>
                      <div className="flex items-center justify-between gap-3">
 
-                    <div className="w-full bg-card dark:bg-card-dark rounded-full overflow-hidden">
+                    <div className="w-full bg-blue-bg dark:bg-blue-bg-dark rounded-full overflow-hidden">
                       <div
-                        className="h-2 bg-brand-blue transition-all duration-300"
+                        className="h-2 bg-blue dark:bg-blue-dark transition-all duration-300"
                         style={{ width: `${(skatepark.qualityRating.maintenance / 5) * 100}%` }}
                       />
                       </div>
-                       <span className="text-xs font-semibold text-text/80 dark:text-text-dark/80">
+                       <span className="text-sm font-semibold text-text/80 dark:text-text-dark/80">
                         {formatRating(skatepark.qualityRating.maintenance)}/5
                       </span>
                     </div>
@@ -2139,7 +2141,7 @@ export default function SkateparkPage() {
             className="!p-2 md:!p-4 !shadow-none m w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
             <CardHeader className="">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-medium flex items-center gap-2">
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
                   <Icon name="messages" className="w-5 h-5" />
                   {t('reviewsCount')}
                 </CardTitle>

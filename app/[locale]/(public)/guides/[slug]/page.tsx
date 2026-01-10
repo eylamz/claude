@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import Image from 'next/image';
@@ -10,6 +10,7 @@ import { Icon } from '@/components/icons';
 import { Skeleton } from '@/components/ui';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import { generateArticleStructuredData } from '@/lib/seo/utils';
+import type { GuideData } from '@/lib/api/guides';
 
 interface ILocalizedField {
   en: string;
@@ -436,15 +437,141 @@ export default function GuidePage() {
   const [guide, setGuide] = useState<Guide | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cacheInitialized, setCacheInitialized] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState<number | null>(null);
+
+  // Check version and cache on mount (similar to guides-page-client)
+  useEffect(() => {
+    const checkVersionAndCache = async () => {
+      const cacheKey = 'guides_cache';
+      const versionKey = 'guides_version';
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedVersion = localStorage.getItem(versionKey);
+
+      // If no cache or version, fetch and cache all guides
+      if (!cachedData || !cachedVersion) {
+        try {
+          const response = await fetch('/api/guides?limit=100');
+          if (response.ok) {
+            const data = await response.json();
+            const currentVersion = data.version || 1;
+            const allGuides = data.guides || [];
+            
+            // Store in cache
+            localStorage.setItem(cacheKey, JSON.stringify(allGuides));
+            localStorage.setItem(versionKey, currentVersion.toString());
+            setCurrentVersion(currentVersion);
+          }
+        } catch (error) {
+          console.error('Error fetching guides for cache:', error);
+        }
+      } else {
+        // Cache exists, check version in background
+        try {
+          const versionResponse = await fetch('/api/guides?versionOnly=true');
+          if (versionResponse.ok) {
+            const versionData = await versionResponse.json();
+            const fetchedVersion = versionData.version || 1;
+            setCurrentVersion(fetchedVersion);
+            const storedVersion = parseInt(cachedVersion);
+
+            // If versions don't match, update cache
+            if (storedVersion !== fetchedVersion) {
+              const response = await fetch('/api/guides?limit=100');
+              if (response.ok) {
+                const data = await response.json();
+                const newVersion = data.version || 1;
+                const allGuides = data.guides || [];
+                
+                // Update cache
+                localStorage.setItem(cacheKey, JSON.stringify(allGuides));
+                localStorage.setItem(versionKey, newVersion.toString());
+                setCurrentVersion(newVersion);
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to check guides version', error);
+        }
+      }
+      
+      setCacheInitialized(true);
+    };
+
+    checkVersionAndCache();
+  }, []);
 
   const fetchGuide = async () => {
+    if (!cacheInitialized) return; // Wait for cache to initialize
+    
     setLoading(true);
     setError(null);
+
+    // Try to find guide in cache first
+    const cacheKey = 'guides_cache';
+    const cachedData = localStorage.getItem(cacheKey);
+    let foundInCache = false;
+    
+    if (cachedData) {
+      try {
+        const allCachedGuides: GuideData[] = JSON.parse(cachedData);
+        const cachedGuide = allCachedGuides.find((g: GuideData) => g.slug === slug);
+        
+        if (cachedGuide) {
+          foundInCache = true;
+          // Found in cache - use it for initial display (but we still need full data with contentBlocks)
+          // Convert GuideData to Guide format for initial display
+          // Handle tags conversion
+          let tags: string[] | { en: string[]; he: string[] } = { en: [], he: [] };
+          if (cachedGuide.tags) {
+            if (Array.isArray(cachedGuide.tags)) {
+              tags = cachedGuide.tags;
+            } else if (typeof cachedGuide.tags === 'object' && 'en' in cachedGuide.tags) {
+              tags = cachedGuide.tags;
+            }
+          }
+          
+          const initialGuide: Guide = {
+            _id: cachedGuide.id,
+            slug: cachedGuide.slug,
+            title: cachedGuide.title,
+            description: cachedGuide.description || { en: '', he: '' },
+            coverImage: cachedGuide.coverImage || '',
+            relatedSports: cachedGuide.relatedSports || [],
+            contentBlocks: { en: [], he: [] }, // Will be filled from API
+            tags: tags,
+            viewsCount: cachedGuide.viewsCount || 0,
+            likesCount: 0,
+            rating: cachedGuide.rating || 0,
+            ratingCount: cachedGuide.ratingCount || 0,
+            status: 'published',
+            isFeatured: false,
+            authorId: '',
+            authorName: 'Unknown',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          
+          // Set initial guide from cache (for fast display)
+          setGuide(initialGuide);
+          // Don't set loading to false yet - we still need to fetch full data
+        }
+      } catch (e) {
+        console.warn('Failed to parse cached guides data', e);
+      }
+    }
+
+    // Always fetch full guide data from API (for contentBlocks and other full data)
+    // This ensures we have complete data even if guide was found in cache
     try {
       const response = await fetch(`/api/guides/${slug}?locale=${locale}`);
       if (!response.ok) {
         if (response.status === 404) {
-          setError('Guide not found');
+          // If guide was found in cache but API returns 404, it might have been unpublished
+          // Keep the cached data but show a warning or handle appropriately
+          if (!foundInCache) {
+            setError('Guide not found');
+          }
         } else {
           setError('Failed to load guide');
         }
@@ -454,17 +581,22 @@ export default function GuidePage() {
 
       const data = await response.json();
       setGuide(data.guide);
+      setLoading(false);
     } catch (err) {
       console.error('Error fetching guide:', err);
-      setError('Failed to load guide');
-    } finally {
+      // If we have cached data, keep showing it even if API fails
+      if (!foundInCache) {
+        setError('Failed to load guide');
+      }
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchGuide();
-  }, [slug, locale]);
+    if (cacheInitialized) {
+      fetchGuide();
+    }
+  }, [slug, locale, cacheInitialized]);
 
   // SEO calculations
   const guideTitle = guide ? getLocalizedText(guide.title, locale) : '';

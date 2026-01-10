@@ -576,7 +576,7 @@ const SkateparkThumbnail = memo(({
           ref={imgRef}
           src={optimizedUrl}
           alt={parkName}
-          className={`w-full h-full  object-cover transition-all duration-200 select-none  bg-card dark:bg-card-dark rounded-2xl overflow-hidden shadow-lg shadow-[rgba(0,0,0,0.05)] group-hover:shadow-lg dark:group-hover:!scale-[1.02] ${
+          className={`absolute left-1/2 -translate-x-1/2 w-[110%] h-full object-cover transition-all duration-200 select-none bg-card dark:bg-card-dark rounded-2xl shadow-lg shadow-[rgba(0,0,0,0.05)] group-hover:shadow-lg dark:group-hover:!scale-[1.02] ${
             alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
           } ${
             isLoaded ? 'opacity-100' : 'opacity-0'
@@ -665,23 +665,11 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
   const [isInViewport, setIsInViewport] = useState(false);
   const [showBadgeContainer, setShowBadgeContainer] = useState<Record<string, boolean>>({});
   const [showBadgeContent, setShowBadgeContent] = useState<Record<string, boolean>>({});
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const name = typeof park.name === 'string' 
     ? park.name 
     : (locale === 'he' ? park.name.he : park.name.en) || park.name.en || park.name.he;
   const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
-
-  // Detect touch device
-  useEffect(() => {
-    const checkTouchDevice = () => {
-      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      setIsTouchDevice(isTouch);
-    };
-    checkTouchDevice();
-    window.addEventListener('resize', checkTouchDevice);
-    return () => window.removeEventListener('resize', checkTouchDevice);
-  }, []);
 
   // Intersection Observer to detect when card is in viewport
   useEffect(() => {
@@ -783,7 +771,11 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
         <ParkAmenities amenities={park.amenities} locale={locale} />
       )}
 
-      <div className="relative h-[10.5rem]">
+      <div className="relative h-[12rem] overflow-hidden rounded-2xl" 
+        style={{
+          filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
+        }}
+      >
         {/* Opening Year Badge */}
         {hasOpeningYear && (
           <div className={`absolute bottom-2 left-0 z-10 ${
@@ -862,38 +854,15 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
           photoUrl={photoUrl}
           parkName={name}
         />
-
-        {/* Hover Overlay - Only on non-touch devices (Distance only) */}
-        {!isTouchDevice && distanceText && (
-          <div className={`absolute -bottom-1 z-20 pointer-events-none ${
-            locale === 'he' ? 'right-0' : 'left-0'
-          }`}>
-            {/* Distance Overlay */}
-            <div 
-              className={`border border-transparent dark:border-[#686868] max-w-[110%] min-w-[105px] absolute bottom-[calc(60%+0.5rem)] bg-card dark:bg-card-dark px-3 py-2 shadow-[-2px_1px_12px_3px_rgba(0,0,0,0.15)] ${
-                locale === 'he'
-                  ? 'rounded-l-lg opacity-0 group-hover:opacity-100 translate-x-[8%] translate-y-[54%] rotate-[-2deg] group-hover:translate-x-[5%] group-hover:translate-y-[5%] group-hover:rotate-[1deg]'
-                  : 'rounded-r-xl opacity-0 group-hover:opacity-100 translate-x-[-8%] translate-y-[54%] rotate-[2deg] group-hover:translate-x-[-5%] group-hover:translate-y-[5%] group-hover:rotate-[-1deg]'
-              } transition-[opacity,transform] duration-[200ms,500ms] ease-[cubic-bezier(0.76,0,0.24,1),cubic-bezier(0.76,0,0.24,1)] [transition-delay:0ms,0ms] group-hover:[transition-delay:200ms,0ms]`}
-            >
-              <div className="flex items-center gap-1.5 text-text dark:text-text-dark text-xs">
-                <Icon name="locationBold" className="w-3 h-3 shrink-0" />
-                <span>{distanceText}</span>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Name Section - For all devices */}
-      <div className={`w-fit relative opacity-0 z-[-1] -mt-2 px-3 pt-4 pb-1 border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark shadow-[-2px_1px_12px_3px_rgba(0,0,0,0.15)] ${
-        locale === 'he' ? 'rounded-b-lg animate-parkNameHoverRtl' : 'rounded-b-lg animate-parkNameHover'
-      }`}>
-        <h3 className={`text-base font-semibold truncate text-text dark:text-text-dark  ${locale === 'he' ? 'rotate-[2.2deg]' : 'origin-bottom-left rotate-[-2.2deg]'}`}>
+      {/* Name Section - Always visible below image */}
+      <div className={`w-full py-2 `}>
+        <h3 className={`text-xl font-semibold truncate text-text dark:text-text-dark`}>
           {name}
         </h3>
-        {/* Distance - Only shown on touch devices below the name */}
-        {isTouchDevice && distanceText && (
+        {/* Distance - Always shown below the name if available */}
+        {distanceText && (
           <div className="flex items-center gap-1.5 mt-1">
             <Icon name="locationBold" className="w-3 h-3 shrink-0 text-text dark:text-text-dark" />
             <span className="text-xs text-text dark:text-text-dark truncate">
@@ -952,7 +921,6 @@ export default function SkateparksPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [wasDragging, setWasDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isTouchDeviceMap, setIsTouchDeviceMap] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const prevSelectedAmenitiesRef = useRef<string[]>([]);
@@ -1442,17 +1410,6 @@ export default function SkateparksPage() {
     fetchAllSkateparks();
   }, [fetchAllSkateparks]);
 
-  // Detect touch device for map view
-  useEffect(() => {
-    const checkTouchDevice = () => {
-      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      setIsTouchDeviceMap(isTouch);
-    };
-    checkTouchDevice();
-    window.addEventListener('resize', checkTouchDevice);
-    return () => window.removeEventListener('resize', checkTouchDevice);
-  }, []);
-
   // Reset card position when selected park changes
   useEffect(() => {
     if (selectedPark && mapContainerRef.current) {
@@ -1811,7 +1768,7 @@ export default function SkateparksPage() {
       ======================================== */}
       <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-3">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <ParkCardSkeleton key={i} />
             ))}
@@ -1906,8 +1863,8 @@ export default function SkateparksPage() {
                         }
                       }}
                     >
-                      {/* Amenities - Top overlay for non-touch devices */}
-                      {!isTouchDeviceMap && selectedPark.amenities && Object.values(selectedPark.amenities).some(Boolean) && (
+                      {/* Amenities - Top overlay */}
+                      {selectedPark.amenities && Object.values(selectedPark.amenities).some(Boolean) && (
                         <ParkAmenities amenities={selectedPark.amenities} locale={locale} alwaysVisible={true} />
                       )}
 
@@ -1969,34 +1926,21 @@ export default function SkateparksPage() {
                           parkName={name}
                           alwaysSaturated={true}
                         />
-
-                        {/* Park Name Overlay - Touch devices: always visible, positioned like non-touch overlay */}
-                        {isTouchDeviceMap && (
-                          <div className={`absolute -bottom-1 z-20 pointer-events-none ${
-                            locale === 'he' ? 'right-0' : 'left-0'
-                          }`}>
-                            <div className={`relative border border-transparent dark:border-[#686868] bg-card dark:bg-card-dark px-3 pt-2 pb-3 shadow-[-2px_1px_8px_3px_rgba(0,0,0,0.2)] ${
-                              locale === 'he'
-                                ? 'rounded-tl-lg translate-x-[3%] translate-y-[3%] rotate-[2deg]'
-                                : 'rounded-tr-xl translate-x-[-3%] translate-y-[3%] rotate-[-2deg]'
-                            }`}>
-                              <h3 className="text-sm font-semibold text-text dark:text-text-dark">
-                                {name}
-                              </h3>
-                            </div>
-                          </div>
-                        )}
                       </div>
 
-                      {/* Amenities Section - Touch devices: where park name used to be */}
+                      {/* Name Section - Always visible below image */}
                       <div className="px-4 py-3 space-y-1">
-                        {isTouchDeviceMap && selectedPark.amenities && Object.values(selectedPark.amenities).some(Boolean) && (
-                          <ParkAmenities amenities={selectedPark.amenities} locale={locale} alwaysVisible={true} variant="inline" />
-                        )}
-                        {!isTouchDeviceMap && (
-                          <h3 className="text-sm font-semibold truncate">
-                            {name}
-                          </h3>
+                        <h3 className="text-sm font-semibold truncate text-text dark:text-text-dark">
+                          {name}
+                        </h3>
+                        {/* Distance - Always shown below the name if available */}
+                        {distanceText && (
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <Icon name="locationBold" className="w-3 h-3 shrink-0 text-text dark:text-text-dark" />
+                            <span className="text-xs text-text dark:text-text-dark truncate">
+                              {distanceText}
+                            </span>
+                          </div>
                         )}
                       </div>
                     </Link>
@@ -2008,7 +1952,7 @@ export default function SkateparksPage() {
         ) : (
           /* GRID VIEW */
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {skateparks.map((park, index) => (
                 <SkateparkCard 
                   key={park._id} 

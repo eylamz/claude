@@ -8,9 +8,16 @@ import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, 
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Icon } from '@/components/icons';
-import type { GuideData, FiltersData } from '@/lib/api/guides';
+import type { GuideData, FiltersData, ILocalizedField } from '@/lib/api/guides';
 
 interface Guide extends GuideData {}
+
+// Helper function to get localized text from localized field or string
+const getLocalizedText = (field: ILocalizedField | string | undefined, locale: string): string => {
+  if (!field) return '';
+  if (typeof field === 'string') return field; // Backward compatibility
+  return field[locale as 'en' | 'he'] || field.en || '';
+};
 
 interface GuidesPageProps {
   initialData?: {
@@ -242,17 +249,23 @@ const GuideCard = memo(({
     return text.substring(0, maxLength) + '...';
   };
 
-  const description = guide.description ? truncateDescription(guide.description, 80) : '';
+  const guideTitle = getLocalizedText(guide.title, locale);
+  const guideDescription = guide.description ? truncateDescription(getLocalizedText(guide.description, locale), 80) : '';
 
   return (
     <div
       ref={cardRef}
       onClick={handleCardClick}
-      className={`h-fit shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+      className={`h-fit group  rounded-xl  cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
       style={{ animationDelay: `${animationDelay}ms` }}
-      aria-label={guide.title}
+      aria-label={guideTitle}
     >
-      <div className="relative h-[10.5rem] overflow-hidden">
+      <div className="group-hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden"
+              style={{
+                filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
+              }}
+      
+      >
         {/* Sports Tags Overlay */}
         {guide.relatedSports && guide.relatedSports.length > 0 && (
           <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
@@ -283,13 +296,13 @@ const GuideCard = memo(({
 
         <GuideThumbnail
           photoUrl={guide.coverImage || ''}
-          guideTitle={guide.title}
+          guideTitle={guideTitle}
         />
       </div>
 
       {/* Name Section */}
       <div 
-          className="px-3 space-y-1 overflow-hidden transition-all duration-300 ease-out"
+          className="space-y-1 overflow-hidden transition-all duration-300 ease-out"
           style={{
             maxHeight: showNameSection ? '200px' : '0',
             paddingTop: showNameSection ? '0.5rem' : '0',
@@ -297,38 +310,11 @@ const GuideCard = memo(({
           }}
         >
           <h3 
-            className={`text-sm font-semibold truncate ${showGuideName ? 'animate-fadeInDown animation-delay-[1s]' : 'opacity-0'}`}
+            className={`text-lg font-medium opacity-0 ${showGuideName ? 'animate-fadeInDown animation-delay-[1s]' : ''}`}
           >
-            {guide.title}
+            {guideTitle}
           </h3>
-          {description && (
-            <p className={`text-xs text-gray-600 dark:text-gray-400 line-clamp-2 ${showGuideName ? 'animate-fadeInDown animation-delay-[1.2s]' : 'opacity-0'}`}>
-              {description}
-            </p>
-          )}
-          <div className={`flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 gap-2 ${showGuideName ? 'opacity-0 animate-fadeInDown animation-delay-[1.4s]' : 'opacity-0'}`}>
-            {guide.rating !== undefined && guide.rating > 0 && (
-              <div className="flex items-center gap-1">
-                <Icon name="star" className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
-                <span className="font-medium">{guide.rating.toFixed(1)}</span>
-                {guide.ratingCount !== undefined && guide.ratingCount > 0 && (
-                  <span className="text-gray-400">({guide.ratingCount})</span>
-                )}
-              </div>
-            )}
-            {guide.readTime !== undefined && guide.readTime > 0 && (
-              <div className="flex items-center gap-1">
-                <Icon name="clock" className="w-3.5 h-3.5" />
-                <span>{guide.readTime} {tr('min', 'דק')}</span>
-              </div>
-            )}
-            {guide.viewsCount !== undefined && (
-              <div className="flex items-center gap-1">
-                <Icon name="eye" className="w-3.5 h-3.5" />
-                <span>{guide.viewsCount}</span>
-              </div>
-            )}
-          </div>
+         
         </div>
     </div>
   );
@@ -547,8 +533,8 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
               if (searchQuery) {
                 const searchLower = searchQuery.toLowerCase();
                 filteredGuides = filteredGuides.filter((guide: Guide) => {
-                  const title = guide.title || '';
-                  const description = guide.description || '';
+                  const title = getLocalizedText(guide.title, locale);
+                  const description = guide.description ? getLocalizedText(guide.description, locale) : '';
                   return title.toLowerCase().includes(searchLower) || 
                          description.toLowerCase().includes(searchLower);
                 });
@@ -580,7 +566,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                   case 'views':
                     return (b.viewsCount || 0) - (a.viewsCount || 0);
                   case 'title':
-                    return (a.title || '').localeCompare(b.title || '');
+                    return getLocalizedText(a.title, locale).localeCompare(getLocalizedText(b.title, locale));
                   case 'newest':
                   default:
                     return 0; // Already sorted by newest in cache
@@ -936,10 +922,10 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
       ======================================== */}
       <div className="max-w-7xl mx-auto px-4 py-6 lg:py-8">
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="h-fit shadow-lg border-[4px] border-card dark:border-card-dark bg-card dark:bg-card-dark rounded-3xl overflow-hidden">
-                <div className="h-[10.5rem] bg-gray-200 dark:bg-gray-700 animate-pulse" />
+              <div key={i} className="h-fit shadow-lg rounded-3xl overflow-hidden">
+                <div className="h-[12rem] md:h-[16rem] bg-gray-200 dark:bg-gray-700 animate-pulse" />
                 <div className="px-3 py-2 space-y-2">
                   <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                   <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3 animate-pulse" />
@@ -949,7 +935,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
           </div>
         ) : guides.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {guides.map((guide, index) => (
                 <GuideCard 
                   key={guide.id} 

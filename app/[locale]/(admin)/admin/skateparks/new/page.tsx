@@ -6,6 +6,7 @@ import { useLocale } from 'next-intl';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper } from '@/components/ui';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ImageUploader } from '@/components/admin/image-uploader';
+import { Toaster } from '@/components/ui/toaster';
 
 interface SkateparkFormData {
   slug: string;
@@ -360,6 +361,7 @@ export default function NewSkateparkPage() {
 
   return (
     <div className="pt-16 space-y-6 min-h-screen bg-background dark:bg-background-dark max-w-4xl mx-auto">
+      <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
