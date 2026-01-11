@@ -475,7 +475,7 @@ border-top-left-radius: 12px;
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background-color: rgba(0, 0, 0, 0.3);
+	background-color: rgba(0, 0, 0, 0.65);
 	-webkit-animation: loadBar 2s cubic-bezier(0.09, 0.89, 0.7, 0.71) infinite;
 	animation: loadBar 2s cubic-bezier(0.09, 0.89, 0.7, 0.71) infinite;
 }

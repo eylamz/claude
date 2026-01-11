@@ -13,7 +13,7 @@ import Bike from './bmx-icon.svg';
 import BombShelter from './safe-house.svg';
 import Shekel from './shekel.svg';
 import Couch from './couch.svg';
-import Umbrella from './umbrella.svg';
+import UmbrellaBold from './umbrellaBold.svg';
 import MapPinBold from './locationBold.svg';
 import MapPin from './location.svg';
 import AmenitiesBold from './notesBold.svg';
@@ -181,7 +181,7 @@ const iconMap: Record<string, SvgComponent> = {
   'safe-house': BombShelter,
   shekel: Shekel,
   couch: Couch,
-  umbrella: Umbrella,
+  umbrellaBold: UmbrellaBold,
   Wax: NoWax,
   nearbyResturants: NearbyRestaurants,
   
@@ -483,7 +483,7 @@ export type IconName =
   | 'oferSesh'
   | 'oferSeshRose'
   | 'trash-can'
-  | 'umbrella'
+  | 'umbrellaBold'
   | 'broom' | 'broomBold'
   | 'settings'  | 'settingsBold'
   | 'admin'  | 'adminBold'

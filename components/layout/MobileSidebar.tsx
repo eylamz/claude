@@ -419,8 +419,8 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
           {/* Loading Bar Animation - shown when searching */}
           {searchLoading && (
-            <div className="w-full h-[1px] -mt-1 bg-sidebar-hover dark:bg-sidebar-hover-dark overflow-hidden">
-              <div className="bg-sidebar-text-brand dark:bg-sidebar-text-brand-dark loading-bar" />
+            <div className="w-full h-[1px] -mt-1 bg-sidebar-hover dark:bg-sidebar-hover-dark overflow-hidden relative">
+              <div className="bg-sidebar-text-brand dark:bg-sidebar-text-brand-dark loading-bar w-full h-full" />
             </div>
           )}
         </div>
@@ -710,27 +710,28 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                       key={item.href}
                       href={item.href}
                       onClick={onClose}
-                      className={`flex items-center gap-1 p-3 rounded-xl bg-card dark:bg-card-dark hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors duration-200 group ${
-                        isActive ? 'bg-sidebar-hover-brand dark:bg-sidebar-hover-brand-dark' : ''
+                      className={`flex items-center gap-1 p-3 rounded-xl border border-transparent bg-card dark:bg-card-dark hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors duration-200 group ${
+                        isActive ? 'bg-sidebar-hover-brand dark:bg-sidebar-hover-brand-dark border-green-border dark:border-green-border-dark' : ''
                       }`}
                     >
                       <div className="flex-none flex items-center justify-center w-5 h-5 rounded-full transition-colors duration-200">
                         <span className={`overflow-visible transition-colors duration-200 ${
                           isActive 
-                            ? 'text-sidebar-text-brand dark:text-sidebar-text-brand-dark' 
-                            : 'text-sidebar-text dark:text-sidebar-text-dark group-hover:text-sidebar-brand dark:group-hover:text-sidebar-brand-dark'
-                        }`}>
+                          ? 'text-[#16641a] dark:text-[#85ef8a] shadow-sm' 
+                          : 'text-sidebar-text dark:text-sidebar-text-dark'
+                      }`}>
                           {item.icon}
                         </span>
                       </div>
                       <span className={`overflow-visible text-sm font-semibold transition-colors duration-200 ${
                         isActive 
-                          ? 'text-sidebar-text-brand dark:text-sidebar-text-brand-dark' 
-                          : 'text-gray-700 dark:text-gray-300'
+                          ? 'text-[#16641a] dark:text-[#85ef8a]' 
+                          : 'text-sidebar-text dark:text-sidebar-text-dark'
                       }`}>
                         {tMobileNav(item.labelKey)}
                       </span>
                     </Link>
+
                   );
                 })}
               </div>

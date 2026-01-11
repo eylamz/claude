@@ -109,9 +109,10 @@ const loadGoogleMapsScript = (locale: string = 'en'): Promise<void> => {
     const script = document.createElement('script');
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
     const language = locale === 'he' ? 'he' : 'en';
+    const region = locale === 'he' ? 'IL' : undefined;
     
     // Build script URL with loading=async for best practices
-    const scriptUrl = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&language=${language}&loading=async`;
+    const scriptUrl = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&language=${language}${region ? `&region=${region}` : ''}&loading=async`;
     
     script.src = scriptUrl;
     script.async = true;
@@ -134,17 +135,20 @@ function GoogleMapView({
   userLocation,
   onMarkerClick,
   locale,
+  hasAmenitiesFilter,
 }: {
   skateparks: Skatepark[];
   userLocation: UserLocation | null;
   onMarkerClick: (park: Skatepark | null) => void;
   locale: string;
+  hasAmenitiesFilter?: boolean;
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
   const scriptLoadedRef = useRef(false);
   const themeCleanupRef = useRef<(() => void) | null>(null);
+  const zoomListenerRef = useRef<any>(null);
 
   useEffect(() => {
     if (!mapRef.current || typeof window === 'undefined') return;
@@ -174,9 +178,9 @@ function GoogleMapView({
         // Helper function to create custom icon for skatepark marker
         const createSkateparkIcon = (fillColor: string, strokeColor: string, circleColor: string) => {
           const svg = `
-            <svg width="40" height="50" viewBox="0 0 40 50" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 0 C9.4 0 0 9.4 0 20 C0 35 20 50 20 50 C20 50 40 35 40 20 C40 9.4 30.6 0 20 0 Z" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2"/>
-              <circle cx="20" cy="20" r="8" fill="${circleColor}"/>
+            <svg width="44" height="48" viewBox="0 0 44 48" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22 6c9 0 16 6 16 14 0 5-2.5 9-6 12-2.5 2-6 6-7.5 9-.5 1.5-2.5 1.5-3 0-1.5-3-5-7-7.5-9-3.5-3-6-7-6-12 0-8 7-14 16-14z" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2"/>
+              <circle cx="23" cy="20.5" r="5.5" fill="${circleColor}"/>
             </svg>
           `;
           return {
@@ -293,6 +297,7 @@ function GoogleMapView({
           streetViewControl: false,
           fullscreenControl: true,
           language: locale === 'he' ? 'he' : 'en',
+          region: locale === 'he' ? 'IL' : undefined,
           // Only apply dark theme styles if theme is dark
           styles: currentTheme === 'dark' ? darkThemeStyles : [],
         };
@@ -423,6 +428,72 @@ function GoogleMapView({
     };
   }, [skateparks, userLocation, onMarkerClick, locale]);
 
+  // Auto-zoom to fit all visible markers when amenities filtering is active
+  useEffect(() => {
+    // Only proceed if amenities filter is active and map is ready
+    if (!hasAmenitiesFilter || !mapInstanceRef.current || skateparks.length === 0) {
+      return;
+    }
+
+    const google = (window as any).google;
+    if (!google?.maps?.LatLngBounds) return;
+
+    // Create bounds from skateparks locations
+    const bounds = new google.maps.LatLngBounds();
+    let hasValidBounds = false;
+
+    skateparks.forEach((park) => {
+      if (park.location && park.location.lat && park.location.lng) {
+        bounds.extend(new google.maps.LatLng(park.location.lat, park.location.lng));
+        hasValidBounds = true;
+      }
+    });
+
+    // Fit bounds with padding if we have valid locations
+    if (hasValidBounds) {
+      // Remove previous zoom listener if it exists
+      if (zoomListenerRef.current) {
+        google.maps.event.removeListener(zoomListenerRef.current);
+        zoomListenerRef.current = null;
+      }
+
+      mapInstanceRef.current.fitBounds(bounds, {
+        top: 50,
+        right: 50,
+        bottom: 50,
+        left: 50,
+      });
+
+      // Listen for bounds_changed event to check and cap zoom level at 6
+      zoomListenerRef.current = google.maps.event.addListener(
+        mapInstanceRef.current,
+        'bounds_changed',
+        () => {
+          const currentZoom = mapInstanceRef.current.getZoom();
+          if (currentZoom && currentZoom > 10) {
+            mapInstanceRef.current.setZoom(10);
+          }
+          // Remove listener after adjusting zoom (one-time check)
+          if (zoomListenerRef.current) {
+            google.maps.event.removeListener(zoomListenerRef.current);
+            zoomListenerRef.current = null;
+          }
+        }
+      );
+    }
+
+    // Cleanup listener on unmount or when dependencies change
+    return () => {
+      if (zoomListenerRef.current) {
+        const google = (window as any).google;
+        if (google?.maps?.event) {
+          google.maps.event.removeListener(zoomListenerRef.current);
+        }
+        zoomListenerRef.current = null;
+      }
+    };
+  }, [skateparks, hasAmenitiesFilter]);
+
   return <div ref={mapRef} className="w-full h-full min-h-[600px]" />;
 }
 
@@ -442,7 +513,7 @@ const getOptimizedImageUrl = (originalUrl: string): string | null => {
 // Amenity icon mapping (for Icon component - matches AmenitiesButton)
 const AMENITY_ICON_MAP: Record<string, string> = {
   parking: 'parking',
-  shade: 'sunBold',
+  shade: 'umbrellaBold',
   bathroom: 'toilet',
   guard: 'securityGuard',
   seating: 'couch',
@@ -459,16 +530,16 @@ const AMENITY_ICON_MAP: Record<string, string> = {
 const getAmenityLabel = (key: string, locale: string): string => {
   const labels: Record<string, { en: string; he: string }> = {
     parking: { en: 'Parking', he: 'חניה' },
-    shade: { en: 'Shade', he: 'צל' },
+    shade: { en: 'Shade', he: 'הצללה' },
     bathroom: { en: 'Bathroom', he: 'שירותים' },
     seating: { en: 'Seating', he: 'מקומות ישיבה' },
     nearbyRestaurants: { en: 'Restaurants Nearby', he: 'מסעדות בקרבת מקום' },
-    scootersAllowed: { en: 'Scooters Allowed', he: 'קורקינטים מותר' },
+    scootersAllowed: { en: 'Scooters Allowed', he: 'קורקינטים כניסה' },
     bikesAllowed: { en: 'Bikes Allowed', he: 'אופניים מותר' },
     guard: { en: 'Guard', he: 'שומר' },
     entryFee: { en: 'Entry Fee', he: 'דמי כניסה' },
     helmetRequired: { en: 'Helmet Required', he: 'חובה קסדה' },
-    bombShelter: { en: 'Bomb Shelter', he: 'ממ"ד' },
+    bombShelter: { en: 'Bomb Shelter', he: 'מקלט' },
     noWax: { en: 'No Wax', he: 'ללא שעווה' },
   };
   const label = labels[key];
@@ -794,8 +865,8 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
           <div className={`absolute bottom-2 left-0 z-10 ${
             showBadgeContainer.openingYear ? 'animate-slideRight animation-delay-[2s]' : 'opacity-0 translate-x-[-30px]'
           }`}>
-            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-orange dark:bg-orange-dark text-orange-bg dark:text-orange-bg-dark text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
-              <span className={`text-sm md:text-md transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-orange dark:bg-orange-dark text-orange-bg dark:text-orange-bg-dark text-xs md:text-sm font-semibold px-2 py-1 rounded-r-full shadow-lg">
+              <span className={`text-sm md:text-base transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`}>
                 {park.openingYear}
               </span>
               <Icon name='sparksBold' className={`w-3 h-3 md:w-4 md:h-4 transition-opacity duration-200 ${showBadgeContent.openingYear ? 'opacity-100' : 'opacity-0'}`} />
@@ -812,10 +883,10 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? (hasOpeningYear ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${hasOpeningYear ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-red dark:bg-red-dark text-red-bg dark:text-red-bg-dark text-xs ps-1 md:ps-3 pe-1 md:pe-2 py-1 shadow-lg ${
+            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-red dark:bg-red-dark text-red-bg dark:text-red-bg-dark px-1 xsm:px-2 py-1 shadow-lg ${
               hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
-              <span className={`text-xs md:text-sm font-medium transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
+              <span className={`text-sm md:text-base font-medium transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('Permanently Closed', 'נסגר לצמיתות')}
               </span>
               <Icon name="closedPark" className={`w-4 h-4 md:w-5 md:h-5 transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`} />
@@ -824,24 +895,29 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
         )}
 
         {/* New Badge */}
-        {isNew && (
-          <div className={`absolute bottom-2 z-10 ${
-            hasOpeningYear || isClosed ? 'right-0' : 'left-0'
-          } ${
-            showBadgeContainer.new 
-              ? ((hasOpeningYear || isClosed) ? 'animate-slideLeft' : 'animate-slideRight')
-              : `opacity-0 ${(hasOpeningYear || isClosed) ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
-          }`}>
-            <div className={`flex gap-0.5 md:gap-1 justify-center items-center  bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark text-xs md:text-sm px-1 md:px-2 py-1 shadow-lg ${
-              hasOpeningYear || isClosed ? 'rounded-l-3xl' : 'rounded-r-3xl'
+        {isNew && (() => {
+          const isOnlyOpeningYear = hasOpeningYear && !isClosed;
+          const isClosedBadge = isClosed;
+          
+          return (
+            <div className={`absolute z-10 ${
+              isClosedBadge ? 'bottom-10 left-0' : isOnlyOpeningYear ? 'bottom-2 right-0' : 'bottom-2 left-0'
+            } ${
+              showBadgeContainer.new 
+                ? `${isOnlyOpeningYear ? 'animate-slideLeft' : 'animate-slideRight'} ${hasOpeningYear && isClosed ? 'animation-delay-[4s]' : ''}`
+                : `opacity-0 ${isOnlyOpeningYear ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
             }`}>
-              <Icon name="trees" className={`w-3 h-3 md:w-4 md:h-4 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
-              <span className={`text-sm md:text-base transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`}>
-                {tr('New', 'חדש')}
-              </span>
+              <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark text-xs md:text-sm px-2 py-1 shadow-lg ${
+                isOnlyOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
+              }`}>
+                <span className={`text-sm md:text-base transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`}>
+                  {tr('New', 'חדש')}
+                </span>
+                <Icon name="trees" className={`w-3 h-3 md:w-4 md:h-4 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Featured Badge */}
         {isFeatured && (
@@ -852,7 +928,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? ((hasOpeningYear || isClosed || isNew) ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${(hasOpeningYear || isClosed || isNew) ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex gap-0.5 md:gap-1 justify-center items-center  bg-green-bg dark:bg-green-dark text-green dark:text-green-bg-dark text-xs md:text-sm font-medium px-1 md:px-2 py-1 shadow-lg ${
+            <div className={`flex gap-0.5 md:gap-1 px-2 justify-center items-center  bg-green-bg dark:bg-green-dark text-green dark:text-green-bg-dark text-xs md:text-sm font-medium px-1 md:px-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
               <span className={`text-sm md:text-base transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`}>
@@ -903,15 +979,15 @@ export default function SkateparksPage() {
 
   const AMENITY_OPTIONS = [
     { key: 'parking', label: tr('Parking', 'חניה'), iconName: 'parking' },
-    { key: 'shade', label: tr('Shade', 'צל'), iconName: 'umbrella' },
+    { key: 'shade', label: tr('Shade', 'הצללה'), iconName: 'umbrellaBold' },
     { key: 'bathroom', label: tr('Bathroom', 'שירותים'), iconName: 'toilet' },
     { key: 'seating', label: tr('Seating', 'מקומות ישיבה'), iconName: 'couch' },
     { key: 'nearbyRestaurants', label: tr('Restaurants Nearby', 'מסעדות בקרבת מקום'), iconName: 'nearbyResturants' },
-    { key: 'scootersAllowed', label: tr('Scooters Allowed', 'קורקינטים מותר'), iconName: 'scooter' },
-    { key: 'bikesAllowed', label: tr('Bikes Allowed', 'אופניים מותר'), iconName: 'bmx-icon' },
+    { key: 'scootersAllowed', label: tr('Scooters Allowed', 'קורקינטים'), iconName: 'scooter' },
+    { key: 'bikesAllowed', label: tr('Bikes Allowed', 'אופניים'), iconName: 'bmx-icon' },
     { key: 'entryFee', label: tr('Entry Fee', 'דמי כניסה'), iconName: 'shekel' },
     { key: 'helmetRequired', label: tr('Helmet Required', 'חובה קסדה'), iconName: 'helmet' },
-    { key: 'bombShelter', label: tr('Bomb Shelter', 'ממ"ד'), iconName: 'safe-house' },
+    { key: 'bombShelter', label: tr('Bomb Shelter', 'מקלט'), iconName: 'safe-house' },
     { key: 'noWax', label: tr('No Wax', 'ללא שעווה'), iconName: 'Wax' },
     { key: 'guard', label: tr('Guard', 'שומר'), iconName: 'securityGuard' },
   ];
@@ -938,6 +1014,7 @@ export default function SkateparksPage() {
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const heroSectionRef = useRef<HTMLDivElement>(null);
   const prevSelectedAmenitiesRef = useRef<string[]>([]);
   const prevUserLocationRef = useRef<UserLocation | null>(null);
   const prevScrollYRef = useRef(0);
@@ -1026,8 +1103,9 @@ export default function SkateparksPage() {
         return null;
       }
 
+      const region = locale === 'he' ? 'IL' : undefined;
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}&language=${locale}`
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}&language=${locale}${region ? `&region=${region}` : ''}`
       );
 
       if (!response.ok) {
@@ -1506,6 +1584,9 @@ export default function SkateparksPage() {
     setSelectedAmenities([]);
     setOpenNowOnly(false);
     setSortBy('newest');
+    // Also disable location if it's enabled
+    setUserLocation(null);
+    setUserCity(null);
   };
 
   return (
@@ -1514,7 +1595,7 @@ export default function SkateparksPage() {
       {/* ========================================
           HERO SECTION - Brand Messaging  
       ======================================== */}
-      <div className="relative pt-14   bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5">
+      <div ref={heroSectionRef} className="relative pt-14   bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5">
         <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
@@ -1623,7 +1704,26 @@ export default function SkateparksPage() {
                       <Button
                         variant={viewMode === 'map' ? "orange" : "gray"}
                         size="sm"
-                        onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
+                        onClick={() => {
+                          const newViewMode = viewMode === 'grid' ? 'map' : 'grid';
+                          setViewMode(newViewMode);
+                          
+                          // Scroll down when switching to map view
+                          if (newViewMode === 'map' && heroSectionRef.current) {
+                            const heroHeight = heroSectionRef.current.offsetHeight;
+                            window.scrollTo({
+                              top: heroHeight,
+                              behavior: 'smooth'
+                            });
+                          }
+                          // Scroll to top when switching to grid view
+                          else if (newViewMode === 'grid') {
+                            window.scrollTo({
+                              top: 0,
+                              behavior: 'smooth'
+                            });
+                          }
+                        }}
                         className=''
                         aria-label={viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
                       >
@@ -1667,8 +1767,8 @@ export default function SkateparksPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   {/* Results Count Badge */}
                   {hasAnyFilter && !loading && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-brand-main/10 to-green-500/10 dark:from-brand-main/20 dark:to-green-500/20 rounded-full border border-brand-main/20 dark:border-brand-main/30">
-                      <Icon name="mapBold" className="w-4 h-4 text-brand-main" />
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark">
+                      <Icon name="mapBold" className="w-4 h-4 text-green" />
                       <span className="text-sm font-semibold text-gray-900 dark:text-white">
                         {skateparks.length}
                       </span>
@@ -1680,33 +1780,29 @@ export default function SkateparksPage() {
 
                   {/* Search Query Badge */}
                   {hasSearchQuery && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-200 dark:border-blue-800">
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-bg dark:bg-orange-bg-dark rounded-full border border-orange-border dark:border-orange-border-dark hover:bg-orange-bg/80 dark:hover:bg-orange-bg-dark/80 transition-colors cursor-pointer"
+                    >
                       <span className="text-sm text-gray-700 dark:text-gray-300">
                         "{searchQuery}"
                       </span>
-                      <button
-                        onClick={() => setSearchQuery('')}
-                        className="p-0.5 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-full transition-colors"
-                      >
-                        <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
-                      </button>
-                    </div>
+                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                    </button>
                   )}
 
                   {/* Area Filter Badge */}
                   {hasAreaFilter && (
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/20 rounded-full border border-purple-200 dark:border-purple-800">
-                      <MapPin className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                    <button
+                      onClick={() => setAreaFilter('')}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-bg dark:bg-purple-bg-dark rounded-full border border-purple-border dark:border-purple-border-dark hover:bg-purple-bg/80 dark:hover:bg-purple-bg-dark/80 transition-colors cursor-pointer"
+                    >
+                      <MapPin className="w-3.5 h-3.5 text-purple dark:text-purple-dark" />
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {t(`search.area.${areaFilter}`)}
                       </span>
-                      <button
-                        onClick={() => setAreaFilter('')}
-                        className="p-0.5 hover:bg-purple-100 dark:hover:bg-purple-800 rounded-full transition-colors"
-                      >
-                        <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
-                      </button>
-                    </div>
+                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                    </button>
                   )}
 
                   {/* Amenities Badges */}
@@ -1716,39 +1812,35 @@ export default function SkateparksPage() {
                     const shouldAnimate = animatingIcons.has(amenity);
 
                     return (
-                      <div
+                      <button
                         key={amenity}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 dark:bg-teal-900/20 rounded-full border border-teal-200 dark:border-teal-800 ${
+                        onClick={() => setSelectedAmenities(prev => prev.filter(a => a !== amenity))}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-bg/80 dark:hover:bg-blue-bg-dark/80 transition-colors cursor-pointer ${
                           shouldAnimate ? 'animate-pop' : ''
                         }`}
                       >
                         {iconName && (
                           <Icon
                             name={iconName as any}
-                            className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400"
+                            className="w-3.5 h-3.5 text-blue dark:text-blue-dark"
                           />
                         )}
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                           {amenityOption?.label}
                         </span>
-                        <button
-                          onClick={() => setSelectedAmenities(prev => prev.filter(a => a !== amenity))}
-                          className="p-0.5 hover:bg-teal-100 dark:hover:bg-teal-800 rounded-full transition-colors"
-                        >
-                          <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
-                        </button>
-                      </div>
+                        <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                      </button>
                     );
                   })}
 
                   {/* Location Sorting Badge */}
                   {hasLocationSorting && (
-                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-brand-main/10 to-brand-main/20 dark:from-brand-main/20 dark:to-brand-main/30 rounded-full border border-brand-main/30 ${
+                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark ${
                       shouldAnimateLocation ? 'animate-pop' : ''
                     }`}>
                       <Icon
                         name="locationBold"
-                        className="w-3.5 h-3.5 text-brand-main"
+                        className="w-3.5 h-3.5 text-green dark:text-green-dark"
                       />
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {tr('Nearest First', 'הקרובים ביותר')}
@@ -1765,7 +1857,7 @@ export default function SkateparksPage() {
                   {hasAnyFilter && (
                     <button
                       onClick={clearFilters}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-full transition-colors duration-200"
                     >
                       <X className="w-3.5 h-3.5" />
                       {tr('Clear All', 'נקה הכל')}
@@ -1781,7 +1873,7 @@ export default function SkateparksPage() {
       {/* ========================================
           MAIN CONTENT AREA
       ======================================== */}
-      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
+      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8  overflow-x-hidden">
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -1801,6 +1893,7 @@ export default function SkateparksPage() {
                 userLocation={userLocation}
                 onMarkerClick={setSelectedPark}
                 locale={locale}
+                hasAmenitiesFilter={selectedAmenities.length > 0}
               />
             </div>
 
@@ -1892,7 +1985,7 @@ export default function SkateparksPage() {
                         {hasOpeningYear && (
                           <div className="absolute bottom-2 left-0 z-10 overflow-hidden">
                           <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-orange dark:bg-orange-dark text-orange-bg dark:text-orange-bg-dark text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
-                            <span className={`text-[0.5rem] md:text-sm transition-opacity duration-200`}>
+                            <span className={`text-sm md:text-base transition-opacity duration-200`}>
                               {selectedPark.openingYear}
                             </span>
                             <Icon name='sparksBold' className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200`} />
@@ -1908,7 +2001,7 @@ export default function SkateparksPage() {
                             <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-red dark:bg-red-dark text-red-bg dark:text-red-bg-dark text-xs md:text-sm px-1 md:px-2 py-1 shadow-lg ${
                               hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
                             }`}>
-                              <span className={`text-[0.5rem] md:text-sm font-medium transition-opacity duration-200`}>
+                              <span className={`text-sm md:text-base font-medium transition-opacity duration-200`}>
                                 {tr('Closed', 'סגור')}
                               </span>
                               <Icon name="closedPark" className="w-2 h-2 md:w-3 md:h-3" />
@@ -1938,7 +2031,7 @@ export default function SkateparksPage() {
                             <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-green-bg dark:bg-green-dark text-green dark:text-green-bg-dark text-xs md:text-sm px-1 md:px-2 py-1 shadow-lg ${
                               hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
                             }`}>
-                              <span className={`text-[0.5rem] md:text-sm font-medium transition-opacity duration-200`}>
+                              <span className={`text-sm md:text-base font-medium transition-opacity duration-200`}>
                                 {tr('Featured', 'מומלץ')}
                               </span>
                               <Icon name="featured" className="w-2 h-2 md:w-3 md:h-3" />
@@ -1996,8 +2089,8 @@ export default function SkateparksPage() {
             {/* Empty State */}
             {skateparks.length === 0 && !loading && (
               <div className="text-center py-16">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-brand-main/10 to-green-500/10 dark:from-brand-main/20 dark:to-green-500/20 mb-4">
-                  <Icon name="searchQuest" className="w-8 h-8 text-brand-main" />
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-bg dark:bg-gray-bg-dark mb-4">
+                  <Icon name="searchQuest" className="w-8 h-8 text-gray dark:text-gray-dark" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                   {searchQuery 
@@ -2009,7 +2102,7 @@ export default function SkateparksPage() {
                   {tr('Try adjusting your filters or search terms', 'נסה לשנות את הפילטרים או החיפוש')}
                 </p>
                 {(searchQuery || selectedAmenities.length > 0 || areaFilter) && (
-                  <Button variant="brand" onClick={clearFilters}>
+                  <Button variant="gray" onClick={clearFilters}>
                     {tr('Clear All Filters', 'נקה את כל הפילטרים')}
                   </Button>
                 )}

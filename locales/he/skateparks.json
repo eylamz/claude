@@ -52,7 +52,7 @@
     "nearbyRestaurantsDescription": "ישנם מסעדות בקרבת מקום",
     "available": "זמין",
     "filterBy": "סנן לפי שירותים / חוקים",
-    "filterByDisable": "כבה סינון לפי שירותים"
+    "filterByDisable": "שנה סינון לפי שירותים"
   },
   "getDirections": "ניווט",
   "googleMaps": "גוגל מפות",

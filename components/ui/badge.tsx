@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 
 interface BadgeProps {
   children: ReactNode;
-  variant?: 'default' | 'secondary' | 'outline' | 'brandOutline' | 'destructive';
+  variant?: 'default' | 'secondary' | 'outline' | 'brandOutline' | 'destructive' | 'info' | 'primary' | 'ghost' | 'blue' | 'green' | 'gray' | 'orange' | 'red' | 'purple';
   className?: string;
 }
 

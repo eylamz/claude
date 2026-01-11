@@ -128,7 +128,7 @@ interface NearbyPark {
 
 const AMENITY_ICONS: Record<string, string> = {
   parking: 'parking',
-  shade: 'umbrella',
+  shade: 'umbrellaBold',
   bathroom: 'toilet',
   guard: 'securityGuard',
   seating: 'couch', // Using couch as closest match for seating

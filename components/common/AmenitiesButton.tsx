@@ -31,7 +31,7 @@ const amenityOptions = [
 // Map amenity keys to icon names
 const AMENITY_ICON_MAP: Record<string, string> = {
   parking: 'parking',
-  shade: 'sun',
+  shade: 'umbrellaBold',
   bathroom: 'toilet',
   guard: 'securityGuard',
   seating: 'couch',
@@ -110,7 +110,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
             <TooltipContent 
               side="bottom" 
               className="text-center"
-              variant={isActive ? "red" : "gray"}
+              variant={isActive ? "blue" : "gray"}
             >
               {!isActive ? tSkateparks('amenities.filterBy') || 'Filter by amenities' : tSkateparks('amenities.filterByDisable') || 'Disable amenities filtering'}
             </TooltipContent>
@@ -156,12 +156,12 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                           <Button
                             variant={isSelected ? "info" : "none"}
                             size="sm"
-                            className={`font-medium w-full justify-start text-nowrap ${isSelected ? '' : 'text-text dark:text-text-dark/90'}`}
+                            className={`flex gap-2 font-medium w-full justify-start text-nowrap ${isSelected ? '' : 'text-gray dark:text-gray-dark'} ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                             onClick={() => toggleAmenity(leftAmenity.key)}
                           >
                             <Icon 
                               name={iconName as any}
-                              className={`w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0 transition-all duration-200 ${isSelected ? 'text-info dark:text-info-dark' : 'text-text-secondary dark:text-text-secondary-dark'}`}
+                              className={`w-4 h-4 transition-all duration-200 ${isSelected ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'}`}
                             />
                             {tSkateparks(leftAmenity.label)}
                           </Button>
@@ -176,12 +176,12 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                           <Button
                             variant={isSelected ? "info" : "none"}
                             size="sm"
-                            className={`w-full justify-start text-nowrap ${isSelected ? '' : 'text-text dark:text-text-dark/90'}`}
+                            className={`flex gap-2 w-full justify-start text-nowrap ${isSelected ? '' : 'text-text dark:text-text-dark/90'} ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                             onClick={() => toggleAmenity(rightAmenity.key)}
                           >
                             <Icon 
                               name={iconName as any}
-                              className={`w-4 h-4 mr-1 rtl:ml-1 rtl:mr-0 transition-all duration-200 ${isSelected ? 'text-info dark:text-info-dark' : 'text-text-secondary dark:text-text-secondary-dark'}`}
+                              className={`w-4 h-4 transition-all duration-200 ${isSelected ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'}`}
                             />
                             {tSkateparks(rightAmenity.label)}
                           </Button>
