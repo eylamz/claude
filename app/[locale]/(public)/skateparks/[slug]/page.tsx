@@ -511,7 +511,7 @@ function FormattedHours({
             <h4 className="text-base font-semibold">{t('lightingHours')}: </h4>
           </div>
           <div>
-            <p className="ps-7 sm:ps-0 text-lg text-gray-500">{t('notApplicable')}</p>
+            <p className="ps-7 xsm:ps-0 text-lg text-gray-500">{t('notApplicable')}</p>
           </div>
         </div>
       </div>
@@ -1622,7 +1622,9 @@ export default function SkateparkPage() {
                   {skatepark.closingYear && (
                     <p className="text-lg text-red dark:text-red-dark">
                       {skatepark.closingMonth 
-                        ? `${t('closedYearDate')} ${getMonthName(skatepark.closingMonth, locale)} ${skatepark.closingYear}`
+                        ? locale === 'he' 
+                          ? `${t('closedYearDate')}${getMonthName(skatepark.closingMonth, locale)} ${skatepark.closingYear}`
+                          : `${t('closedYearDate')} ${getMonthName(skatepark.closingMonth, locale)} ${skatepark.closingYear}`
                         : `${t('closedYear')} ${skatepark.closingYear}`
                       }.
                     </p>

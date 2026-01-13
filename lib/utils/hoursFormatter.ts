@@ -334,20 +334,20 @@ export const groupDaysWithSameHours = (hours: OperatingHours): {
 export const formatDayRanges = (days: DayOfWeek[], locale: string = 'en'): string => {
   // Day names translations
   const dayNames: Record<string, { en: string; he: string; short: { en: string; he: string } }> = {
-    sunday: { en: 'Sunday', he: 'יום ראשון', short: { en: 'Sun', he: 'א' } },
-    monday: { en: 'Monday', he: 'יום שני', short: { en: 'Mon', he: 'ב' } },
-    tuesday: { en: 'Tuesday', he: 'יום שלישי', short: { en: 'Tue', he: 'ג' } },
-    wednesday: { en: 'Wednesday', he: 'יום רביעי', short: { en: 'Wed', he: 'ד' } },
-    thursday: { en: 'Thursday', he: 'יום חמישי', short: { en: 'Thu', he: 'ה' } },
-    friday: { en: 'Friday', he: 'יום שישי', short: { en: 'Fri', he: 'ו' } },
-    saturday: { en: 'Saturday', he: 'שבתות', short: { en: 'Sat', he: 'ש' } },
+    sunday: { en: 'Sunday', he: 'יום ראשון', short: { en: 'Sun', he: 'א\'' } },
+    monday: { en: 'Monday', he: 'יום שני', short: { en: 'Mon', he: 'ב\'' } },
+    tuesday: { en: 'Tuesday', he: 'יום שלישי', short: { en: 'Tue', he: 'ג\'' } },
+    wednesday: { en: 'Wednesday', he: 'יום רביעי', short: { en: 'Wed', he: 'ד\'' } },
+    thursday: { en: 'Thursday', he: 'יום חמישי', short: { en: 'Thu', he: 'ה\'' } },
+    friday: { en: 'Friday', he: 'יום שישי', short: { en: 'Fri', he: 'ו\'' } },
+    saturday: { en: 'Saturday', he: 'שבתות', short: { en: 'Sat', he: 'ש\'' } },
     holidays: { en: 'Holidays', he: 'חגים', short: { en: 'Holidays', he: 'חגים' } },
   };
 
   const translations: Record<string, { en: string; he: string }> = {
     allWeek: { en: 'All Week', he: 'כל השבוע' },
-    days: { en: '', he: 'ימי' },
-    to: { en: 'to', he: 'עד' },
+    days: { en: '', he: 'ימי ' },
+    to: { en: 'to', he: '–' },
     satAndHolidays: { en: 'Saturday and Holidays', he: 'שבת וחגים' },
   };
 
@@ -440,6 +440,10 @@ export const formatDayRanges = (days: DayOfWeek[], locale: string = 'en'): strin
       lastDay = dayNames[lastDayKey]?.short[locale as 'en' | 'he'] || dayNames[lastDayKey]?.short.en || lastDayKey;
     }
     
+    // For Hebrew, no spaces between days and separator; for English, keep spaces
+    if (locale === 'he') {
+      return daysPrefix ? `${daysPrefix}${firstDay}${t('to')}${lastDay}` : `${firstDay}${t('to')}${lastDay}`;
+    }
     return daysPrefix ? `${daysPrefix} ${firstDay} ${t('to')} ${lastDay}` : `${firstDay} ${t('to')} ${lastDay}`;
   }
 

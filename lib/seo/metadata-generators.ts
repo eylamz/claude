@@ -1,7 +1,5 @@
 import { Metadata } from 'next';
 import { generateMetadata as genMeta, getLocalizedText } from './utils';
-import connectDB from '@/lib/db/mongodb';
-import Skatepark from '@/lib/models/Skatepark';
 
 // Example metadata generators for different page types
 
@@ -9,7 +7,7 @@ export async function generateProductMetadata(params: { slug: string; locale: st
   const { slug, locale } = params;
   
   // Fetch product data
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
   const res = await fetch(`${siteUrl}/api/products/${slug}?locale=${locale}`, { next: { revalidate: 3600 } });
   
   if (!res.ok) {
@@ -43,139 +41,41 @@ export async function generateProductMetadata(params: { slug: string; locale: st
 export async function generateSkateparkMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
   const { slug, locale } = params;
   
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+  const res = await fetch(`${siteUrl}/api/skateparks/${slug}`, { next: { revalidate: 3600 } });
   
-  try {
-    // Try fetching directly from database first (more reliable during build)
-    await connectDB();
-    
-    const skatepark = await Skatepark.findOne({ 
-      slug: slug.toLowerCase(), 
-      status: 'active' 
-    }).lean();
-    
-    if (!skatepark) {
-      // If database fetch fails, try API as fallback
-      try {
-        const res = await fetch(`${siteUrl}/api/skateparks/${slug}`, { 
-          next: { revalidate: 3600 },
-          cache: 'force-cache'
-        });
-        
-        if (res.ok) {
-          const { skatepark: apiSkatepark } = await res.json();
-          if (apiSkatepark) {
-            const name = getLocalizedText(apiSkatepark.name, locale);
-            const address = getLocalizedText(apiSkatepark.address, locale);
-            
-            const seoDescription = apiSkatepark.seoMetadata?.description
-              ? getLocalizedText(apiSkatepark.seoMetadata.description, locale)
-              : apiSkatepark.notes 
-              ? getLocalizedText(apiSkatepark.notes, locale).substring(0, 160)
-              : `Visit ${name} - ${address}. Check hours, amenities, and reviews on ENBOSS.`;
-            
-            const image = apiSkatepark.seoMetadata?.ogImage 
-              ? (apiSkatepark.seoMetadata.ogImage.startsWith('http') ? apiSkatepark.seoMetadata.ogImage : `${siteUrl}${apiSkatepark.seoMetadata.ogImage}`)
-              : apiSkatepark.images?.[0]?.url || '/og-skatepark-default.jpg';
-            
-            const keywords = apiSkatepark.seoMetadata?.keywords
-              ? getLocalizedText(apiSkatepark.seoMetadata.keywords, locale)
-              : undefined;
-
-            // Build locale-specific title
-            const title = locale === 'he' 
-              ? `אנבוס | סקייטפארק ${name}`
-              : `${name} Skatepark | ENBOSS`;
-
-            const metadata = genMeta({
-              title,
-              description: seoDescription,
-              image,
-              url: `/skateparks/${slug}`,
-              locale,
-              alternateLocales: locale === 'en' ? ['he'] : ['en'],
-            });
-
-            if (keywords) {
-              metadata.keywords = keywords.split(',').map(k => k.trim()).filter(Boolean);
-            }
-
-            return metadata;
-          }
-        }
-      } catch (apiError) {
-        console.error('API fallback also failed:', apiError);
-      }
-      
-      return genMeta({
-        title: 'Skatepark Not Found',
-        description: 'The skatepark you are looking for could not be found.',
-        locale,
-      });
-    }
-
-    // Process skatepark data from database
-    const name = getLocalizedText(skatepark.name, locale);
-    const address = getLocalizedText(skatepark.address, locale);
-    
-    // Use SEO metadata from model if available, otherwise fallback to notes or default
-    const seoDescription = skatepark.seoMetadata?.description
-      ? getLocalizedText(skatepark.seoMetadata.description, locale)
-      : skatepark.notes 
-      ? (Array.isArray(skatepark.notes[locale as keyof typeof skatepark.notes]) 
-          ? (skatepark.notes[locale as keyof typeof skatepark.notes] as string[]).join(' ').substring(0, 160)
-          : getLocalizedText(skatepark.notes as any, locale).substring(0, 160))
-      : `Visit ${name} - ${address}. Check hours, amenities, and reviews on ENBOSS.`;
-    
-    // Use OG image from SEO metadata if available, otherwise use first image or default
-    const images = skatepark.images || [];
-    const sortedImages = images.sort((a: any, b: any) => a.orderNumber - b.orderNumber);
-    const firstImage = sortedImages.find((img: any) => img.isFeatured) || sortedImages[0];
-    
-    const image = skatepark.seoMetadata?.ogImage 
-      ? (skatepark.seoMetadata.ogImage.startsWith('http') ? skatepark.seoMetadata.ogImage : `${siteUrl}${skatepark.seoMetadata.ogImage}`)
-      : firstImage?.url || '/og-skatepark-default.jpg';
-    
-    // Get keywords from SEO metadata if available
-    const keywords = skatepark.seoMetadata?.keywords
-      ? getLocalizedText(skatepark.seoMetadata.keywords, locale)
-      : undefined;
-
-    // Build locale-specific title
-    const title = locale === 'he' 
-      ? `אנבוס | סקייטפארק ${name}`
-      : `${name} Skatepark | ENBOSS`;
-
-    const metadata = genMeta({
-      title,
-      description: seoDescription,
-      image,
-      url: `/skateparks/${slug}`,
-      locale,
-      alternateLocales: locale === 'en' ? ['he'] : ['en'],
-    });
-
-    // Add keywords if available
-    if (keywords) {
-      metadata.keywords = keywords.split(',').map(k => k.trim()).filter(Boolean);
-    }
-
-    return metadata;
-  } catch (error) {
-    // If both database and API fetch fail, return a basic metadata
-    console.error('Error generating skatepark metadata:', error);
+  if (!res.ok) {
     return genMeta({
-      title: 'Skatepark Guide',
-      description: 'Find the best skateparks in Israel. Check hours, amenities, and reviews on ENBOSS.',
+      title: 'Skatepark Not Found',
+      description: 'The skatepark you are looking for could not be found.',
       locale,
     });
   }
+
+  const { skatepark } = await res.json();
+  const name = getLocalizedText(skatepark.name, locale);
+  const address = getLocalizedText(skatepark.address, locale);
+  const description = skatepark.notes 
+    ? getLocalizedText(skatepark.notes, locale).substring(0, 160)
+    : `Visit ${name} - ${address}. Check hours, amenities, and reviews on ENBOSS.`;
+  
+  const image = skatepark.images?.[0]?.url || '/og-skatepark-default.jpg';
+  const rating = skatepark.rating > 0 ? ` ⭐ ${skatepark.rating.toFixed(1)}` : '';
+
+  return genMeta({
+    title: `${name}${rating} - Skatepark Guide`,
+    description,
+    image,
+    url: `/${locale}/skateparks/${slug}`,
+    locale,
+    alternateLocales: locale === 'en' ? ['he'] : ['en'],
+  });
 }
 
 export async function generateEventMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
   const { slug, locale } = params;
   
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
   const res = await fetch(`${siteUrl}/api/events/${slug}`, { next: { revalidate: 1800 } });
   
   if (!res.ok) {
@@ -212,7 +112,7 @@ export async function generateEventMetadata(params: { slug: string; locale: stri
 export async function generateGuideMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
   const { slug, locale } = params;
   
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
   const res = await fetch(`${siteUrl}/api/guides/${slug}?locale=${locale}`, { next: { revalidate: 3600 } });
   
   if (!res.ok) {
@@ -250,7 +150,7 @@ export async function generateGuideMetadata(params: { slug: string; locale: stri
 export async function generateTrainerMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
   const { slug, locale } = params;
   
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
   const res = await fetch(`${siteUrl}/api/trainers/${slug}?locale=${locale}`, { next: { revalidate: 3600 } });
   
   if (!res.ok) {
@@ -278,37 +178,6 @@ export async function generateTrainerMetadata(params: { slug: string; locale: st
     url: `/${locale}/trainers/${slug}`,
     locale,
     alternateLocales: locale === 'en' ? ['he'] : ['en'],
-  });
-}
-
-export async function generateSkateparksListingMetadata(params: { locale: string }): Promise<Metadata> {
-  const { locale } = params;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
-
-  // Locale-specific titles and descriptions
-  const titles = {
-    en: 'Skateparks in Israel | Find Your Park | ENBOSS',
-    he: 'סקייטפארקים בישראל | מצא את הבית שלך | אנבוס',
-  };
-
-  const descriptions = {
-    en: 'Discover the best skateparks in Israel. Find parks by location, amenities, and ratings. Search by area, check hours, read reviews, and plan your next skate session. Map view and detailed information for every park.',
-    he: 'גלה את הסקייטפארקים הטובים ביותר בישראל. מצא פארקים לפי מיקום, שירותים ודירוגים. חפש לפי אזור, בדוק שעות, קרא ביקורות ותכנן את הפעם הבאה שלך. תצוגת מפה ומידע מפורט לכל פארק.',
-  };
-
-  const keywords = {
-    en: 'skateparks, skateboarding, Israel, skate spots, skate parks, extreme sports, skateboard parks, Israel skateparks, find skatepark, skatepark map, skatepark reviews',
-    he: 'סקייטפארקים, סקייטבורד, ישראל, מקומות סקייט, פארקי סקייט, ספורט אקסטרים, פארקי סקייטבורד, סקייטפארקים בישראל, מצא סקייטפארק, מפת סקייטפארקים, ביקורות סקייטפארקים',
-  };
-
-  return genMeta({
-    title: titles[locale as keyof typeof titles] || titles.en,
-    description: descriptions[locale as keyof typeof descriptions] || descriptions.en,
-    image: '/og-skateparks-listing.jpg',
-    url: `/${locale}/skateparks`,
-    locale,
-    alternateLocales: locale === 'en' ? ['he'] : ['en'],
-    type: 'website',
   });
 }
 
