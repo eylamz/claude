@@ -103,13 +103,10 @@ export default function SkateparksPage() {
   const [userCity, setUserCity] = useState<string | null>(null);
   const [animatingIcons, setAnimatingIcons] = useState<Set<string>>(new Set());
   const [shouldAnimateLocation, setShouldAnimateLocation] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const heroSectionRef = useRef<HTMLDivElement>(null);
   const prevSelectedAmenitiesRef = useRef<string[]>([]);
   const prevUserLocationRef = useRef<UserLocation | null>(null);
-  const prevScrollYRef = useRef(0);
 
   // Track newly added amenities for pop animation
   useEffect(() => {
@@ -157,36 +154,6 @@ export default function SkateparksPage() {
     }
   }, [userLocation, sortBy]);
 
-  // Track scroll position for sticky header and header visibility
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const prevScrollY = prevScrollYRef.current;
-      const scrollDifference = prevScrollY - currentScrollY;
-      const scrollUpThreshold = 10000; // Minimum pixels to scroll up before showing header
-
-      // Determine header visibility (matches HeaderNav/MobileNav logic)
-      if (currentScrollY < 10 || scrollDifference >= scrollUpThreshold) {
-        // At top or scrolled up significantly - show header
-        setIsHeaderVisible(true);
-      } else if (currentScrollY > prevScrollY) {
-        // Scrolling down - hide header
-        setIsHeaderVisible(false);
-      }
-
-      prevScrollYRef.current = currentScrollY;
-      setIsScrolled(currentScrollY > 260);
-    };
-
-    // Set initial scroll position
-    const initialScrollY = window.scrollY;
-    prevScrollYRef.current = initialScrollY;
-    setIsHeaderVisible(initialScrollY < 10);
-    setIsScrolled(initialScrollY > 200);
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   // Reverse geocode coordinates to get city name
   const getCityFromCoordinates = useCallback(async (lat: number, lng: number) => {
@@ -661,8 +628,6 @@ export default function SkateparksPage() {
         sortBy={sortBy}
         viewMode={viewMode}
         setViewMode={setViewMode}
-        isHeaderVisible={isHeaderVisible}
-        isScrolled={isScrolled}
         loading={loading}
         skateparksCount={skateparks.length}
         allSkateparksCount={allSkateparks.length}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState, useRef } from 'react';
 import { MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -29,8 +30,6 @@ interface FilterBarProps {
   setViewMode: (mode: 'map' | 'grid') => void;
   
   // UI states
-  isHeaderVisible: boolean;
-  isScrolled: boolean;
   loading: boolean;
   
   // Data
@@ -68,8 +67,6 @@ export function FilterBar({
   sortBy,
   viewMode,
   setViewMode,
-  isHeaderVisible,
-  isScrolled,
   loading,
   skateparksCount,
   allSkateparksCount,
@@ -83,6 +80,39 @@ export function FilterBar({
   t,
   amenityOptions,
 }: FilterBarProps) {
+  // Scroll tracking state
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isScrollingUp, setIsScrollingUp] = useState(false);
+  const prevScrollYRef = useRef(0);
+
+  // Track scroll position for scroll direction
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const prevScrollY = prevScrollYRef.current;
+
+      // Determine scroll direction
+      if (currentScrollY < prevScrollY) {
+        // Scrolling up
+        setIsScrollingUp(true);
+      } else if (currentScrollY > prevScrollY) {
+        // Scrolling down
+        setIsScrollingUp(false);
+      }
+
+      prevScrollYRef.current = currentScrollY;
+      setIsScrolled(currentScrollY > 260);
+    };
+
+    // Set initial scroll position
+    const initialScrollY = window.scrollY;
+    prevScrollYRef.current = initialScrollY;
+    setIsScrolled(initialScrollY > 260);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Calculate active filters
   const hasAreaFilter = !!areaFilter;
   const hasAmenitiesFilter = selectedAmenities.length > 0;
@@ -95,11 +125,13 @@ export function FilterBar({
 
   return (
     <div 
-      className={`sticky z-40 transition-all duration-300 border-b-2 border-transparent ${
-        isHeaderVisible ? 'top-16' : 'top-0'
-      } ${
+      className={`sticky z-40  bg-header dark:bg-header-dark transition-all duration-200 border-b-2 border-transparent ${
         isScrolled 
-          ? 'shadow-xl bg-header dark:bg-header-dark border-header-border dark:border-header-border-dark py-3' 
+          ? `shadow-xl border-header-border dark:border-header-border-dark py-3 ${
+              isScrollingUp 
+                ? 'top-16' 
+                : 'top-0'
+            }` 
           : 'py-4'
       }`}
     >
