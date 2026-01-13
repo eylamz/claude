@@ -281,4 +281,35 @@ export async function generateTrainerMetadata(params: { slug: string; locale: st
   });
 }
 
+export async function generateSkateparksListingMetadata(params: { locale: string }): Promise<Metadata> {
+  const { locale } = params;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+
+  // Locale-specific titles and descriptions
+  const titles = {
+    en: 'Skateparks in Israel | Find Your Park | ENBOSS',
+    he: 'סקייטפארקים בישראל | מצא את הבית שלך | אנבוס',
+  };
+
+  const descriptions = {
+    en: 'Discover the best skateparks in Israel. Find parks by location, amenities, and ratings. Search by area, check hours, read reviews, and plan your next skate session. Map view and detailed information for every park.',
+    he: 'גלה את הסקייטפארקים הטובים ביותר בישראל. מצא פארקים לפי מיקום, שירותים ודירוגים. חפש לפי אזור, בדוק שעות, קרא ביקורות ותכנן את הפעם הבאה שלך. תצוגת מפה ומידע מפורט לכל פארק.',
+  };
+
+  const keywords = {
+    en: 'skateparks, skateboarding, Israel, skate spots, skate parks, extreme sports, skateboard parks, Israel skateparks, find skatepark, skatepark map, skatepark reviews',
+    he: 'סקייטפארקים, סקייטבורד, ישראל, מקומות סקייט, פארקי סקייט, ספורט אקסטרים, פארקי סקייטבורד, סקייטפארקים בישראל, מצא סקייטפארק, מפת סקייטפארקים, ביקורות סקייטפארקים',
+  };
+
+  return genMeta({
+    title: titles[locale as keyof typeof titles] || titles.en,
+    description: descriptions[locale as keyof typeof descriptions] || descriptions.en,
+    image: '/og-skateparks-listing.jpg',
+    url: `/${locale}/skateparks`,
+    locale,
+    alternateLocales: locale === 'en' ? ['he'] : ['en'],
+    type: 'website',
+  });
+}
+
 

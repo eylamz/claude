@@ -822,12 +822,12 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
               ACTIVE FILTERS STATUS - Improved Layout
           ======================================== */}
           {hasAnyFilter && (
-            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
+            <div className="mt-3 pt-3 border-t border-border dark:border-border-dark">
               <div className="flex flex-wrap items-center gap-2">
                 {/* Results Count Badge */}
                 {!loading && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-brand-main/10 to-green-500/10 dark:from-brand-main/20 dark:to-green-500/20 rounded-full border border-brand-main/20 dark:border-brand-main/30">
-                    <Icon name="mapBold" className="w-4 h-4 text-brand-main" />
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark">
+                    <Icon name="mapBold" className="w-4 h-4 text-green" />
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       {guides.length}
                     </span>
@@ -839,73 +839,63 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
 
                 {/* Search Query Badge */}
                 {searchQuery.trim() && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 rounded-full border border-blue-200 dark:border-blue-800">
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-bg dark:bg-orange-bg-dark rounded-full border border-orange-border dark:border-orange-border-dark hover:bg-orange-hover-bg dark:hover:bg-orange-hover-bg-dark transition-colors duration-200 cursor-pointer"
+                  >
                     <span className="text-sm text-gray-700 dark:text-gray-300">
                       "{searchQuery}"
                     </span>
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className="p-0.5 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-full transition-colors"
-                    >
-                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
-                    </button>
-                  </div>
+                    <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                  </button>
                 )}
 
                 {/* Sports Badges */}
                 {selectedSports.map((sport) => (
-                  <div
+                  <button
                     key={sport}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-50 dark:bg-teal-900/20 rounded-full border border-teal-200 dark:border-teal-800"
+                    onClick={() => setSelectedSports(prev => prev.filter(s => s !== sport))}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark transition-colors duration-200 cursor-pointer"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {sport}
                     </span>
-                    <button
-                      onClick={() => setSelectedSports(prev => prev.filter(s => s !== sport))}
-                      className="p-0.5 hover:bg-teal-100 dark:hover:bg-teal-800 rounded-full transition-colors"
-                    >
-                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
-                    </button>
-                  </div>
+                    <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                  </button>
                 ))}
 
                 {/* Difficulty Badge */}
                 {difficulty && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/20 rounded-full border border-purple-200 dark:border-purple-800">
+                  <button
+                    onClick={() => setDifficulty('')}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-bg dark:bg-purple-bg-dark rounded-full border border-purple-border dark:border-purple-border-dark hover:bg-purple-hover-bg dark:hover:bg-purple-hover-bg-dark transition-colors duration-200 cursor-pointer"
+                  >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {difficulty}
                     </span>
-                    <button
-                      onClick={() => setDifficulty('')}
-                      className="p-0.5 hover:bg-purple-100 dark:hover:bg-purple-800 rounded-full transition-colors"
-                    >
-                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
-                    </button>
-                  </div>
+                    <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                  </button>
                 )}
 
                 {/* Rating Badge */}
                 {minRating > 0 && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-full border border-yellow-200 dark:border-yellow-800">
+                  <button
+                    onClick={() => setMinRating(0)}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-full border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors cursor-pointer"
+                  >
                     <Icon name="star" className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-400" />
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {tr('Rating', 'דירוג')} ≥ {minRating.toFixed(1)}
                     </span>
-                    <button
-                      onClick={() => setMinRating(0)}
-                      className="p-0.5 hover:bg-yellow-100 dark:hover:bg-yellow-800 rounded-full transition-colors"
-                    >
-                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
-                    </button>
-                  </div>
+                    <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                  </button>
                 )}
 
                 {/* Clear All Filters Button */}
                 {hasAnyFilter && (
                   <button
                     onClick={handleClearFilters}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-full transition-colors duration-200"
                   >
                     <X className="w-3.5 h-3.5" />
                     {tr('Clear All', 'נקה הכל')}

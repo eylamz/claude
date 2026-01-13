@@ -2,178 +2,18 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils';
-import { cva } from 'class-variance-authority';
 import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
+import { useLocaleInfo } from '@/hooks/use-translation';
 
-export type SegmentedControlVariant = 
-  | 'default'
-  | 'gray'
-  | 'red'
-  | 'blue'
-  | 'green'
-  | 'purple'
-  | 'orange'
-  | 'yellow'
-  | 'teal'
-  | 'pink';
+export type SegmentedControlVariant = 'green' | 'blue' | 'red' | 'gray' | 'orange' | 'purple';
 
 export interface SegmentedControlOption {
   value: string;
   icon?: React.ReactNode;
   label?: string;
-  variant?: SegmentedControlVariant;
   tooltip?: string;
+  variant?: SegmentedControlVariant;
 }
-
-// Variant styles for the sliding background indicator
-// Note: transform transition is handled separately, colors transition with delay
-const indicatorVariants = cva(
-  'absolute top-0.5 bottom-0.5   rounded-[10px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.04)] pointer-events-none z-0 border border-transparent',
-  {
-    variants: {
-      variant: {
-        default: 'border-[#e6e6e6] dark:border-[#494949] bg-black/[2.5%] hover:bg-black/5',
-        gray: 'border-gray-border dark:border-gray-border-dark bg-gray-bg dark:bg-gray-bg-dark',
-        red: 'border-[#ffc5c5] dark:border-[#f3394c3b] bg-[#ffe6e6] dark:bg-[#311c1c]',
-        blue: 'border-blue-border dark:border-blue-border-dark bg-blue-bg dark:bg-blue-bg-dark',
-        green: 'border-[#baf0bb] dark:border-[#235725] bg-[#e3f6e4] dark:bg-[#0f2f10]',
-        purple: 'border-[#b99ef867] dark:border-[#5f4cc54d] bg-[#e7defc] dark:bg-[#472881]',
-        orange: 'border-[#ffe0bb] dark:border-[#f39d393b] bg-[#fff1e0] dark:bg-[#31271c]',
-        yellow: 'bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800',
-        teal: 'bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800',
-        pink: 'bg-pink-50 dark:bg-pink-900/30 border border-pink-200 dark:border-pink-800',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-);
-
-// Variant styles for text/icon colors
-const textVariants = cva('transition-colors duration-150 delay-150', {
-  variants: {
-    variant: {
-      default: '',
-      gray: '',
-      red: '',
-      blue: '',
-      green: '',
-      purple: '',
-      orange: '',
-      yellow: '',
-      teal: '',
-      pink: '',
-    },
-    isSelected: {
-      true: '',
-      false: '',
-    },
-  },
-  compoundVariants: [
-    // Selected states with variants
-    {
-      variant: 'default',
-      isSelected: true,
-      className: 'text-gray dark:text-gray-dark',
-    },
-    {
-      variant: 'default',
-      isSelected: false,
-      className: 'text-text-secondary dark:text-text-secondary-dark',
-    },
-    {
-      variant: 'gray',
-      isSelected: true,
-      className: 'text-gray dark:text-gray-dark',
-    },
-    {
-      variant: 'gray',
-      isSelected: false,
-      className: 'text-text-secondary dark:text-text-secondary-dark',
-    },
-    {
-      variant: 'red',
-      isSelected: true,
-      className: 'text-red dark:text-red-dark',
-    },
-    {
-      variant: 'red',
-      isSelected: false,
-      className: 'text-text-secondary dark:text-text-secondary-dark',
-    },
-    {
-      variant: 'blue',
-      isSelected: true,
-      className: 'text-blue dark:text-blue-dark',
-    },
-    {
-      variant: 'blue',
-      isSelected: false,
-      className: 'text-text-secondary dark:text-text-secondary-dark',
-    },
-    {
-      variant: 'green',
-      isSelected: true,
-      className: 'text-green dark:text-green-dark',
-    },
-    {
-      variant: 'green',
-      isSelected: false,
-      className: 'text-text-secondary dark:text-text-secondary-dark',
-    },
-    {
-      variant: 'purple',
-      isSelected: true,
-      className: 'text-purple dark:text-purple-dark',
-    },
-    {
-      variant: 'purple',
-      isSelected: false,
-      className: 'text-text-secondary dark:text-text-secondary-dark',
-    },
-    {
-      variant: 'orange',
-      isSelected: true,
-      className: 'text-orange dark:text-orange-dark',
-    },
-    {
-      variant: 'orange',
-      isSelected: false,
-      className: 'text-text-secondary dark:text-text-secondary-dark',
-    },
-    {
-      variant: 'yellow',
-      isSelected: true,
-      className: 'text-yellow-700 dark:text-yellow-300',
-    },
-    {
-      variant: 'yellow',
-      isSelected: false,
-      className: 'text-[#424242] dark:text-[#afafaf]',
-    },
-    {
-      variant: 'teal',
-      isSelected: true,
-      className: 'text-teal-700 dark:text-teal-300',
-    },
-    {
-      variant: 'teal',
-      isSelected: false,
-      className: 'text-[#424242] dark:text-[#afafaf]',
-    },
-    {
-      variant: 'pink',
-      isSelected: true,
-      className: 'text-pink-700 dark:text-pink-300',
-    },
-    {
-      variant: 'pink',
-      isSelected: false,
-      className: 'text-[#424242] dark:text-[#afafaf]',
-    },
-  ],
-});
 
 export interface SegmentedControlsProps {
   options: SegmentedControlOption[];
@@ -182,7 +22,6 @@ export interface SegmentedControlsProps {
   onValueChange?: (value: string) => void;
   name?: string;
   className?: string;
-  size?: 'sm' | 'md' | 'lg';
 }
 
 const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProps>(
@@ -193,7 +32,6 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
     onValueChange, 
     name = 'segmentedControls',
     className,
-    size = 'md',
     ...props 
   }, ref) => {
     const [internalValue, setInternalValue] = React.useState(defaultValue || options[0]?.value || '');
@@ -201,25 +39,7 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
     const currentValue = isControlled ? value : internalValue;
     const selectedIndex = options.findIndex(opt => opt.value === currentValue);
     const actualIndex = selectedIndex >= 0 ? selectedIndex : 0;
-    const selectedOption = options[actualIndex];
-    
-    // Track the variant that should be displayed (delayed to sync with sliding animation)
-    const [displayVariant, setDisplayVariant] = React.useState<SegmentedControlVariant>(
-      selectedOption?.variant || 'default'
-    );
-    
-    // Update display variant to sync with sliding animation
-    React.useEffect(() => {
-      const newVariant = selectedOption?.variant || 'default';
-      if (displayVariant !== newVariant) {
-        // Start color transition partway through the slide (150ms delay for faster transition)
-        // This makes colors start changing as the indicator is moving
-        const timer = setTimeout(() => {
-          setDisplayVariant(newVariant);
-        }, 150);
-        return () => clearTimeout(timer);
-      }
-    }, [selectedOption?.variant, displayVariant]);
+    const { isRTL } = useLocaleInfo();
 
     const handleChange = React.useCallback((newValue: string) => {
       if (!isControlled) {
@@ -228,142 +48,244 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
       onValueChange?.(newValue);
     }, [isControlled, onValueChange]);
 
-    const sizeClasses = {
-      sm: 'h-10',
-      md: 'h-10',
-      lg: 'h-14',
-    };
+    // Calculate transform for the paddle (last label's ::after)
+    // The paddle is positioned on the last label and needs to move to the selected option
+    // In LTR: paddle moves left (negative) from last position to selected position
+    //   - If last option (index 3 of 4) is selected: move 0 positions = 0%
+    //   - If 3rd option (index 2 of 4) is selected: move 1 position left = -100%
+    //   - If 2nd option (index 1 of 4) is selected: move 2 positions left = -200%
+    //   - If 1st option (index 0 of 4) is selected: move 3 positions left = -300%
+    // In RTL: paddle moves right (positive) from last position to selected position
+    const positionsFromLast = options.length - 1 - actualIndex;
+    const paddleTransform = isRTL 
+      ? positionsFromLast * 100  // Positive for RTL (moves right)
+      : positionsFromLast * -100;  // Negative for LTR (moves left)
 
-    const iconSizeClasses = {
-      sm: 'w-4 h-4',
-      md: 'w-4 h-4',
-      lg: 'w-6 h-6',
+    const uniqueId = React.useId();
+    const controlsId = `segmented-controls-${uniqueId}`;
+    
+    // Color mappings for variants (using the same colors as button variants)
+    const variantColors: Record<SegmentedControlVariant, { bg: { light: string; dark: string }; border: { light: string; dark: string } }> = {
+      green: {
+        bg: { light: '#e3f6e4', dark: '#0f2f10' },
+        border: { light: '#baf0bb', dark: '#235725' }
+      },
+      blue: {
+        bg: { light: '#deecfc', dark: 'hsl(199,61%,15%)' },
+        border: { light: '#b6d9fd', dark: '#195570' }
+      },
+      red: {
+        bg: { light: '#ffe6e6', dark: '#311c1c' },
+        border: { light: '#ffc5c5', dark: 'hsl(355, 46%, 25%)' }
+      },
+      gray: {
+        bg: { light: '#efefef', dark: '#262626' },
+        border: { light: '#e6e6e6', dark: '#494949' }
+      },
+      orange: {
+        bg: { light: '#fff1e0', dark: 'hsl(32, 89%, 12%)' },
+        border: { light: '#ffe0bb', dark: 'hsl(32, 89%, 25%)' }
+      },
+      purple: {
+        bg: { light: '#e7defc', dark: 'hsl(261, 54%, 20%)' },
+        border: { light: 'hsl(259, 84%, 87%)', dark: '#6e40c4' }
+      }
     };
-
-    // 1. Calculate the percentage width of one segment
-    const optionWidthPercent = 100 / options.length;
+    
+    // Get the variant of the selected option, default to 'gray' if not specified
+    const selectedOption = options.find(opt => opt.value === currentValue);
+    const rawVariant = selectedOption?.variant;
+    const selectedVariant: SegmentedControlVariant = (
+      rawVariant && 
+      typeof rawVariant === 'string' && 
+      rawVariant in variantColors
+    ) 
+      ? rawVariant as SegmentedControlVariant
+      : 'gray';
+    
+    const selectedColors = variantColors[selectedVariant] || variantColors.gray;
 
     return (
-      <div
-        ref={ref}
-        className={cn(
-          'relative flex w-full rounded-xl',
-          'border border-input-border dark:border-input-border-dark',
-          'bg-input dark:bg-input-dark',
-          'p-0.5 overflow-hidden', // This is 2px padding (0.125rem)
-          'transition-all duration-300 ease-in-out',
-          sizeClasses[size],
-          className
-        )}
-        {...props}
-      >
-        {/* Sliding Background - transform slides immediately, colors transition smoothly */}
+      <>
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            #${controlsId} {
+              --paddle-transform: ${paddleTransform}%;
+              --paddle-bg-light: ${selectedColors.bg.light};
+              --paddle-bg-dark: ${selectedColors.bg.dark};
+              --paddle-border-light: ${selectedColors.border.light};
+              --paddle-border-dark: ${selectedColors.border.dark};
+            }
+            #${controlsId} input {
+              position: absolute !important;
+              height: 1px;
+              width: 1px;
+              overflow: hidden;
+              clip: rect(1px 1px 1px 1px);
+              clip: rect(1px, 1px, 1px, 1px);
+              white-space: nowrap;
+            }
+            #${controlsId} label:last-of-type::after {
+              content: "";
+              position: absolute;
+              top: 0;
+              right: 0;
+              bottom: 0;
+              left: 0;
+              z-index: -2;
+              background: var(--paddle-bg-light);
+              border-radius: 0.4275rem;
+              border: 1px solid var(--paddle-border-light);
+              transform: translateX(var(--paddle-transform));
+              transition: transform 0.3s ease-in-out, background 0.3s ease-in-out, border-color 0.3s ease-in-out;
+            }
+            .dark #${controlsId} label:last-of-type::after {
+              background: var(--paddle-bg-dark);
+              border-color: var(--paddle-border-dark);
+            }
+            #${controlsId} label:not(:first-of-type)::before {
+              content: "";
+              position: absolute;
+              z-index: -3;
+              top: 0.5rem;
+              left: 0;
+              bottom: 0.5rem;
+              width: 1px;
+              background: rgba(0,0,0,0.15);
+              transition: opacity 0.3s ease;
+            }
+            .dark #${controlsId} label:not(:first-of-type)::before {
+              background: rgba(255, 255, 255, 0.15);
+            }
+            #${controlsId} input:checked + label::before,
+            #${controlsId} input:checked + label + input + label::before {
+              opacity: 0;
+            }
+            @media (pointer: coarse) {
+            #${controlsId}:focus-within {
+              box-shadow: 0 0 0 0.2rem rgba(0,122,255,0.75);
+            }
+            .dark #${controlsId}:focus-within {
+              box-shadow: 0 0 0 0.2rem rgba(0,122,255,0.5);
+            }
+        }
+          `
+        }} />
         <div
+          ref={ref}
+          id={controlsId}
           className={cn(
-            indicatorVariants({ variant: displayVariant })
+            'flex relative overflow-hidden',
+            'rounded-[0.5rem] bg-input dark:bg-input-dark h-10 px-0.5 pb-[0.16rem] !pt-0.5 border border-gray-border dark:border-gray-border-dark ',
+            'transition-all duration-300 ease-in-out',
+            className
           )}
-          style={{
-            // 2. Width is the segment percentage minus the container's total horizontal padding (2px + 2px = 4px) 
-            // divided by the number of segments to keep it proportional.
-            width: `calc(${optionWidthPercent}% - 1rem / ${options.length})`,
-            // 3. Translate uses the index * 100% of the segment width minus 1rem per index.
-            // Since the slider is positioned 'absolute' relative to the padded container,
-            // 100% translation moves it exactly one segment over, minus the rem offset.
-            transform: `translateX(calc(${actualIndex * 100}% + ${actualIndex}* 0.3rem))`,
-            // Transform transitions immediately (300ms)
-            // Colors transition faster (150ms) with shorter delay (150ms)
-            transition: 'transform 200ms ease-in-out, background-color 150ms ease-in-out 150ms, border-color 150ms ease-in-out 150ms',
-          }}
-        />
-
-        {options.map((option, index) => {
-          const isSelected = option.value === currentValue;
-          const inputId = `${name}-${option.value}-${index}`;
-          const optionVariant = option.variant || 'default';
-          const nextOption = options[index + 1];
-          const isNextSelected = nextOption?.value === currentValue;
-          const shouldShowBorder = index < options.length - 1 && !isSelected && !isNextSelected;
-          
-          const labelContent = (
-            <>
-              {option.icon && (
-                <span
-                  className={cn(iconSizeClasses[size], 'flex items-center justify-center')}
-                  style={{
-                    transition: 'color 200ms ease-in-out, fill 200ms ease-in-out',
-                  }}
-                >
-                  {option.icon}
-                </span>
-              )}
-              {option.label && (
-                <span className={cn(
-                  'font-semibold text-sm',
-                  option.icon && 'ms-2'
-                )}>
-                  {option.label}
-                </span>
-              )}
-            </>
-          );
-          
-          return (
-            <React.Fragment key={`${option.value}-${index}`}>
-              <input
-                type="radio"
-                id={inputId}
-                name={name}
-                value={option.value}
-                checked={isSelected}
-                onChange={() => handleChange(option.value)}
-                className="sr-only"
-              />
-              {option.tooltip ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <label
-                      htmlFor={inputId}
-                      className={cn(
-                        'relative px-3 flex-1 flex items-center justify-center h-fit my-auto',
-                        'cursor-pointer select-none transition-all duration-200',
-                        'z-[2]',
-                        index < options.length - 1 && 'border-r border-red-500',
-                        shouldShowBorder ? 'animate-borderFadeIn' : 'animate-borderFadeOut',
-                        textVariants({ variant: optionVariant, isSelected })
-                      )}
-                      style={{
-                        transition: 'color 300ms ease-in-out 250ms',
-                      }}
-                    >
-                      {labelContent}
-                    </label>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" variant={optionVariant}>
-                    {option.tooltip}
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
-                <label
-                  htmlFor={inputId}
-                  className={cn(
-                    'relative px-3 flex-1 flex items-center justify-center',
-                    'cursor-pointer select-none transition-all duration-200',
-                    'z-[2]',
-                    index < options.length - 1 && 'border-r border-red-500',
-                    shouldShowBorder ? 'animate-borderFadeIn' : 'animate-borderFadeOut',
-                    textVariants({ variant: optionVariant, isSelected })
-                  )}
-                  style={{
-                    transition: 'color 300ms ease-in-out 250ms',
-                  }}
-                >
-                  {labelContent}
-                </label>
-              )}
-            </React.Fragment>
-          );
-        })}
-      </div>
+          {...props}
+        >
+          {options.map((option, index) => {
+            const isSelected = option.value === currentValue;
+            const inputId = `${name}-${option.value}-${index}`;
+            const isLast = index === options.length - 1;
+            // Get variant-specific text and icon colors
+            // Only show variant color when selected, otherwise use default gray
+            const getTextColorClass = () => {
+              if (!isSelected) {
+                // Unselected buttons always use default gray
+                return 'text-gray dark:text-gray-dark';
+              }
+              
+              // Selected buttons use their variant color (if specified and not gray)
+              const variant = option.variant;
+              if (variant && variant !== 'gray') {
+                const variantColorMap: Record<Exclude<SegmentedControlVariant, 'gray'>, string> = {
+                  green: 'text-green dark:text-green-dark',
+                  blue: 'text-blue dark:text-blue-dark',
+                  red: 'text-red dark:text-red-dark',
+                  orange: 'text-orange dark:text-orange-dark',
+                  purple: 'text-purple dark:text-purple-dark',
+                };
+                return variantColorMap[variant] || 'text-gray dark:text-gray-dark';
+              }
+              
+              // Default to gray for selected buttons without variant
+              return 'text-gray dark:text-gray-dark';
+            };
+            
+            const textColorClass = getTextColorClass();
+            
+            const labelContent = (
+              <>
+                {option.icon && (
+                  <span className={cn(
+                    "w-4 h-4 flex items-center justify-center",
+                    textColorClass
+                  )}>
+                    {option.icon}
+                  </span>
+                )}
+                {option.label && (
+                  <span className={cn(
+                    'text-[0.8125rem] font-medium leading-none',
+                    'font-sans', // -apple-system, BlinkMacSystemFont, sans-serif
+                    isSelected && 'text-[0.875rem] font-semibold',
+                    option.icon && 'ms-2',
+                    textColorClass
+                  )}>
+                    {option.label}
+                  </span>
+                )}
+              </>
+            );
+            
+            return (
+              <React.Fragment key={`${option.value}-${index}`}>
+                <input
+                  type="radio"
+                  id={inputId}
+                  name={name}
+                  value={option.value}
+                  checked={isSelected}
+                  onChange={() => handleChange(option.value)}
+                />
+                {option.tooltip ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <label
+                        htmlFor={inputId}
+                        className={cn(
+                          'flex-1 flex justify-center items-center text-center',
+                          'cursor-pointer relative',
+                          'transition-all duration-300',
+                          'p-4',
+                          isLast ? 'z-[1]' : 'z-[2]'
+                        )}
+                      >
+                        {labelContent}
+                      </label>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      {option.tooltip}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <label
+                    htmlFor={inputId}
+                    className={cn(
+                      'flex-1 flex justify-center items-center text-center',
+                      'cursor-pointer relative',
+                      'transition-all duration-300',
+                      'px-2',
+                      isLast ? 'z-[1]' : 'z-[2]'
+                    )}
+                  >
+                    {labelContent}
+                  </label>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </>
     );
   }
 );

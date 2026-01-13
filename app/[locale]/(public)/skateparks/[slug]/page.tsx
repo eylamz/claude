@@ -511,7 +511,7 @@ function FormattedHours({
             <h4 className="text-base font-semibold">{t('lightingHours')}: </h4>
           </div>
           <div>
-            <p className="ps-7 sm:ps-0 text-base text-gray-500">{t('notApplicable')}</p>
+            <p className="ps-7 sm:ps-0 text-lg text-gray-500">{t('notApplicable')}</p>
           </div>
         </div>
       </div>
@@ -527,23 +527,23 @@ function FormattedHours({
         {/* 24/7 Header */}
         <div className="flex items-center gap-2 text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5" />
-          <h3 className="text-base font-semibold">{t('openingHours')}: </h3>
+          <h3 className="text-xl font-semibold">{t('openingHours')}: </h3>
           <Badge 
           variant="brandOutline" 
-          className="inline-flex items-center px-2 py-1 !rounded text-sm font-semibold"
+          className="inline-flex items-center px-2 py-1 !rounded !text-lg font-semibold"
             >
           {t('open247')}
           </Badge>
         </div>
         
         {/* ALWAYS show lighting hours for 24/7 parks when is24Hours is true */}
-        <div className={`flex  items-start gap-2 ${locale === 'he' ? 'flex-col xsm:flex-row' : ''}`}>
+        <div className={`flex flex-col lg:flex-row items-start gap-2 ${locale === 'he' ? 'flex-col xsm:flex-row' : ''}`}>
           <div className="flex items-center gap-2">
             <Icon name="sunset" className={`w-5 h-5 ${lightingHours?.endTime ? 'text-yellow-500 dark:text-yellow-300' : 'text-gray-500'}`} />
-            <h4 className="text-base font-semibold">{t('lightingHours')}: </h4>
+            <h4 className="text-lg font-semibold text-text dark:text-text-dark">{t('lightingHours')}: </h4>
           </div>
           <div>
-            <p className={`ps-7 xsm:ps-0 text-base ${!lightingHours?.endTime ? 'text-gray-500' : ''}`}>
+            <p className={`ps-7 lg:ps-0 text-lg ${!lightingHours?.endTime ? 'text-gray-500' : 'text-text dark:text-text-dark'}`}>
               {lightingHours?.endTime 
                 ? formatLightingHours(lightingHours.endTime, locale)
                 : t('noLighting')}

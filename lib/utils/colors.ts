@@ -292,7 +292,7 @@ export const colors = {
     dark: '#93c5fd',
     bg: {
       light: '#deecfc',
-      dark: '#12384a',
+      dark: 'hsl(199,61%,15%)',
     },
     border: {
       light: '#b6d9fd',
@@ -301,7 +301,7 @@ export const colors = {
     hover: {
       bg: {
         light: '#d0e4fb',
-        dark: '#16455a',
+        dark: 'hsl(199,61%,13%)',
       },
     },
   },
@@ -349,7 +349,7 @@ export const colors = {
     dark: '#f39d39',
     bg: {
       light: '#fff1e0',
-      dark: 'hsl(32, 89%, 9%)',
+      dark: 'hsl(32, 89%, 12%)',
     },
     border: {
       light: '#ffe0bb',
@@ -358,7 +358,7 @@ export const colors = {
     hover: {
       bg: {
         light: '#ffead1',
-        dark: 'hsl(32, 89%,11%)',
+        dark: 'hsl(32, 89%,10%)',
       },
     },
   },
@@ -387,7 +387,7 @@ export const colors = {
     dark: '#c5b6fd',
     bg: {
       light: '#e7defc',
-      dark: '#2f1a56',
+      dark: 'hsl(261, 54%, 20%)',
     },
     border: {
       light: 'hsl(259, 84%, 87%)',
@@ -396,7 +396,7 @@ export const colors = {
     hover: {
       bg: {
         light: '#ddd0fb',
-        dark: '#381e66',
+        dark: 'hsl(261, 54%, 18%)',
       },
     },
   },

@@ -2,14 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef, memo } from 'react';
 import { usePathname } from 'next/navigation';
-import Link from 'next/link';
 import {
   MapPin,
   X,
-  Sparkles,
-  XCircle,
-  Badge,
-  Award,
   TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
@@ -18,6 +13,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import AmenitiesButton from '@/components/common/AmenitiesButton';
 import { SearchInput } from '@/components/common/SearchInput';
 import ParkCardSkeleton from '@/components/skateparks/ParkCardSkeleton';
+import { MapParkCard } from '@/components/skateparks/MapParkCard';
 import { Icon } from '@/components/icons';
 import { useTranslations } from 'next-intl';
 
@@ -901,7 +897,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
           
           return (
             <div className={`absolute z-10 ${
-              isClosedBadge ? 'bottom-10 left-0' : isOnlyOpeningYear ? 'bottom-2 right-0' : 'bottom-2 left-0'
+              isClosedBadge ? 'bottom-10 md:bottom-12 left-0' : isOnlyOpeningYear ? 'bottom-2 right-0' : 'bottom-2 left-0'
             } ${
               showBadgeContainer.new 
                 ? `${isOnlyOpeningYear ? 'animate-slideLeft' : 'animate-slideRight'} ${hasOpeningYear && isClosed ? 'animation-delay-[4s]' : ''}`
@@ -928,7 +924,7 @@ const SkateparkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLoca
               ? ((hasOpeningYear || isClosed || isNew) ? 'animate-slideLeft' : 'animate-slideRight')
               : `opacity-0 ${(hasOpeningYear || isClosed || isNew) ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
-            <div className={`flex gap-0.5 md:gap-1 px-2 justify-center items-center  bg-green-bg dark:bg-green-dark text-green dark:text-green-bg-dark text-xs md:text-sm font-medium px-1 md:px-2 py-1 shadow-lg ${
+            <div className={`flex gap-0.5 md:gap-1 justify-center items-center  bg-green-bg dark:bg-green-dark text-green dark:text-green-bg-dark text-xs md:text-sm font-medium px-1 md:px-2 py-1 shadow-lg ${
               hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
             }`}>
               <span className={`text-sm md:text-base transition-opacity duration-200 ${showBadgeContent.featured ? 'opacity-100' : 'opacity-0'}`}>
@@ -1008,11 +1004,6 @@ export default function SkateparksPage() {
   const [shouldAnimateLocation, setShouldAnimateLocation] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const [cardPosition, setCardPosition] = useState<{ x: number; y: number } | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [wasDragging, setWasDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const cardRef = useRef<HTMLDivElement>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const heroSectionRef = useRef<HTMLDivElement>(null);
   const prevSelectedAmenitiesRef = useRef<string[]>([]);
@@ -1070,10 +1061,12 @@ export default function SkateparksPage() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const prevScrollY = prevScrollYRef.current;
+      const scrollDifference = prevScrollY - currentScrollY;
+      const scrollUpThreshold = 10000; // Minimum pixels to scroll up before showing header
 
       // Determine header visibility (matches HeaderNav/MobileNav logic)
-      if (currentScrollY < prevScrollY || currentScrollY < 10) {
-        // Scrolling up or at top - show header
+      if (currentScrollY < 10 || scrollDifference >= scrollUpThreshold) {
+        // At top or scrolled up significantly - show header
         setIsHeaderVisible(true);
       } else if (currentScrollY > prevScrollY) {
         // Scrolling down - hide header
@@ -1503,81 +1496,6 @@ export default function SkateparksPage() {
     fetchAllSkateparks();
   }, [fetchAllSkateparks]);
 
-  // Reset card position when selected park changes
-  useEffect(() => {
-    if (selectedPark && mapContainerRef.current) {
-      // Calculate initial position (bottom left)
-      const mapRect = mapContainerRef.current.getBoundingClientRect();
-      const cardHeight = 200; // Approximate height
-      setCardPosition({
-        x: 16, // 16px from left edge
-        y: mapRect.height - cardHeight - 96, // 16px from bottom
-      });
-    } else {
-      setCardPosition(null);
-    }
-  }, [selectedPark]);
-
-  // Drag handlers for park card - only from drag handle button
-  const handleDragHandleMouseDown = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-
-    if (cardRef.current) {
-      const cardRect = cardRef.current.getBoundingClientRect();
-
-      // Calculate offset from mouse to card top-left
-      const offsetX = e.clientX - cardRect.left;
-      const offsetY = e.clientY - cardRect.top;
-      setDragOffset({ x: offsetX, y: offsetY });
-    }
-  }, []);
-
-  // Global mouse move handler for dragging
-  useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!cardRef.current || !mapContainerRef.current) return;
-
-      const mapRect = mapContainerRef.current.getBoundingClientRect();
-      const cardRect = cardRef.current.getBoundingClientRect();
-
-      // Calculate new position relative to map container
-      let newX = e.clientX - mapRect.left - dragOffset.x;
-      let newY = e.clientY - mapRect.top - dragOffset.y;
-
-      // Constrain to map bounds
-      const minX = 0;
-      const minY = 0;
-      const maxX = mapRect.width - cardRect.width;
-      const maxY = mapRect.height - cardRect.height;
-
-      newX = Math.max(minX, Math.min(maxX, newX));
-      newY = Math.max(minY, Math.min(maxY, newY));
-
-      setCardPosition({ x: newX, y: newY });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      setWasDragging(true);
-      // Clear wasDragging flag after a short delay to prevent accidental navigation
-      setTimeout(() => {
-        setWasDragging(false);
-      }, 100);
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, dragOffset]);
-
   const clearFilters = () => {
     setAreaFilter('');
     setSearchQuery('');
@@ -1908,164 +1826,13 @@ export default function SkateparksPage() {
             </div>
 
             {/* Selected Park Detail Panel - Bottom */}
-            {selectedPark && (() => {
-              const name = typeof selectedPark.name === 'string' 
-                ? selectedPark.name 
-                : (locale === 'he' ? selectedPark.name.he : selectedPark.name.en) || selectedPark.name.en || selectedPark.name.he;
-
-              const photoUrl = selectedPark.images && selectedPark.images.length > 0 
-                ? selectedPark.images.find(img => img.isFeatured)?.url || selectedPark.images[0]?.url 
-                : selectedPark.imageUrl;
-
-              const currentYear = new Date().getFullYear();
-              const recentYears = [currentYear, currentYear - 1, currentYear - 2];
-              const hasOpeningYear = selectedPark.openingYear && recentYears.includes(selectedPark.openingYear);
-              const isClosed = selectedPark.closingYear && selectedPark.closingYear <= currentYear;
-              const isNew = selectedPark.createdAt && isNewPark(selectedPark.createdAt);
-              const isFeatured = selectedPark.isFeatured;
-
-              const distanceText = selectedPark.distance !== null && selectedPark.distance !== undefined
-                ? `(${selectedPark.distance.toFixed(1)} ${tr('km', 'ק\"מ')})`
-                : null;
-
-              const areaLabels: Record<'north' | 'center' | 'south', { en: string; he: string }> = {
-                north: { en: 'North', he: 'צפון' },
-                center: { en: 'Center', he: 'מרכז' },
-                south: { en: 'South', he: 'דרום' },
-              };
-              const areaLabel = locale === 'he' ? areaLabels[selectedPark.area]?.he : areaLabels[selectedPark.area]?.en || selectedPark.area;
-
-              // Use cardPosition if available, otherwise don't render yet (will be set by useEffect)
-              if (!cardPosition) {
-                return null;
-              }
-
-              return (
-                <div
-                  ref={cardRef}
-                  className="absolute w-1/2 md:w-[calc(100%-2rem)] max-w-[20rem] z-40 bg-card dark:bg-card-dark rounded-3xl border-2 border-card dark:border-card-dark overflow-hidden"
-                  style={{
-                    left: `${cardPosition.x}px`,
-                    top: `${cardPosition.y}px`,
-                    transform: 'none',
-                    userSelect: isDragging ? 'none' : 'auto',
-                  }}
-                >
-                  <div className={`h-fit relative group select-none transform-gpu shadow-2xl ${isDragging ? 'opacity-90' : ''}`}>
-                    {/* Close Button */}
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setSelectedPark(null);
-                      }}
-                      className="absolute top-3 right-3 z-30 p-2 rounded-full bg-sidebar dark:bg-sidebar-dark backdrop-blur-sm shadow-lg hover:bg-card dark:hover:bg-card-dark transition-colors duration-200"
-                      aria-label={tr('Close', 'סגור')}
-                    >
-                      <X className="w-4 h-4 text-sidebar-text dark:text-sidebar-text-dark" />
-                    </button>
-
-                    <Link 
-                      href={`/${locale}/skateparks/${selectedPark.slug}`}
-                      className="block focus:outline-none focus:ring-2 focus:ring-brand-main focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-3xl"
-                      onClick={(e) => {
-                        // Don't navigate if dragging or just finished dragging
-                        if (isDragging || wasDragging) {
-                          e.preventDefault();
-                        }
-                      }}
-                    >
-                      {/* Amenities - Top overlay */}
-                      {selectedPark.amenities && Object.values(selectedPark.amenities).some(Boolean) && (
-                        <ParkAmenities amenities={selectedPark.amenities} locale={locale} alwaysVisible={true} />
-                      )}
-
-                      <div className="relative bg-black/25 h-[10.5rem]">
-                        {/* Opening Year Badge */}
-                        {hasOpeningYear && (
-                          <div className="absolute bottom-2 left-0 z-10 overflow-hidden">
-                          <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-orange dark:bg-orange-dark text-orange-bg dark:text-orange-bg-dark text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
-                            <span className={`text-sm md:text-base transition-opacity duration-200`}>
-                              {selectedPark.openingYear}
-                            </span>
-                            <Icon name='sparksBold' className={`w-2 h-2 md:w-3 md:h-3 transition-opacity duration-200`} />
-                          </div>
-                        </div>
-                      )}
-
-                        {/* Closed Badge */}
-                        {isClosed && (
-                          <div className={`absolute bottom-2 z-10 overflow-hidden ${
-                            hasOpeningYear ? 'right-0' : 'left-0'
-                          }`}>
-                            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-red dark:bg-red-dark text-red-bg dark:text-red-bg-dark text-xs md:text-sm px-1 md:px-2 py-1 shadow-lg ${
-                              hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
-                            }`}>
-                              <span className={`text-sm md:text-base font-medium transition-opacity duration-200`}>
-                                {tr('Closed', 'סגור')}
-                              </span>
-                              <Icon name="closedPark" className="w-2 h-2 md:w-3 md:h-3" />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* New Badge */}
-                        {isNew && (
-                          <div className={`absolute bottom-2 z-10 ${
-                            hasOpeningYear || isClosed ? 'right-0' : 'left-0'
-                          }`}>
-                            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark text-xs md:text-sm px-1 md:px-2 py-1 shadow-lg ${
-                              hasOpeningYear || isClosed ? 'rounded-l-3xl' : 'rounded-r-3xl'
-                            }`}>
-                              <Icon name="trees" className="w-2 h-2 md:w-3 md:h-3" />
-                              {tr('New', 'חדש')}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Featured Badge */}
-                        {isFeatured && (
-                          <div className={`absolute bottom-2 z-10 ${
-                            hasOpeningYear || isClosed || isNew ? 'right-0' : 'left-0'
-                          }`}>
-                            <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-green-bg dark:bg-green-dark text-green dark:text-green-bg-dark text-xs md:text-sm px-1 md:px-2 py-1 shadow-lg ${
-                              hasOpeningYear || isClosed || isNew ? 'rounded-l-3xl' : 'rounded-r-3xl'
-                            }`}>
-                              <span className={`text-sm md:text-base font-medium transition-opacity duration-200`}>
-                                {tr('Featured', 'מומלץ')}
-                              </span>
-                              <Icon name="featured" className="w-2 h-2 md:w-3 md:h-3" />
-                            </div>
-                          </div>
-                        )}
-
-                        <SkateparkThumbnail
-                          photoUrl={photoUrl}
-                          parkName={name}
-                          alwaysSaturated={true}
-                        />
-                      </div>
-
-                      {/* Name Section - Always visible below image */}
-                      <div className="px-4 py-3 space-y-1">
-                        <h3 className="text-sm font-semibold truncate text-text dark:text-text-dark opacity-0 animate-fadeInDown">
-                          {name}
-                        </h3>
-                        {/* Distance - Always shown below the name if available */}
-                        {distanceText && (
-                          <div className="flex items-center gap-1.5 mt-1">
-                            <Icon name="locationBold" className="w-3 h-3 shrink-0 text-text dark:text-text-dark" />
-                            <span className="text-xs text-text dark:text-text-dark truncate">
-                              {distanceText}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                  </div>
-                </div>
-              );
-            })()}
+            {selectedPark && (
+              <MapParkCard
+                park={selectedPark}
+                locale={locale}
+                onClose={() => setSelectedPark(null)}
+              />
+            )}
           </section>
         ) : (
           /* GRID VIEW */

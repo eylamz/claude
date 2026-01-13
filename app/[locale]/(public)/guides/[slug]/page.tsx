@@ -823,12 +823,12 @@ export default function GuidePage() {
 
             {/* Date and Author - Second appearance (below description) */}
             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-8">
-              {publishedDate && <span>{publishedDate}</span>}
+              {publishedDate && <span className="text-nowrap">{publishedDate}</span>}
               {publishedDate && guide.authorName && <span>•</span>}
               {guide.authorName && (
-                <Link href="#" className="hover:text-brand-main dark:hover:text-brand-dark transition-colors">
+                <p className="text-nowrap">
                   {guide.authorName}
-                </Link>
+                </p>
               )}
             </div>
           </header>
