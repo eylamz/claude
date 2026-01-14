@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useTransition, useEffect, useRef } from 'react';
-import { signIn, useSession, update } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks';
-import { Button } from '@/components/ui';
+import { Button, Input, Checkbox } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { isRegisterEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
 
@@ -156,6 +156,7 @@ export default function LoginPage() {
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
+        rememberMe: formData.rememberMe.toString(),
         redirect: false,
       });
 
@@ -165,14 +166,6 @@ export default function LoginPage() {
         return;
       }
 
-      // Success - try to update session (non-blocking)
-      try {
-        await update();
-      } catch (updateError) {
-        // Ignore update errors - router.refresh() will handle session update
-        console.log('Session update skipped:', updateError);
-      }
-      
       // Refresh router to ensure session is available
       router.refresh();
       
@@ -209,10 +202,10 @@ export default function LoginPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: value,
     }));
     
     // Clear error for this field when user starts typing
@@ -222,6 +215,13 @@ export default function LoginPage() {
         [name]: undefined,
       }));
     }
+  };
+
+  const handleRememberMeChange = (checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      rememberMe: checked,
+    }));
   };
 
   const isRTL = locale === 'he';
@@ -239,16 +239,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background dark:bg-background-dark">
       <div className="w-full max-w-[400px] animate-fade-in">
         {/* Card */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 space-y-6 border border-gray-200 dark:border-gray-800">
+        <div className="rounded-2xl p-8 space-y-6 ">
           {/* Header */}
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               {t('login.title')}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray dark:text-gray-dark">
               {t('login.subtitle')}
             </p>
           </div>
@@ -261,79 +261,47 @@ export default function LoginPage() {
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5" dir={isRTL ? 'rtl' : 'ltr'}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 items-center" dir={isRTL ? 'rtl' : 'ltr'}>
             {/* Email Field */}
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('login.email')}
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.email
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500'
-                } bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200`}
-                placeholder={t('login.email')}
-                disabled={isLoading}
-                autoComplete="email"
-              />
-              {errors.email && (
-                <p className="text-sm text-red-600 dark:text-red-400 animate-fade-in">
-                  {errors.email}
-                </p>
-              )}
-            </div>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              label={t('login.email')}
+              value={formData.email}
+              onChange={handleChange}
+              placeholder={t('login.email')}
+              disabled={isLoading}
+              autoComplete="email"
+              error={errors.email}
+            />
 
             {/* Password Field */}
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('login.password')}
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.password
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500'
-                } bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200`}
-                placeholder={t('login.password')}
-                disabled={isLoading}
-                autoComplete="current-password"
-              />
-              {errors.password && (
-                <p className="text-sm text-red-600 dark:text-red-400 animate-fade-in">
-                  {errors.password}
-                </p>
-              )}
-            </div>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              label={t('login.password')}
+              value={formData.password}
+              onChange={handleChange}
+              placeholder={t('login.password')}
+              disabled={isLoading}
+              autoComplete="current-password"
+              error={errors.password}
+            />
 
             {/* Remember Me & Forgot Password */}
-            <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <label className="flex items-center space-x-2 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  name="rememberMe"
-                  checked={formData.rememberMe}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 transition-colors"
-                  disabled={isLoading}
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-                  {t('login.rememberMe')}
-                </span>
-              </label>
+            <div className={`flex items-center justify-between w-full ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <Checkbox
+                id="rememberMe"
+                checked={formData.rememberMe}
+                onChange={handleRememberMeChange}
+                label={t('login.rememberMe')}
+                variant="brand"
+              />
               <Link
                 href={`/${locale}/auth/forgot-password`}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                className="text-sm text-text-secondary dark:text-text-secondary-dark hover:underline transition-colors"
               >
                 {t('login.forgotPassword')}
               </Link>
@@ -344,7 +312,7 @@ export default function LoginPage() {
               type="submit"
               variant="primary"
               size="lg"
-              className="w-full"
+              className="w-full max-w-[270px]"
               disabled={isLoading}
             >
               {isLoading ? (
@@ -361,58 +329,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">
-                {locale === 'he' ? 'או המשך עם' : 'Or continue with'}
-              </span>
-            </div>
-          </div>
-
-          {/* Social Login Buttons */}
-          <div className="space-y-3">
-            <button
-              type="button"
-              onClick={() => {
-                // Placeholder for Google sign-in
-                console.log('Google sign-in');
-              }}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
-              disabled={isLoading}
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              <span className="text-gray-700 dark:text-gray-300">
-                {t('login.signInWithGoogle')}
-              </span>
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => {
-                // Placeholder for Facebook sign-in
-                console.log('Facebook sign-in');
-              }}
-              className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
-              disabled={isLoading}
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1877F2">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-              </svg>
-              <span className="text-gray-700 dark:text-gray-300">
-                {t('login.signInWithFacebook')}
-              </span>
-            </button>
-          </div>
-
           {/* Sign Up Link - Only show if registration is enabled */}
           {registerEnabled && (
             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
@@ -424,6 +340,18 @@ export default function LoginPage() {
                 {t('login.signUp')}
               </Link>
             </p>
+          )}
+
+          {/* Back to Home Link - Only show if registration is disabled */}
+          {!registerEnabled && (
+            <div className="text-center">
+              <Link
+                href={`/${locale}`}
+                className="text-sm text-text-secondary dark:text-text-secondary-dark hover:underline transition-colors"
+              >
+                {t('login.backToHome')}
+              </Link>
+            </div>
           )}
         </div>
       </div>

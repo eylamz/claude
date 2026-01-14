@@ -802,6 +802,13 @@ const config: Config = {
               transform: 'translateX(-7%) translateY(-11%) rotate(-2deg)'
             }
           },
+          'horizontalShaking': {
+            '0%': { transform: 'translateX(0)', opacity: '0' },
+            '25%': { transform: 'translateX(5px) ', opacity: '1' },
+            '50%': { transform: 'translateX(-5px)' },
+            '75%': { transform: 'translateX(5px)' },
+            '100%': { transform: 'translateX(0)' }
+          }
       },
       animation: {
         'popUp': 'popUp 0.2s',
@@ -846,6 +853,7 @@ const config: Config = {
         'borderFadeOut': 'borderFadeOut 0.1s ease-out forwards',
         'parkNameHover': 'parkNameHover 0.5s cubic-bezier(0.76, 0, 0.24, 1) forwards 0.5s',
         'parkNameHoverRtl': 'parkNameHoverRtl 0.5s cubic-bezier(0.76, 0, 0.24, 1) forwards 0.5s',
+        'horizontalShaking': 'horizontalShaking 0.5s ease-in-out forwards',
       },
     },
   },

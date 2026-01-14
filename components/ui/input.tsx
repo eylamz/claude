@@ -150,7 +150,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
         {error && (
 
-          <p className="text-xs text-red-500 mt-1">{error}</p>
+          <p className="text-xs text-red-500 mt-1 animate-horizontalShaking">{error}</p>
 
         )}
 

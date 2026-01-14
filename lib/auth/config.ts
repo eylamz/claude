@@ -25,6 +25,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        rememberMe: { label: 'Remember Me', type: 'text' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -58,6 +59,7 @@ export const authOptions: NextAuthOptions = {
           // }
 
           // Return user object for JWT token including preferences
+          // Also pass rememberMe so it can be used in jwt callback for session duration
           return {
             id: (user._id as any).toString(),
             email: user.email,
@@ -67,6 +69,7 @@ export const authOptions: NextAuthOptions = {
               language: user.preferences?.language || 'en',
               colorMode: user.preferences?.colorMode || 'system',
             },
+            rememberMe: credentials.rememberMe === 'true',
           };
         } catch (error) {
           console.error('Authentication error:', error);
@@ -77,14 +80,16 @@ export const authOptions: NextAuthOptions = {
   ],
 
   // Session strategy
+  // Note: maxAge is set dynamically in jwt callback based on rememberMe
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60, // Default: 30 days (for rememberMe=true)
   },
 
   // JWT configuration
+  // Note: maxAge is set dynamically in jwt callback based on rememberMe
   jwt: {
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60, // Default: 30 days (for rememberMe=true)
     secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-change-in-production',
   },
 
@@ -95,6 +100,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     /**
      * Add user role and preferences to JWT token
+     * Also handles rememberMe functionality for session duration
      */
     async jwt({ token, user, trigger, session }) {
       // Initial sign in
@@ -106,6 +112,20 @@ export const authOptions: NextAuthOptions = {
           language: 'en',
           colorMode: 'system',
         };
+        
+        // Handle rememberMe from user object (passed from authorize)
+        // If rememberMe is true, use 30 days, otherwise use shorter duration (1 day)
+        const rememberMe = (user as any).rememberMe === true;
+        
+        // Set token expiration based on rememberMe
+        // For rememberMe=false, we'll use a shorter duration (1 day) that acts like a session cookie
+        // For rememberMe=true, use 30 days
+        const maxAge = rememberMe 
+          ? 30 * 24 * 60 * 60 // 30 days
+          : 24 * 60 * 60; // 1 day (session-like behavior)
+        
+        // Set the expiration time
+        token.exp = Math.floor(Date.now() / 1000) + maxAge;
       }
 
       // Update session when specific actions occur
