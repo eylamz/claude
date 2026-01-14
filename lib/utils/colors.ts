@@ -132,7 +132,7 @@ export const colors = {
     dark: 'hsl(0, 0%, 9%)',
   },
   text: {
-    light: 'hsl(0, 0%, 29%)',
+    light: 'hsl(0, 0%, 13%)',
     dark: '#E0E0E0',
     hover: {
       light: '#1e293b',

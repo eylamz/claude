@@ -6,7 +6,7 @@ export interface IReview extends Document {
   entityType: 'skatepark';
   entityId: mongoose.Types.ObjectId;
   slug: string; // for quick lookup by slug
-  userId: mongoose.Types.ObjectId;
+  userId?: mongoose.Types.ObjectId; // Optional for anonymous reviews
   userName: string;
   rating: number;
   comment: string;
@@ -45,7 +45,7 @@ const ReviewSchema: Schema<IReview> = new Schema<IReview>(
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      required: false, // Optional for anonymous reviews
       index: true,
     },
     userName: {

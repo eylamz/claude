@@ -87,11 +87,12 @@ export async function PATCH(request: NextRequest) {
 
     await connectDB();
     const body = await request.json();
-    const { id, action, comment, rating } = body as { 
+    const { id, action, comment, rating, userName } = body as { 
       id: string; 
       action?: 'approve' | 'reject';
       comment?: string;
       rating?: number;
+      userName?: string;
     };
 
     const review = await Review.findById(id);
@@ -162,8 +163,8 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // Handle content updates (comment and/or rating)
-    if (comment !== undefined || rating !== undefined) {
+    // Handle content updates (comment, rating, and/or userName)
+    if (comment !== undefined || rating !== undefined || userName !== undefined) {
       if (comment !== undefined) {
         review.comment = comment.trim();
       }
@@ -172,6 +173,12 @@ export async function PATCH(request: NextRequest) {
           return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 });
         }
         review.rating = rating;
+      }
+      if (userName !== undefined) {
+        if (!userName.trim()) {
+          return NextResponse.json({ error: 'User name cannot be empty' }, { status: 400 });
+        }
+        review.userName = userName.trim();
       }
       await review.save();
     }

@@ -85,38 +85,85 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    
+    // Check environment variables for review permissions
+    const userReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_USERREVIEWS;
+    const everyoneReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS;
+    const userReviewsEnabled = userReviewsEnv === 'true' || userReviewsEnv === true;
+    const everyoneReviewsEnabled = everyoneReviewsEnv === 'true' || everyoneReviewsEnv === true;
+    
+    // Priority: If both are true, treat as userReviews only
+    const allowUserReviews = userReviewsEnabled;
+    const allowAnonymousReviews = !userReviewsEnabled && everyoneReviewsEnabled;
+    
+    // If both are false, reject
+    if (!allowUserReviews && !allowAnonymousReviews) {
+      return NextResponse.json({ error: 'Reviews are currently disabled' }, { status: 403 });
+    }
+    
+    // If user reviews are enabled, require authentication
+    if (allowUserReviews && !session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
+    // If only anonymous reviews are enabled, allow without authentication
+    const isAnonymous = !session?.user?.id;
 
     await connectDB();
     const { slug } = await params;
     const body = await request.json();
-    const { rating, comment } = body as { rating: number; comment: string };
+    const { rating, comment, userName } = body as { rating: number; comment: string; userName?: string };
 
     if (!rating || rating < 1 || rating > 5) {
       return NextResponse.json({ error: 'Rating must be 1-5' }, { status: 400 });
+    }
+    
+    // For anonymous reviews, userName is required
+    if (isAnonymous && (!userName || !userName.trim())) {
+      return NextResponse.json({ error: 'Name is required for anonymous reviews' }, { status: 400 });
     }
     // Comment is optional, no minimum length requirement
 
     const park = await Skatepark.findOne({ slug: slug.toLowerCase(), status: 'active' });
     if (!park) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    // Optional: prevent duplicate pending/approved by same user
-    const existing = await Review.findOne({ slug: slug.toLowerCase(), userId: session.user.id });
-    if (existing) {
-      return NextResponse.json({ error: 'You have already submitted a review' }, { status: 400 });
+    // Prevent duplicate reviews
+    if (isAnonymous) {
+      // For anonymous reviews, check by userName and slug (basic duplicate prevention)
+      // Note: This is a simple check - in production you might want IP-based or session-based tracking
+      const existing = await Review.findOne({ 
+        slug: slug.toLowerCase(), 
+        userId: { $exists: false },
+        userName: userName?.trim(),
+        status: { $in: ['pending', 'approved'] }
+      });
+      if (existing) {
+        return NextResponse.json({ error: 'You have already submitted a review' }, { status: 400 });
+      }
+    } else {
+      // For logged-in users, check by userId
+      const existing = await Review.findOne({ slug: slug.toLowerCase(), userId: session.user.id });
+      if (existing) {
+        return NextResponse.json({ error: 'You have already submitted a review' }, { status: 400 });
+      }
     }
 
     const reviewData: any = {
       entityType: 'skatepark',
       entityId: park._id,
       slug: slug.toLowerCase(),
-      userId: session.user.id,
-      userName: session.user.name || session.user.email || 'User',
       rating,
-      status: 'pending',
+      status: 'pending', // Anonymous reviews always pending for admin approval
     };
+
+    // Set user info based on whether it's anonymous or logged-in
+    if (isAnonymous) {
+      reviewData.userName = userName?.trim() || 'Anonymous';
+      // userId is not set for anonymous reviews
+    } else {
+      reviewData.userId = session.user.id;
+      reviewData.userName = session.user.name || session.user.email || 'User';
+    }
 
     // Only include comment if it's not empty
     if (comment && comment.trim()) {

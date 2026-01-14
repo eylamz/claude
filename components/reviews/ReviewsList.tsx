@@ -115,7 +115,7 @@ export default function ReviewsList({ slug, canWrite = false }: { slug: string; 
               Write a review
             </button>
           ) : (
-            <ReviewForm slug={slug} onSubmitted={() => { setShowForm(false); fetchReviews(); }} onCancel={() => setShowForm(false)} />
+            <ReviewForm slug={slug} onSubmitted={() => { setShowForm(false); /* Don't fetch reviews - they need admin approval first */ }} onCancel={() => setShowForm(false)} />
           )}
         </div>
       )}

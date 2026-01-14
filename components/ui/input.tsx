@@ -20,7 +20,7 @@ export interface InputProps
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
-  ({ className, error, type, variant = 'default', label, id, ...props }, ref) => {
+  ({ className, error, type, variant = 'default', label, id, required, ...props }, ref) => {
 
     const inputId = React.useId();
 
@@ -36,11 +36,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
             htmlFor={finalId}
 
-            className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1.5"
+            className="block text-sm font-medium text-gray dark:text-gray-dark mb-1.5"
 
           >
 
             {label}
+
+            {required && <span className="text-red dark:text-red-dark ms-1">*</span>}
 
           </label>
 
@@ -74,7 +76,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
               "focus:bg-input-hover/70 dark:focus:bg-input-hover-dark/70",
 
-              "placeholder:text-input-text dark:placeholder:text-input-text-dark",
+              "placeholder:text-text-secondary dark:placeholder:text-text-secondary-dark",
 
               "text-text dark:text-text-dark",
 
@@ -139,6 +141,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
 
           ref={ref}
+
+          required={required}
 
           {...props}
 

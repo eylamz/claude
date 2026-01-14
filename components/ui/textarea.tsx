@@ -9,7 +9,7 @@ export interface TextareaProps
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, error, variant = 'default', label, id, ...props }, ref) => {
+  ({ className, error, variant = 'default', label, id, required, ...props }, ref) => {
     const textareaId = React.useId();
     const finalId = id || textareaId;
 
@@ -18,9 +18,10 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={finalId}
-            className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1.5"
+            className="block text-sm font-medium text-gray dark:text-gray-dark mb-1.5"
           >
             {label}
+            {required && <span className="text-red dark:text-red-dark ms-1">*</span>}
           </label>
         )}
         <textarea
@@ -32,8 +33,9 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             // Default variant
             variant === 'default' && [
               "bg-input dark:bg-input-dark",
+              "border border-input-border dark:border-input-border-dark md:focus-visible:border-brand-main dark:md:focus-visible:border-brand-main",
               "hover:bg-input-hover dark:hover:bg-input-hover-dark",
-              "placeholder:text-input-text dark:placeholder:text-input-text-dark",
+              "placeholder:text-text-secondary dark:placeholder:text-text-secondary-dark",
               "text-text dark:text-text-dark",
               "dark:focus:ring-offset-background-dark",
             ],
@@ -66,6 +68,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             className
           )}
           ref={ref}
+          required={required}
           {...props}
         />
         {error && (

@@ -12,7 +12,7 @@ interface Review {
   entityType: string;
   entityId: any;
   slug: string;
-  userId: string;
+  userId?: string; // Optional for anonymous reviews
   userName: string;
   rating: number;
   comment: string;
@@ -38,6 +38,7 @@ export default function ReviewsPage() {
   const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [editComment, setEditComment] = useState('');
   const [editRating, setEditRating] = useState(5);
+  const [editUserName, setEditUserName] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -188,6 +189,7 @@ export default function ReviewsPage() {
     setEditingReview(review);
     setEditComment(review.comment || '');
     setEditRating(review.rating);
+    setEditUserName(review.userName || '');
     setError(null);
   };
 
@@ -195,6 +197,7 @@ export default function ReviewsPage() {
     setEditingReview(null);
     setEditComment('');
     setEditRating(5);
+    setEditUserName('');
     setError(null);
   };
 
@@ -212,6 +215,7 @@ export default function ReviewsPage() {
           id: editingReview._id,
           comment: editComment,
           rating: editRating,
+          userName: editUserName,
         }),
       });
 
@@ -1117,7 +1121,7 @@ export default function ReviewsPage() {
       {/* Edit Modal */}
       {editingReview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <Card className="bg-card dark:bg-card-dark w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <Card className="bg-sidebar dark:bg-sidebar-dark w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4">
             <CardHeader>
               <CardTitle>Edit Review</CardTitle>
             </CardHeader>
@@ -1127,6 +1131,17 @@ export default function ReviewsPage() {
                   <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
                 </div>
               )}
+
+              <div>
+                <Input
+                  label="User Name"
+                  value={editUserName}
+                  onChange={(e) => setEditUserName(e.target.value)}
+                  placeholder="Reviewer name..."
+                  maxLength={30}
+                  required
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -1144,12 +1159,12 @@ export default function ReviewsPage() {
                         className={`w-8 h-8 ${
                           rating <= editRating
                             ? 'fill-yellow-400 text-yellow-400'
-                            : 'fill-gray-300 text-gray-300 dark:fill-gray-600 dark:text-gray-600'
+                            : 'text-text-secondary dark:text-text-secondary-dark'
                         }`}
                       />
                     </button>
                   ))}
-                  <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                  <span className="ms-2 text-sm text-gray dark:text-gray-dark">
                     ({editRating}/5)
                   </span>
                 </div>
@@ -1162,23 +1177,23 @@ export default function ReviewsPage() {
                   onChange={(e) => setEditComment(e.target.value)}
                   rows={6}
                   placeholder="Review comment..."
-                  maxLength={2000}
+                  maxLength={100}
                 />
                 <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {editComment.length}/2000 characters
+                  {editComment.length}/100 characters
                 </p>
               </div>
 
-              <div className="flex items-center space-x-3 pt-4">
+              <div className="flex items-center gap-2 pt-4">
                 <Button
-                  variant="green"
+                  variant="primary"
                   onClick={handleSaveEdit}
                   disabled={saving}
                 >
                   {saving ? 'Saving...' : 'Save Changes'}
                 </Button>
                 <Button
-                  variant="secondary"
+                  variant="error"
                   onClick={closeEditModal}
                   disabled={saving}
                 >

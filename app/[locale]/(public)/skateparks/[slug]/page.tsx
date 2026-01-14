@@ -721,6 +721,16 @@ export default function SkateparkPage() {
     fetchSkatepark();
   }, [slug]);
 
+  // Debug: Log environment variables (remove after debugging)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('Review env vars:', {
+        NEXT_PUBLIC_ENABLE_USERREVIEWS: process.env.NEXT_PUBLIC_ENABLE_USERREVIEWS,
+        NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS: process.env.NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS,
+      });
+    }
+  }, []);
+
 
   useEffect(() => {
     // Detect theme from document class or localStorage
@@ -1132,7 +1142,7 @@ export default function SkateparkPage() {
 
   const handleReviewSubmitted = async () => {
     setShowAddReview(false);
-    await fetchReviews();
+    // Don't fetch reviews - they need admin approval first
   };
 
   const getLocalizedText = (text: { en: string; he: string } | string): string => {
@@ -1567,7 +1577,7 @@ export default function SkateparkPage() {
         <div className="">
           <div className="max-w-5xl mx-auto overflow-visible">
             <ParkImageGallery 
-              images={getImageSliderImages(skatepark.images, locale, parkNameEn)} 
+              images={getImageSliderImages(skatepark.images, parkName)} 
               parkName={parkName}
               closingYear={skatepark.closingYear}
               area={skatepark.area}
@@ -2147,24 +2157,68 @@ export default function SkateparkPage() {
                   <Icon name="messages" className="w-5 h-5" />
                   {t('reviewsCount')}
                 </CardTitle>
-                {status === 'loading' ? (
-                  <div className="flex items-center justify-center">
-                    <LoadingSpinner className="h-5" />
-                  </div>
-                ) : session?.user ? (
-                  <Button 
-                  variant={skatepark.closingYear && skatepark.closingYear <= new Date().getFullYear() ? 'error' : 'primary'}
-                  onClick={() => setShowAddReview(true)}
-                  >
-                    {t('addReview')}
-                  </Button>
-                ) : (
-                  <Link href={`/${locale}/login`}>
-                    <Button variant={skatepark.closingYear && skatepark.closingYear <= new Date().getFullYear() ? 'error' : 'primary'}>
-                      {tCommon('signInToReview')}
-                    </Button>
-                  </Link>
-                )}
+                {(() => {
+                  // Check environment variables for review permissions
+                  // Handle both string 'true' and boolean true, case-insensitive
+                  const userReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_USERREVIEWS;
+                  const everyoneReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS;
+                  const userReviewsEnabled = userReviewsEnv === 'true' || userReviewsEnv === true;
+                  const everyoneReviewsEnabled = everyoneReviewsEnv === 'true' || everyoneReviewsEnv === true;
+                  
+                  // Priority: If both are true, treat as userReviews only
+                  const allowUserReviews = userReviewsEnabled;
+                  const allowAnonymousReviews = !userReviewsEnabled && everyoneReviewsEnabled;
+                  
+                  // If both are false, don't show button
+                  if (!allowUserReviews && !allowAnonymousReviews) {
+                    return null;
+                  }
+                  
+                  // If loading, show spinner
+                  if (status === 'loading') {
+                    return (
+                      <div className="flex items-center justify-center">
+                        <LoadingSpinner className="h-5" />
+                      </div>
+                    );
+                  }
+                  
+                  // If user reviews enabled, require login
+                  if (allowUserReviews) {
+                    if (session?.user) {
+                      return (
+                        <Button 
+                          variant={skatepark.closingYear && skatepark.closingYear <= new Date().getFullYear() ? 'error' : 'primary'}
+                          onClick={() => setShowAddReview(true)}
+                        >
+                          {t('addReview')}
+                        </Button>
+                      );
+                    } else {
+                      return (
+                        <Link href={`/${locale}/login`}>
+                          <Button variant={skatepark.closingYear && skatepark.closingYear <= new Date().getFullYear() ? 'error' : 'primary'}>
+                            {tCommon('signInToReview')}
+                          </Button>
+                        </Link>
+                      );
+                    }
+                  }
+                  
+                  // If anonymous reviews enabled, show button for everyone
+                  if (allowAnonymousReviews) {
+                    return (
+                      <Button 
+                        variant={skatepark.closingYear && skatepark.closingYear <= new Date().getFullYear() ? 'error' : 'primary'}
+                        onClick={() => setShowAddReview(true)}
+                      >
+                        {t('addReview')}
+                      </Button>
+                    );
+                  }
+                  
+                  return null;
+                })()}
               </div>
             </CardHeader>
             <CardContent className="">
@@ -2479,8 +2533,18 @@ export default function SkateparkPage() {
         </div>
       </div>
 
-      {/* Add Review Modal - Only show if logged in */}
-      {showAddReview && session?.user && (
+      {/* Add Review Modal - Show if logged in OR if anonymous reviews are enabled */}
+      {showAddReview && (() => {
+        const userReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_USERREVIEWS;
+        const everyoneReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS;
+        const userReviewsEnabled = userReviewsEnv === 'true' || userReviewsEnv === true;
+        const everyoneReviewsEnabled = everyoneReviewsEnv === 'true' || everyoneReviewsEnv === true;
+        const allowUserReviews = userReviewsEnabled;
+        const allowAnonymousReviews = !userReviewsEnabled && everyoneReviewsEnabled;
+        
+        // Show modal if user is logged in (and user reviews enabled) OR if anonymous reviews are enabled
+        return (allowUserReviews && session?.user) || allowAnonymousReviews;
+      })() && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           {/* Backdrop */}
           <div
@@ -2490,16 +2554,20 @@ export default function SkateparkPage() {
 
           {/* Modal */}
           <div className="fixed inset-0 flex items-center justify-center p-4">
-            <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10 rounded-lg shadow-sm border border-border-dark/20 dark:border-text-secondary-dark/70 p-4 backdrop-blur-custom bg-white/80 dark:bg-gray-800/70">
+            <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10 rounded-2xl bord p-4 bg-sidebar dark:bg-sidebar-dark"
+            style={{
+              filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
+            }}
+            >
               {/* Header */}
-              <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 p-6 flex items-center justify-between z-10">
+              <div className="sticky top-0  border-b border-border-border-dark dark:border-border-dark p-6 flex items-center justify-between z-10">
                 <h2 className="text-base font-bold text-gray-900 dark:text-white">{t('writeReview')}</h2>
                 <button
                   onClick={() => setShowAddReview(false)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                  className="p-"
                   aria-label={t('closeModal')}
                 >
-                  <Icon name="X" className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <Icon name="X" className="w-5 h-5 text-text dark:text-text-dark" />
                 </button>
               </div>
 
