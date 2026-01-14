@@ -359,123 +359,173 @@ export default function ReviewsPage() {
     }
   };
 
-  // Render a single review item
-  const renderReviewItem = (review: Review) => (
-                  <div
-                    key={review._id}
-                    className={`p-6 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
-                      review.status === 'pending' ? 'bg-yellow-50/50 dark:bg-yellow-900/10' : ''
-                    }`}
+  // Render a single review item as an accordion
+  const renderReviewItem = (review: Review) => {
+    const isOpen = openReview === review._id;
+    const commentPreview = review.comment ? (review.comment.length > 100 ? review.comment.substring(0, 100) + '...' : review.comment) : '';
+    
+    return (
+      <div
+        key={review._id}
+        className={`border-b border-border dark:border-border-dark last:border-none ${
+          review.status === 'pending' ? 'bg-card dark:bg-card-dark' : ''
+        }`}
+      >
+        {/* Accordion Button - Summary View */}
+        <button
+          onClick={() => setOpenReview(isOpen ? null : review._id)}
+          className="w-full flex justify-between items-center px-4 py-3 text-left hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors"
+        >
+          <div className="flex-1 flex items-center space-x-3 flex-wrap">
+            <div className="flex items-center space-x-1">
+              {renderStars(review.rating)}
+            </div>
+            <span className="font-medium text-gray-900 dark:text-white">
+              {review.userName}
+            </span>
+            <span className="text-sm text-gray dark:text-gray-dark">
+              on{' '}
+              <Link
+                href={getEntityLink(review)}
+                className="text-brand-main dark:text-brand-dark hover:underline"
+                target="_blank"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {review.entityId?.name?.en || review.slug}
+              </Link>
+            </span>
+            <span className="text-xs text-gray dark:text-gray-dark capitalize">
+              ({review.entityType || 'skatepark'})
+            </span>
+            {commentPreview && (
+              <span className="text-xs text-gray dark:text-gray-dark italic">
+                - {commentPreview}
+              </span>
+            )}
+            <span className="text-xs text-gray dark:text-gray-dark">
+              {formatDate(review.createdAt)}
+            </span>
+            {(review.helpfulCount > 0 || review.reportsCount > 0) && (
+              <div className="flex items-center space-x-2 text-xs">
+                {review.helpfulCount > 0 && (
+                  <span className="text-gray dark:text-gray-dark">👍 {review.helpfulCount}</span>
+                )}
+                {review.reportsCount > 0 && (
+                  <span className="text-red-600 dark:text-red-400">⚠️ {review.reportsCount}</span>
+                )}
+              </div>
+            )}
+          </div>
+          <svg 
+            className={`w-4 h-4 text-gray dark:text-gray-dark transition-transform duration-300 flex-shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`} 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {/* Expanded Content */}
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+          <div className="px-4 pb-4 space-y-3">
+            {/* Full Comment */}
+            {review.comment && (
+              <div className="pt-2">
+                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                  {review.comment}
+                </p>
+              </div>
+            )}
+
+            {/* Stats */}
+            <div className="flex items-center space-x-4 text-sm text-gray dark:text-gray-dark">
+              {review.helpfulCount > 0 && (
+                <span>👍 {review.helpfulCount} helpful</span>
+              )}
+              {review.reportsCount > 0 && (
+                <span className="text-red-600 dark:text-red-400">
+                  ⚠️ {review.reportsCount} reports
+                </span>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center space-x-2 pt-2">
+              <Button
+                variant="gray"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEditModal(review);
+                }}
+                className="flex items-center space-x-1"
+              >
+                <Edit2 className="w-4 h-4" />
+                <span>Edit</span>
+              </Button>
+              {review.status === 'pending' && (
+                <>
+                  <Button
+                    variant="green"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStatusChange(review._id, 'approve');
+                    }}
+                    className="flex items-center space-x-1"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 space-y-3">
-                        {/* Header */}
-                        <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 flex-wrap">
-                            <div className="flex items-center space-x-1">
-                              {renderStars(review.rating)}
-                            </div>
-                            <span className="font-medium text-gray-900 dark:text-white">
-                              {review.userName}
-                            </span>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">
-                              on{' '}
-                              <Link
-                  href={getEntityLink(review)}
-                                className="text-blue-600 dark:text-blue-400 hover:underline"
-                                target="_blank"
-                              >
-                                {review.entityId?.name?.en || review.slug}
-                              </Link>
-                            </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                ({review.entityType || 'skatepark'})
-                            </span>
-                          </div>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatDate(review.createdAt)}
-                          </span>
-                        </div>
-
-                        {/* Comment */}
-                        {review.comment && (
-                          <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                            {review.comment}
-                          </p>
-                        )}
-
-                        {/* Stats */}
-                        <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-                          {review.helpfulCount > 0 && (
-                            <span>👍 {review.helpfulCount} helpful</span>
-                          )}
-                          {review.reportsCount > 0 && (
-                            <span className="text-red-600 dark:text-red-400">
-                              ⚠️ {review.reportsCount} reports
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="ml-4 flex items-center space-x-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => openEditModal(review)}
-                          className="flex items-center space-x-1"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          <span>Edit</span>
-                        </Button>
-                        {review.status === 'pending' && (
-                          <>
-                            <Button
-                variant="green"
-                              size="sm"
-                              onClick={() => handleStatusChange(review._id, 'approve')}
-                              className="flex items-center space-x-1"
-                            >
-                              <Check className="w-4 h-4" />
-                              <span>Approve</span>
-                            </Button>
-                            <Button
-                variant="red"
-                              size="sm"
-                              onClick={() => handleStatusChange(review._id, 'reject')}
-                              className="flex items-center space-x-1"
-                            >
-                              <X className="w-4 h-4" />
-                              <span>Reject</span>
-                            </Button>
-                          </>
-                        )}
-                        {review.status === 'approved' && (
-                          <Button
-              variant="red"
-                            size="sm"
-                            onClick={() => handleStatusChange(review._id, 'reject')}
-                            className="flex items-center space-x-1"
-                          >
-                            <X className="w-4 h-4" />
-                            <span>Reject</span>
-                          </Button>
-                        )}
-                        {review.status === 'rejected' && (
-                          <Button
-              variant="green"
-                            size="sm"
-                            onClick={() => handleStatusChange(review._id, 'approve')}
-                            className="flex items-center space-x-1"
-                          >
-                            <Check className="w-4 h-4" />
-                            <span>Approve</span>
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-  );
+                    <Check className="w-4 h-4" />
+                    <span>Approve</span>
+                  </Button>
+                  <Button
+                    variant="red"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStatusChange(review._id, 'reject');
+                    }}
+                    className="flex items-center space-x-1"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>Reject</span>
+                  </Button>
+                </>
+              )}
+              {review.status === 'approved' && (
+                <Button
+                  variant="red"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusChange(review._id, 'reject');
+                  }}
+                  className="flex items-center space-x-1"
+                >
+                  <X className="w-4 h-4" />
+                  <span>Reject</span>
+                </Button>
+              )}
+              {review.status === 'rejected' && (
+                <Button
+                  variant="green"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleStatusChange(review._id, 'approve');
+                  }}
+                  className="flex items-center space-x-1"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Approve</span>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // Render a review section
   const renderReviewSection = (reviews: Review[], emptyMessage: string) => {
@@ -492,13 +542,13 @@ export default function ReviewsPage() {
     if (reviews.length === 0) {
       return (
         <div className="p-12 text-center">
-          <p className="text-gray-500 dark:text-gray-400">{emptyMessage}</p>
+          <p className="text-gray dark:text-gray-dark">{emptyMessage}</p>
         </div>
       );
     }
 
     return (
-      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="divide-y divide-border-dark dark:divide-border-dark">
         {reviews.map(renderReviewItem)}
       </div>
     );
@@ -518,6 +568,7 @@ export default function ReviewsPage() {
   const [openPark, setOpenPark] = useState<string | null>(null);
   const [openEvent, setOpenEvent] = useState<string | null>(null);
   const [openGuide, setOpenGuide] = useState<string | null>(null);
+  const [openReview, setOpenReview] = useState<string | null>(null); // Track which review is expanded
 
   const areaLabels: Record<string, string> = {
     north: 'North',
@@ -531,7 +582,7 @@ export default function ReviewsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reviews Management</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <p className="text-sm text-gray dark:text-gray-dark mt-1">
             Review and moderate user reviews
           </p>
         </div>
@@ -588,14 +639,14 @@ export default function ReviewsPage() {
           <div className="overflow-x-auto">
             <div className="p-6 space-y-4">
                 {/* Events Accordion */}
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                    <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+                    <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Events ({groupedApproved.event.length})
                       </h3>
                       {groupedApproved.event.length === 0 && !loadingEntityType['event-approved'] && (
                         <Button
-                          variant="secondary"
+                          variant="gray"
                           size="sm"
                           onClick={() => fetchEntityTypeReviews('event', 'approved')}
                           disabled={loadingEntityType['event-approved']}
@@ -609,26 +660,26 @@ export default function ReviewsPage() {
                         <Skeleton className="h-32 w-full" />
                       </div>
                     ) : groupedApproved.event.length > 0 ? (
-                      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                      <div className="divide-y divide-border-dark dark:divide-border-dark">
                         {Object.entries(eventsByEntity).map(([eventSlug, eventReviews]) => {
                           const eventName = eventReviews[0]?.entityId?.name?.en || eventSlug;
                           const isOpen = openEvent === eventSlug;
                           return (
-                            <div key={eventSlug} className="border-b border-gray-200 dark:border-gray-700 last:border-none">
+                            <div key={eventSlug} className="border-b border-border dark:border-border-dark last:border-none">
                               <button
                                 onClick={() => setOpenEvent(isOpen ? null : eventSlug)}
-                                className="w-full flex justify-between items-center px-6 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                className="w-full flex justify-between items-center px-6 py-4 text-left hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors"
                               >
                                 <div className="flex items-center space-x-3">
-                                  <span className={`text-base font-medium ${isOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+                                  <span className={`text-base font-medium ${isOpen ? 'text-blue dark:text-blue-dark' : 'text-gray-900 dark:text-white'}`}>
                                     {eventName}
                                   </span>
-                                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                                  <span className="text-sm text-gray dark:text-gray-dark">
                                     ({eventReviews.length} {eventReviews.length === 1 ? 'review' : 'reviews'})
                                   </span>
                                 </div>
                                 <svg 
-                                  className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
+                                  className={`w-5 h-5 text-gray dark:text-gray-dark transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
                                   fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                 >
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -645,14 +696,14 @@ export default function ReviewsPage() {
                       </div>
                     ) : (
                       <div className="p-6 text-center">
-                        <p className="text-gray-500 dark:text-gray-400">No approved event reviews found.</p>
+                        <p className="text-gray dark:text-gray-dark">No approved event reviews found.</p>
                       </div>
                     )}
                   </div>
 
                 {/* Skateparks Accordion - By Area, then by Park */}
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                    <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+                    <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark">
                       <div className="flex justify-between items-center mb-2">
                         <button
                           onClick={() => setOpenSkateparks(!openSkateparks)}
@@ -662,12 +713,12 @@ export default function ReviewsPage() {
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                               Skateparks ({groupedApproved.skatepark.length} reviews)
                             </h3>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            <p className="text-sm text-gray dark:text-gray-dark mt-1">
                               Organized by area: North, Center, South
                             </p>
                           </div>
                           <svg 
-                            className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform duration-300 ${openSkateparks ? 'rotate-180' : ''}`} 
+                            className={`w-5 h-5 text-gray dark:text-gray-dark transition-transform duration-300 ${openSkateparks ? 'rotate-180' : ''}`} 
                             fill="none" stroke="currentColor" viewBox="0 0 24 24"
                           >
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -675,7 +726,7 @@ export default function ReviewsPage() {
                         </button>
                         {groupedApproved.skatepark.length === 0 && !loadingEntityType['skatepark-approved'] && (
                           <Button
-                            variant="secondary"
+                            variant="gray"
                             size="sm"
                             onClick={() => fetchEntityTypeReviews('skatepark', 'approved')}
                             disabled={loadingEntityType['skatepark-approved']}
@@ -724,32 +775,32 @@ export default function ReviewsPage() {
                                   if (isAreaOpen) setOpenPark(null);
                                 }}
                                 className={cn(
-                                  "group relative flex items-center justify-between p-6 rounded-[18px] bg-white/5 dark:bg-gray-800/50 border border-white/10 dark:border-gray-700 cursor-pointer transition-all duration-300 hover:bg-white/10 dark:hover:bg-gray-700/50 hover:-translate-y-1 hover:border-blue-500/50",
-                                  isAreaOpen && "bg-blue-500/10 dark:bg-blue-500/20 border-blue-500/50"
+                                  "group relative flex items-center justify-between p-6 rounded-[18px] bg-card dark:bg-card-dark border border-border dark:border-border-dark cursor-pointer transition-all duration-300 hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark hover:-translate-y-1",
+                                  isAreaOpen && "bg-blue-bg dark:bg-blue-bg-dark border-blue-border dark:border-blue-border-dark"
                                 )}
                               >
                                 <div className="flex items-center gap-5">
-                                  <div className="w-12 h-12 rounded-full bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center text-xl">
+                                  <div className="w-12 h-12 rounded-full bg-blue-bg dark:bg-blue-bg-dark flex items-center justify-center text-xl">
                                     {areaIcons[area]}
                                   </div>
                                   <div>
                                     <h3 className={cn(
                                       "text-lg font-semibold transition-colors",
                                       isAreaOpen 
-                                        ? "text-blue-400 dark:text-blue-300" 
-                                        : "text-gray-900 dark:text-white group-hover:text-blue-400 dark:group-hover:text-blue-300"
+                                        ? "text-blue dark:text-blue-dark" 
+                                        : "text-gray-900 dark:text-white group-hover:text-blue dark:group-hover:text-blue-dark"
                                     )}>
                                       {areaLabels[area]} Area
                                     </h3>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">{areaDescription}</p>
+                                    <p className="text-sm text-gray dark:text-gray-dark">{areaDescription}</p>
                                   </div>
                                 </div>
                                 <svg 
                                   className={cn(
                                     "w-5 h-5 transition-all duration-300",
                                     isAreaOpen 
-                                      ? "text-blue-400 dark:text-blue-300 rotate-180" 
-                                      : "text-gray-600 dark:text-gray-400 group-hover:text-blue-400 dark:group-hover:text-blue-300 group-hover:translate-x-1"
+                                      ? "text-blue dark:text-blue-dark rotate-180" 
+                                      : "text-gray-600 dark:text-gray-400 group-hover:text-blue dark:group-hover:text-blue-dark group-hover:translate-x-1"
                                   )}
                                   fill="none" 
                                   stroke="currentColor" 
@@ -761,7 +812,7 @@ export default function ReviewsPage() {
                                 {/* Glossy Border Effect */}
                                 <div className={cn(
                                   "absolute inset-0 rounded-[18px] border-2 border-transparent pointer-events-none transition-all",
-                                  isAreaOpen && "border-blue-500/20"
+                                  isAreaOpen && "border-blue-border dark:border-blue-border-dark"
                                 )} />
                               </div>
                               
@@ -772,7 +823,7 @@ export default function ReviewsPage() {
                               )}>
                                 <div className="px-2 space-y-2">
                                   {areaReviews.length === 0 ? (
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 py-2 px-4">
+                                    <p className="text-sm text-gray dark:text-gray-dark py-2 px-4">
                                       No reviews in this area.
                                     </p>
                                   ) : (
@@ -780,29 +831,29 @@ export default function ReviewsPage() {
                                       const parkName = parkReviews[0]?.entityId?.name?.en || parkSlug;
                                       const isParkOpen = openPark === `${area}-${parkSlug}`;
                                       return (
-                                        <div key={parkSlug} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white/5 dark:bg-gray-800/30">
+                                        <div key={parkSlug} className="border border-border dark:border-border-dark rounded-lg overflow-hidden bg-card dark:bg-card-dark">
                                           {/* Park Level Accordion */}
                                           <button
                                             onClick={() => setOpenPark(isParkOpen ? null : `${area}-${parkSlug}`)}
                                             className="w-full flex justify-between items-center px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                                           >
                                             <div className="flex items-center space-x-3">
-                                              <span className={`text-sm font-medium ${isParkOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+                                              <span className={`text-sm font-medium ${isParkOpen ? 'text-blue dark:text-blue-dark' : 'text-gray-900 dark:text-white'}`}>
                                                 {parkName}
                                               </span>
-                                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                              <span className="text-xs text-gray dark:text-gray-dark">
                                                 ({parkReviews.length} {parkReviews.length === 1 ? 'review' : 'reviews'})
                                               </span>
                                             </div>
                                             <svg 
-                                              className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-300 ${isParkOpen ? 'rotate-180' : ''}`} 
+                                              className={`w-4 h-4 text-gray dark:text-gray-dark transition-transform duration-300 ${isParkOpen ? 'rotate-180' : ''}`} 
                                               fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                             >
                                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                             </svg>
                                           </button>
-                                          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isParkOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                                            <div className="px-4 pb-3 space-y-3">
+                                          <div className={`overflow-auto transition-all duration-300 ease-in-out pb-6 ${isParkOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                                            <div className="divide-y divide-border dark:divide-border-dark">
                                               {parkReviews.map(renderReviewItem)}
                                             </div>
                                           </div>
@@ -819,20 +870,20 @@ export default function ReviewsPage() {
                     </div>
                     ) : (
                       <div className="p-6 text-center">
-                        <p className="text-gray-500 dark:text-gray-400">No approved skatepark reviews found.</p>
+                        <p className="text-gray dark:text-gray-dark">No approved skatepark reviews found.</p>
                       </div>
                     )}
                   </div>
 
                 {/* Guides Accordion */}
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                    <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+                    <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Guides ({groupedApproved.guide.length})
                       </h3>
                       {groupedApproved.guide.length === 0 && !loadingEntityType['guide-approved'] && (
                         <Button
-                          variant="secondary"
+                          variant="gray"
                           size="sm"
                           onClick={() => fetchEntityTypeReviews('guide', 'approved')}
                           disabled={loadingEntityType['guide-approved']}
@@ -846,26 +897,26 @@ export default function ReviewsPage() {
                         <Skeleton className="h-32 w-full" />
                       </div>
                     ) : groupedApproved.guide.length > 0 ? (
-                      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                      <div className="divide-y divide-border dark:divide-border-dark">
                         {Object.entries(guidesByEntity).map(([guideSlug, guideReviews]) => {
                           const guideName = guideReviews[0]?.entityId?.name?.en || guideSlug;
                           const isOpen = openGuide === guideSlug;
                           return (
-                            <div key={guideSlug} className="border-b border-gray-200 dark:border-gray-700 last:border-none">
+                            <div key={guideSlug} className="border-b border-border-dark dark:border-border-dark last:border-none">
                               <button
                                 onClick={() => setOpenGuide(isOpen ? null : guideSlug)}
                                 className="w-full flex justify-between items-center px-6 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                               >
                                 <div className="flex items-center space-x-3">
-                                  <span className={`text-base font-medium ${isOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+                                  <span className={`text-base font-medium ${isOpen ? 'text-blue dark:text-blue-dark' : 'text-gray-900 dark:text-white'}`}>
                                     {guideName}
                                   </span>
-                                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                                  <span className="text-sm text-gray dark:text-gray-dark">
                                     ({guideReviews.length} {guideReviews.length === 1 ? 'review' : 'reviews'})
                                   </span>
                                 </div>
                                 <svg 
-                                  className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
+                                  className={`w-5 h-5 text-gray dark:text-gray-dark transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
                                   fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                 >
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -882,20 +933,20 @@ export default function ReviewsPage() {
                       </div>
                     ) : (
                       <div className="p-6 text-center">
-                        <p className="text-gray-500 dark:text-gray-400">No approved guide reviews found.</p>
+                        <p className="text-gray dark:text-gray-dark">No approved guide reviews found.</p>
                       </div>
                     )}
                   </div>
 
                 {/* Products Accordion */}
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                    <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+                    <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Products ({groupedApproved.product.length})
                       </h3>
                       {groupedApproved.product.length === 0 && !loadingEntityType['product-approved'] && (
                         <Button
-                          variant="secondary"
+                          variant="gray"
                           size="sm"
                           onClick={() => fetchEntityTypeReviews('product', 'approved')}
                           disabled={loadingEntityType['product-approved']}
@@ -909,26 +960,26 @@ export default function ReviewsPage() {
                         <Skeleton className="h-32 w-full" />
                       </div>
                     ) : groupedApproved.product.length > 0 ? (
-                      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                      <div className="divide-y divide-border dark:divide-border-dark">
                         {Object.entries(productsByEntity).map(([productSlug, productReviews]) => {
                           const productName = productReviews[0]?.entityId?.name?.en || productSlug;
                           const isOpen = openEvent === productSlug;
                           return (
-                            <div key={productSlug} className="border-b border-gray-200 dark:border-gray-700 last:border-none">
+                            <div key={productSlug} className="border-b border-border dark:border-border-dark last:border-none">
                               <button
                                 onClick={() => setOpenEvent(isOpen ? null : productSlug)}
                                 className="w-full flex justify-between items-center px-6 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                               >
                                 <div className="flex items-center space-x-3">
-                                  <span className={`text-base font-medium ${isOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+                                  <span className={`text-base font-medium ${isOpen ? 'text-blue dark:text-blue-dark' : 'text-gray-900 dark:text-white'}`}>
                                     {productName}
                                   </span>
-                                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                                  <span className="text-sm text-gray dark:text-gray-dark">
                                     ({productReviews.length} {productReviews.length === 1 ? 'review' : 'reviews'})
                                   </span>
                                 </div>
                                 <svg 
-                                  className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
+                                  className={`w-5 h-5 text-gray dark:text-gray-dark transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
                                   fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                 >
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -945,20 +996,20 @@ export default function ReviewsPage() {
                       </div>
                     ) : (
                       <div className="p-6 text-center">
-                        <p className="text-gray-500 dark:text-gray-400">No approved product reviews found.</p>
+                        <p className="text-gray dark:text-gray-dark">No approved product reviews found.</p>
                       </div>
                     )}
                   </div>
 
                 {/* Trainers Accordion */}
-                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                    <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+                    <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Trainers ({groupedApproved.trainer.length})
                       </h3>
                       {groupedApproved.trainer.length === 0 && !loadingEntityType['trainer-approved'] && (
                         <Button
-                          variant="secondary"
+                          variant="gray"
                           size="sm"
                           onClick={() => fetchEntityTypeReviews('trainer', 'approved')}
                           disabled={loadingEntityType['trainer-approved']}
@@ -972,26 +1023,26 @@ export default function ReviewsPage() {
                         <Skeleton className="h-32 w-full" />
                       </div>
                     ) : groupedApproved.trainer.length > 0 ? (
-                      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                      <div className="divide-y divide-border dark:divide-border-dark">
                         {Object.entries(trainersByEntity).map(([trainerSlug, trainerReviews]) => {
                           const trainerName = trainerReviews[0]?.entityId?.name?.en || trainerSlug;
                           const isOpen = openEvent === trainerSlug;
                           return (
-                            <div key={trainerSlug} className="border-b border-gray-200 dark:border-gray-700 last:border-none">
+                            <div key={trainerSlug} className="border-b border-border dark:border-border-dark last:border-none">
                               <button
                                 onClick={() => setOpenEvent(isOpen ? null : trainerSlug)}
                                 className="w-full flex justify-between items-center px-6 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                               >
                                 <div className="flex items-center space-x-3">
-                                  <span className={`text-base font-medium ${isOpen ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}>
+                                  <span className={`text-base font-medium ${isOpen ? 'text-blue dark:text-blue-dark' : 'text-gray-900 dark:text-white'}`}>
                                     {trainerName}
                                   </span>
-                                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                                  <span className="text-sm text-gray dark:text-gray-dark">
                                     ({trainerReviews.length} {trainerReviews.length === 1 ? 'review' : 'reviews'})
                                   </span>
                                 </div>
                                 <svg 
-                                  className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
+                                  className={`w-5 h-5 text-gray dark:text-gray-dark transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} 
                                   fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                 >
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -1008,7 +1059,7 @@ export default function ReviewsPage() {
                       </div>
                     ) : (
                       <div className="p-6 text-center">
-                        <p className="text-gray-500 dark:text-gray-400">No approved trainer reviews found.</p>
+                        <p className="text-gray dark:text-gray-dark">No approved trainer reviews found.</p>
                       </div>
                     )}
                   </div>
@@ -1045,7 +1096,7 @@ export default function ReviewsPage() {
               </div>
             ) : rejectedReviews.length === 0 ? (
               <div className="p-12 text-center">
-                <p className="text-gray-500 dark:text-gray-400 mb-4">No rejected reviews loaded.</p>
+                <p className="text-gray dark:text-gray-dark mb-4">No rejected reviews loaded.</p>
                 <Button
                   variant="green"
                   onClick={fetchRejectedReviews}
@@ -1073,14 +1124,14 @@ export default function ReviewsPage() {
                   if (reviews.length === 0 && !isLoaded) return null;
                   
                   return (
-                    <div key={entityType} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                      <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <div key={entityType} className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+                      <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                           {entityLabels[entityType]} ({reviews.length})
                         </h3>
                         {reviews.length === 0 && !isLoading && (
                           <Button
-                            variant="secondary"
+                            variant="gray"
                             size="sm"
                             onClick={() => fetchEntityTypeReviews(entityType, 'rejected')}
                             disabled={isLoading}
@@ -1094,12 +1145,12 @@ export default function ReviewsPage() {
                           <Skeleton className="h-32 w-full" />
                         </div>
                       ) : reviews.length > 0 ? (
-                        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                        <div className="divide-y divide-border dark:divide-border-dark">
                           {reviews.map(renderReviewItem)}
                         </div>
                       ) : (
                         <div className="p-6 text-center">
-                          <p className="text-gray-500 dark:text-gray-400">No rejected {entityType} reviews found.</p>
+                          <p className="text-gray dark:text-gray-dark">No rejected {entityType} reviews found.</p>
                         </div>
                       )}
                     </div>
@@ -1109,7 +1160,7 @@ export default function ReviewsPage() {
                 {/* Show message if no rejected reviews loaded yet */}
                 {rejectedReviews.length === 0 && Object.keys(loadedEntityTypes).filter(k => k.includes('rejected')).length === 0 && (
                   <div className="text-center py-8">
-                    <p className="text-gray-500 dark:text-gray-400 mb-4">No rejected reviews loaded. Click the buttons above to load reviews by entity type.</p>
+                    <p className="text-gray dark:text-gray-dark mb-4">No rejected reviews loaded. Click the buttons above to load reviews by entity type.</p>
                   </div>
                 )}
               </div>
@@ -1179,7 +1230,7 @@ export default function ReviewsPage() {
                   placeholder="Review comment..."
                   maxLength={100}
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-gray dark:text-gray-dark">
                   {editComment.length}/100 characters
                 </p>
               </div>

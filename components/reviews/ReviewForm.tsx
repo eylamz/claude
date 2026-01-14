@@ -138,7 +138,7 @@ export default function ReviewForm({
               }
             }}
             placeholder={t('reviewForm.enterYourName')}
-            maxLength={100}
+            maxLength={30}
             required
             variant="default"
             
