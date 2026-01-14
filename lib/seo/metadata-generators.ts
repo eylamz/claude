@@ -1,5 +1,8 @@
 import { Metadata } from 'next';
 import { generateMetadata as genMeta, getLocalizedText } from './utils';
+import connectDB from '@/lib/db/mongodb';
+import Skatepark from '@/lib/models/Skatepark';
+import Guide from '@/lib/models/Guide';
 
 // Example metadata generators for different page types
 
@@ -41,35 +44,194 @@ export async function generateProductMetadata(params: { slug: string; locale: st
 export async function generateSkateparkMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
   const { slug, locale } = params;
   
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
-  const res = await fetch(`${siteUrl}/api/skateparks/${slug}`, { next: { revalidate: 3600 } });
-  
-  if (!res.ok) {
+  try {
+    await connectDB();
+    
+    // Try to find active skatepark first
+    let skatepark = await Skatepark.findOne({ 
+      slug: slug.toLowerCase(), 
+      status: 'active' 
+    }).lean();
+    
+    // If not found, try inactive parks (for closed parks that should still be accessible)
+    if (!skatepark) {
+      skatepark = await Skatepark.findOne({ 
+        slug: slug.toLowerCase(), 
+        status: 'inactive' 
+      }).lean();
+    }
+    
+    if (!skatepark) {
+      const notFoundTitle = locale === 'he' 
+        ? 'סקייטפארק לא נמצא'
+        : 'Skatepark Not Found';
+      const notFoundDesc = locale === 'he'
+        ? 'הסקייטפארק שחיפשת לא נמצא.'
+        : 'The skatepark you are looking for could not be found.';
+      
+      return genMeta({
+        title: notFoundTitle,
+        description: notFoundDesc,
+        locale,
+      });
+    }
+
+    const name = getLocalizedText(skatepark.name, locale);
+    const address = getLocalizedText(skatepark.address, locale);
+    
+    // Handle notes - can be string array or object with en/he
+    let notesText = '';
+    if (skatepark.notes) {
+      if (typeof skatepark.notes === 'string') {
+        notesText = skatepark.notes;
+      } else if (typeof skatepark.notes === 'object') {
+        const localeNotes = (skatepark.notes as any)[locale] || (skatepark.notes as any).en || (skatepark.notes as any).he;
+        if (Array.isArray(localeNotes)) {
+          notesText = localeNotes.join(' ');
+        } else if (typeof localeNotes === 'string') {
+          notesText = localeNotes;
+        }
+      }
+    }
+    
+    // Localized fallback description
+    const fallbackDescription = locale === 'he'
+      ? `בקר ב${name} - ${address}. בדוק שעות פעילות, שירותים וביקורות ב-ENBOSS.`
+      : `Visit ${name} - ${address}. Check hours, amenities, and reviews on ENBOSS.`;
+    
+    const description = notesText && notesText.trim()
+      ? notesText.substring(0, 160)
+      : fallbackDescription;
+    
+    // Get first image (sorted by orderNumber or isFeatured)
+    let image = '/og-skatepark-default.jpg';
+    if (skatepark.images && Array.isArray(skatepark.images) && skatepark.images.length > 0) {
+      const featuredImg = skatepark.images.find((img: any) => img.isFeatured);
+      if (featuredImg) {
+        image = featuredImg.url;
+      } else {
+        const sortedImages = [...skatepark.images].sort((a: any, b: any) => 
+          (a.orderNumber || 0) - (b.orderNumber || 0)
+        );
+        image = sortedImages[0]?.url || '/og-skatepark-default.jpg';
+      }
+    }
+    
+    // Localized title format
+    // English: "Netanya Skatepark | ENBOSS"
+    // Hebrew: "סקייטפארק נתניה | אנבוס"
+    const title = locale === 'he' 
+      ? `סקייטפארק ${name} | אנבוס`
+      : `${name} Skatepark | ENBOSS`;
+
     return genMeta({
-      title: 'Skatepark Not Found',
-      description: 'The skatepark you are looking for could not be found.',
+      title,
+      description,
+      image,
+      url: `/${locale}/skateparks/${slug}`,
+      locale,
+      alternateLocales: locale === 'en' ? ['he'] : ['en'],
+    });
+  } catch (error) {
+    console.error('Error generating skatepark metadata:', error);
+    const notFoundTitle = locale === 'he' 
+      ? 'סקייטפארק לא נמצא'
+      : 'Skatepark Not Found';
+    const notFoundDesc = locale === 'he'
+      ? 'הסקייטפארק שחיפשת לא נמצא.'
+      : 'The skatepark you are looking for could not be found.';
+    
+    return genMeta({
+      title: notFoundTitle,
+      description: notFoundDesc,
       locale,
     });
   }
+}
 
-  const { skatepark } = await res.json();
-  const name = getLocalizedText(skatepark.name, locale);
-  const address = getLocalizedText(skatepark.address, locale);
-  const description = skatepark.notes 
-    ? getLocalizedText(skatepark.notes, locale).substring(0, 160)
-    : `Visit ${name} - ${address}. Check hours, amenities, and reviews on ENBOSS.`;
+export async function generateSkateparksListingMetadata(params: { locale: string }): Promise<Metadata> {
+  const { locale } = params;
   
-  const image = skatepark.images?.[0]?.url || '/og-skatepark-default.jpg';
-  const rating = skatepark.rating > 0 ? ` ⭐ ${skatepark.rating.toFixed(1)}` : '';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+  
+  // Fetch skateparks count (lightweight request)
+  let parksCount = 0;
+  try {
+    const res = await fetch(`${siteUrl}/api/skateparks`, { next: { revalidate: 3600 } });
+    if (res.ok) {
+      const data = await res.json();
+      parksCount = data.skateparks?.length || 0;
+    }
+  } catch (error) {
+    console.warn('Failed to fetch skateparks count for metadata', error);
+  }
+
+  // Localized titles and descriptions
+  const title = locale === 'he' 
+    ? 'סקייטפארקים בישראל | ENBOSS'
+    : 'Skateparks in Israel | ENBOSS';
+  
+  const description = locale === 'he'
+    ? `גלה ${parksCount > 0 ? `${parksCount} ` : ''}סקייטפארקים בישראל. מצא פארקים קרובים, בדוק שעות פעילות, שירותים וביקורות. הצטרף לקהילת הרוכבים הגדולה בישראל.`
+    : `Discover ${parksCount > 0 ? `${parksCount} ` : ''}skateparks across Israel. Find nearby parks, check hours, amenities, and reviews. Join Israel's largest skating community.`;
 
   return genMeta({
-    title: `${name}${rating} - Skatepark Guide`,
+    title,
     description,
-    image,
-    url: `/${locale}/skateparks/${slug}`,
+    image: '/og-skatepark-default.jpg',
+    url: `/${locale}/skateparks`,
     locale,
     alternateLocales: locale === 'en' ? ['he'] : ['en'],
   });
+}
+
+export async function generateGuidesListingMetadata(params: { locale: string }): Promise<Metadata> {
+  const { locale } = params;
+  
+  try {
+    await connectDB();
+    
+    // Fetch guides count directly from database
+    let guidesCount = 0;
+    try {
+      guidesCount = await Guide.countDocuments({ status: 'published' });
+    } catch (error) {
+      console.warn('Failed to fetch guides count for metadata', error);
+    }
+
+    // Localized titles and descriptions
+    const title = locale === 'he' 
+      ? 'מדריכים | אנבוס'
+      : 'Guides | ENBOSS';
+    
+    const description = locale === 'he'
+      ? `גלה ${guidesCount > 0 ? `${guidesCount} ` : ''}מדריכים מקצועיים לספורט אקסטרים. למד טריקים חדשים, טכניקות מתקדמות וטיפים ממומחים. שפר את הכישורים שלך עם המדריכים הטובים ביותר בישראל.`
+      : `Discover ${guidesCount > 0 ? `${guidesCount} ` : ''}professional guides for extreme sports. Learn new tricks, advanced techniques, and expert tips. Improve your skills with the best guides in Israel.`;
+
+    return genMeta({
+      title,
+      description,
+      image: '/og-guide-default.jpg',
+      url: `/${locale}/guides`,
+      locale,
+      alternateLocales: locale === 'en' ? ['he'] : ['en'],
+    });
+  } catch (error) {
+    console.error('Error generating guides listing metadata:', error);
+    // Fallback metadata
+    const title = locale === 'he' ? 'מדריכים | אנבוס' : 'Guides | ENBOSS';
+    const description = locale === 'he'
+      ? 'מדריכים מקצועיים לספורט אקסטרים בישראל.'
+      : 'Professional guides for extreme sports in Israel.';
+    
+    return genMeta({
+      title,
+      description,
+      url: `/${locale}/guides`,
+      locale,
+      alternateLocales: locale === 'en' ? ['he'] : ['en'],
+    });
+  }
 }
 
 export async function generateEventMetadata(params: { slug: string; locale: string }): Promise<Metadata> {

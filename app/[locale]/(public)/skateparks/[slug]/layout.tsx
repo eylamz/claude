@@ -33,6 +33,7 @@ export async function generateStaticParams() {
 
 // Allow on-demand revalidation - pages are static but can be regenerated
 export const dynamicParams = true; // Allow new pages to be generated on first request
+export const revalidate = 3600; // Revalidate every hour
 // Don't use force-static - this allows revalidation
 
 export async function generateMetadata({
