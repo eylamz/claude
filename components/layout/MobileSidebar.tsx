@@ -11,7 +11,7 @@ import { Icon, type IconName } from '@/components/icons/Icon';
 import { useTheme } from '@/context/ThemeProvider';
 import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
-import { isEcommerceEnabled, isTrainersEnabled } from '@/lib/utils/ecommerce';
+import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -80,6 +80,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const isAdmin = session?.user?.role === 'admin';
   const ecommerceEnabled = isEcommerceEnabled();
   const trainersEnabled = isTrainersEnabled();
+  const loginEnabled = isLoginEnabled();
 
   // 1. Navigation Configuration (Grid Cards)
   const navCards: NavCard[] = [
@@ -307,7 +308,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               </button>
 
               {/* Login Button */}
-              {!session && (
+              {loginEnabled && !session && (
                 <Link
                   href={`/${locale}/login`}
                   className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
@@ -319,7 +320,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               )}
 
               {/* User Profile Link */}
-              {session && !isAdmin && (
+              {loginEnabled && session && !isAdmin && (
                 <Link
                   href={`/${locale}/account`}
                   className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
@@ -330,7 +331,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 </Link>
               )}
 
-          {session && isAdmin && (
+          {loginEnabled && session && isAdmin && (
                 <Link
                   href={`/${locale}/account`}
                   className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
@@ -370,7 +371,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               </button>
 
               {/* Logout Button */}
-              {session && (
+              {loginEnabled && session && (
                 <button
                   onClick={() => {
                     handleLogout();
@@ -603,7 +604,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           </div>
 
           {/* Admin Management Links */}
-          {isAdmin && (
+          {loginEnabled && isAdmin && (
             <div className="mb-4">
               <h4 className="px-1 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
                 {tMobileNav('adminManagement') || "Admin Management"}

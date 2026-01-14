@@ -7,6 +7,8 @@ import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks';
 import { Button } from '@/components/ui';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { isRegisterEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
 
 interface LoginErrors {
   email?: string;
@@ -20,6 +22,8 @@ export default function LoginPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [, startTransition] = useTransition();
+  const registerEnabled = isRegisterEnabled();
+  const loginEnabled = isLoginEnabled();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -30,6 +34,15 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const preferencesAppliedRef = useRef(false);
+
+  // Redirect to home page if login is disabled
+  useEffect(() => {
+    if (!loginEnabled) {
+      startTransition(() => {
+        router.push(`/${locale}`);
+      });
+    }
+  }, [loginEnabled, locale, router]);
 
   // Reset preferences flag when session is cleared
   useEffect(() => {
@@ -213,6 +226,18 @@ export default function LoginPage() {
 
   const isRTL = locale === 'he';
 
+  // Show loading state while redirecting if login is disabled
+  if (!loginEnabled) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
+        <div className="text-center">
+          <LoadingSpinner className="mb-4" />
+          <p className="text-text dark:text-text-dark whitespace-pre-line">{t('login.disabledRedirecting')}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="w-full max-w-[400px] animate-fade-in">
@@ -388,16 +413,18 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* Sign Up Link */}
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-            {t('login.noAccount')}{' '}
-            <Link
-              href={`/${locale}/register`}
-              className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-            >
-              {t('login.signUp')}
-            </Link>
-          </p>
+          {/* Sign Up Link - Only show if registration is enabled */}
+          {registerEnabled && (
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+              {t('login.noAccount')}{' '}
+              <Link
+                href={`/${locale}/register`}
+                className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+              >
+                {t('login.signUp')}
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -27,8 +27,7 @@ export const LoadingSpinner: React.FC<{
   return (
     <div className={`flex items-center justify-center h-full ${className || ''}`}>
       <div 
-        className={`animate-spin rounded-full border-b-2 ${getVariantColor()}`}
-        style={{ width: size, height: size }}
+        className={`animate-spin h-8 w-8 border-4 ${getVariantColor()} border-t-transparent rounded-full mx-auto mb-4`}
       ></div>
     </div>
   );

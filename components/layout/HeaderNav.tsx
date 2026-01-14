@@ -38,7 +38,7 @@ import {
   type CartItem 
 } from '@/stores/cartStore';
 import { Input } from '@/components/ui';
-import { isEcommerceEnabled, isTrainersEnabled } from '@/lib/utils/ecommerce';
+import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
 
 export default function HeaderNav() {
   const pathname = usePathname();
@@ -58,6 +58,7 @@ export default function HeaderNav() {
   
   const ecommerceEnabled = isEcommerceEnabled();
   const trainersEnabled = isTrainersEnabled();
+  const loginEnabled = isLoginEnabled();
   const itemCount = useCartItemCount();
   const items = useCartItems();
   const totals = useCartTotals();
@@ -632,7 +633,7 @@ export default function HeaderNav() {
                       </button>
 
                       {/* Login Button */}
-                      {!session && (
+                      {loginEnabled && !session && (
                         <>
                           <Separator className="bg-popover-border/80 dark:bg-popover-border-dark/50 transition-colors duration-200" />
                           <Link
@@ -646,7 +647,7 @@ export default function HeaderNav() {
                       )}
 
                       {/* User Profile Link */}
-                      {session && (
+                      {loginEnabled && session && (
                         <>
                           <Separator className="bg-popover-border/50 dark:bg-popover-border-dark/50 transition-colors duration-200" />
                           <Link
@@ -660,7 +661,7 @@ export default function HeaderNav() {
                       )}
 
                       {/* Admin Menu */}
-                      {isAdmin && (
+                      {loginEnabled && isAdmin && (
                         <>
                           <Separator className="bg-popover-border/50 dark:bg-popover-border-dark/50 transition-colors duration-200" />
                           <Popover>
@@ -760,7 +761,7 @@ export default function HeaderNav() {
                       )}
 
                       {/* Logout Button */}
-                      {session && (
+                      {loginEnabled && session && (
                         <>
                           <Separator className="bg-popover-border dark:bg-popover-border-dark transition-colors duration-200" />
                           <button

@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks';
 import { Button } from '@/components/ui';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { registerUser } from '@/lib/actions/auth';
+import { isRegisterEnabled } from '@/lib/utils/ecommerce';
 
 interface RegisterErrors {
   fullName?: string;
@@ -61,6 +63,7 @@ export default function RegisterPage() {
   const t = useTranslation('auth');
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const registerEnabled = isRegisterEnabled();
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -74,6 +77,15 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const passwordStrength = getPasswordStrength(formData.password);
+
+  // Redirect to home page if registration is disabled
+  useEffect(() => {
+    if (!registerEnabled) {
+      startTransition(() => {
+        router.push(`/${locale}`);
+      });
+    }
+  }, [registerEnabled, locale, router]);
 
   const validate = (): boolean => {
     const newErrors: RegisterErrors = {};
@@ -187,6 +199,18 @@ export default function RegisterPage() {
   };
 
   const isRTL = locale === 'he';
+
+  // Show loading state while redirecting if registration is disabled
+  if (!registerEnabled) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
+        <div className="text-center">
+          <LoadingSpinner className="mb-4" />
+          <p className="text-text dark:text-text-dark whitespace-pre-line">{t('register.disabledRedirecting')}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
