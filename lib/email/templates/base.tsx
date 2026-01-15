@@ -6,7 +6,7 @@
 interface BaseEmailTemplateProps {
   title: string;
   preheader?: string;
-  children: React.ReactNode;
+  children: string;
   primaryButton?: {
     text: string;
     url: string;

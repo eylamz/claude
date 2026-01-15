@@ -1024,7 +1024,8 @@ export default function EditGuidePage() {
                 <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2">
                   Related Sports
                 </label>
-                <div className="flex flex-wrap gap-2">
+                {/* Predefined Sports */}
+                <div className="flex flex-wrap gap-2 mb-3">
                   {SPORTS.map((sport) => (
                     <Button
                       variant={formData.relatedSports.includes(sport.toLowerCase()) ? 'blue' : 'gray'}
@@ -1041,6 +1042,36 @@ export default function EditGuidePage() {
                     </Button>
                   ))}
                 </div>
+                {/* Selected Sports Display (like tags) */}
+                {formData.relatedSports.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {formData.relatedSports.map((sport) => (
+                      <Button
+                        variant="blue"
+                        key={sport}
+                        onClick={() => handleRemoveSport(sport)}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm"
+                      >
+                        {sport.charAt(0).toUpperCase() + sport.slice(1)}
+                        <p className="ms-2">×</p>
+                      </Button>
+                    ))}
+                  </div>
+                )}
+                {/* Custom Sport Input */}
+                <Input
+                  placeholder="Add a custom sport and press Enter"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const customSport = e.currentTarget.value.trim().toLowerCase();
+                      if (customSport && !formData.relatedSports.includes(customSport)) {
+                        handleAddSport(customSport);
+                        e.currentTarget.value = '';
+                      }
+                    }
+                  }}
+                />
               </div>
 
               {/* Tags */}

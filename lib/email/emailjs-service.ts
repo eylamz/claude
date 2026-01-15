@@ -5,6 +5,7 @@
 
 const EMAILJS_SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || '';
 const EMAILJS_PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || '';
+const EMAILJS_TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID || '';
 
 /**
  * Initialize EmailJS (call this once in your app)
@@ -52,7 +53,8 @@ export async function sendEmailJS(
     await emailjs.send(
       serviceId || EMAILJS_SERVICE_ID,
       templateId,
-      templateParams
+      templateParams,
+      EMAILJS_PUBLIC_KEY
     );
   } catch (error) {
     console.error('Failed to send email via EmailJS:', error);
@@ -86,7 +88,13 @@ export async function sendContactFormEmailJS(data: {
   message: string;
   replyTo?: string;
 }): Promise<void> {
-  await sendEmailJS(EMAILJS_TEMPLATES.CONTACT_FORM, {
+  const templateId = EMAILJS_TEMPLATE_ID || EMAILJS_TEMPLATES.CONTACT_FORM;
+  
+  if (!templateId) {
+    throw new Error('EmailJS template ID is not configured. Please set NEXT_PUBLIC_EMAILJS_TEMPLATE_ID');
+  }
+
+  await sendEmailJS(templateId, {
     user_name: data.userName,
     user_email: data.userEmail,
     user_phone: data.userPhone || '',
@@ -140,17 +148,24 @@ export async function sendWelcomeEmailJS(data: {
 }
 
 /**
- * Helper to send password reset via EmailJS
+ * Helper to send password reset via EmailJS (client-side)
+ * Template variables: {{link}} and {{email}}
  */
 export async function sendPasswordResetEmailJS(data: {
   toEmail: string;
   resetUrl: string;
-  expiryHours: number;
 }): Promise<void> {
-  await sendEmailJS(EMAILJS_TEMPLATES.PASSWORD_RESET, {
-    to_email: data.toEmail,
-    reset_url: data.resetUrl,
-    expiry_hours: data.expiryHours.toString(),
+  const templateId = process.env.NEXT_PUBLIC_EMAILJS_PASSWORD_RESET_TEMPLATE_ID || '';
+  
+  if (!templateId) {
+    throw new Error('EmailJS password reset template ID is not configured. Please set NEXT_PUBLIC_EMAILJS_PASSWORD_RESET_TEMPLATE_ID');
+  }
+
+  // Use the template ID directly with template variables matching your EmailJS template
+  // Template variables: {{link}} and {{email}}
+  await sendEmailJS(templateId, {
+    link: data.resetUrl,
+    email: data.toEmail,
   });
 }
 
@@ -173,6 +188,74 @@ export async function sendAdminNotificationEmailJS(
   await sendEmailJS(templateMap[type], {
     to_email: adminEmail,
     ...data,
+  });
+}
+
+/**
+ * Send email via EmailJS REST API (server-side)
+ * Use this for API routes and server-side code
+ */
+export async function sendEmailJSServer(
+  templateId: string,
+  templateParams: Record<string, any>,
+  serviceId?: string
+): Promise<void> {
+  const service = serviceId || process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID || '';
+  const publicKey = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || '';
+
+  if (!service || !publicKey) {
+    throw new Error('EmailJS is not configured. Please set NEXT_PUBLIC_EMAILJS_SERVICE_ID and NEXT_PUBLIC_EMAILJS_PUBLIC_KEY');
+  }
+
+  try {
+    const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        service_id: service,
+        template_id: templateId,
+        user_id: publicKey,
+        template_params: templateParams,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = `EmailJS API error: ${response.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.message || errorData.text || errorMessage;
+      } catch {
+        errorMessage = errorText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+  } catch (error: any) {
+    console.error('Failed to send email via EmailJS REST API:', error);
+    throw error;
+  }
+}
+
+/**
+ * Helper to send password reset via EmailJS (server-side)
+ * Uses REST API for server-side email sending
+ */
+export async function sendPasswordResetEmailJSServer(data: {
+  toEmail: string;
+  resetUrl: string;
+}): Promise<void> {
+  const templateId = process.env.NEXT_PUBLIC_EMAILJS_PASSWORD_RESET_TEMPLATE_ID || '';
+  
+  if (!templateId) {
+    throw new Error('EmailJS password reset template ID is not configured. Please set NEXT_PUBLIC_EMAILJS_PASSWORD_RESET_TEMPLATE_ID');
+  }
+
+  // Template variables match your EmailJS template: {{link}} and {{email}}
+  await sendEmailJSServer(templateId, {
+    link: data.resetUrl,
+    email: data.toEmail,
   });
 }
 

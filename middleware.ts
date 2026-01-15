@@ -45,7 +45,8 @@ function isPublicRoute(pathname: string): boolean {
     pathname.includes('/register') ||
     pathname.includes('/signin') ||
     pathname.includes('/signout') ||
-    pathname.includes('/forgot-password')
+    pathname.includes('/forgot-password') ||
+    pathname.includes('/reset-password')
   ) {
     return true;
   }

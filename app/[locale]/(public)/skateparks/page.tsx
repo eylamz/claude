@@ -107,6 +107,7 @@ export default function SkateparksPage() {
   const heroSectionRef = useRef<HTMLDivElement>(null);
   const prevSelectedAmenitiesRef = useRef<string[]>([]);
   const prevUserLocationRef = useRef<UserLocation | null>(null);
+  const isFetchingRef = useRef(false); // Prevent duplicate concurrent fetches
 
   // Track newly added amenities for pop animation
   useEffect(() => {
@@ -285,6 +286,11 @@ export default function SkateparksPage() {
 
   // Fetch all skateparks once on mount (no filters, no pagination)
   const fetchAllSkateparks = useCallback(async () => {
+    // Prevent duplicate concurrent calls
+    if (isFetchingRef.current) {
+      return;
+    }
+
     const cacheKey = 'skateparks_cache';
     const versionKey = 'skateparks_version';
     const cachedData = localStorage.getItem(cacheKey);
@@ -319,22 +325,29 @@ export default function SkateparksPage() {
         // Check version asynchronously after using cache
         // If version doesn't match, refetch and update both cache and version
         if (cachedVersion) {
-          // Check version in background (fire and forget)
+          // If version exists in cache, only fetch version (lightweight request)
           (async () => {
             try {
-              // Fetch only version (lightweight request)
               const versionResponse = await fetch('/api/skateparks?versionOnly=true');
               if (versionResponse.ok) {
                 const versionData = await versionResponse.json();
-                const currentVersion = versionData.version || 1;
-                const storedVersion = parseInt(cachedVersion);
+                const currentVersion = Number(versionData.version) || 1;
+                const storedVersion = Number(cachedVersion) || 1;
+
+                // Ensure both are valid numbers before comparison
+                if (isNaN(currentVersion) || isNaN(storedVersion)) {
+                  console.warn('Invalid version numbers, skipping version check');
+                  return;
+                }
 
                 // If versions don't match, refetch skateparks data and update both cache and version
                 if (storedVersion !== currentVersion) {
+                  console.log(`Version mismatch: cached=${storedVersion}, current=${currentVersion}, fetching full data`);
+                  isFetchingRef.current = true;
                   const response = await fetch('/api/skateparks');
                   if (response.ok) {
                     const data = await response.json();
-                    const newVersion = data.version || 1;
+                    const newVersion = Number(data.version) || 1;
 
                     // Convert location format from API (coordinates array) to expected format (lat/lng object)
                     const normalizedSkateparks = (data.skateparks || []).map((park: any) => {
@@ -361,11 +374,57 @@ export default function SkateparksPage() {
                     const allParks = mergeInactiveParks(normalizedSkateparks);
                     setAllSkateparks(allParks);
                   }
+                  isFetchingRef.current = false;
+                } else {
+                  // Versions match, no need to fetch
+                  console.log(`Version match: ${storedVersion} === ${currentVersion}, using cached data`);
                 }
               }
             } catch (e) {
               console.warn('Failed to check version', e);
               // Continue with cached data if version check fails
+            }
+          })();
+        } else {
+          // If no version in cache, fetch both version and skateparks data
+          (async () => {
+            try {
+              isFetchingRef.current = true;
+              const response = await fetch('/api/skateparks');
+              if (response.ok) {
+                const data = await response.json();
+                const currentVersion = data.version || 1;
+
+                // Convert location format from API (coordinates array) to expected format (lat/lng object)
+                const normalizedSkateparks = (data.skateparks || []).map((park: any) => {
+                  let location = park.location;
+
+                  // Convert from { type: 'Point', coordinates: [lng, lat] } to { lat, lng }
+                  if (location?.coordinates && Array.isArray(location.coordinates)) {
+                    const [lng, lat] = location.coordinates;
+                    location = { lat, lng };
+                  }
+                  // If already in { lat, lng } format, keep it as is
+
+                  return {
+                    ...park,
+                    location,
+                  };
+                });
+
+                // Update both cache and version in localStorage (store normalized format)
+                localStorage.setItem(cacheKey, JSON.stringify(normalizedSkateparks));
+                localStorage.setItem(versionKey, currentVersion.toString());
+
+                // Merge with inactive parks and update state
+                const allParks = mergeInactiveParks(normalizedSkateparks);
+                setAllSkateparks(allParks);
+              }
+              isFetchingRef.current = false;
+            } catch (e) {
+              console.warn('Failed to fetch skateparks data', e);
+              isFetchingRef.current = false;
+              // Continue with cached data if fetch fails
             }
           })();
         }
@@ -380,6 +439,7 @@ export default function SkateparksPage() {
     }
 
     // No cache exists or cache was corrupted, fetch fresh data and store both cache and version
+    isFetchingRef.current = true;
     setLoading(true);
     try {
       const response = await fetch('/api/skateparks');
@@ -416,6 +476,7 @@ export default function SkateparksPage() {
       console.error('Error fetching skateparks:', error);
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   }, [mergeInactiveParks]);
 
@@ -562,7 +623,8 @@ export default function SkateparksPage() {
   // Fetch all skateparks once on mount
   useEffect(() => {
     fetchAllSkateparks();
-  }, [fetchAllSkateparks]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run once on mount
 
   const clearFilters = () => {
     setAreaFilter('');

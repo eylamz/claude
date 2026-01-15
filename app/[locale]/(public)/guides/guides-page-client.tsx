@@ -40,7 +40,7 @@ const SPORT_CONFIG = [
     value: '', // Empty value means "all sports"
     iconName: 'filter' as const,
     displayName: 'All',
-    variant: 'default' as const,
+    variant: 'gray' as const,
     tooltipEn: 'Show all sports',
     tooltipHe: 'הצג את כל הספורטים',
   },
@@ -50,7 +50,7 @@ const SPORT_CONFIG = [
     displayName: 'Rollerblading',
     variant: 'blue' as const,
     tooltipEn: 'Filter by Rollerblading guides',
-    tooltipHe: 'סנן לפי מדריכי רולרבליידינג',
+    tooltipHe: 'סנן לפי מדריכי רולר',
   },
   {
     value: 'skate',
@@ -58,7 +58,7 @@ const SPORT_CONFIG = [
     displayName: 'Skating',
     variant: 'blue' as const,
     tooltipEn: 'Filter by Skating guides',
-    tooltipHe: 'סנן לפי מדריכי החלקה',
+    tooltipHe: 'סנן לפי מדריכי סקייט',
   },
   {
     value: 'scoot',
@@ -76,6 +76,14 @@ const SPORT_CONFIG = [
     tooltipEn: 'Filter by BMX guides',
     tooltipHe: 'סנן לפי מדריכי BMX',
   },
+  {
+    value: 'longboard',
+    iconName: 'longboard' as const,
+    displayName: 'Longboarding',
+    variant: 'orange' as const,
+    tooltipEn: 'Filter by Longboarding guides',
+    tooltipHe: 'סנן לפי מדריכי לונגבורד',
+  }
 ] as const;
 
 // Utility function to optimize image URLs
@@ -210,11 +218,13 @@ GuideThumbnail.displayName = 'GuideThumbnail';
 const GuideCard = memo(({ 
   guide, 
   locale, 
-  animationDelay = 0 
+  animationDelay = 0,
+  getSportTranslation
 }: { 
   guide: Guide; 
   locale: string; 
   animationDelay?: number;
+  getSportTranslation: (sport: string) => string;
 }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [showNameSection, setShowNameSection] = useState(false);
@@ -274,7 +284,7 @@ const GuideCard = memo(({
                 key={idx}
                 className="flex items-center bg-black/45 backdrop-blur-sm px-2 py-1 rounded-lg"
               >
-                <span className="text-xs font-medium text-white">{sport}</span>
+                <span className="text-xs font-medium text-white">{getSportTranslation(sport)}</span>
               </div>
             ))}
             {guide.relatedSports.length > 3 && (
@@ -327,6 +337,20 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   const t = useTranslations('guides');
   
   const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
+  
+  // Helper function to get translated sport name
+  const getSportTranslation = useCallback((sport: string): string => {
+    if (!sport) return sport;
+    const sportKey = sport.toLowerCase();
+    const translationKey = `sports.${sportKey}`;
+    const translated = t(translationKey as any);
+    // If translation key doesn't exist, next-intl returns the key path, so check if it's different
+    if (translated && translated !== translationKey && !translated.startsWith('sports.')) {
+      return translated;
+    }
+    // Fallback to original sport name (capitalize first letter)
+    return sport.charAt(0).toUpperCase() + sport.slice(1);
+  }, [t]);
   
   const [guides, setGuides] = useState<Guide[]>(initialData?.guides || []);
   const [filtersData, setFiltersData] = useState<FiltersData>(
@@ -765,7 +789,6 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                     setPage(1);
                   }}
                   name="sports-filter"
-                  size="md"
                   className="w-fit"
                 />
               </div>
@@ -858,7 +881,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark transition-colors duration-200 cursor-pointer"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {sport}
+                      {getSportTranslation(sport)}
                     </span>
                     <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                   </button>
@@ -932,6 +955,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                   guide={guide} 
                   locale={locale} 
                   animationDelay={index * 50}
+                  getSportTranslation={getSportTranslation}
                 />
               ))}
             </div>

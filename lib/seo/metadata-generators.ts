@@ -343,4 +343,70 @@ export async function generateTrainerMetadata(params: { slug: string; locale: st
   });
 }
 
+export async function generateLoginMetadata(params: { locale: string }): Promise<Metadata> {
+  const { locale } = params;
+  
+  // Localized titles and descriptions
+  const title = locale === 'he' 
+    ? 'התחברות | אנבוס'
+    : 'Sign In | ENBOSS';
+  
+  const description = locale === 'he'
+    ? 'התחבר לחשבון שלך ב-ENBOSS. גש לסקייטפארקים, מדריכים, אירועים ועוד. הצטרף לקהילת הרוכבים הגדולה בישראל.'
+    : 'Sign in to your ENBOSS account. Access skateparks, guides, events, and more. Join Israel\'s largest skating community.';
+
+  return genMeta({
+    title,
+    description,
+    image: '/og-default.jpg',
+    url: `/${locale}/login`,
+    locale,
+    alternateLocales: locale === 'en' ? ['he'] : ['en'],
+  });
+}
+
+export async function generateRegisterMetadata(params: { locale: string }): Promise<Metadata> {
+  const { locale } = params;
+  
+  // Localized titles and descriptions
+  const title = locale === 'he' 
+    ? 'הרשמה | אנבוס'
+    : 'Sign Up | ENBOSS';
+  
+  const description = locale === 'he'
+    ? 'צור חשבון חדש ב-ENBOSS והצטרף לקהילת הרוכבים הגדולה בישראל. גש לסקייטפארקים, מדריכים, אירועים ועוד.'
+    : 'Create a new account on ENBOSS and join Israel\'s largest skating community. Access skateparks, guides, events, and more.';
+
+  return genMeta({
+    title,
+    description,
+    image: '/og-default.jpg',
+    url: `/${locale}/register`,
+    locale,
+    alternateLocales: locale === 'en' ? ['he'] : ['en'],
+  });
+}
+
+export async function generateContactMetadata(params: { locale: string }): Promise<Metadata> {
+  const { locale } = params;
+  
+  // Localized titles and descriptions
+  const title = locale === 'he' 
+    ? 'צור קשר | אנבוס'
+    : 'Contact Us | ENBOSS';
+  
+  const description = locale === 'he'
+    ? 'צור קשר עם ENBOSS. שלח לנו הודעה ונשמח לעזור לך. שאלות, הצעות או בקשות - אנחנו כאן בשבילך.'
+    : 'Contact ENBOSS. Send us a message and we\'d be happy to help. Questions, suggestions, or requests - we\'re here for you.';
+
+  return genMeta({
+    title,
+    description,
+    image: '/og-default.jpg',
+    url: `/${locale}/contact`,
+    locale,
+    alternateLocales: locale === 'en' ? ['he'] : ['en'],
+  });
+}
+
 

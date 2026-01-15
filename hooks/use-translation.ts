@@ -2,7 +2,7 @@
 
 import { useTranslations as useNextIntlTranslations, useLocale } from 'next-intl';
 
-type TranslationNamespaces = 'common' | 'shop' | 'admin' | 'auth';
+type TranslationNamespaces = 'common' | 'shop' | 'admin' | 'auth' | 'contact';
 
 /**
  * Enhanced useTranslation hook with type safety and namespace support

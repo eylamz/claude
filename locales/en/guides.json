@@ -26,5 +26,12 @@
     "previous": "Previous",
     "next": "Next",
     "page": "Page"
+  },
+  "sports": {
+    "bmx": "BMX",
+    "scoot": "Scoot",
+    "roller": "Roller",
+    "skate": "Skate",
+    "longboard": "Longboard"
   }
 }

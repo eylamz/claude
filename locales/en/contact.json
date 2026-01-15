@@ -1,0 +1,31 @@
+{
+  "title": "Contact Us",
+  "subtitle": "We'd love to hear from you. Send us a message and we'll respond as soon as possible.",
+  "form": {
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "subject": "Subject",
+    "description": "Message",
+    "submit": "Send Message",
+    "submitting": "Sending...",
+    "nameRequired": "Name is required",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Please enter a valid email address",
+    "phoneInvalid": "Please enter a valid phone number",
+    "subjectRequired": "Subject is required",
+    "descriptionRequired": "Message is required",
+    "descriptionMinLength": "Message must be at least 10 characters",
+    "descriptionMaxLength": "Message must not exceed 250 characters",
+    "charactersCount": "{count}/250"
+  },
+  "success": {
+    "title": "Message Sent!",
+    "description": "Thank you for contacting us. We'll get back to you soon."
+  },
+  "error": {
+    "title": "Error",
+    "description": "Failed to send message. Please try again later."
+  }
+}
+

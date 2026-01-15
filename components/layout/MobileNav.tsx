@@ -41,49 +41,36 @@ export default function MobileNavMinimal() {
     setIsMenuOpen(false);
   }, [pathname]);
 
+  // Scroll detection for header visibility and skateparks page
   useEffect(() => {
-    const threshold = 50000; // Use your desired 50px here
-    let accumulatedScroll = 0;
-    let lastScrollY = window.scrollY;
-
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      const deltaY = currentScrollY - lastScrollY;
+      const prevScrollY = prevScrollYRef.current;
       
-      // 1. Always show if at the very top
-      if (currentScrollY < 10) {
+      // Determine scroll direction
+      if (currentScrollY < prevScrollY || currentScrollY < 10) {
+        // Scrolling up or at top - show header
         setIsHeaderVisible(true);
-        accumulatedScroll = 0;
-      } 
-      else {
-        // 2. Check if we changed direction
-        // If we were scrolling down but now up (or vice versa), reset accumulator
-        const isScrollingDown = deltaY > 0;
-        const wasScrollingDown = accumulatedScroll > 0;
-        
-        if (isScrollingDown !== wasScrollingDown) {
-          accumulatedScroll = 0;
-        }
-
-        accumulatedScroll += deltaY;
-
-        // 3. Trigger visibility based on threshold
-        if (Math.abs(accumulatedScroll) > threshold) {
-          if (accumulatedScroll > 0) {
-            setIsHeaderVisible(false); // Scrolled down 50px
-          } else {
-            setIsHeaderVisible(true);  // Scrolled up 50px
-          }
-          accumulatedScroll = 0; // Reset after trigger
-        }
+      } else if (currentScrollY > prevScrollY) {
+        // Scrolling down - hide header
+        setIsHeaderVisible(false);
       }
-
-      lastScrollY = currentScrollY;
+      
+      prevScrollYRef.current = currentScrollY;
       setScrollY(currentScrollY);
     };
 
+    // Set initial scroll position
+    const initialScrollY = window.scrollY;
+    setScrollY(initialScrollY);
+    prevScrollYRef.current = initialScrollY;
+    setIsHeaderVisible(initialScrollY < 10);
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [pathname]);
 
   return (

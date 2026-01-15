@@ -42,6 +42,9 @@ export interface IUser extends Document {
   wishlist: mongoose.Types.ObjectId[];
   resetToken?: string;
   resetTokenExpiry?: Date;
+  resetTokenUsed?: boolean;
+  resetTokenAttempts?: number;
+  resetTokenIP?: string;
   emailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -165,6 +168,20 @@ const UserSchema: Schema<IUser> = new Schema<IUser>(
       type: Date,
       select: false,
     },
+    resetTokenUsed: {
+      type: Boolean,
+      default: false,
+      select: false,
+    },
+    resetTokenAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    resetTokenIP: {
+      type: String,
+      select: false,
+    },
     emailVerified: {
       type: Boolean,
       default: false,
@@ -176,6 +193,9 @@ const UserSchema: Schema<IUser> = new Schema<IUser>(
       delete ret.password;
       delete ret.resetToken;
       delete ret.resetTokenExpiry;
+      delete ret.resetTokenUsed;
+      delete ret.resetTokenAttempts;
+      delete ret.resetTokenIP;
       return ret;
     }},
     toObject: { virtuals: true },
@@ -262,8 +282,10 @@ UserSchema.methods.generateResetToken = function (): string {
     .update(resetToken)
     .digest('hex');
   
-  // Token expires in 1 hour
-  this.resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
+  // Token expires in 15 minutes
+  this.resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000);
+  this.resetTokenUsed = false;
+  this.resetTokenAttempts = 0;
   
   return resetToken;
 };
@@ -274,10 +296,13 @@ UserSchema.methods.generateResetToken = function (): string {
 UserSchema.methods.toJSON = function () {
   const userObject = this.toObject();
   
-  // Remove sensitive fields
-  delete userObject.password;
-  delete userObject.resetToken;
-  delete userObject.resetTokenExpiry;
+      // Remove sensitive fields
+      delete userObject.password;
+      delete userObject.resetToken;
+      delete userObject.resetTokenExpiry;
+      delete userObject.resetTokenUsed;
+      delete userObject.resetTokenAttempts;
+      delete userObject.resetTokenIP;
   
   return userObject;
 };

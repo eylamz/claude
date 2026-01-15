@@ -4,16 +4,18 @@
  */
 
 import { sendEmail } from './send';
+
+// Import template functions directly from individual files to avoid module resolution issues
+import { getOrderConfirmationHTML } from './templates/order-confirmation';
+import { getWelcomeEmailHTML } from './templates/welcome';
+import { getPasswordResetHTML } from './templates/password-reset';
+import { getContactFormHTML } from './templates/contact-form';
 import {
-  getOrderConfirmationHTML,
-  getWelcomeEmailHTML,
-  getPasswordResetHTML,
-  getContactFormHTML,
   getNewOrderNotificationHTML,
   getLowStockNotificationHTML,
   getNewReviewNotificationHTML,
   getContactFormNotificationHTML,
-} from './templates';
+} from './templates/admin-notifications';
 import {
   sendEmailJS,
   sendContactFormEmailJS,

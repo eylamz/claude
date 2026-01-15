@@ -300,7 +300,7 @@ export default function LoginPage() {
                 variant="brand"
               />
               <Link
-                href={`/${locale}/auth/forgot-password`}
+                href={`/${locale}/reset-password`}
                 className="text-sm text-text-secondary dark:text-text-secondary-dark hover:underline transition-colors"
               >
                 {t('login.forgotPassword')}

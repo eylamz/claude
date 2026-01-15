@@ -1,0 +1,31 @@
+{
+  "title": "צור קשר",
+  "subtitle": "נשמח לשמוע ממך. שלח לנו הודעה ואנו נשיב בהקדם האפשרי.",
+  "form": {
+    "name": "שם",
+    "email": "אימייל",
+    "phone": "טלפון",
+    "subject": "נושא",
+    "description": "הודעה",
+    "submit": "שלח הודעה",
+    "submitting": "שולח...",
+    "nameRequired": "שם הוא שדה חובה",
+    "emailRequired": "אימייל הוא שדה חובה",
+    "emailInvalid": "אנא הזן כתובת אימייל תקינה",
+    "phoneInvalid": "אנא הזן מספר טלפון תקין",
+    "subjectRequired": "נושא הוא שדה חובה",
+    "descriptionRequired": "הודעה היא שדה חובה",
+    "descriptionMinLength": "הודעה חייבת להכיל לפחות 10 תווים",
+    "descriptionMaxLength": "הודעה לא יכולה לעלות על 250 תווים",
+    "charactersCount": "{count}/250"
+  },
+  "success": {
+    "title": "הודעה נשלחה!",
+    "description": "תודה על פנייתך. נחזור אליך בהקדם."
+  },
+  "error": {
+    "title": "שגיאה",
+    "description": "שליחת ההודעה נכשלה. אנא נסה שוב מאוחר יותר."
+  }
+}
+
