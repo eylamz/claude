@@ -179,6 +179,15 @@ export default function LoginPasswordPage() {
       });
 
       if (result?.error) {
+        // Check if error is due to unverified email
+        if (result.error === 'EMAIL_NOT_VERIFIED' || result.error.includes('EMAIL_NOT_VERIFIED')) {
+          // Redirect to pending verification page
+          startTransition(() => {
+            router.push(`/${locale}/login/password/pending?email=${encodeURIComponent(formData.email)}`);
+          });
+          setIsLoading(false);
+          return;
+        }
         setErrors({ general: t('login.errors.invalidCredentials') });
         setIsLoading(false);
         return;

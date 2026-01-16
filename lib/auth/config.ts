@@ -39,7 +39,8 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Find user by email - explicitly select password field (it's excluded by default)
-          const user = await User.findOne({ email: credentials.email.toLowerCase() }).select('+password');
+          // emailVerified is included by default, but we explicitly check it
+          const user = await User.findOne({ email: credentials.email.toLowerCase() }).select('+password emailVerified');
 
           if (!user) {
             throw new Error('No user found with this email');
@@ -52,11 +53,10 @@ export const authOptions: NextAuthOptions = {
             throw new Error('Invalid password');
           }
 
-          // Check if email is verified (optional requirement)
-          // You can remove this if you want to allow unverified users
-          // if (!user.emailVerified) {
-          //   throw new Error('Please verify your email before logging in');
-          // }
+          // Check if email is verified - redirect to pending page if not verified
+          if (!user.emailVerified) {
+            throw new Error('EMAIL_NOT_VERIFIED');
+          }
 
           // Return user object for JWT token including preferences
           // Also pass rememberMe so it can be used in jwt callback for session duration

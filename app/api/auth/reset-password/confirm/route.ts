@@ -85,6 +85,8 @@ export async function POST(request: NextRequest) {
       user.resetTokenUsed = true; // Mark as used
       user.resetTokenAttempts = 0; // Reset attempts on success
       user.resetTokenIP = undefined; // Clear IP
+      // Set emailVerified to true when password is reset
+      user.emailVerified = true;
       await user.save();
 
       return NextResponse.json({
