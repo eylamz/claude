@@ -76,7 +76,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
               "focus:bg-input-hover/70 dark:focus:bg-input-hover-dark/70",
 
-              "placeholder:text-text-secondary dark:placeholder:text-text-secondary-dark",
+              "placeholder:text-text-secondary dark:placeholder:text-[#86868b]",
 
               "text-text dark:text-text-dark",
 

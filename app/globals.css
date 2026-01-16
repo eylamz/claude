@@ -94,6 +94,7 @@ Mobile font sizes
     /* RTL text alignment */
     [dir="rtl"] {
       text-align: right;
+      direction: rtl;
     }
   
     [dir="ltr"] {
@@ -107,6 +108,11 @@ Mobile font sizes
     [dir="rtl"] input,
     [dir="rtl"] textarea {
       text-align: right;
+      direction: rtl;
+    }
+
+    [dir="rtl"] .floating-input {
+      direction: ltr;
     }
 
     /* Prevent mobile zoom on input focus */
@@ -210,18 +216,25 @@ input{
 }
 
 /* Default (light mode) */
-::selection {
+body *::selection {
   color: theme('colors.text.DEFAULT');
   background-color: theme('colors.brand.main'); /* Uses your Tailwind theme color */
 }
-
 /* Dark mode */
-.dark ::selection {
+.dark body *::selection {
   color: hsl(123, 60%, 48%);
+
   background-color: hsla(123, 60%, 48%, 0.289); /* Uses your Tailwind theme color */
 }
 
-
+/* Let buttons use the regular OS selection */
+button::selection,
+button *::selection,
+.dark button::selection,
+.dark button *::selection {
+  background: Highlight;      /* system default highlight */
+  color: HighlightText;       /* system default highlight text */
+}
 
 /* Custom Scrollbar Styles - Base width/height for all scrollbars */
 *::-webkit-scrollbar {

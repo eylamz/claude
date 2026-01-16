@@ -7,6 +7,7 @@ import { signIn } from 'next-auth/react';
 import { useTranslation } from '@/hooks';
 import { Button, Input } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { Icon } from '@/components/icons/Icon';
 
 interface ResetErrors {
   password?: string;
@@ -18,37 +19,18 @@ interface PasswordStrength {
   score: number;
   checks: {
     length: boolean;
-    uppercase: boolean;
-    lowercase: boolean;
-    number: boolean;
-    special: boolean;
   };
 }
 
 function getPasswordStrength(password: string): PasswordStrength {
   const checks = {
-    length: password.length >= 8,
-    uppercase: /[A-Z]/.test(password),
-    lowercase: /[a-z]/.test(password),
-    number: /\d/.test(password),
-    special: /[^A-Za-z0-9]/.test(password),
+    length: password.length >= 12,
   };
 
-  const score = Object.values(checks).filter(Boolean).length;
+  const score = checks.length ? 1 : 0;
   return { score, checks };
 }
 
-function getStrengthColor(score: number) {
-  const colors = {
-    0: 'bg-red-500',
-    1: 'bg-red-400',
-    2: 'bg-orange-500',
-    3: 'bg-yellow-500',
-    4: 'bg-green-500',
-    5: 'bg-green-600',
-  };
-  return colors[score as keyof typeof colors] || 'bg-gray-300';
-}
 
 export default function ResetConfirmPage() {
   const params = useParams();
@@ -65,6 +47,8 @@ export default function ResetConfirmPage() {
   });
   const [errors, setErrors] = useState<ResetErrors>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const passwordStrength = getPasswordStrength(formData.password);
   const token = params.token as string;
@@ -106,7 +90,7 @@ export default function ResetConfirmPage() {
 
     if (!formData.password) {
       newErrors.password = t('reset.confirm.errors.passwordRequired');
-    } else if (formData.password.length < 8) {
+    } else if (formData.password.length < 12) {
       newErrors.password = t('reset.confirm.errors.passwordMin');
     }
 
@@ -244,52 +228,68 @@ export default function ResetConfirmPage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4 items-center" dir={isRTL ? 'rtl' : 'ltr'}>
             {/* Password Field */}
             <div className="w-full space-y-2">
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                label={t('reset.confirm.newPassword')}
-                value={formData.password}
-                onChange={handleChange}
-                placeholder={t('reset.confirm.newPassword')}
-                disabled={isLoading}
-                autoComplete="new-password"
-                error={errors.password}
-              />
-
-              {/* Password Strength Indicator */}
-              {formData.password && (
-                <div className="space-y-2 mt-2">
-                  <div className="flex gap-1">
-                    {[0, 1, 2, 3, 4].map(i => (
-                      <div
-                        key={i}
-                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                          i < passwordStrength.score
-                            ? getStrengthColor(passwordStrength.score)
-                            : 'bg-gray-200 dark:bg-gray-700'
-                        }`}
-                      />
-                    ))}
-                  </div>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    label={t('reset.confirm.newPassword')}
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder={t('reset.confirm.newPassword')}
+                    disabled={isLoading}
+                    autoComplete="new-password"
+                    error={errors.password}
+                  />
                 </div>
-              )}
+                <Button
+                  type="button"
+                  variant="none"
+                  size="sm"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="h-10 !px-4 mb-0 -ms-[3.759rem] z-[2] hover:text-text dark:hover:text-white hover:!bg-transparent"
+                  disabled={isLoading}
+                >
+                  <Icon
+                    name={showPassword ? "eyeClosed" : "eye"}
+                    className="w-4 h-4"
+                  />
+                </Button>
+              </div>
             </div>
 
             {/* Confirm Password Field */}
             <div className="w-full space-y-2">
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                label={t('reset.confirm.confirmPassword')}
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder={t('reset.confirm.confirmPassword')}
-                disabled={isLoading}
-                autoComplete="new-password"
-                error={errors.confirmPassword}
-              />
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    label={t('reset.confirm.confirmPassword')}
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    placeholder={t('reset.confirm.confirmPassword')}
+                    disabled={isLoading}
+                    autoComplete="new-password"
+                    error={errors.confirmPassword}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="none"
+                  size="sm"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="h-10 !px-4 mb-0 -ms-[3.759rem] z-[2] hover:text-text dark:hover:text-white hover:!bg-transparent"
+                  disabled={isLoading}
+                >
+                  <Icon
+                    name={showConfirmPassword ? "eyeClosed" : "eye"}
+                    className="w-4 h-4"
+                  />
+                </Button>
+              </div>
               {formData.confirmPassword && formData.password === formData.confirmPassword && !errors.confirmPassword && (
                 <p className="text-sm text-green-600 dark:text-green-400">
                   ✓ {t('reset.confirm.passwordsMatch')}

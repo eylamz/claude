@@ -103,7 +103,9 @@ import Backpack from './backpack.svg';
 import BackpackBold from './backpackBold.svg';
 import LockBold from './lockBold.svg';
 import Eye from './eye.svg';
+import EyeClosed from './eyeClosed.svg';
 import EyeBold from './eyeBold.svg';
+import EyeClosedBold from './eyeClosedBold.svg';
 import Shop from './shop.svg';
 import ShopBold from './shopBold.svg';
 import ShopCart from './shopCart.svg';
@@ -313,7 +315,9 @@ const iconMap: Record<string, SvgComponent> = {
   zoomOut: ZoomOut,
   arrowCircleDown: ArrowCircleDown,
   eye: Eye,
+  eyeClosed: EyeClosed,
   eyeBold: EyeBold,
+  eyeClosedBold: EyeClosedBold,
   gift: Gift,
   giftBold: GiftBold,
   tag: Tag,
@@ -403,6 +407,7 @@ export type IconName =
   | 'filter'  | 'filterBold'
   | 'star'
   | 'eye'  | 'eyeBold'
+  | 'eyeClosed'  | 'eyeClosedBold'
   | 'edit'  | 'editBold'
   | 'trash'  | 'trashBold'
   | 'checkmark'

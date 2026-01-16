@@ -82,12 +82,12 @@ const UserSchema: Schema<IUser> = new Schema<IUser>(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
+      minlength: [12, 'Password must be at least 12 characters'],
       select: false, // Don't include password in queries by default
     },
     fullName: {
       type: String,
-      required: [true, 'Full name is required'],
+      default: '',
       trim: true,
       maxlength: [100, 'Full name cannot exceed 100 characters'],
     },

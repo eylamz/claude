@@ -21,19 +21,13 @@ function isValidEmail(email: string): boolean {
  * Validate password strength
  */
 function isStrongPassword(password: string): boolean {
-  return (
-    password.length >= 8 &&
-    /[A-Z]/.test(password) && // Has uppercase
-    /[a-z]/.test(password) && // Has lowercase
-    /\d/.test(password) && // Has number
-    /[^A-Za-z0-9]/.test(password) // Has special char
-  );
+  return password.length >= 12;
 }
 
 /**
  * Check if email already exists
  */
-async function emailExists(email: string): Promise<boolean> {
+export async function emailExists(email: string): Promise<boolean> {
   try {
     await connectDB();
     const user = await User.findOne({ email: email.toLowerCase() });
@@ -49,20 +43,12 @@ async function emailExists(email: string): Promise<boolean> {
  */
 export async function registerUser(
   data: {
-    fullName: string;
     email: string;
     password: string;
-    confirmPassword: string;
-    agreeToTerms: boolean;
-    emailMarketing: boolean;
   }
 ): Promise<RegisterResult> {
   try {
     // Validate inputs
-    if (!data.fullName?.trim()) {
-      return { success: false, error: 'Full name is required' };
-    }
-
     if (!data.email?.trim()) {
       return { success: false, error: 'Email is required' };
     }
@@ -78,17 +64,8 @@ export async function registerUser(
     if (!isStrongPassword(data.password)) {
       return {
         success: false,
-        error:
-          'Password must be at least 8 characters with uppercase, lowercase, number, and special character',
+        error: 'Password must be at least 12 characters',
       };
-    }
-
-    if (data.password !== data.confirmPassword) {
-      return { success: false, error: 'Passwords do not match' };
-    }
-
-    if (!data.agreeToTerms) {
-      return { success: false, error: 'You must agree to the terms and conditions' };
     }
 
     // Check if email already exists
@@ -103,12 +80,12 @@ export async function registerUser(
     const user = new User({
       email: data.email.toLowerCase(),
       password: data.password, // Will be hashed by User model pre-save hook
-      fullName: data.fullName.trim(),
+      // fullName is optional and will default to '' from schema
       role: 'user',
       preferences: {
         language: 'en', // Can be updated based on locale
         colorMode: 'system',
-        emailMarketing: data.emailMarketing,
+        emailMarketing: false,
       },
       emailVerified: false,
       wishlist: [],

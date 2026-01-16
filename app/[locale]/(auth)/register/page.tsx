@@ -1,82 +1,77 @@
 'use client';
 
 import { useState, useTransition, useEffect } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks';
-import { Button } from '@/components/ui';
+import { Button, FloatingInput } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { Icon } from '@/components/icons/Icon';
 import { registerUser } from '@/lib/actions/auth';
 import { isRegisterEnabled } from '@/lib/utils/ecommerce';
 
 interface RegisterErrors {
-  fullName?: string;
   email?: string;
   password?: string;
-  confirmPassword?: string;
-  agreeToTerms?: string;
   general?: string;
 }
 
 interface PasswordStrength {
   score: number;
-  feedback: string;
   checks: {
     length: boolean;
-    uppercase: boolean;
-    lowercase: boolean;
-    number: boolean;
-    special: boolean;
   };
 }
 
 function getPasswordStrength(password: string): PasswordStrength {
   const checks = {
-    length: password.length >= 8,
-    uppercase: /[A-Z]/.test(password),
-    lowercase: /[a-z]/.test(password),
-    number: /\d/.test(password),
-    special: /[^A-Za-z0-9]/.test(password),
+    length: password.length >= 12,
   };
 
-  const score = Object.values(checks).filter(Boolean).length;
-  const feedbacks = {
-    0: 'Very weak',
-    1: 'Weak',
-    2: 'Fair',
-    3: 'Good',
-    4: 'Strong',
-    5: 'Very strong',
-  };
+  const score = checks.length ? 1 : 0;
+  return { score, checks };
+}
 
-  return {
-    score,
-    feedback: feedbacks[score as keyof typeof feedbacks],
-    checks,
+function getStrengthColor(score: number) {
+  const colors = {
+    0: 'bg-red-500',
+    1: 'bg-green-500',
   };
+  return colors[score as keyof typeof colors] || 'bg-gray-300';
 }
 
 export default function RegisterPage() {
   const locale = useLocale();
   const t = useTranslation('auth');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
   const registerEnabled = isRegisterEnabled();
+  
+  // Get email from URL params if available
+  const emailFromParams = searchParams.get('email') || '';
 
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
+    email: emailFromParams,
     password: '',
-    confirmPassword: '',
-    agreeToTerms: false,
-    emailMarketing: false,
   });
 
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const passwordStrength = getPasswordStrength(formData.password);
+
+  // Update formData when email from params changes
+  useEffect(() => {
+    if (emailFromParams) {
+      setFormData(prev => ({
+        ...prev,
+        email: emailFromParams,
+      }));
+    }
+  }, [emailFromParams]);
 
   // Redirect to home page if registration is disabled
   useEffect(() => {
@@ -90,10 +85,6 @@ export default function RegisterPage() {
   const validate = (): boolean => {
     const newErrors: RegisterErrors = {};
 
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = t('register.errors.fullNameRequired');
-    }
-
     if (!formData.email.trim()) {
       newErrors.email = t('register.errors.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -102,18 +93,8 @@ export default function RegisterPage() {
 
     if (!formData.password) {
       newErrors.password = t('register.errors.passwordRequired');
-    } else if (formData.password.length < 8) {
+    } else if (formData.password.length < 12) {
       newErrors.password = t('register.errors.passwordMin');
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = t('register.errors.confirmPasswordRequired');
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = t('register.errors.passwordsDontMatch');
-    }
-
-    if (!formData.agreeToTerms) {
-      newErrors.agreeToTerms = t('register.errors.agreeToTermsRequired');
     }
 
     setErrors(newErrors);
@@ -135,7 +116,10 @@ export default function RegisterPage() {
 
     try {
       // Register the user
-      const result = await registerUser(formData);
+      const result = await registerUser({
+        email: formData.email,
+        password: formData.password,
+      });
 
       if (!result.success) {
         setErrors({ general: result.error || t('register.errors.somethingWentWrong') });
@@ -143,25 +127,9 @@ export default function RegisterPage() {
         return;
       }
 
-      // Automatically sign in after registration
-      const signInResult = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      });
-
-      if (signInResult?.error) {
-        // If auto-login fails, redirect to login page
-        startTransition(() => {
-          router.push(`/${locale}/login`);
-        });
-        return;
-      }
-
-      // Success - redirect to account
+      // Success - redirect to email verification page
       startTransition(() => {
-        router.push(`/${locale}/account`);
-        router.refresh();
+        router.push(`/${locale}/register/email?email=${encodeURIComponent(formData.email)}`);
       });
     } catch (error) {
       console.error('Registration error:', error);
@@ -171,10 +139,10 @@ export default function RegisterPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: value,
     }));
 
     // Clear error for this field when user starts typing
@@ -184,18 +152,6 @@ export default function RegisterPage() {
         [name]: undefined,
       }));
     }
-  };
-
-  const getStrengthColor = (score: number) => {
-    const colors = {
-      0: 'bg-red-500',
-      1: 'bg-red-400',
-      2: 'bg-orange-500',
-      3: 'bg-yellow-500',
-      4: 'bg-green-500',
-      5: 'bg-green-600',
-    };
-    return colors[score as keyof typeof colors] || 'bg-gray-300';
   };
 
   const isRTL = locale === 'he';
@@ -213,16 +169,16 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background dark:bg-background-dark">
       <div className="w-full max-w-[400px] animate-fade-in">
         {/* Card */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 space-y-6 border border-gray-200 dark:border-gray-800">
+        <div className="rounded-2xl p-8 space-y-6 ">
           {/* Header */}
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               {t('register.title')}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray dark:text-gray-dark">
               {t('register.subtitle')}
             </p>
           </div>
@@ -235,190 +191,118 @@ export default function RegisterPage() {
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5" dir={isRTL ? 'rtl' : 'ltr'}>
-            {/* Full Name Field */}
-            <div className="space-y-2">
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('register.fullName')}
-              </label>
-              <input
-                id="fullName"
-                name="fullName"
-                type="text"
-                value={formData.fullName}
-                onChange={handleChange}
-                className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.fullName
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500'
-                } bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200`}
-                placeholder={t('register.fullName')}
-                disabled={isLoading}
-                autoComplete="name"
-              />
-              {errors.fullName && (
-                <p className="text-sm text-red-600 dark:text-red-400 animate-fade-in">
-                  {errors.fullName}
-                </p>
-              )}
-            </div>
-
-            {/* Email Field */}
-            <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('register.email')}
-              </label>
-              <input
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 items-center" dir={isRTL ? 'rtl' : 'ltr'}>
+            {/* Email Field - Conditionally Read Only with Edit Button */}
+            {emailFromParams ? (
+              // Email from params (from login redirect) - read-only with Edit button
+              <div className="w-full">
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <FloatingInput
+                      id="email"
+                      name="email"
+                      type="email"
+                      label={t('register.email')}
+                      value={formData.email}
+                      disabled={true}
+                      readOnly={true}
+                      autoComplete="email"
+                      error={errors.email}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="none"
+                    size="sm"
+                    onClick={() => {
+                      startTransition(() => {
+                        router.push(`/${locale}/login?email=${encodeURIComponent(formData.email)}`);
+                      });
+                    }}
+                    className="h-10 !px-4 mb-0 -ms-[4.25rem] z-[2] hover:text-text dark:hover:text-white hover:!bg-transparent"
+                    disabled={isLoading}
+                  >
+                    {t('login.edit') || 'Edit'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              // No email from params (from Sign Up link) - editable, no Edit button
+              <FloatingInput
                 id="email"
                 name="email"
                 type="email"
+                label={t('register.email')}
                 value={formData.email}
                 onChange={handleChange}
-                className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.email
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500'
-                } bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200`}
-                placeholder={t('register.email')}
                 disabled={isLoading}
                 autoComplete="email"
+                error={errors.email}
               />
-              {errors.email && (
-                <p className="text-sm text-red-600 dark:text-red-400 animate-fade-in">
-                  {errors.email}
-                </p>
-              )}
-            </div>
-
-            {/* Password Field */}
-            <div className="space-y-2">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('register.password')}
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.password
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500'
-                } bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200`}
-                placeholder={t('register.password')}
-                disabled={isLoading}
-                autoComplete="new-password"
-              />
-              {errors.password && (
-                <p className="text-sm text-red-600 dark:text-red-400 animate-fade-in">
-                  {errors.password}
-                </p>
-              )}
-
-              {/* Password Strength Indicator */}
-              {formData.password && (
-                <div className="space-y-2">
-                  <div className="flex gap-1">
-                    {[0, 1, 2, 3, 4].map(i => (
-                      <div
-                        key={i}
-                        className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
-                          i < passwordStrength.score
-                            ? getStrengthColor(passwordStrength.score)
-                            : 'bg-gray-200 dark:bg-gray-700'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {passwordStrength.score < 3 ? (
-                      <span className="text-orange-600 dark:text-orange-400">
-                        Password requirements: 8+ characters, uppercase, lowercase, number, special character
-                      </span>
-                    ) : (
-                      <span className="text-green-600 dark:text-green-400">
-                        Password strength: {passwordStrength.feedback}
-                      </span>
-                    )}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Confirm Password Field */}
-            <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('register.confirmPassword')}
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className={`w-full px-4 py-3 rounded-lg border ${
-                  errors.confirmPassword
-                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                    : 'border-gray-300 dark:border-gray-700 focus:border-blue-500 focus:ring-blue-500'
-                } bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200`}
-                placeholder={t('register.confirmPassword')}
-                disabled={isLoading}
-                autoComplete="new-password"
-              />
-              {errors.confirmPassword && (
-                <p className="text-sm text-red-600 dark:text-red-400 animate-fade-in">
-                  {errors.confirmPassword}
-                </p>
-              )}
-              {formData.confirmPassword && formData.password === formData.confirmPassword && (
-                <p className="text-sm text-green-600 dark:text-green-400">
-                  ✓ Passwords match
-                </p>
-              )}
-            </div>
-
-            {/* Terms Checkbox */}
-            <label className="flex items-start space-x-2 cursor-pointer group">
-              <input
-                type="checkbox"
-                name="agreeToTerms"
-                checked={formData.agreeToTerms}
-                onChange={handleChange}
-                className="mt-0.5 w-4 h-4 text-blue-600 rounded focus:ring-blue-500 transition-colors"
-                disabled={isLoading}
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-                {t('register.agreeToTerms')}
-              </span>
-            </label>
-            {errors.agreeToTerms && (
-              <p className="text-sm text-red-600 dark:text-red-400 animate-fade-in">
-                {errors.agreeToTerms}
-              </p>
             )}
 
-            {/* Marketing Checkbox */}
-            <label className="flex items-start space-x-2 cursor-pointer group">
-              <input
-                type="checkbox"
-                name="emailMarketing"
-                checked={formData.emailMarketing}
-                onChange={handleChange}
-                className="mt-0.5 w-4 h-4 text-blue-600 rounded focus:ring-blue-500 transition-colors"
-                disabled={isLoading}
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-                Send me emails about products and offers
-              </span>
-            </label>
+            {/* Password Field */}
+            <div className="w-full space-y-2">
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <FloatingInput
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    label={t('register.password')}
+                    value={formData.password}
+                    onChange={handleChange}
+                    disabled={isLoading}
+                    autoComplete="new-password"
+                    error={errors.password}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="none"
+                  size="sm"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="h-10 !px-4 mb-0 -ms-[3.759rem] z-[2] hover:text-text dark:hover:text-white hover:!bg-transparent"
+                  disabled={isLoading}
+                >
+                  <Icon
+                    name={showPassword ? "eyeClosed" : "eye"}
+                    className="w-4 h-4"
+                  />
+                </Button>
+              </div>
+
+              {/* Password Strength Indicator */}
+                  
+                  {/* Password Requirements Checklist */}
+                  {formData.password && (
+                    <div className="space-y-1.5 mt-2">
+                      <div className={`flex items-center gap-2 text-sm transition-colors ${
+                        passwordStrength.checks.length
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-gray-500 dark:text-gray-400'
+                      }`}>
+                        {passwordStrength.checks.length ? (
+                          <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                          </svg>
+                        )}
+                        <span>{t('register.passwordRequirements.length')}</span>
+                      </div>
+                    </div>
+                  )}
+            </div>
 
             {/* Submit Button */}
             <Button
               type="submit"
               variant="primary"
               size="lg"
-              className="w-full"
+              className="w-full max-w-[270px]"
               disabled={isLoading}
             >
               {isLoading ? (

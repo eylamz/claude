@@ -121,7 +121,7 @@ export const colors = {
   },
   background: {
     light: 'hsl(0, 0%, 100%)',
-    dark: 'hsl(180, 2%, 10%)',
+    dark: 'hsl(240, 4%, 11%)',
   },
   backgroundSecondary: {
     light: '#F5F5F5',
@@ -169,15 +169,15 @@ export const colors = {
     },
   },
   input: {
-    light: 'hsl(60, 60%, 99%)',
-    dark: 'hsl(180, 3%, 13%)',
+    light: 'hsl(0, 0%, 100%)',
+    dark: 'hsl(240, 3%, 15%)',
     border: {
-      light: 'hsl(0, 0%, 88%)',
-      dark: 'hsl(0, 0%, 29%)',
+      light: 'hsl(0, 0%, 50%)',
+      dark: 'hsl(240, 1%, 42%)',
     },
     hover: {
       light: 'hsl(220, 6%, 99%)',
-      dark: 'hsl(214, 16%, 7%)',
+      dark: 'hsl(240, 3%, 12%)',
     },
     text: {
       light: 'hsl(220, 1%, 52%)',
