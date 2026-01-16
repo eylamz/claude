@@ -626,7 +626,7 @@ export default function GuidePage() {
     ? `${metaKeywords}${tagsForKeywords.length > 0 ? `, ${tagsForKeywords.join(', ')}` : ''}`
     : tagsForKeywords.join(', ');
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
   const canonicalUrl = guide ? `${siteUrl}/${locale}/guides/${guide.slug}` : '';
   const alternateEnUrl = guide ? `${siteUrl}/en/guides/${guide.slug}` : '';
   const alternateHeUrl = guide ? `${siteUrl}/he/guides/${guide.slug}` : '';

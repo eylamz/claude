@@ -79,6 +79,8 @@ export default function RegisterEmailPage() {
           await sendPasswordResetEmailJS({
             toEmail: data.email,
             resetUrl: data.verificationUrl,
+            locale: locale,
+            type: 'email_verification',
           });
           
           // Success - redirect to verify page

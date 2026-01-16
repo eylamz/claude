@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 const locales = ['en', 'he'];
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
 
 async function fetchProducts() {
   try {

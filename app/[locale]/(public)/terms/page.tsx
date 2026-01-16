@@ -23,7 +23,7 @@ export default function TermsPage() {
       : 'terms of use, privacy policy, ENBOSS, skateboarding, skateparks, Israel, terms and conditions';
   }, [isHebrew]);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
   const canonicalUrl = `${siteUrl}/${locale}/terms`;
   const alternateEnUrl = `${siteUrl}/en/terms`;
   const alternateHeUrl = `${siteUrl}/he/terms`;

@@ -80,8 +80,8 @@ export function getBaseEmailHTML({
                 © ${new Date().getFullYear()} ENBOSS. All rights reserved.
               </p>
               <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                <a href="https://enboss.com" style="color: #2563eb; text-decoration: none;">Visit our website</a> | 
-                <a href="mailto:support@enboss.com" style="color: #2563eb; text-decoration: none;">Contact Support</a>
+                <a href="https://enboss.co" style="color: #2563eb; text-decoration: none;">Visit our website</a> | 
+                <a href="mailto:support@enboss.co" style="color: #2563eb; text-decoration: none;">Contact Support</a>
               </p>
             </td>
           </tr>

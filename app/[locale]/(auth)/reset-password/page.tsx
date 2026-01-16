@@ -24,6 +24,8 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
+  const [resendCount, setResendCount] = useState(0);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   // Validate email parameter and redirect if missing
   useEffect(() => {
@@ -40,6 +42,23 @@ export default function ResetPasswordPage() {
     setEmail(emailFromParams);
     setIsValidating(false);
   }, [searchParams, locale, router]);
+
+  // Handle resend cooldown countdown
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => {
+        setResendCooldown(resendCooldown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  // Set initial 20 second cooldown when success is shown
+  useEffect(() => {
+    if (isSuccess && resendCount === 0) {
+      setResendCooldown(30);
+    }
+  }, [isSuccess, resendCount]);
 
   const handleContinue = async () => {
     setErrors({});
@@ -81,6 +100,8 @@ export default function ResetPasswordPage() {
           await sendPasswordResetEmailJS({
             toEmail: data.email,
             resetUrl: data.resetUrl,
+            locale: locale,
+            type: 'password_reset',
           });
           
           // Success
@@ -100,6 +121,83 @@ export default function ResetPasswordPage() {
       }
     } catch (error) {
       console.error('Reset password error:', error);
+      setErrors({ general: t('reset.errors.somethingWentWrong') });
+      setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setErrors({});
+
+    if (resendCooldown > 0) {
+      return; // Still in cooldown
+    }
+
+    if (resendCount >= 3) {
+      setErrors({ general: t('reset.resendMaxAttempts') });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/reset-password/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept-Language': locale,
+        },
+        body: JSON.stringify({ email, locale }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Check if it's an email not found error (404)
+        if (response.status === 404 && data.error?.toLowerCase().includes('no account')) {
+          setErrors({ general: t('reset.errors.emailNotFound') });
+        } else {
+          setErrors({ general: data.error || t('reset.errors.somethingWentWrong') });
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // If we got a reset URL, send email via EmailJS (client-side)
+      if (data.success && data.resetUrl && data.email) {
+        try {
+          await sendPasswordResetEmailJS({
+            toEmail: data.email,
+            resetUrl: data.resetUrl,
+            locale: locale,
+            type: 'password_reset',
+          });
+          
+          // Update resend count and set cooldown
+          const newCount = resendCount + 1;
+          setResendCount(newCount);
+          
+          // Set cooldown: 20 seconds for first resend, then 1 minute
+          if (newCount === 1) {
+            setResendCooldown(20); // 20 seconds for first resend
+          } else {
+            setResendCooldown(60); // 1 minute for subsequent resends
+          }
+          
+          setIsLoading(false);
+        } catch (emailError: any) {
+          console.error('Failed to send email via EmailJS:', emailError);
+          setErrors({ 
+            general: emailError.message || t('reset.errors.somethingWentWrong')
+          });
+          setIsLoading(false);
+        }
+      } else {
+        // Fallback if API doesn't return expected data
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Resend email error:', error);
       setErrors({ general: t('reset.errors.somethingWentWrong') });
       setIsLoading(false);
     }
@@ -136,16 +234,52 @@ export default function ResetPasswordPage() {
 
           {/* Success Message */}
           {isSuccess && (
-            <div className="bg-green-bg dark:bg-green-bg-dark border border-green-border dark:border-green-border-dark rounded-lg p-4 space-y-2 animate-fade-in">
-              <div className="flex items-center gap-2 text-green dark:text-green-dark">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-                <span className="font-medium">{t('reset.success')}</span>
+            <div className="bg-green-bg dark:bg-green-bg-dark border border-green-border dark:border-green-border-dark rounded-lg p-4 space-y-4 animate-fade-in">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-green dark:text-green-dark">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-medium">{t('reset.success')}</span>
+                </div>
+                <p className="text-sm text-green dark:text-green-dark">
+                  {t('reset.successDescription')}
+                </p>
               </div>
-              <p className="text-sm text-green dark:text-green-dark">
-                {t('reset.successDescription')}
-              </p>
+              
+              {/* Resend Button */}
+              {resendCount < 5 && (
+                <div className="flex flex-col gap-2 items-center" dir={isRTL ? 'rtl' : 'ltr'}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="md"
+                    className="w-full"
+                    disabled={isLoading || resendCooldown > 0}
+                    onClick={handleResend}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        {t('reset.sending')}
+                      </span>
+                    ) : resendCooldown > 0 ? (
+                      t('reset.resendEmailWithCooldown', { seconds: resendCooldown })
+                    ) : (
+                      t('reset.resendEmail')
+                    )}
+                  </Button>
+                </div>
+              )}
+              
+              {resendCount >= 5 && (
+                <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
+                  {t('reset.resendMaxAttempts')}
+                </p>
+              )}
             </div>
           )}
 

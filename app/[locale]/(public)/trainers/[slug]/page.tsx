@@ -340,7 +340,7 @@ export default function TrainerPage() {
   const trainerDescription = getLocalizedText(trainer.description);
   const trainerShortDescription = getLocalizedText(trainer.shortDescription);
   const areaLabel = locale === 'he' ? areaLabels[trainer.area]?.he : areaLabels[trainer.area]?.en || trainer.area;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
 
   // Structured data for SEO (Person schema)
   const structuredData = {

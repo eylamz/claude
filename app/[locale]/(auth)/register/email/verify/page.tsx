@@ -99,6 +99,8 @@ export default function VerifyEmailPage() {
           await sendPasswordResetEmailJS({
             toEmail: data.email,
             resetUrl: data.verificationUrl,
+            locale: locale,
+            type: 'email_verification',
           });
           
           // Update resend count and set cooldown

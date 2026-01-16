@@ -331,7 +331,7 @@ class EmailService {
           customerName: order.customerName,
           items: order.items,
           total: order.total,
-          orderUrl: order.trackingUrl || `https://enboss.com/orders/${order.orderNumber}`,
+          orderUrl: order.trackingUrl || `https://enboss.co/orders/${order.orderNumber}`,
         });
       } catch (error) {
         console.error('Failed to send order confirmation via EmailJS:', error);
@@ -432,7 +432,7 @@ class EmailService {
     } else {
       const html = getContactFormHTML(data);
       const subject = data.subject || `Contact Form: ${data.userName}`;
-      const recipient = process.env.CONTACT_FORM_RECIPIENT || 'contact@enboss.com';
+      const recipient = process.env.CONTACT_FORM_RECIPIENT || 'contact@enboss.co';
       
       await this.sendWithRetry(recipient, subject, html);
     }
@@ -445,7 +445,7 @@ class EmailService {
     type: 'new_order' | 'low_stock' | 'new_review' | 'contact_form',
     data: any
   ): Promise<void> {
-    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@enboss.com';
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@enboss.co';
 
     let html: string;
     let subject: string;

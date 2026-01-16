@@ -36,7 +36,7 @@ await emailService.sendOrderConfirmation({
     zip: '12345',
     country: 'Israel'
   },
-  trackingUrl: 'https://enboss.com/orders/ORD-12345'
+  trackingUrl: 'https://enboss.co/orders/ORD-12345'
 });
 
 // Send welcome email
@@ -88,15 +88,15 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
-SMTP_FROM=noreply@enboss.com
+SMTP_FROM=noreply@enboss.co
 
 # EmailJS (Client-side)
 NEXT_PUBLIC_EMAILJS_SERVICE_ID=your_service_id
 NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_public_key
 
 # Recipients
-ADMIN_NOTIFICATION_EMAIL=admin@enboss.com
-CONTACT_FORM_RECIPIENT=contact@enboss.com
+ADMIN_NOTIFICATION_EMAIL=admin@enboss.co
+CONTACT_FORM_RECIPIENT=contact@enboss.co
 
 # Test Mode
 EMAIL_TEST_MODE=true  # Only in development

@@ -101,7 +101,7 @@ export async function sendContactFormEmailJS(data: {
     subject: data.subject || 'Contact Form Submission',
     message: data.message,
     reply_to: data.replyTo || data.userEmail,
-    to_email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'contact@enboss.com',
+    to_email: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'contact@enboss.co',
   });
 }
 
@@ -149,11 +149,13 @@ export async function sendWelcomeEmailJS(data: {
 
 /**
  * Helper to send password reset via EmailJS (client-side)
- * Template variables: {{link}} and {{email}}
+ * Template variables: dir, align, title, intro, link_text, expiry_note, security_note, regards_text, footer_sent_to, footer_reason, link, email, site_url
  */
 export async function sendPasswordResetEmailJS(data: {
   toEmail: string;
   resetUrl: string;
+  locale?: string;
+  type?: string;
 }): Promise<void> {
   const templateId = process.env.NEXT_PUBLIC_EMAILJS_PASSWORD_RESET_TEMPLATE_ID || '';
   
@@ -161,12 +163,18 @@ export async function sendPasswordResetEmailJS(data: {
     throw new Error('EmailJS password reset template ID is not configured. Please set NEXT_PUBLIC_EMAILJS_PASSWORD_RESET_TEMPLATE_ID');
   }
 
-  // Use the template ID directly with template variables matching your EmailJS template
-  // Template variables: {{link}} and {{email}}
-  await sendEmailJS(templateId, {
-    link: data.resetUrl,
-    email: data.toEmail,
-  });
+  // Import the template function
+  const { getPasswordResetEmailJSTemplateParams } = await import('./templates/password-reset');
+  
+  // Generate template variables based on locale
+  const templateParams = getPasswordResetEmailJSTemplateParams(
+    data.toEmail,
+    data.resetUrl,
+    data.locale || 'en',
+    data.type || 'password_reset'
+  );
+
+  await sendEmailJS(templateId, templateParams);
 }
 
 /**
@@ -183,7 +191,7 @@ export async function sendAdminNotificationEmailJS(
     contact_form: EMAILJS_TEMPLATES.ADMIN_CONTACT_FORM,
   };
 
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@enboss.com';
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@enboss.co';
 
   await sendEmailJS(templateMap[type], {
     to_email: adminEmail,
@@ -241,10 +249,13 @@ export async function sendEmailJSServer(
 /**
  * Helper to send password reset via EmailJS (server-side)
  * Uses REST API for server-side email sending
+ * Template variables: dir, align, title, intro, link_text, expiry_note, security_note, regards_text, footer_sent_to, footer_reason, link, email, site_url
  */
 export async function sendPasswordResetEmailJSServer(data: {
   toEmail: string;
   resetUrl: string;
+  locale?: string;
+  type?: string;
 }): Promise<void> {
   const templateId = process.env.NEXT_PUBLIC_EMAILJS_PASSWORD_RESET_TEMPLATE_ID || '';
   
@@ -252,11 +263,18 @@ export async function sendPasswordResetEmailJSServer(data: {
     throw new Error('EmailJS password reset template ID is not configured. Please set NEXT_PUBLIC_EMAILJS_PASSWORD_RESET_TEMPLATE_ID');
   }
 
-  // Template variables match your EmailJS template: {{link}} and {{email}}
-  await sendEmailJSServer(templateId, {
-    link: data.resetUrl,
-    email: data.toEmail,
-  });
+  // Import the template function
+  const { getPasswordResetEmailJSTemplateParams } = await import('./templates/password-reset');
+  
+  // Generate template variables based on locale
+  const templateParams = getPasswordResetEmailJSTemplateParams(
+    data.toEmail,
+    data.resetUrl,
+    data.locale || 'en',
+    data.type || 'password_reset'
+  );
+
+  await sendEmailJSServer(templateId, templateParams);
 }
 
 

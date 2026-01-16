@@ -255,10 +255,9 @@ export default function LoginPage() {
                 }`}
               />
             </div>
-            <h1 className="text-3xl font-bold text-gray dark:text-gray-dark">
-              {t('login.title')}
+            <h1 className="text-[1rem] font-medium text-gray dark:text-gray-dark">
+              {t('login.subtitle')}
             </h1>
-
           </div>
 
           {/* General Error */}

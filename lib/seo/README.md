@@ -34,7 +34,7 @@ export default function ProductPage({ product, locale }) {
     images: product.images,
     slug: product.slug,
     locale,
-    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com',
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co',
     availability: product.totalStock > 0 ? 'InStock' : 'OutOfStock',
   });
 
@@ -83,7 +83,7 @@ Configured at `/robots.txt`:
 ## Environment Variables
 
 ```env
-NEXT_PUBLIC_SITE_URL=https://enboss.com
+NEXT_PUBLIC_SITE_URL=https://enboss.co
 ```
 
 ## Implementation Examples

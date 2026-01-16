@@ -53,7 +53,7 @@ export function getWelcomeEmailHTML(data: WelcomeEmailData): string {
     children: content,
     primaryButton: {
       text: 'Start Shopping',
-      url: 'https://enboss.com/shop',
+      url: 'https://enboss.co/shop',
     },
   });
 }

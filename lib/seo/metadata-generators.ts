@@ -10,7 +10,7 @@ export async function generateProductMetadata(params: { slug: string; locale: st
   const { slug, locale } = params;
   
   // Fetch product data
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
   const res = await fetch(`${siteUrl}/api/products/${slug}?locale=${locale}`, { next: { revalidate: 3600 } });
   
   if (!res.ok) {
@@ -152,7 +152,7 @@ export async function generateSkateparkMetadata(params: { slug: string; locale: 
 export async function generateSkateparksListingMetadata(params: { locale: string }): Promise<Metadata> {
   const { locale } = params;
   
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
   
   // Fetch skateparks count (lightweight request)
   let parksCount = 0;
@@ -237,7 +237,7 @@ export async function generateGuidesListingMetadata(params: { locale: string }):
 export async function generateEventMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
   const { slug, locale } = params;
   
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
   const res = await fetch(`${siteUrl}/api/events/${slug}`, { next: { revalidate: 1800 } });
   
   if (!res.ok) {
@@ -274,7 +274,7 @@ export async function generateEventMetadata(params: { slug: string; locale: stri
 export async function generateGuideMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
   const { slug, locale } = params;
   
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
   const res = await fetch(`${siteUrl}/api/guides/${slug}?locale=${locale}`, { next: { revalidate: 3600 } });
   
   if (!res.ok) {
@@ -312,7 +312,7 @@ export async function generateGuideMetadata(params: { slug: string; locale: stri
 export async function generateTrainerMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
   const { slug, locale } = params;
   
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.com';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
   const res = await fetch(`${siteUrl}/api/trainers/${slug}?locale=${locale}`, { next: { revalidate: 3600 } });
   
   if (!res.ok) {
