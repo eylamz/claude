@@ -51,10 +51,17 @@ export async function GET(request: Request) {
       filter.role = role;
     }
 
-    // Status filter (for now, active by default, banned would need a separate field)
+    // Status filter
     if (status) {
-      // In real implementation, add a 'status' or 'banned' field to User model
-      // filter.status = status;
+      if (status === 'active') {
+        filter.emailVerified = true;
+      } else if (status === 'pending') {
+        filter.emailVerified = false;
+      } else if (status === 'banned') {
+        // In real implementation, add a 'banned' or 'status' field to User model
+        // filter.banned = true;
+        // For now, we'll leave this as a placeholder
+      }
     }
 
     // Date range filter

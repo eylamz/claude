@@ -179,6 +179,40 @@ const DropdownMenuShortcut = ({
 }
 DropdownMenuShortcut.displayName = "DropdownMenuShortcut"
 
+// Simple Dropdown wrapper component
+interface DropdownOption {
+  label: string;
+  value: string;
+  onClick?: () => void;
+  disabled?: boolean;
+}
+
+interface DropdownProps {
+  trigger: React.ReactNode;
+  options: DropdownOption[];
+}
+
+const Dropdown = ({ trigger, options }: DropdownProps) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        {trigger}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        {options.map((option) => (
+          <DropdownMenuItem
+            key={option.value}
+            onClick={option.onClick}
+            disabled={option.disabled}
+          >
+            {option.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 export {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -195,4 +229,5 @@ export {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuRadioGroup,
+  Dropdown,
 }

@@ -109,12 +109,11 @@ const SelectWrapper = React.forwardRef<HTMLButtonElement, SelectWrapperProps>(
     const selectId = React.useId();
     const finalId = props.id || selectId;
 
-    // Filter out options with empty string values (Radix UI doesn't allow them)
-    const validOptions = options.filter(option => option.value !== '');
+    // Find empty option for placeholder
     const emptyOption = options.find(option => option.value === '');
     
-    // Use undefined for empty string values to show placeholder
-    const selectValue = value === '' ? undefined : value;
+    // Map empty string to __empty__ for Radix UI (which doesn't allow empty string values)
+    const selectValue = value === '' ? '__empty__' : value;
 
     return (
       <div className={cn("relative w-full", className)}>
@@ -128,7 +127,11 @@ const SelectWrapper = React.forwardRef<HTMLButtonElement, SelectWrapperProps>(
         )}
         <SelectRoot
           value={selectValue}
-          onValueChange={(newValue) => onChange({ target: { value: newValue || '' } })}
+          onValueChange={(newValue) => {
+            // Convert __empty__ back to empty string
+            const finalValue = newValue === '__empty__' ? '' : (newValue || '');
+            onChange({ target: { value: finalValue } });
+          }}
           disabled={disabled}
         >
           <SelectTrigger
@@ -139,8 +142,11 @@ const SelectWrapper = React.forwardRef<HTMLButtonElement, SelectWrapperProps>(
             <SelectValue placeholder={emptyOption?.label || "Select..."} />
           </SelectTrigger>
           <SelectContent>
-            {validOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
+            {options.map((option) => (
+              <SelectItem 
+                key={option.value || 'empty'} 
+                value={option.value || '__empty__'}
+              >
                 {option.label}
               </SelectItem>
             ))}

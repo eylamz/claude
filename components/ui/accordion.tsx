@@ -88,3 +88,6 @@ export const FAQContainer = () => {
     </div>
   );
 };
+
+// Export as Accordion for compatibility with index.ts
+export const Accordion = FAQContainer;

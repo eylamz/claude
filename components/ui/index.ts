@@ -4,7 +4,7 @@ export { Input } from './input';
 export { FloatingInput } from './floating-input';
 export { SelectRoot as Select, SelectRoot, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectItem, SelectWrapper } from './select';
 export { Textarea } from './textarea';
-export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuRadioItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuGroup, DropdownMenuPortal, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuRadioGroup } from './dropdown';
+export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuRadioItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuGroup, DropdownMenuPortal, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuRadioGroup, Dropdown } from './dropdown';
 export { Skeleton } from './skeleton';
 export { ThemeToggle } from './theme-toggle';
 export { LanguageSwitcher } from './language-switcher';
