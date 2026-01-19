@@ -101,6 +101,7 @@ export const authOptions: NextAuthOptions = {
     /**
      * Add user role and preferences to JWT token
      * Also handles rememberMe functionality for session duration
+     * Refreshes role from database periodically to ensure it's up to date
      */
     async jwt({ token, user, trigger, session }) {
       // Initial sign in
@@ -112,6 +113,9 @@ export const authOptions: NextAuthOptions = {
           language: 'en',
           colorMode: 'system',
         };
+        
+        // Track when role was last refreshed (in seconds since epoch)
+        token.roleRefreshedAt = Math.floor(Date.now() / 1000);
         
         // Handle rememberMe from user object (passed from authorize)
         // If rememberMe is true, use 30 days, otherwise use shorter duration (1 day)
@@ -131,8 +135,42 @@ export const authOptions: NextAuthOptions = {
       // Update session when specific actions occur
       if (trigger === 'update' && session?.user) {
         token.role = (session.user as any).role as string;
+        token.roleRefreshedAt = Math.floor(Date.now() / 1000);
         if ((session.user as any).preferences) {
           token.preferences = (session.user as any).preferences;
+        }
+      }
+
+      // Refresh role from database periodically (every 5 minutes) or if role is missing
+      // This ensures role changes in the database are reflected in the token
+      if (token.id) {
+        const now = Math.floor(Date.now() / 1000);
+        const roleRefreshedAt = (token.roleRefreshedAt as number) || 0;
+        const fiveMinutes = 5 * 60; // 5 minutes in seconds
+        
+        // Refresh if role is missing or if it's been more than 5 minutes since last refresh
+        if (!token.role || (now - roleRefreshedAt) > fiveMinutes) {
+          try {
+            // Ensure a MongoDB connection before querying
+            if (!isDBConnected()) {
+              await connectDB();
+            }
+
+            const dbUser = await User.findById(token.id).select('role preferences');
+            if (dbUser) {
+              token.role = dbUser.role;
+              token.roleRefreshedAt = now;
+              if (dbUser.preferences) {
+                token.preferences = {
+                  language: dbUser.preferences.language || 'en',
+                  colorMode: dbUser.preferences.colorMode || 'system',
+                };
+              }
+            }
+          } catch (error) {
+            // If database query fails, keep existing token data
+            console.error('Error refreshing user role in JWT callback:', error);
+          }
         }
       }
 

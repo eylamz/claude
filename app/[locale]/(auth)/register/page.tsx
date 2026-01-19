@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks';
+import { useTranslations } from 'next-intl';
 import { Button, FloatingInput } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Icon } from '@/components/icons/Icon';
@@ -44,6 +45,7 @@ function getStrengthColor(score: number) {
 export default function RegisterPage() {
   const locale = useLocale();
   const t = useTranslation('auth');
+  const commonT = useTranslations('common');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
@@ -185,7 +187,7 @@ export default function RegisterPage() {
 
           {/* General Error */}
           {errors.general && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg p-3 text-sm text-red-600 dark:text-red-400 animate-fade-in">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg p-3 text-sm text-red-600 dark:text-red-400 animate-fade-in text-center">
               {errors.general}
             </div>
           )}
@@ -329,6 +331,23 @@ export default function RegisterPage() {
               {t('register.signIn')}
             </Link>
           </p>
+
+          {/* Terms and Privacy Policy Links */}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-gray-500 dark:text-gray-400 pt-2">
+            <Link
+              href={`/${locale}/terms`}
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline"
+            >
+              {commonT('footer.termsOfService')}
+            </Link>
+            <span className="text-gray-400 dark:text-gray-500">•</span>
+            <Link
+              href={`/${locale}/privacy`}
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline"
+            >
+              {commonT('footer.privacyPolicy')}
+            </Link>
+          </div>
         </div>
       </div>
     </div>

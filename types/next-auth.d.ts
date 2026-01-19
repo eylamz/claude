@@ -30,6 +30,7 @@ declare module 'next-auth/jwt' {
     id: string;
     role: string;
     email: string;
+    roleRefreshedAt?: number;
     preferences?: {
       language: 'en' | 'he';
       colorMode: 'light' | 'dark' | 'system';

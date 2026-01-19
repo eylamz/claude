@@ -5,6 +5,7 @@ import { useLocale } from 'next-intl';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { sendPasswordResetEmailJS } from '@/lib/email/emailjs-service';
@@ -16,6 +17,7 @@ interface RegisterEmailErrors {
 export default function RegisterEmailPage() {
   const locale = useLocale();
   const t = useTranslation('auth');
+  const commonT = useTranslations('common');
   const router = useRouter();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
@@ -129,16 +131,16 @@ export default function RegisterEmailPage() {
           {/* Header */}
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Email verification
+              {t('register.emailPage.title') || 'Email verification'}
             </h1>
             <p className="text-gray dark:text-gray-dark text-base">
-              Click "Continue" to send an email verification to {email}
+              {t('register.emailPage.description', { email }) || `Click "Continue" to send an email verification to ${email}`}
             </p>
           </div>
 
           {/* General Error */}
           {errors.general && (
-            <div className="bg-red-bg dark:bg-red-bg-dark border border-red-border dark:border-red-border-dark rounded-lg p-3 text-sm text-red dark:text-red-dark animate-fade-in">
+            <div className="bg-red-bg dark:bg-red-bg-dark border border-red-border dark:border-red-border-dark rounded-lg p-3 text-sm text-red dark:text-red-dark animate-fade-in text-center">
               {errors.general}
             </div>
           )}
@@ -173,9 +175,26 @@ export default function RegisterEmailPage() {
               href={`/${locale}`}
               className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue dark:hover:text-blue-dark hover:underline transition-colors"
             >
-              Back to Home
+              {t('register.emailPage.backToHome') || 'Back to Home'}
             </Link>
           </p>
+
+          {/* Terms and Privacy Policy Links */}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-gray-500 dark:text-gray-400 pt-2">
+            <Link
+              href={`/${locale}/terms`}
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline"
+            >
+              {commonT('footer.termsOfService')}
+            </Link>
+            <span className="text-gray-400 dark:text-gray-500">•</span>
+            <Link
+              href={`/${locale}/privacy`}
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline"
+            >
+              {commonT('footer.privacyPolicy')}
+            </Link>
+          </div>
         </div>
       </div>
     </div>

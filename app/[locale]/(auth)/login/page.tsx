@@ -205,6 +205,14 @@ export default function LoginPage() {
         [name]: undefined,
       }));
     }
+    
+    // Also clear general error (email not found) when user starts typing in email field
+    if (name === 'email' && errors.general) {
+      setErrors(prev => ({
+        ...prev,
+        general: undefined,
+      }));
+    }
   };
 
   const handleEmailFocus = () => {
@@ -216,12 +224,22 @@ export default function LoginPage() {
         email: undefined,
       }));
     }
+    // Also clear general error (email not found) when user focuses on email field
+    if (errors.general) {
+      setErrors(prev => ({
+        ...prev,
+        general: undefined,
+      }));
+    }
   };
 
   const handleEmailBlur = () => {
     setIsEmailFocused(false);
   };
 
+  // Check if we should show error state (email error or email not found error)
+  const showErrorState = (errors.email && !isEmailFocused) || 
+    (errors.general === (t('login.errors.emailNotFound') || 'No account found with this email address.'));
 
   const isRTL = locale === 'he';
 
@@ -249,7 +267,7 @@ export default function LoginPage() {
               <Icon
                 name="logo"
                 className={`w-[120px] h-auto transition-colors duration-300 ${
-                  errors.email && !isEmailFocused
+                  showErrorState
                     ? 'text-red dark:text-red-dark'
                     : 'text-text dark:text-text-dark'
                 }`}
@@ -262,7 +280,7 @@ export default function LoginPage() {
 
           {/* General Error */}
           {errors.general && (
-            <div className="bg-red-bg dark:bg-red-bg-dark border border-red-border dark:border-red-border-dark rounded-lg p-3 text-sm text-red dark:text-red-dark animate-fade-in">
+            <div className="bg-red-bg dark:bg-red-bg-dark border border-red-border dark:border-red-border-dark rounded-lg p-3 text-sm text-red dark:text-red-dark animate-fade-in text-center">
               {errors.general}
             </div>
           )}
@@ -290,7 +308,7 @@ export default function LoginPage() {
               variant="primary"
               size="lg"
               className={`w-full max-w-[270px] transition-colors duration-300 ${
-                errors.email && !isEmailFocused
+                showErrorState
                   ? '!bg-red dark:!bg-red-dark'
                   : ''
               }`}

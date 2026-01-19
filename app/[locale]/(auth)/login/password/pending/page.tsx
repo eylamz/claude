@@ -163,7 +163,7 @@ export default function LoginPendingPage() {
 
           {/* General Error */}
           {errors.general && (
-            <div className="bg-red-bg dark:bg-red-bg-dark border border-red-border dark:border-red-border-dark rounded-lg p-3 text-sm text-red dark:text-red-dark animate-fade-in">
+            <div className="bg-red-bg dark:bg-red-bg-dark border border-red-border dark:border-red-border-dark rounded-lg p-3 text-sm text-red dark:text-red-dark animate-fade-in text-center">
               {errors.general}
             </div>
           )}

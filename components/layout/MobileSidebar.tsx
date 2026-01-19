@@ -300,7 +300,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                      searchInputRef.current?.focus();
                   }
                 }}
-                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
                 aria-label={isSearchOpen ? "Close Search" : "Open Search"}
               >
                 <Icon name={isSearchOpen ? "searchClose" : "searchBold"} className="w-4 h-4" />
@@ -311,7 +311,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               {loginEnabled && !session && (
                 <Link
                   href={`/${locale}/login`}
-                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
                   onClick={onClose}
                 >
                   <Icon name="accountBold" className="w-4 h-4" />
@@ -323,7 +323,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               {loginEnabled && session && !isAdmin && (
                 <Link
                   href={`/${locale}/account`}
-                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
                   onClick={onClose}
                 >
                   <Icon name="accountBold" className="w-4 h-4" />
@@ -334,7 +334,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           {loginEnabled && session && isAdmin && (
                 <Link
                   href={`/${locale}/account`}
-                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
                   onClick={onClose}
                 >
                   <Icon name="adminBold" className="w-5 h-5" />
@@ -345,7 +345,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               {/* Theme Toggle Button */}
               <button
                 onClick={handleThemeToggle}
-                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
                 aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
               >
                 {theme === 'dark' ? (
@@ -359,7 +359,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               {/* Language Switcher Button */}
               <button
                 onClick={handleLanguageToggle}
-                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark transition-colors duration-200"
+                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
                 aria-label={tCommon('toggle_language') || 'Toggle language'}
               >
                 {locale === 'en' ? (
@@ -377,7 +377,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                     handleLogout();
                     onClose();
                   }}
-                  className="flex flex-col items-center justify-between gap-3 px-3 py-2 text-xs text-error/70 dark:text-error-dark/70 hover:text-error dark:hover:text-error-dark transition-colors duration-200"
+                  className="flex flex-col items-center justify-between gap-3 px-3 py-2 text-xs text-error/70 dark:text-error-dark/70 hover:text-error dark:hover:text-error-dark hover:bg-red-bg/50 dark:hover:bg-red-bg-dark/50 rounded-lg transition-colors duration-200"
                 >
                   <Icon name="logoutBold" className="w-4 h-4" />
                   <span>{tCommon('logout') || 'Logout'}</span>
@@ -548,12 +548,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                     className={`block relative group h-full ${card.comingSoon ? 'cursor-not-allowed' : ''}`}
                   >
                     <div className={` 
-                      relative overflow-hidden rounded-xl bg-card dark:bg-card-dark border
+                      relative overflow-hidden rounded-xl bg-black/[3%] dark:bg-card-dark border
                        transition-colors duration-200 p-3 h-full flex flex-col gap-2 items-start
                       ${isActive 
                         ? 'border !bg-[#defce0] dark:!bg-[#1452174d] border-[#85ef8a] dark:border-[#1452174d]' 
                         : card.comingSoon
-                          ? 'border-transparent bg-card/60 dark:bg-card-dark/40'
+                          ? 'border-transparent bg-black/[1%] dark:bg-card-dark/40'
                           : 'border-transparent hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark'
                       }
                     `}>
@@ -750,7 +750,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   key={card.href}
                   href={card.comingSoon ? '#' : card.href}
                   onClick={card.comingSoon ? (e) => e.preventDefault() : onClose}
-                  className="flex items-center gap-1 p-3 rounded-xl bg-card dark:bg-card-dark hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors duration-200 group"
+                  className="flex items-center gap-1 p-3 rounded-xl bg-black/[3%] dark:bg-white/[3%] hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors duration-200 group"
                 >
                   <div className=" flex-none flex items-center justify-center w-5 h-5 rounded-full transition-colors duration-200">
                      <Icon name={card.icon} className="w-4 h-4 overflow-visible text-sidebar-text dark:text-sidebar-text-dark group-hover:text-sidebar-brand dark:group-hover:text-sidebar-brand-dark transition-colors duration-200" />

@@ -290,7 +290,7 @@ export default function LoginPasswordPage() {
 
           {/* General Error */}
           {errors.general && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg p-3 text-sm text-red-600 dark:text-red-400 animate-fade-in">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg p-3 text-sm text-red-600 dark:text-red-400 animate-fade-in text-center">
               {errors.general}
             </div>
           )}
