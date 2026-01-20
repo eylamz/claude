@@ -12,6 +12,7 @@ import { ParkCard } from '@/components/skateparks/ParkCard';
 import { FilterBar } from '@/components/skateparks/FilterBar';
 import { Icon } from '@/components/icons';
 import { useTranslations } from 'next-intl';
+import { IsraelWeatherSummary } from '@/components/weather';
 
 interface SkateparkImage {
   url: string;
@@ -674,6 +675,11 @@ export default function SkateparksPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Weather Summary */}
+      <div className="max-w-6xl mx-auto px-4 pt-6">
+        <IsraelWeatherSummary />
       </div>
 
       {/* Filter Bar */}

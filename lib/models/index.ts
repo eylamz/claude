@@ -75,3 +75,10 @@ export type {
   IMaintenanceSettings,
 } from './Settings';
 
+export { default as WeatherForecast } from './WeatherForecast';
+export type {
+  IWeatherForecast,
+  IHourlyForecast,
+  IDailyForecast,
+} from './WeatherForecast';
+

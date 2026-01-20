@@ -139,6 +139,10 @@ npm run dev
 - Analytics & Error Webhook (optional)
   - `NEXT_PUBLIC_GA_MEASUREMENT_ID`
   - `NEXT_PUBLIC_ERROR_WEBHOOK_URL`
+- Weather Forecast (optional)
+  - `NEXT_PUBLIC_ENABLE_WEATHER_FORECAST=true/false` - Enable/disable weather forecast feature
+  - `OPENWEATHERMAP_API_KEY=your_api_key` - OpenWeatherMap API key (free tier: 1,000 calls/day)
+  - `WEATHER_CACHE_TTL=86400` - Cache TTL in seconds (default: 86400 = 24 hours)
 
 ### Domains & SSL
 

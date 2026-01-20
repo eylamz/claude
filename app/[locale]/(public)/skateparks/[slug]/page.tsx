@@ -17,6 +17,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import ReviewForm from '@/components/reviews/ReviewForm';
 import ParkImageGallery from '@/components/skateparks/ParkImageGallery';
+import { ParkWeatherForecast } from '@/components/weather';
 import {
   is24HourSchedule,
   groupDaysWithSameHours,
@@ -1589,6 +1590,8 @@ export default function SkateparkPage() {
 
     
 
+          
+
           {/* Info Cards */}
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 ">
             {/* Hours Card - Now using FormattedHours component */}
@@ -1980,7 +1983,10 @@ export default function SkateparkPage() {
             </Card>
           </div>
 
-
+        {/* Weather Forecast */}
+        <div className="max-w-6xl mx-auto mb-8">
+            <ParkWeatherForecast slug={slug} closingYear={skatepark.closingYear} />
+          </div>
 
           {/* YouTube Embed */}
           {skatepark.mediaLinks.youtube && (
