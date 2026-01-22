@@ -202,7 +202,7 @@ const SkateparkThumbnail = memo(({
           ref={imgRef}
           src={optimizedUrl}
           alt={parkName}
-          className={`absolute left-1/2 -translate-x-1/2 w-[110%] h-full object-cover transition-all duration-200 select-none bg-card dark:bg-card-dark shadow-lg shadow-[rgba(0,0,0,0.05)] group-hover:shadow-lg dark:group-hover:!scale-[1.02] ${
+          className={`absolute left-1/2 -translate-x-1/2 w-[110%] h-full object-cover rounded-2xl transition-all duration-200 select-none bg-card dark:bg-card-dark shadow-lg shadow-[rgba(0,0,0,0.05)] group-hover:shadow-lg dark:group-hover:!scale-[1.02] ${
             alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
           } ${
             isLoaded ? 'opacity-100' : 'opacity-0'
@@ -418,7 +418,7 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
         <ParkAmenities amenities={park.amenities} locale={locale} />
       )}
 
-      <div className="relative h-[12rem] lg:h-[14rem] overflow-hidden rounded-2xl" 
+      <div className="relative h-[12rem] lg:h-[14rem] !overflow-hidden rounded-2xl" 
         style={{
           filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
         }}
@@ -530,4 +530,7 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
 });
 
 ParkCard.displayName = 'ParkCard';
+
+
+
 

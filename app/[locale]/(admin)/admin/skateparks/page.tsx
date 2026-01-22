@@ -90,6 +90,41 @@ const OpeningYearsTooltip = ({ active, payload, t }: any) => {
   );
 };
 
+// Custom Tooltip for opening months chart
+const OpeningMonthsTooltip = ({ active, payload, t }: any) => {
+  if (!active || !payload || !payload[0]) return null;
+  
+  const data = payload[0].payload;
+  const parks = data.parks || [];
+  const count = data.count || 0;
+  const month = data.month || 0;
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  const monthName = month > 0 && month <= 12 ? monthNames[month - 1] : 'Unknown';
+
+  return (
+    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 max-w-md">
+      <div className="font-semibold text-gray-900 dark:text-white mb-2">{monthName}</div>
+      <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+        {count} {count === 1 ? t('admin.statistics.openingMonths.park') : t('admin.statistics.openingMonths.parks')}
+      </div>
+      {parks.length > 0 && (
+        <div className="mt-2 max-h-40 overflow-y-auto">
+          <div className="text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">{t('admin.statistics.amenities.parks')}:</div>
+          <ul className="list-disc list-inside text-xs space-y-0.5 text-gray-600 dark:text-gray-400">
+            {parks.map((park: string, idx: number) => (
+              <li key={idx}>{park}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Custom Tooltip for areas chart
 const AreasTooltip = ({ active, payload, t }: any) => {
   if (!active || !payload || !payload[0]) return null;
@@ -176,10 +211,11 @@ export default function SkateparksPage() {
   const [statisticsData, setStatisticsData] = useState<{
     amenities: Record<string, { count: number; parks: string[] }>;
     openingYears: Array<{ year: number; count: number; parks: string[] }>;
+    openingMonths: Array<{ month: number; count: number; parks: string[] }>;
     areas: { north: number; center: number; south: number };
     totalParks: number;
   } | null>(null);
-  const [activeTab, setActiveTab] = useState<'amenities' | 'openingYears' | 'areas'>('amenities');
+  const [activeTab, setActiveTab] = useState<'amenities' | 'openingYears' | 'openingMonths' | 'areas'>('amenities');
   
   // Cache version control
   const [skateparksVersion, setSkateparksVersion] = useState<number>(1);
@@ -482,6 +518,9 @@ export default function SkateparksPage() {
     // Calculate opening years distribution with park names
     const openingYearsMap: Record<number, { count: number; parks: string[] }> = {};
 
+    // Calculate opening months distribution with park names
+    const openingMonthsMap: Record<number, { count: number; parks: string[] }> = {};
+
     // Calculate area distribution
     const areaStats = {
       north: 0,
@@ -555,6 +594,17 @@ export default function SkateparksPage() {
         openingYearsMap[year].parks.push(parkName);
       }
 
+      // Opening months with park names
+      if (skatepark.openingMonth && skatepark.openingMonth >= 1 && skatepark.openingMonth <= 12) {
+        const month = skatepark.openingMonth;
+        if (!openingMonthsMap[month]) {
+          openingMonthsMap[month] = { count: 0, parks: [] };
+        }
+        openingMonthsMap[month].count++;
+        const parkName = skatepark.name?.en || skatepark.name?.he || 'Unknown';
+        openingMonthsMap[month].parks.push(parkName);
+      }
+
       // Area distribution
       if (skatepark.area) {
         if (skatepark.area === 'north') {
@@ -579,9 +629,21 @@ export default function SkateparksPage() {
       });
     }
 
+    // Generate all months (1-12)
+    const openingMonths = [];
+    for (let month = 1; month <= 12; month++) {
+      const monthData = openingMonthsMap[month];
+      openingMonths.push({
+        month,
+        count: monthData ? monthData.count : 0,
+        parks: monthData ? monthData.parks : [],
+      });
+    }
+
     return {
       amenities: amenitiesStats,
       openingYears,
+      openingMonths,
       areas: areaStats,
       totalParks: allParks.length,
     };
@@ -777,9 +839,10 @@ export default function SkateparksPage() {
             {t('admin.subtitle')}
           </p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
+            className='flex items-center gap-1'
             onClick={async () => {
               setIsRefreshing(true);
               // Clear localStorage cache
@@ -816,7 +879,7 @@ export default function SkateparksPage() {
             disabled={isRefreshing}
           >
             <svg 
-              className={`w-4 h-4 mr-2 transition-transform ${isRefreshing ? 'animate-spin' : ''}`} 
+              className={`w-4 h-4 transition-transform ${isRefreshing ? 'animate-spin' : ''}`} 
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -1228,6 +1291,16 @@ export default function SkateparksPage() {
                 {t('admin.statistics.tabs.openingYears')}
               </button>
               <button
+                onClick={() => setActiveTab('openingMonths')}
+                className={`px-6 py-3 font-medium text-sm transition-colors ${
+                  activeTab === 'openingMonths'
+                    ? 'text-header-text dark:text-header-text-dark border-b-2 border-header-text dark:border-header-text-dark'
+                    : 'text-text-secondary dark:text-text-secondary-dark hover:text-text dark:hover:text-text-dark'
+                }`}
+              >
+                {t('admin.statistics.tabs.openingMonths')}
+              </button>
+              <button
                 onClick={() => setActiveTab('areas')}
                 className={`px-6 py-3 font-medium text-sm transition-colors ${
                   activeTab === 'areas'
@@ -1369,6 +1442,44 @@ export default function SkateparksPage() {
                     </div>
                   )}
 
+                  {/* Opening Months Chart */}
+                  {activeTab === 'openingMonths' && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-text dark:text-text-dark">
+                        {t('admin.statistics.openingMonths.title')}
+                      </h3>
+                      {statisticsData.openingMonths && statisticsData.openingMonths.some(m => m.count > 0) ? (
+                        <ResponsiveContainer width="100%" height={400}>
+                          <BarChart data={statisticsData.openingMonths}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#6e40c4" className="dark:stroke-gray-700" />
+                            <XAxis 
+                              dataKey="month" 
+                              tick={{ fontSize: 12, fill: 'currentColor' }}
+                              className="text-text-secondary dark:text-text-dark"
+                              tickFormatter={(value) => {
+                                const monthNames = [
+                                  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+                                ];
+                                return monthNames[value - 1] || value;
+                              }}
+                            />
+                            <YAxis 
+                              tick={{ fontSize: 12, fill: 'currentColor' }}
+                              className="text-text-secondary dark:text-text-secondary-dark"
+                            />
+                            <Tooltip content={<OpeningMonthsTooltip t={t} />} />
+                            <Bar dataKey="count" fill="#6e40c4" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex items-center justify-center h-96 text-text-secondary dark:text-text-secondary-dark">
+                          {t('admin.statistics.openingMonths.noData')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Areas Chart */}
                   {activeTab === 'areas' && (
                     <div className="space-y-4">
@@ -1401,7 +1512,7 @@ export default function SkateparksPage() {
                               { name: 'Center', value: statisticsData.areas.center },
                               { name: 'South', value: statisticsData.areas.south },
                             ].map((_, index) => {
-                              const colors = ['#4CAF50', '#9C27B0', '#FF9800'];
+                              const colors = ['#4CAF50', '#6e40c4', '#FF9800'];
                               return <Cell key={`cell-${index}`} fill={colors[index]} />;
                             })}
                           </Pie>
@@ -1410,8 +1521,8 @@ export default function SkateparksPage() {
                         </PieChart>
                       </ResponsiveContainer>
                       <div className="mt-4 grid grid-cols-3 gap-4">
-                        <div className="text-center p-4 bg-[#9c27b0]/5 dark:bg-blue-900/20 rounded-lg">
-                          <div className="text-2xl font-bold text-[#9c27b0] dark:text-blue-400">
+                        <div className="text-center p-4 bg-[#6e40c4]/5 dark:bg-blue-900/20 rounded-lg">
+                          <div className="text-2xl font-bold text-[#6e40c4] dark:text-blue-400">
                             {statisticsData.areas.north}
                           </div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">{t('admin.statistics.areas.north')}</div>

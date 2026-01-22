@@ -130,9 +130,9 @@ export function FilterBar({
           ? `shadow-xl border-header-border dark:border-header-border-dark py-3 ${
               isScrollingUp 
                 ? 'top-16' 
-                : 'top-0'
+                : 'top-0 pt-6'
             }` 
-          : 'py-4'
+          : 'py-4 pt-6'
       }`}
     >
       <div className="max-w-6xl mx-auto px-4">

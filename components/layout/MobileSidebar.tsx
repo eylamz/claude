@@ -278,17 +278,21 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
       {/* Sidebar Drawer */}
       <div 
-        className={`sidebar h-full fixed inset-0 z-[61] w-full max-w-[500px] bg-sidebar dark:bg-sidebar-dark shadow-2xl  ease-out transition-all duration-200 flex flex-col`}
+        className={`sidebar h-full fixed ${locale === 'he' ? 'right-0' : 'left-0'} top-0 bottom-0 z-[61] w-full max-w-[500px] bg-sidebar dark:bg-sidebar-dark shadow-2xl  ease-out transition-all duration-300 flex flex-col`}
         style={{ 
           height: '100dvh',
-          transform: isOpen ? 'translateX(0)' : 'translateX(-100%)' 
+          transform: isOpen 
+            ? 'translateX(0)' 
+            : locale === 'he' 
+              ? 'translateX(100%)' 
+              : 'translateX(-100%)'
         }}
       >
         
         {/* === HEADER === */}
         <div className="flex-none border-b border-border dark:border-border-dark bg-header dark:bg-header-dark transition-colors duration-200">
           {/* Header */}
-          <div className="flex flex-row-reverse items-start justify-between pb-2 mx-2 pt-6 flex-shrink-0">
+          <div className="flex flex-row-reverse items-start justify-between pb-2 mx-2 pt-2 flex-shrink-0">
             <div className="flex flex-wrap items-center gap-1 top-0">
               <button
                 onClick={() => {
@@ -435,7 +439,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         <div className="flex-1 overflow-y-auto px-2 py-6 bg-sidebar dark:bg-sidebar-dark transition-colors duration-200">
           {isSearching ? (
             // Search Results
-            <div className="space-y-6">
+            <div className="space-y-6 px-3">
               {searchLoading ? (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400 transition-colors duration-200">
                   {tCommon('loading') || 'Loading...'}
@@ -493,7 +497,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                             className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors duration-200 group"
                           >
                             {/* Thumbnail */}
-                            <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center transition-colors duration-200">
+                            <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-card dark:bg-card-dark flex items-center justify-center transition-colors duration-200">
                               {imageUrl ? (
                                 <Image
                                   src={imageUrl}
@@ -544,18 +548,20 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 (card.href !== `/${locale}` && pathname.startsWith(card.href));
 
               return (
+                <div className="rounded overflow-hidden">
                 <Link
                   key={card.href}
                   href={card.href}
                   onClick={onClose}
                   className={`flex items-center gap-2 px-2 py-3 text-3xl ${
                     isActive
-                      ? ' bg-brand-main/20 dark:bg-brand-main/5 text-header-text-dark dark:text-brand-main ltr:border-l-4 rtl:border-r-4 border-brand-main'
+                      ? 'ps-3 bg-brand-main/20 dark:bg-brand-main/5 text-header-text-dark dark:text-brand-main ltr:border-l-4 rtl:border-r-4 border-brand-main'
                       : 'ms-2 text-black/80 dark:text-white/90'
                   }`}
                 >
                   <span className="font-medium">{card.label}</span>
                 </Link>
+                </div>
               );
             })}
           </nav>
@@ -697,7 +703,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           )}
 
           {/* Separator between navCards and miniCards */}
-          <Separator className="my-6" />
+          <Separator className="my-6 !w-[60%]" />
 
           {/* Mini Cards (Info & Support) - nav.body-4 structure */}
           <nav className="text-base mt-12 px-6 transition-colors duration-200">

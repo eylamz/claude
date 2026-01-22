@@ -177,6 +177,7 @@
       "tabs": {
         "amenities": "Amenities",
         "openingYears": "Opening Years",
+        "openingMonths": "Opening Months",
         "areas": "Areas"
       },
       "amenities": {
@@ -202,6 +203,12 @@
         "title": "Opening Years Distribution",
         "noData": "No opening year data available",
         "year": "Year: {year}",
+        "park": "park",
+        "parks": "parks"
+      },
+      "openingMonths": {
+        "title": "Opening Months Distribution",
+        "noData": "No opening month data available",
         "park": "park",
         "parks": "parks"
       },
