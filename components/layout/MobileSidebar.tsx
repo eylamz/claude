@@ -12,6 +12,7 @@ import { useTheme } from '@/context/ThemeProvider';
 import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
 import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
+import { Separator } from '@/components/ui/separator';
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -85,6 +86,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   // 1. Navigation Configuration (Grid Cards)
   const navCards: NavCard[] = [
     {
+      href: `/${locale}`,
+      icon: 'home',
+      label: tMobileNav('home'),
+      description: tMobileNav('homeDesc'),
+    },
+    {
       href: `/${locale}/skateparks`,
       icon: 'trees',
       label: tMobileNav('findParks'),
@@ -96,26 +103,24 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       label: tMobileNav('events'),
       description: tMobileNav('eventsDesc'),
     },
-    {
+    ...(ecommerceEnabled ? [{
       href: `/${locale}/shop`,
-      icon: 'shopBold',
+      icon: 'shopBold' as IconName,
       label: tMobileNav('shop'),
       description: tMobileNav('shopDesc'),
-      comingSoon: !ecommerceEnabled,
-    },
+    }] : []),
     {
       href: `/${locale}/guides`,
       icon: 'books',
       label: tMobileNav('guides'),
       description: tMobileNav('guidesDesc'),
     },
-    {
+    ...(trainersEnabled ? [{
       href: `/${locale}/trainers`,
-      icon: 'trainersBold',
+      icon: 'trainersBold' as IconName,
       label: tMobileNav('findCoaches'),
-      description: tMobileNav('comingSoon'),
-      comingSoon: !trainersEnabled,
-    },
+      description: tMobileNav('findCoaches') || '',
+    }] : []),
   ];
 
   // 2. Secondary Links (Mini Cards)
@@ -303,7 +308,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
                 aria-label={isSearchOpen ? "Close Search" : "Open Search"}
               >
-                <Icon name={isSearchOpen ? "searchClose" : "searchBold"} className="w-4 h-4" />
+                <Icon name={isSearchOpen ? "searchClose" : "search"} className="w-4 h-4" />
                 <span>{tCommon('search') || 'Search'}</span>
               </button>
 
@@ -314,7 +319,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
                   onClick={onClose}
                 >
-                  <Icon name="accountBold" className="w-4 h-4" />
+                  <Icon name="account" className="w-4 h-4" />
                   <span>{tCommon('login') || 'Login'}</span>
                 </Link>
               )}
@@ -326,7 +331,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
                   onClick={onClose}
                 >
-                  <Icon name="accountBold" className="w-4 h-4" />
+                  <Icon name="account" className="w-4 h-4" />
                   <span>{tCommon('profile') || 'Profile'}</span>
                 </Link>
               )}
@@ -337,7 +342,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
                   onClick={onClose}
                 >
-                  <Icon name="adminBold" className="w-5 h-5" />
+                  <Icon name="admin" className="w-5 h-5" />
                   <span className="-mt-0.5">{tCommon('profile') || 'Profile'}</span>
                 </Link>
               )}
@@ -349,9 +354,9 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
               >
                 {theme === 'dark' ? (
-                  <Icon name="sunBold" className={`w-4 h-4 ${shouldAnimate ? 'animate-pop' : ''}`} />
+                  <Icon name="sun" className={`w-4 h-4 ${shouldAnimate ? 'animate-pop' : ''}`} />
                 ) : (
-                  <Icon name="moonBold" className={`w-4 h-4 ${shouldAnimate ? 'animate-pop' : ''}`} />
+                  <Icon name="moon" className={`w-4 h-4 ${shouldAnimate ? 'animate-pop' : ''}`} />
                 )}
                 <span>{theme === 'dark' ? tCommon('light_mode') || 'Light Mode' : tCommon('dark_mode') || 'Dark Mode'}</span>
               </button>
@@ -363,7 +368,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 aria-label={tCommon('toggle_language') || 'Toggle language'}
               >
                 {locale === 'en' ? (
-                  <Icon name="hebrewBold" className="w-4 h-4" />
+                  <Icon name="hebrew" className="w-4 h-4" />
                 ) : (
                   <Icon name="englishBold" className="w-4 h-4" />
                 )}
@@ -427,7 +432,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         </div>
 
         {/* === SCROLLABLE CONTENT === */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 bg-sidebar dark:bg-sidebar-dark transition-colors duration-200">
+        <div className="flex-1 overflow-y-auto px-2 py-6 bg-sidebar dark:bg-sidebar-dark transition-colors duration-200">
           {isSearching ? (
             // Search Results
             <div className="space-y-6">
@@ -532,76 +537,28 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             // Regular Navigation Content
             <>
           
-          {/* Main Navigation - GRID LAYOUT */}
-          <div className="grid grid-cols-2 gap-2 mb-6">
-             {navCards.map((card) => {
-                const isActive = pathname === card.href || (card.href !== `/${locale}` && pathname.startsWith(card.href));
-                
-                return (
-                  <Link
-                    key={card.href}
-                    href={card.comingSoon ? '#' : card.href}
-                    onClick={(e) => {
-                      if (card.comingSoon) e.preventDefault();
-                      else onClose();
-                    }}
-                    className={`block relative group h-full ${card.comingSoon ? 'cursor-not-allowed' : ''}`}
-                  >
-                    <div className={` 
-                      relative overflow-hidden rounded-xl bg-black/[3%] dark:bg-card-dark border
-                       transition-colors duration-200 p-3 h-full flex flex-col gap-2 items-start
-                      ${isActive 
-                        ? 'border !bg-[#defce0] dark:!bg-[#1452174d] border-[#85ef8a] dark:border-[#1452174d]' 
-                        : card.comingSoon
-                          ? 'border-transparent bg-black/[1%] dark:bg-card-dark/40'
-                          : 'border-transparent hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark'
-                      }
-                    `}>
+          {/* Navigation Links */}
+          <nav className="flex-1 overflow-y-auto pt-4 min-h-0">
+            {navCards.map((card) => {
+              const isActive = pathname === card.href || 
+                (card.href !== `/${locale}` && pathname.startsWith(card.href));
 
-                      {/* Icon Box */}
-                      <div className="w-full flex justify-between items-start relative">
-                        <div className={`${card.comingSoon ? 'opacity-50' : ''}
-                          w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200
-                          ${isActive 
-                            ? 'bg-[#16641a] dark:bg-[#85ef8a] text-[#defce0] dark:text-[#145217] shadow-sm ' 
-                            : 'bg-sidebar-hover dark:bg-black/20 text-sidebar-text dark:text-sidebar-text-dark group-hover:bg-sidebar/50 dark:group-hover:bg-sidebar-dark/50'
-                          }
-                        `}>
-                          <Icon name={card.icon} className="w-4 h-4" />
-                        </div>
-                        <div className="h-full flex items-start justify-end">
-                      {card.comingSoon && (
-                          <span className="inline-block text-xs xsm:text-sm font-semibold px-1.5 py-0.5 bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] rounded">
-                            {card.href.includes('/trainers') 
-                              ? (locale === 'he' ? 'בשלבי סיום' : 'Almost Done')
-                              : card.href.includes('/shop')
-                              ? (locale === 'he' ? 'מסדרים מדפים' : 'Restocking')
-                              : (locale === 'he' ? 'בקרוב' : 'Coming soon!')
-                            }
-                          </span>
-                        )}
-                        </div>
-                        
-                      </div>
-
-                      {/* Text Content */}
-                      <div className={`w-full ${card.comingSoon ? 'opacity-50' : ''}`}>
-                        <div className="flex items-center justify-between mb-0.5">
-                          <h3 className={`font-bold text-base leading-tight transition-colors duration-200 ${isActive ? 'text-[#16641a] dark:text-[#85ef8a]' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
-                            {card.label}
-                          </h3>
-                        </div>
-                        
-                          <p className={`text-xs xsm:text-sm  line-clamp-2 leading-tight transition-colors duration-200 ${isActive ? 'text-[#16641a] dark:text-[#4fb154]' : 'text-sidebar-text dark:text-sidebar-text-dark'}`}>
-                            {card.description}
-                          </p>
-                      </div>
-                      
-                    </div>
-                  </Link>
-                );
-             })}
-          </div>
+              return (
+                <Link
+                  key={card.href}
+                  href={card.href}
+                  onClick={onClose}
+                  className={`flex items-center gap-2 px-2 py-3 text-3xl ${
+                    isActive
+                      ? ' bg-brand-main/20 dark:bg-brand-main/5 text-header-text-dark dark:text-brand-main ltr:border-l-4 rtl:border-r-4 border-brand-main'
+                      : 'ms-2 text-black/80 dark:text-white/90'
+                  }`}
+                >
+                  <span className="font-medium">{card.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
 
           {/* Admin Management Links */}
           {loginEnabled && isAdmin && (
@@ -739,29 +696,35 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             </div>
           )}
 
-          {/* Mini Cards (Info & Support) */}
-          <div className="mb-4">
-            <h4 className="px-1 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-              {tMobileNav('infoSupport') || "Support"}
-            </h4>
-            <div className="grid grid-cols-2 gap-2">
-              {miniCards.map((card) => (
-                <Link
-                  key={card.href}
-                  href={card.comingSoon ? '#' : card.href}
-                  onClick={card.comingSoon ? (e) => e.preventDefault() : onClose}
-                  className="flex items-center gap-1 p-3 rounded-xl bg-black/[3%] dark:bg-white/[3%] hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors duration-200 group"
-                >
-                  <div className=" flex-none flex items-center justify-center w-5 h-5 rounded-full transition-colors duration-200">
-                     <Icon name={card.icon} className="w-4 h-4 overflow-visible text-sidebar-text dark:text-sidebar-text-dark group-hover:text-sidebar-brand dark:group-hover:text-sidebar-brand-dark transition-colors duration-200" />
-                  </div>
-                  <span className="overflow-visible  text-md font-semibold text-gray-700 dark:text-gray-300 transition-colors duration-200">
-                    {card.label}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
+          {/* Separator between navCards and miniCards */}
+          <Separator className="my-6" />
+
+          {/* Mini Cards (Info & Support) - nav.body-4 structure */}
+          <nav className="text-base mt-12 px-6 transition-colors duration-200">
+            <ul className="flex flex-col items-start gap-4">
+              {miniCards.map((card) => {
+                const isActive = pathname === card.href || (card.href !== `/${locale}` && pathname.startsWith(card.href));
+                
+                return (
+                  <li key={card.href}>
+                    <Link
+                      href={card.comingSoon ? '#' : card.href}
+                      onClick={card.comingSoon ? (e) => e.preventDefault() : onClose}
+                      className={`block transition-colors duration-200 ${
+                        card.comingSoon 
+                          ? 'cursor-not-allowed opacity-50 text-sidebar-text dark:text-sidebar-text-dark' 
+                          : isActive
+                            ? 'text-[#16641a] dark:text-[#85ef8a] font-semibold'
+                            : 'text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark'
+                      }`}
+                    >
+                      {card.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
             </>
           )}
         </div>

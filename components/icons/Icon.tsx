@@ -13,7 +13,14 @@ import Bike from './bmx-icon.svg';
 import BombShelter from './safe-house.svg';
 import Shekel from './shekel.svg';
 import Couch from './couch.svg';
+import Rainy from './rainy.svg';
+import LightRain from './lightRain.svg';
+import Snow from './snow.svg';
+import Wind from './wind.svg';
+import Cloudy from './cloudy.svg';
+import PartlyCloudy from './partlyCloudy.svg';
 import UmbrellaBold from './umbrellaBold.svg';
+import Thunderstorm from './thunderstorm.svg';
 import MapPinBold from './locationBold.svg';
 import MapPin from './location.svg';
 import AmenitiesBold from './notesBold.svg';
@@ -224,6 +231,15 @@ const iconMap: Record<string, SvgComponent> = {
   bookBold: BookBold,
   objects: Objects,
   objectsBold: ObjectsBold,
+
+  // Weather Icons
+  wind: Wind,
+  cloudy: Cloudy,
+  partlyCloudy: PartlyCloudy, 
+  rainy: Rainy,
+  lightRain: LightRain,
+  snow: Snow,
+  thunderstorm: Thunderstorm,
 
 
   // Action Icons
@@ -489,6 +505,13 @@ export type IconName =
   | 'oferSeshRose'
   | 'trash-can'
   | 'umbrellaBold'
+  | 'wind'
+  | 'cloudy'
+  | 'partlyCloudy'
+  | 'lightRain'
+  | 'rainy'
+  | 'snow'
+  | 'thunderstorm'
   | 'broom' | 'broomBold'
   | 'settings'  | 'settingsBold'
   | 'admin'  | 'adminBold'
