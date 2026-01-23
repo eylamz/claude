@@ -75,7 +75,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
   const buttonElement = (
     <Button
       variant={isActive ? "blue" : "gray"}
-      size="sm"
+      size="md"
       className={`relative active:scale-95 transition-all duration-200 ${className || ''}`}
       aria-label={tSkateparks('amenities.filterBy') || 'Filter by amenities'}
       aria-expanded={isOpen}
@@ -130,8 +130,9 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                 variant="red"
                 size="sm"
                 onClick={clearAll}
-                className=" h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
-              >
+                className="opacity-0 animate-popFadeIn h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
+                style={{ animationDelay: `300ms` }}
+            >
                 {tCommon('clear') || 'Clear'}
                 <Icon 
                   name="trash" 

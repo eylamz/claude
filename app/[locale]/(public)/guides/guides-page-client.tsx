@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, memo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { X, TrendingUp } from 'lucide-react';
-import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SegmentedControls } from '@/components/ui';
+import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Icon } from '@/components/icons';
@@ -36,14 +36,6 @@ interface GuidesPageProps {
 // Add or remove sports here, update the iconName to match available icons, and set variant for colors
 // Available variants: 'default' | 'red' | 'blue' | 'green' | 'purple' | 'orange' | 'yellow' | 'teal' | 'pink'
 const SPORT_CONFIG = [
-  {
-    value: '', // Empty value means "all sports"
-    iconName: 'filter' as const,
-    displayName: 'All',
-    variant: 'gray' as const,
-    tooltipEn: 'Show all sports',
-    tooltipHe: 'הצג את כל הספורטים',
-  },
   {
     value: 'roller',
     iconName: 'Roller' as const,
@@ -691,11 +683,17 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   const showingTo = Math.min(currentPage * 12, totalResults);
 
   const hasAnyFilter = selectedSports.length > 0 || difficulty || minRating > 0 || searchQuery.trim();
+  
+  // Count active filters (each selected sport counts as a separate filter)
+  const activeFiltersCount = 
+    selectedSports.length + 
+    (difficulty ? 1 : 0) + 
+    (minRating > 0 ? 1 : 0) + 
+    (searchQuery.trim() ? 1 : 0);
+  const hasMultipleFilters = activeFiltersCount > 1;
 
   // Filter sport buttons to only show those with available guides
   const availableSportButtons = SPORT_CONFIG.filter(sport => {
-    // Always show "All" button
-    if (sport.value === '') return true;
     // Show button only if this sport exists in filtersData
     return filtersData.sports.includes(sport.value);
   });
@@ -770,28 +768,46 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
 
             {/* Right: Filters + Sort */}
             <div className="flex items-center gap-0 xsm:gap-1">
-              {/* Sports Filter - Segmented Controls */}
-              <div className="flex-shrink-0">
-                <SegmentedControls
-                  options={availableSportButtons.map((sport) => ({
-                    value: sport.value,
-                    icon: <Icon name={sport.iconName} className="w-5 h-5" />,
-                    variant: sport.variant,
-                    tooltip: tr(sport.tooltipEn, sport.tooltipHe),
-                  }))}
-                  value={selectedSports.length > 0 ? selectedSports[0] : ''}
-                  onValueChange={(value: string) => {
-                    if (value === '') {
-                      setSelectedSports([]);
-                    } else {
-                      setSelectedSports([value]);
-                    }
-                    setPage(1);
-                  }}
-                  name="sports-filter"
-                  className="w-fit"
-                />
-              </div>
+              {/* Sports Filter - Multi-select Buttons */}
+              <TooltipProvider delayDuration={50}>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {availableSportButtons.map((sport) => {
+                    const isSelected = selectedSports.includes(sport.value);
+                    
+                    return (
+                      <Tooltip key={sport.value}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={isSelected ? sport.variant : 'gray'}
+                            size="md"
+                            onClick={() => {
+                              // Toggle this sport
+                              setSelectedSports(prev => {
+                                if (prev.includes(sport.value)) {
+                                  return prev.filter(s => s !== sport.value);
+                                } else {
+                                  return [...prev, sport.value];
+                                }
+                              });
+                              setPage(1);
+                            }}
+                            aria-label={tr(sport.tooltipEn, sport.tooltipHe)}
+                          >
+                            <Icon name={sport.iconName} className="w-5 h-5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent 
+                          side="bottom" 
+                          className="text-center"
+                          variant={isSelected ? sport.variant : 'gray'}
+                        >
+                          {tr(sport.tooltipEn, sport.tooltipHe)}
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </div>
+              </TooltipProvider>
 
               {/* Difficulty Filter */}
               {filtersData.difficulties.length > 0 && (
@@ -849,7 +865,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
               <div className="flex flex-wrap items-center gap-2">
                 {/* Results Count Badge */}
                 {!loading && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark animate-pop">
                     <Icon name="mapBold" className="w-4 h-4 text-green" />
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       {guides.length}
@@ -864,7 +880,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                 {searchQuery.trim() && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-bg dark:bg-orange-bg-dark rounded-full border border-orange-border dark:border-orange-border-dark hover:bg-orange-hover-bg dark:hover:bg-orange-hover-bg-dark transition-colors duration-200 cursor-pointer"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-bg dark:bg-orange-bg-dark rounded-full border border-orange-border dark:border-orange-border-dark hover:bg-orange-hover-bg dark:hover:bg-orange-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
                   >
                     <span className="text-sm text-gray-700 dark:text-gray-300">
                       "{searchQuery}"
@@ -878,7 +894,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                   <button
                     key={sport}
                     onClick={() => setSelectedSports(prev => prev.filter(s => s !== sport))}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark transition-colors duration-200 cursor-pointer"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {getSportTranslation(sport)}
@@ -891,7 +907,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                 {difficulty && (
                   <button
                     onClick={() => setDifficulty('')}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-bg dark:bg-purple-bg-dark rounded-full border border-purple-border dark:border-purple-border-dark hover:bg-purple-hover-bg dark:hover:bg-purple-hover-bg-dark transition-colors duration-200 cursor-pointer"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-bg dark:bg-purple-bg-dark rounded-full border border-purple-border dark:border-purple-border-dark hover:bg-purple-hover-bg dark:hover:bg-purple-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {difficulty}
@@ -915,11 +931,12 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                 )}
 
                 {/* Clear All Filters Button */}
-                {hasAnyFilter && (
+                {hasMultipleFilters && (
                   <button
                     onClick={handleClearFilters}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-full transition-colors duration-200"
-                  >
+                    className="opacity-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-full transition-colors duration-200 animate-fadeIn"
+                    style={{ animationDelay: `400ms` }}
+                 >
                     <X className="w-3.5 h-3.5" />
                     {tr('Clear All', 'נקה הכל')}
                   </button>

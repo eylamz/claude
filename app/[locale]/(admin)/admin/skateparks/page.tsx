@@ -1088,7 +1088,7 @@ export default function SkateparksPage() {
                   key={skateparkId} 
                   className={isDeleting ? 'opacity-50' : ''}
                 >
-                  <TableCell className="whitespace-nowrap px-4 md:px-6 md:py-3">
+                  <TableCell className="whitespace-nowrap px-2 md:py-3">
                     {!isDeleting ? (
                       <Checkbox
                         variant="brand"
@@ -1149,8 +1149,13 @@ export default function SkateparksPage() {
                       <div className="text-xs text-text-secondary dark:text-text-secondary-dark">{skatepark.name.he}</div>
                     </div>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-sm text-text-secondary dark:text-text-secondary-dark">
-                    {skatepark.slug}
+                  <TableCell className="whitespace-nowrap text-sm text-text dark:text-text-dark">
+                    <button
+                      onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkId}`)}
+                      className="text-brand-main dark:text-brand-dark hover:underline"
+                    >
+                      {skatepark.slug}
+                    </button>
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-text-secondary dark:text-text-secondary-dark max-w-xs truncate">
                     {formatAddress(skatepark.address)}
@@ -1294,7 +1299,7 @@ export default function SkateparksPage() {
                 onClick={() => setActiveTab('openingMonths')}
                 className={`px-6 py-3 font-medium text-sm transition-colors ${
                   activeTab === 'openingMonths'
-                    ? 'text-header-text dark:text-header-text-dark border-b-2 border-header-text dark:border-header-text-dark'
+                    ? 'text-purple dark:text-purple-dark border-b-2 border-purple dark:border-purple-dark'
                     : 'text-text-secondary dark:text-text-secondary-dark hover:text-text dark:hover:text-text-dark'
                 }`}
               >
@@ -1450,8 +1455,8 @@ export default function SkateparksPage() {
                       </h3>
                       {statisticsData.openingMonths && statisticsData.openingMonths.some(m => m.count > 0) ? (
                         <ResponsiveContainer width="100%" height={400}>
-                          <BarChart data={statisticsData.openingMonths}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#6e40c4" className="dark:stroke-gray-700" />
+                          <LineChart data={statisticsData.openingMonths}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" className="dark:stroke-gray-700" />
                             <XAxis 
                               dataKey="month" 
                               tick={{ fontSize: 12, fill: 'currentColor' }}
@@ -1469,8 +1474,15 @@ export default function SkateparksPage() {
                               className="text-text-secondary dark:text-text-secondary-dark"
                             />
                             <Tooltip content={<OpeningMonthsTooltip t={t} />} />
-                            <Bar dataKey="count" fill="#6e40c4" />
-                          </BarChart>
+                            <Line 
+                              type="monotone" 
+                              dataKey="count" 
+                              stroke="#6e40c4" 
+                              strokeWidth={2}
+                              dot={{ r: 4 }}
+                              activeDot={{ r: 6 }}
+                            />
+                          </LineChart>
                         </ResponsiveContainer>
                       ) : (
                         <div className="flex items-center justify-center h-96 text-text-secondary dark:text-text-secondary-dark">

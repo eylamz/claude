@@ -374,7 +374,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 {locale === 'en' ? (
                   <Icon name="hebrew" className="w-4 h-4" />
                 ) : (
-                  <Icon name="englishBold" className="w-4 h-4" />
+                  <Icon name="english" className="w-4 h-4" />
                 )}
                 <span>{locale === 'en' ? 'עברית' : 'English'}</span>
               </button>
@@ -388,7 +388,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   }}
                   className="flex flex-col items-center justify-between gap-3 px-3 py-2 text-xs text-error/70 dark:text-error-dark/70 hover:text-error dark:hover:text-error-dark hover:bg-red-bg/50 dark:hover:bg-red-bg-dark/50 rounded-lg transition-colors duration-200"
                 >
-                  <Icon name="logoutBold" className="w-4 h-4" />
+                  <Icon name="logout" className="w-4 h-4" />
                   <span>{tCommon('logout') || 'Logout'}</span>
                 </button>
               )}
@@ -566,13 +566,13 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             })}
           </nav>
 
+
+
           {/* Admin Management Links */}
           {loginEnabled && isAdmin && (
-            <div className="mb-4">
-              <h4 className="px-1 text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-                {tMobileNav('adminManagement') || "Admin Management"}
-              </h4>
-              <div className="grid grid-cols-2 gap-2">
+            <nav className="text-base mt-12 px-6 transition-colors duration-200">
+            <Separator className="my-6 !w-[80%]" />
+              <ul className="grid grid-cols-2 gap-4">
                 {[
                   {
                     href: `/${locale}/admin`,
@@ -669,37 +669,34 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 ].map((item) => {
                   const isActive = pathname === item.href || (item.href !== `/${locale}/admin` && pathname.startsWith(item.href));
                   
+                  
                   return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={onClose}
-                      className={`flex items-center gap-1 p-3 rounded-xl border border-transparent bg-card dark:bg-card-dark hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors duration-200 group ${
-                        isActive ? 'bg-sidebar-hover-brand dark:bg-sidebar-hover-brand-dark border-green-border dark:border-green-border-dark' : ''
-                      }`}
-                    >
-                      <div className="flex-none flex items-center justify-center w-5 h-5 rounded-full transition-colors duration-200">
-                        <span className={`overflow-visible transition-colors duration-200 ${
-                          isActive 
-                          ? 'text-[#16641a] dark:text-[#85ef8a] shadow-sm' 
-                          : 'text-sidebar-text dark:text-sidebar-text-dark'
-                      }`}>
-                          {item.icon}
-                        </span>
-                      </div>
-                      <span className={`overflow-visible text-sm font-semibold transition-colors duration-200 ${
-                        isActive 
-                          ? 'text-[#16641a] dark:text-[#85ef8a]' 
-                          : 'text-sidebar-text dark:text-sidebar-text-dark'
-                      }`}>
-                        {tMobileNav(item.labelKey)}
-                      </span>
-                    </Link>
-
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={onClose}
+                        className={`block transition-colors duration-200 ${
+                          isActive
+                            ? 'text-[#16641a] dark:text-[#85ef8a] font-semibold'
+                            : 'text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className={`transition-colors duration-200 ${
+                            isActive
+                              ? 'text-[#16641a] dark:text-[#85ef8a]'
+                              : 'text-sidebar-text dark:text-sidebar-text-dark'
+                          }`}>
+                            {item.icon}
+                          </span>
+                          <span>{tMobileNav(item.labelKey)}</span>
+                        </div>
+                      </Link>
+                    </li>
                   );
                 })}
-              </div>
-            </div>
+              </ul>
+            </nav>
           )}
 
           {/* Separator between navCards and miniCards */}

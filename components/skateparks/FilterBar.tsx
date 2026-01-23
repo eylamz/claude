@@ -35,8 +35,6 @@ interface FilterBarProps {
   // Data
   skateparksCount: number;
   allSkateparksCount: number;
-  animatingIcons: Set<string>;
-  shouldAnimateLocation: boolean;
   
   // Callbacks
   requestLocation: () => void;
@@ -70,8 +68,6 @@ export function FilterBar({
   loading,
   skateparksCount,
   allSkateparksCount,
-  animatingIcons,
-  shouldAnimateLocation,
   requestLocation,
   clearFilters,
   heroSectionRef,
@@ -113,26 +109,26 @@ export function FilterBar({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Calculate active filters
+  // Calculate active filters (each selected amenity counts as a separate filter)
   const hasAreaFilter = !!areaFilter;
-  const hasAmenitiesFilter = selectedAmenities.length > 0;
   const hasOpenNowFilter = openNowOnly;
   const hasSearchQuery = !!searchQuery.trim();
-  const activeFiltersCount = (hasAreaFilter ? 1 : 0) + (hasAmenitiesFilter ? 1 : 0) + (hasOpenNowFilter ? 1 : 0) + (hasSearchQuery ? 1 : 0);
+  const activeFiltersCount = selectedAmenities.length + (hasAreaFilter ? 1 : 0) + (hasOpenNowFilter ? 1 : 0) + (hasSearchQuery ? 1 : 0);
   const hasAnyFilter = activeFiltersCount > 0;
+  const hasMultipleFilters = activeFiltersCount > 1;
   const hasLocationSorting = userLocation && sortBy === 'nearest';
   const showStatus = hasAnyFilter || hasLocationSorting;
 
   return (
     <div 
-      className={`sticky z-40  bg-header dark:bg-header-dark transition-all duration-200 border-b-2 border-transparent ${
+      className={`sticky z-40  bg-background dark:bg-background-dark transition-all duration-200 border-b-2 border-transparent ${
         isScrolled 
-          ? `shadow-xl border-header-border dark:border-header-border-dark py-3 ${
+          ? `!bg-header dark:!bg-header-dark shadow-xl border-header-border dark:border-header-border-dark py-3 ${
               isScrollingUp 
                 ? 'top-16' 
-                : 'top-0 pt-6'
+                : 'top-0 pt-6 sm:pt-4'
             }` 
-          : 'py-4 pt-6'
+          : 'py-4 pt-6 sm:pt-4'
       }`}
     >
       <div className="max-w-6xl mx-auto px-4">
@@ -169,7 +165,7 @@ export function FilterBar({
                 <TooltipTrigger asChild>
                   <Button
                     variant={userLocation ? "green" : "gray"}
-                    size="sm"
+                    size="md"
                     onClick={requestLocation}
                     className='overflow-hidden'
                     aria-label={userLocation ? tr('Disable Location', 'כבה מיקום') : tr('Use My Location', 'השתמש במיקומי')}
@@ -195,7 +191,7 @@ export function FilterBar({
                   <div className="relative">
                     <Button
                       variant={viewMode === 'map' ? "orange" : "gray"}
-                      size="sm"
+                      size="md"
                       onClick={() => {
                         const newViewMode = viewMode === 'grid' ? 'map' : 'grid';
                         setViewMode(newViewMode);
@@ -245,7 +241,7 @@ export function FilterBar({
             <div className="flex flex-wrap items-center gap-2">
               {/* Results Count Badge */}
               {hasAnyFilter && !loading && (
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark animate-pop">
                   <Icon name="mapBold" className="w-4 h-4 text-green" />
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">
                     {skateparksCount}
@@ -260,7 +256,7 @@ export function FilterBar({
               {hasSearchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-bg dark:bg-orange-bg-dark rounded-full border border-orange-border dark:border-orange-border-dark hover:bg-orange-bg/80 dark:hover:bg-orange-bg-dark/80 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-bg dark:bg-orange-bg-dark rounded-full border border-orange-border dark:border-orange-border-dark hover:bg-orange-bg/80 dark:hover:bg-orange-bg-dark/80 transition-colors cursor-pointer animate-pop"
                 >
                   <span className="text-sm text-gray-700 dark:text-gray-300">
                     "{searchQuery}"
@@ -273,7 +269,7 @@ export function FilterBar({
               {hasAreaFilter && (
                 <button
                   onClick={() => setAreaFilter('')}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-bg dark:bg-purple-bg-dark rounded-full border border-purple-border dark:border-purple-border-dark hover:bg-purple-bg/80 dark:hover:bg-purple-bg-dark/80 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-bg dark:bg-purple-bg-dark rounded-full border border-purple-border dark:border-purple-border-dark hover:bg-purple-bg/80 dark:hover:bg-purple-bg-dark/80 transition-colors cursor-pointer animate-pop"
                 >
                   <MapPin className="w-3.5 h-3.5 text-purple dark:text-purple-dark" />
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -287,15 +283,12 @@ export function FilterBar({
               {selectedAmenities.map((amenity) => {
                 const amenityOption = amenityOptions.find(a => a.key === amenity);
                 const iconName = amenityOption?.iconName;
-                const shouldAnimate = animatingIcons.has(amenity);
 
                 return (
                   <button
                     key={amenity}
                     onClick={() => setSelectedAmenities(prev => prev.filter(a => a !== amenity))}
-                    className={`inline-flex items-center gap-2 px-3 py-1.5 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-bg/80 dark:hover:bg-blue-bg-dark/80 transition-colors cursor-pointer ${
-                      shouldAnimate ? 'animate-pop' : ''
-                    }`}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-bg/80 dark:hover:bg-blue-bg-dark/80 transition-colors cursor-pointer animate-pop"
                   >
                     {iconName && (
                       <Icon
@@ -313,9 +306,7 @@ export function FilterBar({
 
               {/* Location Sorting Badge */}
               {hasLocationSorting && (
-                <div className={`inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark ${
-                  shouldAnimateLocation ? 'animate-pop' : ''
-                }`}>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark animate-pop">
                   <Icon
                     name="locationBold"
                     className="w-3.5 h-3.5 text-green dark:text-green-dark"
@@ -332,10 +323,11 @@ export function FilterBar({
               )}
 
               {/* Clear All Filters Button */}
-              {hasAnyFilter && (
+              {hasMultipleFilters && (
                 <button
                   onClick={clearFilters}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-full transition-colors duration-200"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-full transition-colors duration-200 animate-fadeIn"
+                  style={{ animationDelay: `400ms` }}
                 >
                   <X className="w-3.5 h-3.5" />
                   {tr('Clear All', 'נקה הכל')}

@@ -51,7 +51,7 @@ const Tooltip = ({ children, ...props }: React.ComponentPropsWithoutRef<typeof T
         {...props}
         open={isTouch ? open : undefined}
         onOpenChange={isTouch ? handleOpenChange : undefined}
-        delayDuration={isTouch ? 0 : 300}
+        delayDuration={isTouch ? 0 : 50}
       >
         {children}
       </TooltipPrimitive.Root>
