@@ -35,7 +35,7 @@ export function generateMetadata(config: SEOConfig): Metadata {
     if (canonicalUrl.includes(`/${locale}/`)) {
       // URL has locale prefix, replace it
       return canonicalUrl.replace(`/${locale}/`, `/${targetLocale}/`);
-    } else if (canonicalUrl.includes('/skateparks/') || canonicalUrl.includes('/shop/') || canonicalUrl.includes('/guides/') || canonicalUrl.includes('/trainers/') || canonicalUrl.includes('/events/')) {
+    } else if (canonicalUrl.includes('/skateparks/') || canonicalUrl.includes('/shop/') || canonicalUrl.includes('/guides/') || canonicalUrl.includes('/trainers/') || canonicalUrl.includes('/events/') || canonicalUrl.includes('/growth-lab
       // URL doesn't have locale prefix, add it
       const pathWithoutDomain = canonicalUrl.replace(siteUrl, '');
       return `${siteUrl}/${targetLocale}${pathWithoutDomain}`;

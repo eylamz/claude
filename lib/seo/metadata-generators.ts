@@ -309,6 +309,44 @@ export async function generateGuideMetadata(params: { slug: string; locale: stri
   });
 }
 
+export async function generateFormMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
+  const { slug, locale } = params;
+  
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+  const res = await fetch(`${siteUrl}/api/forms/${slug}?locale=${locale}`, { next: { revalidate: 3600 } });
+  
+  if (!res.ok) {
+    return genMeta({
+      title: 'Form Not Found',
+      description: 'The form you are looking for could not be found.',
+      locale,
+    });
+  }
+
+  const { form } = await res.json();
+  const title = getLocalizedText(form.title, locale);
+  const description = form.description
+    ? getLocalizedText(form.description, locale).substring(0, 160)
+    : `Fill out ${title} on ENBOSS. Help us grow by sharing your thoughts.`;
+  
+  const metaTitle = form.metaTitle
+    ? getLocalizedText(form.metaTitle, locale)
+    : `${title} - Growth Lab | ENBOSS`;
+  const metaDescription = form.metaDescription
+    ? getLocalizedText(form.metaDescription, locale)
+    : description;
+
+  return genMeta({
+    title: metaTitle,
+    description: metaDescription,
+    image: '/og-form-default.jpg',
+    url: `/${locale}/growth-labg}`,
+    type: 'website',
+    locale,
+    alternateLocales: locale === 'en' ? ['he'] : ['en'],
+  });
+}
+
 export async function generateTrainerMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
   const { slug, locale } = params;
   

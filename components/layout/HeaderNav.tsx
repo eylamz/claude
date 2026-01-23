@@ -305,6 +305,16 @@ export default function HeaderNav() {
                 {tAdmin('guides')}
               </Link>
 
+              {/* Growth Lab */}
+              <Link
+                href={`/${locale}/growth-lab`}
+                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                  isActive(`/${locale}/growth-lab`) ? 'text-black dark:text-white' : ''
+                }`}
+              >
+                {locale === 'en' ? 'Growth Lab' : 'צומחים יחד'}
+              </Link>
+
               {/* Join Community (drive registration) */}
               <Link
                 href={`/${locale}/community`}
@@ -728,6 +738,11 @@ export default function HeaderNav() {
                                   {
                                     href: `/${locale}/admin/guides`,
                                     labelKey: 'guides',
+                                    icon: BookOpen,
+                                  },
+                                  {
+                                    href: `/${locale}/admin/forms`,
+                                    labelKey: 'forms',
                                     icon: BookOpen,
                                   },
                                   {
