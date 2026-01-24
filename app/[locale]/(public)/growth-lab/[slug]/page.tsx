@@ -10,7 +10,7 @@ import { generateFormMetadata } from '@/lib/seo/metadata-generators';
 
 interface FormField {
   id: string;
-  type: 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'date' | 'number' | 'link' | 'image' | 'image-selection';
+  type: 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'date' | 'number' | 'link' | 'image' | 'image-selection' | 'israel-cities';
   label: { en: string; he: string };
   required: boolean;
   placeholder?: { en: string; he: string };

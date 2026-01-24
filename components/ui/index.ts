@@ -30,5 +30,6 @@ export {
   ToastAction,
 } from './toast';
 export { Toaster } from './toaster';
+export { IsraelCitiesAutocomplete, ISRAEL_CITIES } from './israel-cities-autocomplete';
 
 

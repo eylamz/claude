@@ -13,7 +13,7 @@ import { NumberInput } from '@/components/ui/number-input';
 
 interface FormField {
   id: string;
-  type: 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'date' | 'number' | 'link' | 'image' | 'image-selection';
+  type: 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'date' | 'number' | 'link' | 'image' | 'image-selection' | 'israel-cities';
   label: { en: string; he: string };
   required: boolean;
   order: number;
@@ -21,6 +21,8 @@ interface FormField {
   options?: Array<{ value: string; label: { en: string; he: string } }>;
   hasOtherOption?: boolean;
   otherInputType?: 'input' | 'textarea';
+  otherLabel?: { en: string; he: string };
+  otherPlaceholder?: { en: string; he: string };
   images?: Array<{ url: string; alt?: { en: string; he: string } }>;
   min?: number;
   max?: number;
@@ -53,6 +55,7 @@ const FORM_FIELD_TYPES: { value: FormFieldType; label: string; icon: string }[] 
   { value: 'link', label: 'Link', icon: '🔗' },
   { value: 'image', label: 'Image', icon: '🖼️' },
   { value: 'image-selection', label: 'Image Selection', icon: '🖼️📸' },
+  { value: 'israel-cities', label: 'Israeli Cities', icon: '🏙️' },
 ];
 
 export default function NewFormPage() {
@@ -117,6 +120,8 @@ export default function NewFormPage() {
       options: type === 'radio' || type === 'select' || type === 'checkbox' ? [{ value: '', label: { en: '', he: '' } }] : undefined,
       hasOtherOption: type === 'radio' || type === 'select' ? false : undefined,
       otherInputType: 'input',
+      otherLabel: type === 'radio' || type === 'select' ? { en: 'Other', he: 'אחר' } : undefined,
+      otherPlaceholder: type === 'radio' || type === 'select' ? { en: 'Please specify...', he: 'אנא ציין...' } : undefined,
       images: type === 'image-selection' ? [] : undefined,
       min: type === 'number' || type === 'date' ? undefined : undefined,
       max: type === 'number' || type === 'date' ? undefined : undefined,
@@ -501,7 +506,7 @@ export default function NewFormPage() {
                       Add Field
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-64 p-2 bg-siderbar-bg dark:bg-siderbar-bg-dark" align="end">
+                  <PopoverContent className="w-64 p-2" align="end">
                     <div className="grid grid-cols-2 gap-2">
                       {FORM_FIELD_TYPES.map(type => (
                         <button
@@ -513,7 +518,7 @@ export default function NewFormPage() {
                             handleAddField(type.value);
                             setPopoverOpen(false);
                           }}
-                          className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bord text-left"
+                          className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg border border-gray-border dark:border-gray-border-dark text-left"
                         >
                           <span className="text-2xl">{type.icon}</span>
                           <span className="text-xs font-medium text-text-secondary dark:text-text-secondary-dark">{type.label}</span>
@@ -775,18 +780,50 @@ export default function NewFormPage() {
                                       label="Add 'Other' option"
                                     />
                                     {field.hasOtherOption && (
-                                      <SelectWrapper
-                                        value={field.otherInputType || 'input'}
-                                        onChange={(e) =>
-                                          handleUpdateField(field.id, {
-                                            otherInputType: e.target.value as 'input' | 'textarea',
-                                          })
-                                        }
-                                        options={[
-                                          { value: 'input', label: 'Text Input' },
-                                          { value: 'textarea', label: 'Textarea' },
-                                        ]}
-                                      />
+                                      <div className="space-y-3 border-l-2 border-gray-300 dark:border-gray-600 pl-3 ml-2">
+                                        <div>
+                                          <Input
+                                            label={`Other Label (${activeTab === 'en' ? 'EN' : 'HE'})`}
+                                            value={field.otherLabel?.[activeTab] || ''}
+                                            onChange={(e) =>
+                                              handleUpdateField(field.id, {
+                                                otherLabel: {
+                                                  ...(field.otherLabel || { en: 'Other', he: 'אחר' }),
+                                                  [activeTab]: e.target.value,
+                                                },
+                                              })
+                                            }
+                                            placeholder={activeTab === 'en' ? 'e.g., Other, Something else' : 'למשל, אחר, משהו אחר'}
+                                          />
+                                        </div>
+                                        <div>
+                                          <Input
+                                            label={`Other Placeholder (${activeTab === 'en' ? 'EN' : 'HE'})`}
+                                            value={field.otherPlaceholder?.[activeTab] || ''}
+                                            onChange={(e) =>
+                                              handleUpdateField(field.id, {
+                                                otherPlaceholder: {
+                                                  ...(field.otherPlaceholder || { en: 'Please specify...', he: 'אנא ציין...' }),
+                                                  [activeTab]: e.target.value,
+                                                },
+                                              })
+                                            }
+                                            placeholder={activeTab === 'en' ? 'e.g., Please specify...' : 'למשל, אנא ציין...'}
+                                          />
+                                        </div>
+                                        <SelectWrapper
+                                          value={field.otherInputType || 'input'}
+                                          onChange={(e) =>
+                                            handleUpdateField(field.id, {
+                                              otherInputType: e.target.value as 'input' | 'textarea',
+                                            })
+                                          }
+                                          options={[
+                                            { value: 'input', label: 'Text Input' },
+                                            { value: 'textarea', label: 'Textarea' },
+                                          ]}
+                                        />
+                                      </div>
                                     )}
                                   </div>
                                 )}
@@ -855,7 +892,7 @@ export default function NewFormPage() {
                                   label="Or add image URL"
                                   type="url"
                                   placeholder="https://..."
-                                  onKeyPress={(e) => {
+                                  onKeyDown={(e) => {
                                     if (e.key === 'Enter') {
                                       e.preventDefault();
                                       const url = e.currentTarget.value.trim();
@@ -866,7 +903,8 @@ export default function NewFormPage() {
                                         });
                                         e.currentTarget.value = '';
                                       }
-                                    }}
+                                    }
+                                  }}
                                 />
                                 {errors[`field-${index}-images`] && (
                                   <p className="text-xs text-red-500">{errors[`field-${index}-images`]}</p>

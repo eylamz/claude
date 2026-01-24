@@ -312,7 +312,7 @@ export default function HeaderNav() {
                   isActive(`/${locale}/growth-lab`) ? 'text-black dark:text-white' : ''
                 }`}
               >
-                {locale === 'en' ? 'Growth Lab' : 'צומחים יחד'}
+                {locale === 'en' ? 'Growth Lab' : 'המרחב'}
               </Link>
 
               {/* Join Community (drive registration) */}

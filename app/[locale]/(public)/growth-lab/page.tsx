@@ -262,12 +262,12 @@ export default function GrowingTogetherPage() {
         <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
-              {tr('Growth Lab', 'צומחים יחד')}
+              {tr('🪴Growth Lab🧪', 'מרחב גדילה')}
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               {tr(
                 'Help us grow by sharing your thoughts and experiences. Fill out the forms below to contribute to our community.',
-                'עזרו לנו לצמוח על ידי שיתוף המחשבות והחוויות שלכם. מלאו את הטפסים למטה כדי לתרום לקהילה שלנו.'
+                'סקרים קטנים, שינויים גדולים. בואו נשפר ביחד!'
               )}
             </p>
             
@@ -276,14 +276,14 @@ export default function GrowingTogetherPage() {
               <div className="flex items-center gap-2 text-sm">
                 <div className="w-2 h-2 rounded-full bg-brand-main animate-pulse" />
                 <span className="text-gray-600 dark:text-gray-400">
-                  {totalFormsCount} {totalFormsCount === 1 ? tr('form', 'טופס') : tr('forms', 'טפסים')}
+                {tr('Updated Daily', 'סקרים משתנים')}
                 </span>
               </div>
               <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
               <div className="flex items-center gap-2 text-sm">
                 <TrendingUp className="w-4 h-4 text-green-500" />
                 <span className="text-gray-600 dark:text-gray-400">
-                  {tr('Updated Daily', 'מתעדכן יומי')}
+                  {tr('Updated Daily', 'שדרוגים גדולים')}
                 </span>
               </div>
             </div>

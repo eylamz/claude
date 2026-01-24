@@ -65,4 +65,3 @@ export function isLoginEnabled(): boolean {
     return envValue !== 'false';
   }
 }
-

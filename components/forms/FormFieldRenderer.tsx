@@ -6,17 +6,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { NumberInput } from '@/components/ui/number-input';
+import { IsraelCitiesAutocomplete } from '@/components/ui/israel-cities-autocomplete';
 import Image from 'next/image';
 
 interface FormField {
   id: string;
-  type: 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'date' | 'number' | 'link' | 'image' | 'image-selection';
+  type: 'text' | 'textarea' | 'radio' | 'checkbox' | 'select' | 'date' | 'number' | 'link' | 'image' | 'image-selection' | 'israel-cities';
   label: { en: string; he: string };
   required: boolean;
   placeholder?: { en: string; he: string };
   options?: Array<{ value: string; label: { en: string; he: string } }>;
   hasOtherOption?: boolean;
   otherInputType?: 'input' | 'textarea';
+  otherLabel?: { en: string; he: string };
+  otherPlaceholder?: { en: string; he: string };
   images?: Array<{ url: string; alt?: { en: string; he: string } }>;
   min?: number;
   max?: number;
@@ -160,7 +163,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
                     htmlFor={`${field.id}-other`}
                     className="ml-2 text-sm text-text dark:text-text-dark cursor-pointer"
                   >
-                    {locale === 'en' ? 'Other' : 'אחר'}
+                    {field.otherLabel?.[locale] || (locale === 'en' ? 'Other' : 'אחר')}
                   </label>
                 </div>
                 {typeof value === 'object' && value?.value === 'other' && (
@@ -173,7 +176,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
                           setOtherValue(newValue);
                           onChange({ value: 'other', other: newValue });
                         }}
-                        placeholder={locale === 'en' ? 'Please specify...' : 'אנא ציין...'}
+                        placeholder={field.otherPlaceholder?.[locale] || (locale === 'en' ? 'Please specify...' : 'אנא ציין...')}
                         rows={3}
                         required={field.required}
                       />
@@ -185,7 +188,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
                           setOtherValue(newValue);
                           onChange({ value: 'other', other: newValue });
                         }}
-                        placeholder={locale === 'en' ? 'Please specify...' : 'אנא ציין...'}
+                        placeholder={field.otherPlaceholder?.[locale] || (locale === 'en' ? 'Please specify...' : 'אנא ציין...')}
                         required={field.required}
                       />
                     )}
@@ -249,7 +252,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
                 );
               })}
               {field.hasOtherOption && (
-                <SelectItem value="other">{locale === 'en' ? 'Other' : 'אחר'}</SelectItem>
+                <SelectItem value="other">{field.otherLabel?.[locale] || (locale === 'en' ? 'Other' : 'אחר')}</SelectItem>
               )}
             </SelectContent>
           </Select>
@@ -263,7 +266,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
                     setOtherValue(newValue);
                     onChange({ value: 'other', other: newValue });
                   }}
-                  placeholder={locale === 'en' ? 'Please specify...' : 'אנא ציין...'}
+                  placeholder={field.otherPlaceholder?.[locale] || (locale === 'en' ? 'Please specify...' : 'אנא ציין...')}
                   rows={3}
                   required={field.required}
                 />
@@ -275,7 +278,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
                     setOtherValue(newValue);
                     onChange({ value: 'other', other: newValue });
                   }}
-                  placeholder={locale === 'en' ? 'Please specify...' : 'אנא ציין...'}
+                  placeholder={field.otherPlaceholder?.[locale] || (locale === 'en' ? 'Please specify...' : 'אנא ציין...')}
                   required={field.required}
                 />
               )}
@@ -304,8 +307,10 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
     case 'number':
       return (
         <div>
+          <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
+            {label} {field.required && <span className="text-red-500">*</span>}
+          </label>
           <NumberInput
-            label={label}
             value={typeof value === 'number' ? value : (value ? parseFloat(value) : undefined)}
             onChange={(e) => {
               const numValue = e.target.value ? parseFloat(e.target.value) : undefined;
@@ -400,6 +405,19 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
           )}
           {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
         </div>
+      );
+
+    case 'israel-cities':
+      return (
+        <IsraelCitiesAutocomplete
+          value={typeof value === 'string' ? value : ''}
+          onChange={(value) => onChange(value)}
+          label={label}
+          error={error}
+          required={field.required}
+          id={field.id}
+          locale={locale}
+        />
       );
 
     default:

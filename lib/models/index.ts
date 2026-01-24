@@ -81,4 +81,3 @@ export type {
   IHourlyForecast,
   IDailyForecast,
 } from './WeatherForecast';
-

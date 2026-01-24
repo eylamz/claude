@@ -118,7 +118,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     {
       href: `/${locale}/growth-lab`,
       icon: 'messages' as IconName,
-      label: locale === 'en' ? 'Growth Lab' : 'צומחים יחד',
+      label: locale === 'en' ? 'Growth Lab' : 'המרחב',
       description: locale === 'en' ? 'Share your thoughts and help the community grow' : 'שתפו את המחשבות שלכם ועזרו לקהילה לצמוח',
     },
     ...(trainersEnabled ? [{
@@ -554,9 +554,8 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 (card.href !== `/${locale}` && pathname.startsWith(card.href));
 
               return (
-                <div className="rounded overflow-hidden">
+                <div key={card.href} className="rounded overflow-hidden">
                 <Link
-                  key={card.href}
                   href={card.href}
                   onClick={onClose}
                   className={`flex items-center gap-2 px-2 py-3 text-3xl ${

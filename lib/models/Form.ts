@@ -21,7 +21,8 @@ export type FormFieldType =
   | 'number' 
   | 'link' 
   | 'image' 
-  | 'image-selection';
+  | 'image-selection'
+  | 'israel-cities';
 
 /**
  * Form field option interface
@@ -52,6 +53,8 @@ export interface IFormField {
   options?: IFormFieldOption[];
   hasOtherOption?: boolean;
   otherInputType?: 'input' | 'textarea';
+  otherLabel?: ILocalizedField;
+  otherPlaceholder?: ILocalizedField;
   images?: IFormFieldImage[];
   min?: number;
   max?: number;
@@ -116,7 +119,7 @@ const FormFieldSchema = new Schema<IFormField>(
     },
     type: {
       type: String,
-      enum: ['text', 'textarea', 'radio', 'checkbox', 'select', 'date', 'number', 'link', 'image', 'image-selection'],
+      enum: ['text', 'textarea', 'radio', 'checkbox', 'select', 'date', 'number', 'link', 'image', 'image-selection', 'israel-cities'],
       required: true,
     },
     label: {
@@ -179,6 +182,26 @@ const FormFieldSchema = new Schema<IFormField>(
       type: String,
       enum: ['input', 'textarea'],
       default: 'input',
+    },
+    otherLabel: {
+      en: {
+        type: String,
+        trim: true,
+      },
+      he: {
+        type: String,
+        trim: true,
+      },
+    },
+    otherPlaceholder: {
+      en: {
+        type: String,
+        trim: true,
+      },
+      he: {
+        type: String,
+        trim: true,
+      },
     },
     images: [
       {
