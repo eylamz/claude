@@ -1,5 +1,7 @@
 // Google Analytics 4 implementation
 
+import { hasConsent } from '@/lib/utils/cookie-consent';
+
 declare global {
   interface Window {
     gtag: (...args: any[]) => void;
@@ -13,6 +15,14 @@ const DEBUG = process.env.NODE_ENV === 'development';
 // Initialize GA4
 export function initializeGA() {
   if (typeof window === 'undefined' || !GA_MEASUREMENT_ID) return;
+
+  // Check if user has consented to analytics cookies
+  if (!hasConsent('analytics')) {
+    if (DEBUG) {
+      console.log('[GA4] Analytics disabled - user has not consented to analytics cookies');
+    }
+    return;
+  }
 
   // Initialize dataLayer
   window.dataLayer = window.dataLayer || [];
@@ -41,6 +51,7 @@ export function initializeGA() {
 // Page view tracking
 export function pageview(url: string, title?: string) {
   if (!window.gtag || !GA_MEASUREMENT_ID) return;
+  if (!hasConsent('analytics')) return;
 
   window.gtag('config', GA_MEASUREMENT_ID, {
     page_path: url,
@@ -55,6 +66,7 @@ export function pageview(url: string, title?: string) {
 // Base event tracking
 export function trackEvent(eventName: string, parameters?: Record<string, any>) {
   if (!window.gtag || !GA_MEASUREMENT_ID) return;
+  if (!hasConsent('analytics')) return;
 
   window.gtag('event', eventName, {
     ...parameters,

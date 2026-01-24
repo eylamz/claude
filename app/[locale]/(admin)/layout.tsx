@@ -1,6 +1,7 @@
 import HeaderNav from "@/components/layout/HeaderNav";
 import MobileNav from "@/components/layout/MobileNav";
 import { Footer } from "@/components/layout";
+import CookieConsentBanner from "@/components/ui/cookie-consent-banner";
 
 export default function AdminLayout({
   children,
@@ -14,6 +15,7 @@ export default function AdminLayout({
       <main className="min-h-screen">{children}</main>
       <Footer />
       <MobileNav />
+      <CookieConsentBanner />
     </>
   );
 }
