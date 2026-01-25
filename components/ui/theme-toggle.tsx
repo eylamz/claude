@@ -1,11 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Icon } from '@/components/icons/Icon'
 import { useTheme } from '@/context/ThemeProvider'
 import { useTranslation } from '@/lib/i18n/client'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { hasConsent } from '@/lib/utils/cookie-consent'
+import { useToast } from '@/hooks/use-toast'
+import { Button } from './button'
 
 interface ThemeToggleProps {
   className?: string
@@ -15,8 +18,11 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ className = '', lng }: ThemeToggleProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const localeFromHook = useLocale()
   const { theme, toggleTheme } = useTheme()
+  const { toast } = useToast()
+  const tCommon = useTranslations('common')
   
   // Get locale from prop, pathname, or hook
   const currentLng = lng || (pathname?.split('/')?.[1] || localeFromHook || 'en')
@@ -25,6 +31,33 @@ export function ThemeToggle({ className = '', lng }: ThemeToggleProps) {
   const [shouldAnimate, setShouldAnimate] = useState(false)
 
   const handleThemeToggle = () => {
+    // Check if user has consented to essential cookies
+    if (!hasConsent('essential')) {
+      // Show toast notification
+      toast({
+        title: tCommon('cookieConsent.functionalConsentRequired'),
+        description: tCommon('cookieConsent.functionalConsentMessage'),
+        action: (
+          <Button
+            size="sm"
+            variant="info"
+            onClick={() => {
+              // Trigger cookie banner to show settings
+              if (typeof window !== 'undefined') {
+                // Clear consent to show banner again, or better: show settings directly
+                const event = new CustomEvent('showCookieSettings');
+                window.dispatchEvent(event);
+              }
+            }}
+          >
+            {tCommon('cookieConsent.openCookieSettings')}
+          </Button>
+        ),
+        variant: 'default',
+      });
+      return;
+    }
+    
     setShouldAnimate(true)
     toggleTheme()
   }

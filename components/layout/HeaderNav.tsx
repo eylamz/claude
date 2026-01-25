@@ -28,7 +28,10 @@ import { Icon } from '@/components/icons/Icon';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 import { useTheme } from '@/context/ThemeProvider';
+import { hasConsent } from '@/lib/utils/cookie-consent';
+import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { 
   useCartStore, 
@@ -51,6 +54,7 @@ export default function HeaderNav() {
   const tAdmin = useTranslations('admin');
   const tMobileNav = useTranslations('common.mobileNav');
   const { theme, toggleTheme } = useTheme();
+  const { toast } = useToast();
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -611,7 +615,32 @@ export default function HeaderNav() {
                     <div className="space-y-2">
                       {/* Theme Toggle */}
                       <button
-                        onClick={toggleTheme}
+                        onClick={() => {
+                          if (!hasConsent('essential')) {
+                            toast({
+                              title: tCommon('cookieConsent.functionalConsentRequired'),
+                              description: tCommon('cookieConsent.functionalConsentMessage'),
+                              action: (
+                                <Button
+                                  size="sm"
+                                  variant="blue"
+                                  className="!px-4 w-fit"
+                                  onClick={() => {
+                                    if (typeof window !== 'undefined') {
+                                      const event = new CustomEvent('showCookieSettings');
+                                      window.dispatchEvent(event);
+                                    }
+                                  }}
+                                >
+                                  {tCommon('cookieConsent.openCookieSettings')}
+                                </Button>
+                              ),
+                              variant: 'default',
+                            });
+                            return;
+                          }
+                          toggleTheme();
+                        }}
                         className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 ${locale === 'he' ? 'flex-row-reverse' : ''}`}
                         aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
                       >

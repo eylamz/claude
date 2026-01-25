@@ -1,13 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
-import { useRouter } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { TrendingUp, Users } from 'lucide-react';
+import { useLocale } from 'next-intl';
+import { TrendingUp, Users, CheckCircle2 } from 'lucide-react';
 import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, Skeleton, Toaster } from '@/components/ui';
 import { SearchInput } from '@/components/common/SearchInput';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 
 interface Form {
@@ -40,17 +37,18 @@ const getLocalizedText = (field: { en: string; he: string } | undefined, locale:
 const FormCard = memo(({ 
   form, 
   locale, 
-  animationDelay = 0
+  animationDelay = 0,
+  isSubmitted = false
 }: { 
   form: Form; 
   locale: string; 
   animationDelay?: number;
+  isSubmitted?: boolean;
 }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [showNameSection, setShowNameSection] = useState(false);
   const [showFormName, setShowFormName] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
 
   // Show name section after delay when card appears
   useEffect(() => {
@@ -90,7 +88,9 @@ const FormCard = memo(({
       aria-label={formTitle}
     >
       <div 
-        className="group-hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden"
+        className={`group-hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden ${
+          isSubmitted ? 'ring-2 ring-green-500/50 opacity-90' : ''
+        }`}
         style={{
           filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
         }}
@@ -99,11 +99,20 @@ const FormCard = memo(({
         <div className="absolute inset-0 bg-gradient-to-br from-brand-purple/20 via-brand-main/10 to-brand-blue/20 dark:from-brand-purple/10 dark:via-brand-dark/10 dark:to-brand-blue/10" />
         
         {/* Submissions Badge */}
-        <div className="absolute top-2 right-2 z-10">
+        <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
           <div className="flex items-center gap-1.5 bg-black/45 backdrop-blur-sm px-3 py-1.5 rounded-lg">
             <Users className="w-3.5 h-3.5 text-white" />
             <span className="text-xs font-medium text-white">{form.submissionsCount}</span>
           </div>
+          {/* Submitted Badge */}
+          {isSubmitted && (
+            <div className="flex items-center gap-1.5 bg-green-500/90 backdrop-blur-sm px-3 py-1.5 rounded-lg animate-fadeIn">
+              <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+              <span className="text-xs font-medium text-white">
+                {locale === 'he' ? 'הוגש' : 'Submitted'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Form Icon/Content */}
@@ -143,7 +152,6 @@ FormCard.displayName = 'FormCard';
 
 export default function GrowingTogetherPage() {
   const locale = useLocale();
-  const router = useRouter();
   const [allForms, setAllForms] = useState<Form[]>([]);
   const [forms, setForms] = useState<Form[]>([]);
   const [loading, setLoading] = useState(true);
@@ -192,14 +200,10 @@ export default function GrowingTogetherPage() {
         const data = await response.json();
         const allFetchedForms = data.forms || [];
 
-        // Filter out forms that user has already submitted (check localStorage)
-        const availableForms = allFetchedForms.filter((form: Form) => {
-          const submittedKey = `form_submission_${form.slug}`;
-          return !localStorage.getItem(submittedKey);
-        });
-
-        setAllForms(availableForms);
-        setForms(availableForms);
+        // Show all forms (don't filter out submitted ones)
+        // We'll mark them as submitted in the UI instead
+        setAllForms(allFetchedForms);
+        setForms(allFetchedForms);
       } catch (error) {
         console.error('Error fetching forms:', error);
         toast({
@@ -250,7 +254,6 @@ export default function GrowingTogetherPage() {
     setForms(filtered);
   }, [allForms, searchQuery, sortBy, locale]);
 
-  const totalFormsCount = allForms.length;
   const filteredCount = forms.length;
 
   return (
@@ -387,14 +390,21 @@ export default function GrowingTogetherPage() {
 
             {/* Forms Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {forms.map((form, index) => (
-                <FormCard
-                  key={form.id}
-                  form={form}
-                  locale={locale}
-                  animationDelay={index * 50}
-                />
-              ))}
+              {forms.map((form, index) => {
+                // Check if form has been submitted
+                const submittedKey = `form_submission_${form.slug}`;
+                const isSubmitted = typeof window !== 'undefined' && localStorage.getItem(submittedKey) !== null;
+                
+                return (
+                  <FormCard
+                    key={form.id}
+                    form={form}
+                    locale={locale}
+                    animationDelay={index * 50}
+                    isSubmitted={isSubmitted}
+                  />
+                );
+              })}
             </div>
           </>
         )}

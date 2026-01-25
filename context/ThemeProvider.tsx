@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { hasConsent } from '@/lib/utils/cookie-consent';
 
 type Theme = 'light' | 'dark';
 
@@ -41,21 +42,26 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const applyTheme = useCallback((newTheme: Theme) => {
+  const applyTheme = useCallback((newTheme: Theme, skipStorage = false) => {
     const root = document.documentElement;
     if (newTheme === 'dark') {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('theme', newTheme);
+    // Only save to localStorage if user has consented to functional cookies
+    if (!skipStorage && hasConsent('functional')) {
+      localStorage.setItem('theme', newTheme);
+    }
     updateMetaThemeColor(newTheme);
   }, [updateMetaThemeColor]);
 
   const toggleTheme = useCallback(() => {
     setTheme((prevTheme) => {
       const newTheme = prevTheme === 'dark' ? 'light' : 'dark';
-      applyTheme(newTheme);
+      // Only save to localStorage if user has consented to functional cookies
+      const skipStorage = !hasConsent('functional');
+      applyTheme(newTheme, skipStorage);
       return newTheme;
     });
   }, [applyTheme]);

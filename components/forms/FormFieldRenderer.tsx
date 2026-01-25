@@ -31,9 +31,10 @@ interface FormFieldRendererProps {
   onChange: (value: any) => void;
   error?: string;
   locale: 'en' | 'he';
+  questionNumber?: number;
 }
 
-export function FormFieldRenderer({ field, value, onChange, error, locale }: FormFieldRendererProps) {
+export function FormFieldRenderer({ field, value, onChange, error, locale, questionNumber }: FormFieldRendererProps) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [otherValue, setOtherValue] = useState<string>('');
 
@@ -46,6 +47,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
 
   const label = field.label[locale] || field.label.en || '';
   const placeholder = field.placeholder?.[locale] || field.placeholder?.en || '';
+  const displayLabel = questionNumber !== undefined ? `${questionNumber}. ${label}` : label;
 
   const handleRadioChange = (optionValue: string) => {
     if (field.hasOtherOption && optionValue === 'other') {
@@ -90,7 +92,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
       return (
         <div>
           <Input
-            label={label}
+            label={displayLabel}
             value={typeof value === 'string' ? value : ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
@@ -104,7 +106,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
       return (
         <div>
           <Textarea
-            label={label}
+            label={displayLabel}
             value={typeof value === 'string' ? value : ''}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
@@ -118,8 +120,8 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
     case 'radio':
       return (
         <div className="space-y-3">
-          <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
-            {label} {field.required && <span className="text-red-500">*</span>}
+          <label className="block text-base font-semibold text-text dark:text-text-dark mb-2">
+             {displayLabel} {field.required && <span className="text-red-500">*</span>}
           </label>
           <div className="space-y-2">
             {field.options?.map((option, index) => {
@@ -139,7 +141,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
                   />
                   <label
                     htmlFor={`${field.id}-${index}`}
-                    className="ml-2 text-sm text-text dark:text-text-dark cursor-pointer"
+                    className="ms-2 text-sm text-text dark:text-text-dark cursor-pointer"
                   >
                     {optionLabel}
                   </label>
@@ -161,13 +163,13 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
                   />
                   <label
                     htmlFor={`${field.id}-other`}
-                    className="ml-2 text-sm text-text dark:text-text-dark cursor-pointer"
+                    className="ms-2 text-sm text-text dark:text-text-dark cursor-pointer"
                   >
                     {field.otherLabel?.[locale] || (locale === 'en' ? 'Other' : 'אחר')}
                   </label>
                 </div>
                 {typeof value === 'object' && value?.value === 'other' && (
-                  <div className="ml-6">
+                  <div className="ms-6">
                     {field.otherInputType === 'textarea' ? (
                       <Textarea
                         value={otherValue || value.other || ''}
@@ -204,8 +206,8 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
     case 'checkbox':
       return (
         <div className="space-y-3">
-          <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
-            {label} {field.required && <span className="text-red-500">*</span>}
+          <label className="block text-base font-semibold text-text dark:text-text-dark mb-2">
+            {displayLabel} {field.required && <span className="text-red-500">*</span>}
           </label>
           <div className="space-y-2">
             {field.options?.map((option, index) => {
@@ -231,7 +233,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
     case 'select':
       return (
         <div>
-          <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
+          <label className="block text-base font-semibold text-text dark:text-text-dark mb-2">
             {label} {field.required && <span className="text-red-500">*</span>}
           </label>
           <Select
@@ -292,7 +294,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
       return (
         <div>
           <Input
-            label={label}
+            label={displayLabel}
             type="date"
             value={typeof value === 'string' ? value : ''}
             onChange={(e) => onChange(e.target.value)}
@@ -307,7 +309,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
     case 'number':
       return (
         <div>
-          <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
+          <label className="block text-base font-semibold text-text dark:text-text-dark mb-2">
             {label} {field.required && <span className="text-red-500">*</span>}
           </label>
           <NumberInput
@@ -329,7 +331,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
       return (
         <div>
           <Input
-            label={label}
+            label={displayLabel}
             type="url"
             value={typeof value === 'string' ? value : ''}
             onChange={(e) => onChange(e.target.value)}
@@ -343,7 +345,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
     case 'image':
       return (
         <div>
-          <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
+          <label className="block text-base font-semibold text-text dark:text-text-dark mb-2">
             {label}
           </label>
           {field.images && field.images.length > 0 && (
@@ -361,8 +363,8 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
     case 'image-selection':
       return (
         <div>
-          <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
-            {label} {field.required && <span className="text-red-500">*</span>}
+          <label className="block text-base font-semibold text-text dark:text-text-dark mb-2">
+            {displayLabel} {field.required && <span className="text-red-500">*</span>}
           </label>
           {field.images && field.images.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-2">
@@ -412,7 +414,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale }: For
         <IsraelCitiesAutocomplete
           value={typeof value === 'string' ? value : ''}
           onChange={(value) => onChange(value)}
-          label={label}
+          label={displayLabel}
           error={error}
           required={field.required}
           id={field.id}

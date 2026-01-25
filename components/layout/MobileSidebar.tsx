@@ -9,6 +9,9 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { Icon, type IconName } from '@/components/icons/Icon';
 import { useTheme } from '@/context/ThemeProvider';
+import { hasConsent } from '@/lib/utils/cookie-consent';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
 import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
@@ -65,6 +68,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const locale = useLocale();
   const { data: session } = useSession();
   const tCommon = useTranslations('common');
+  const { toast } = useToast();
   const tMobileNav = useTranslations('common.mobileNav');
   const { theme, toggleTheme } = useTheme();
 
@@ -251,6 +255,31 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
   // Theme toggle handler with animation
   const handleThemeToggle = () => {
+    // Check if user has consented to essential cookies
+    if (!hasConsent('essential')) {
+      toast({
+        title: tCommon('cookieConsent.functionalConsentRequired'),
+        description: tCommon('cookieConsent.functionalConsentMessage'),
+        action: (
+          <Button
+            size="sm"
+            variant="blue"
+            className="!px-4 w-fit"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                const event = new CustomEvent('showCookieSettings');
+                window.dispatchEvent(event);
+              }
+            }}
+          >
+            {tCommon('cookieConsent.openCookieSettings')}
+          </Button>
+        ),
+        variant: 'default',
+      });
+      return;
+    }
+    
     setShouldAnimate(true);
     toggleTheme();
     setTimeout(() => setShouldAnimate(false), 300);

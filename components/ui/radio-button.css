@@ -1,0 +1,113 @@
+/* Radio Button Component Styles */
+/* Based on design from Uiverse.io by Praashoo7 */
+
+.radio-input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.radio-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.radio-input input[type='radio'] {
+  appearance: none;
+  width: 2em;
+  height: 2em;
+  background-color: #171717;
+  box-shadow: inset 2px 5px 10px rgb(5, 5, 5);
+  border-radius: 5px;
+  transition: 0.4s ease-in-out;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+
+.radio-input input[type='radio']:hover:not(:disabled) {
+  scale: 1.2;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.radio-input input[type='radio']:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.radio-input .plus1 {
+  position: absolute;
+  top: 0.01em;
+  left: 0.275em;
+  width: 1.3em;
+  height: 0.2em;
+  background-color: red;
+  rotate: 45deg;
+  scale: 0;
+  border-radius: 5px;
+  transition: 0.4s ease-in-out;
+  pointer-events: none;
+}
+
+.radio-input .plus2 {
+  position: relative;
+  width: 1.3em;
+  height: 0.2em;
+  background-color: red;
+  transform: rotate(90deg);
+  border-radius: 5px;
+  transition: 0.4s ease-in-out;
+}
+
+.radio-input input[type='radio']:checked {
+  box-shadow: none;
+}
+
+.radio-input input[type='radio']:checked + .plus1 {
+  transform: rotate(180deg);
+  scale: 1;
+}
+
+.radio-label {
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+  transition: color 0.2s ease-in-out;
+}
+
+.radio-input input[type='radio']:hover:not(:disabled) + .plus1 + label {
+  color: #ff6b6b;
+}
+
+.radio-input input[type='radio']:disabled + .plus1 + label {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .radio-input {
+    gap: 1rem;
+  }
+
+  .radio-input input[type='radio'] {
+    width: 1.6em;
+    height: 1.6em;
+  }
+
+  .radio-input .plus1 {
+    width: 1.04em;
+    height: 0.16em;
+    left: 0.22em;
+  }
+
+  .radio-input .plus2 {
+    width: 1.04em;
+    height: 0.16em;
+  }
+}

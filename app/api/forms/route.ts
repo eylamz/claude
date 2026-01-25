@@ -25,6 +25,7 @@ export async function GET(request: Request) {
       submissionsCount: form.submissionsCount || 0,
       visibleFrom: form.visibleFrom ? form.visibleFrom.toISOString() : null,
       visibleUntil: form.visibleUntil ? form.visibleUntil.toISOString() : null,
+      createdAt: form.createdAt ? form.createdAt.toISOString() : null,
     }));
 
     return NextResponse.json({ forms: formattedForms });

@@ -8,7 +8,7 @@ export type CookieCategory = 'essential' | 'analytics' | 'functional';
 export interface CookiePreferences {
   essential: boolean; // Always true, cannot be disabled
   analytics: boolean;
-  functional: boolean;
+  functional: boolean; // Always true, cannot be disabled
   timestamp: number; // When consent was given/updated
 }
 
@@ -44,7 +44,7 @@ export function setCookiePreferences(preferences: Partial<CookiePreferences>): v
     const newPreferences: CookiePreferences = {
       essential: true, // Always true
       analytics: preferences.analytics ?? existing?.analytics ?? false,
-      functional: preferences.functional ?? existing?.functional ?? false,
+      functional: true, // Always true, cannot be disabled
       timestamp: Date.now(),
     };
 
@@ -63,11 +63,11 @@ export function setCookiePreferences(preferences: Partial<CookiePreferences>): v
  * Check if user has given consent for a specific category
  */
 export function hasConsent(category: CookieCategory): boolean {
-  if (category === 'essential') return true; // Essential cookies are always allowed
-
   const preferences = getCookiePreferences();
   if (!preferences) return false;
 
+  // For essential and functional, check the actual stored value
+  // (even though they should always be true, we respect user preferences)
   return preferences[category] === true;
 }
 
@@ -97,7 +97,7 @@ export function rejectNonEssentialCookies(): void {
   setCookiePreferences({
     essential: true,
     analytics: false,
-    functional: false,
+    functional: true, // Always enabled, cannot be disabled
   });
 }
 

@@ -1,24 +1,30 @@
+"use client";
+
 import * as React from "react";
 import * as ToastPrimitives from "@radix-ui/react-toast";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocale } from "next-intl";
 
 const ToastProvider = ToastPrimitives.Provider;
 
 const ToastViewport = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Viewport>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport>
->(({ className, ...props }, ref) => (
-  <ToastPrimitives.Viewport
-    ref={ref}
-    className={cn(
-      "fixed bottom-0 right-0 z-[100] dir-rtl flex max-h-screen w-full flex-col gap-2 p-4 sm:max-w-[300px]",
-      className
-    )}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  const locale = useLocale();
+  return (
+    <ToastPrimitives.Viewport
+      ref={ref}
+      className={cn(
+        `fixed bottom-0 z-[100] dir-rtl flex max-h-screen w-fit flex-col gap-2 p-4 sm:max-w-[300px] ${locale === 'he' ? 'right-0 text-right' : 'left-0'}`,
+        className
+      )}
+      {...props}
+    />
+  );
+});
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
@@ -53,7 +59,7 @@ const Toast = React.forwardRef<
     VariantProps<typeof toastVariants>
 >(({ className, variant, ...props }, ref) => {
   const borderColor = {
-    default: "border-purple-500",
+    default: "border-border dark:border-border-dark",
     success: "border-[#51a775]",
     error: "border-[#a75151]",
     info: "border-[#6097b8]",
@@ -83,7 +89,7 @@ const Toast = React.forwardRef<
       {...props}
     >
       <div className={cn("w-full h-full p-[10px] rtl:border-r-4 ltr:border-l-4", borderColor)}>
-        <div className="flex-1 animate-slideUp">{props.children}</div>
+        <div className="flex flex-col flex-1 gap-2 animate-slideUp">{props.children}</div>
       </div>
     </ToastPrimitives.Root>
   );

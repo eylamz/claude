@@ -187,13 +187,16 @@
   },
   "cookieConsent": {
     "title": "We use cookies",
-    "description": "We use cookies to enhance your browsing experience, analyze site traffic, and personalize content. By clicking 'Accept All', you consent to our use of cookies.",
+    "functionalConsentRequired": "Functional cookies required",
+    "functionalConsentMessage": "Please enable functional cookies in your cookie preferences to use theme and language settings.",
+    "openCookieSettings": "Open Cookie Settings",
+    "description": "By clicking 'Accept All', you consent to our use of cookies.",
     "learnMore": "Learn more",
     "acceptAll": "Accept All",
     "rejectNonEssential": "Reject Non-Essential",
     "customize": "Customize",
     "selectAll": "Select All",
-    "savePreferences": "Save Preferences",
+    "savePreferences": "Save",
     "settings": {
       "title": "Cookie Preferences",
       "description": "Manage your cookie preferences. You can enable or disable different types of cookies below.",

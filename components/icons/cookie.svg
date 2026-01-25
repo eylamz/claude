@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 107.36 109.8">
+  <defs>
+    <style>
+      .cookie-1 {
+        fill: none;
+        stroke: CurrentColor;
+        stroke-miterlimit: 10;
+        stroke-width: 5px;
+      }
+	#cookie {
+	   fill: CurrentColor;
+	}
+    </style>
+  </defs>
+  <g id="cookie">
+    <g>
+      <g >
+        <circle cx="97.06" cy="3.2" r="3.2"/>
+        <circle cx="98.86" cy="20.46" r="2.32"/>
+      </g>
+      <g>
+        <circle cx="81.97" cy="23.08" r="8.62"/>
+        <circle cx="68.97" cy="6.7" r="4.37"/>
+        <circle cx="102.96" cy="34.92" r="4.4"/>
+        <circle cx="23.49" cy="48.82" r="10.25"/>
+        <circle cx="76.83" cy="65.5" r="7.59"/>
+        <circle cx="56.52" cy="92.11" r="7.16"/>
+        <circle cx="29.37" cy="75.63" r="5.67"/>
+        <circle cx="43.91" cy="28.41" r="5.26"/>
+        <circle cx="51.3" cy="57.98" r="5.23"/>
+      </g>
+    </g>
+    <path class="cookie-1" d="M100.47,50.99c-1.01-2.03-6.68-2.89-9.03-4.97-1.8-1.6-3.48-6.37-5.17-6.91-3.91-1.25-8.34,3.77-15.82-2.11-8.26-6.49-3.81-13.92-5.66-16.84-.17-.26-3.76-1.39-5.39-3.11-2.24-2.36-3.36-8.03-6.16-8.87C7.35,7.14-15.44,64.7,19.43,95.03c34.57,30.08,87.84.81,81.04-44.04Z"/>
+  </g>
+</svg>

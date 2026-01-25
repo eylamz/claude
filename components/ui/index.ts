@@ -12,6 +12,7 @@ export { Accordion } from './accordion';
 export { Slider } from './slider';
 export { Drawer } from './drawer';
 export { Checkbox } from './checkbox';
+export { Switch } from './switch';
 export { Popover, PopoverTrigger, PopoverContent } from './popover';
 export { Badge } from './badge';
 export { Separator } from './separator';

@@ -3,6 +3,7 @@ import { generateMetadata as genMeta, getLocalizedText } from './utils';
 import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';
 import Guide from '@/lib/models/Guide';
+import Form from '@/lib/models/Form';
 
 // Example metadata generators for different page types
 
@@ -312,39 +313,54 @@ export async function generateGuideMetadata(params: { slug: string; locale: stri
 export async function generateFormMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
   const { slug, locale } = params;
   
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
-  const res = await fetch(`${siteUrl}/api/forms/${slug}?locale=${locale}`, { next: { revalidate: 3600 } });
-  
-  if (!res.ok) {
+  try {
+    await connectDB();
+    
+    const form = await Form.findBySlug(slug);
+    
+    if (!form || !form.isVisible()) {
+      return genMeta({
+        title: locale === 'en' ? 'Form Not Found' : 'טופס לא נמצא',
+        description: locale === 'en' 
+          ? 'The form you are looking for could not be found.'
+          : 'הטופס שחיפשת לא נמצא.',
+        locale,
+      });
+    }
+
+    const title = getLocalizedText(form.title, locale);
+    const description = form.description
+      ? getLocalizedText(form.description, locale).substring(0, 160)
+      : locale === 'en'
+        ? `Fill out ${title} on ENBOSS. Help us grow by sharing your thoughts.`
+        : `מלא את ${title} ב-ENBOSS. עזור לנו לגדול על ידי שיתוף המחשבות שלך.`;
+    
+    const metaTitle = form.metaTitle
+      ? getLocalizedText(form.metaTitle, locale)
+      : `${title} - Growth Lab | ENBOSS`;
+    const metaDescription = form.metaDescription
+      ? getLocalizedText(form.metaDescription, locale)
+      : description;
+
     return genMeta({
-      title: 'Form Not Found',
-      description: 'The form you are looking for could not be found.',
+      title: metaTitle,
+      description: metaDescription,
+      image: '/og-form-default.jpg',
+      url: `/${locale}/growth-lab/${slug}`,
+      type: 'website',
+      locale,
+      alternateLocales: locale === 'en' ? ['he'] : ['en'],
+    });
+  } catch (error) {
+    console.error('Error generating form metadata:', error);
+    return genMeta({
+      title: locale === 'en' ? 'Form' : 'טופס',
+      description: locale === 'en'
+        ? 'Fill out forms on ENBOSS Growth Lab. Help us grow by sharing your thoughts and experiences.'
+        : 'מלא טפסים ב-ENBOSS מרחב גדילה. עזור לנו לגדול על ידי שיתוף המחשבות והחוויות שלך.',
       locale,
     });
   }
-
-  const { form } = await res.json();
-  const title = getLocalizedText(form.title, locale);
-  const description = form.description
-    ? getLocalizedText(form.description, locale).substring(0, 160)
-    : `Fill out ${title} on ENBOSS. Help us grow by sharing your thoughts.`;
-  
-  const metaTitle = form.metaTitle
-    ? getLocalizedText(form.metaTitle, locale)
-    : `${title} - Growth Lab | ENBOSS`;
-  const metaDescription = form.metaDescription
-    ? getLocalizedText(form.metaDescription, locale)
-    : description;
-
-  return genMeta({
-    title: metaTitle,
-    description: metaDescription,
-    image: '/og-form-default.jpg',
-    url: `/${locale}/growth-labg}`,
-    type: 'website',
-    locale,
-    alternateLocales: locale === 'en' ? ['he'] : ['en'],
-  });
 }
 
 export async function generateTrainerMetadata(params: { slug: string; locale: string }): Promise<Metadata> {

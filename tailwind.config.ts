@@ -558,12 +558,12 @@ const config: Config = {
         },
         slideIn: {
           '0%': { 
-            transform: 'translateX(calc(100% + 1rem))',
-            opacity: '0'
+            opacity: '0',
+            transform: 'scale(0.95) translateX(-10px)'
           },
           '100%': { 
-            transform: 'translateX(0)',
-            opacity: '1'
+            opacity: '1',
+            transform: 'scale(1) translateX(0)'
           },
         },
         slideRight: {
@@ -811,12 +811,12 @@ const config: Config = {
           }
       },
       animation: {
-        'popUp': 'popUp 0.2s',
+        'popUp': 'popUp 0.2s ease-out forwards',
         'popOut': 'popOut 0.2s',
         'popDown': 'popDown 0.2s',
         'popOutDown': 'popOutDown 0.2s',
         'skeleton': 'skeleton 4s ease-in-out infinite',
-        slideIn: 'slideIn 0.4s ease-out forwards',
+        slideIn: 'slideIn  0.25s ease-out forwards',
         scaleDownFade: 'scaleDownFade 0.25s ease-in forwards',
         scaleFadeUp: 'scaleFadeUp 0.15s ease-in forwards',
         fadeIn: 'fadeIn 0.3s ease-out forwards',

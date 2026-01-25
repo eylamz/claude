@@ -345,7 +345,7 @@ export default function FormFillPage() {
           <CardContent className="p-6 space-y-6">
             {form.fields
               .sort((a, b) => a.order - b.order)
-              .map((field) => (
+              .map((field, index) => (
                 <div key={field.id}>
                   <FormFieldRenderer
                     field={field}
@@ -353,6 +353,7 @@ export default function FormFillPage() {
                     onChange={(value) => handleFieldChange(field.id, value)}
                     error={errors[field.id]}
                     locale={locale}
+                    questionNumber={index + 1}
                   />
                 </div>
               ))}

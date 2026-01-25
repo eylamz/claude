@@ -170,7 +170,8 @@ import ChartBold from './chartBold.svg';
 import Objects from './objects.svg';
 import ObjectsBold from './objectsBold.svg';
 import BroomBold from './broomBold.svg';
-
+import Cookie from './cookie.svg';
+import CookieBold from './cookieBold.svg';
 
 // Type for SVG components (Next.js imports SVGs as URLs by default)
 type SvgComponent = React.ComponentType<React.SVGProps<SVGSVGElement>> | string;
@@ -287,6 +288,8 @@ const iconMap: Record<string, SvgComponent> = {
   'logo-hostage3': LogoHostage3,
   clock: ClockBold,
   clockBold: ClockBold,
+  cookie: Cookie,
+  cookieBold: CookieBold,
   notesBold: AmenitiesBold,
   info: Info,
   infoBold: InfoBold,
@@ -412,6 +415,7 @@ export type IconName =
   | 'close'
   | 'X'
   | 'cart'
+  | 'cookie'  | 'cookieBold'
   | 'backpack'  | 'backpackBold'
   | 'shopCart'  | 'shopCartBold'
   | 'heart'  | 'heartBold'
