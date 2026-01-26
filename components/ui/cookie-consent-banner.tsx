@@ -25,7 +25,7 @@ export default function CookieConsentBanner() {
   const [preferences, setPreferences] = useState({
     essential: true,
     analytics: false,
-    functional: true,
+    functional: false,
   });
 
   useEffect(() => {
@@ -38,9 +38,9 @@ export default function CookieConsentBanner() {
     const existing = getCookiePreferences();
     if (existing) {
       setPreferences({
-        essential: true,
+        essential: true, // Always enabled, cannot be disabled
         analytics: existing.analytics,
-        functional: existing.functional, // Always enabled, cannot be disabled
+        functional: existing.functional,
       });
     }
 
@@ -98,12 +98,13 @@ export default function CookieConsentBanner() {
   if (!isVisible) return null;
 
   return (
-    <div className="max-h-screen overflow-y-auto fixed bottom-0 left-0 right-0 z-[80] bg-card dark:bg-card-dark border-t border-border dark:border-border-dark shadow-2xl opacity-0 animate-popUp transition-all duration-300"
+    <div className={` fixed bottom-0 left-0 right-0 z-[80] bg-card dark:bg-card-dark border-t border-border dark:border-border-dark opacity-0 animate-popUp transition-all duration-300 ${showSettings ? 'max-h-screen overflow-y-auto pt-6' : 'py-6'}`}
      style={{
       animationDelay: '3s',
+      boxShadow: '15px 0 20px 5px rgba(0, 0, 0, 0.5)',
      }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
         <div className="relative">
           {/* Main banner view */}
           <div
@@ -161,13 +162,13 @@ export default function CookieConsentBanner() {
 
           {/* Settings view */}
           <div
-            className={`pt-6 transition-all duration-200 ease-in-out ${
+            className={`pt-6 md:p-0 transition-all duration-200 ease-in-out ${
               showSettings
                 ? 'animate-fadeIn pointer-events-auto relative'
                 : 'opacity-0 pointer-events-none absolute inset-0'
             }`}
           >
-            <div className="space-y-6 max-w-2xl mx-auto">
+            <div className="max-w-2xl mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
               <h3 className="text-xl font-semibold text-text dark:text-text-dark">
@@ -184,7 +185,7 @@ export default function CookieConsentBanner() {
               </button>
             </div>
 
-            <p className="text-sm text-gray dark:text-gray-dark">
+            <p className="mb-4 text-sm text-gray dark:text-gray-dark">
               {t('cookieConsent.settings.description')}
             </p>
 
@@ -282,7 +283,7 @@ export default function CookieConsentBanner() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-3 pt-4 border-t border-gray-border dark:border-gray-border-dark">
+            <div className="my-4 flex flex-wrap items-center gap-3 pt-4 border-t border-gray-border dark:border-gray-border-dark">
               <Button
                 variant="gray"
                 size="sm"

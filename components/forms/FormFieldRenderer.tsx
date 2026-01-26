@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -8,6 +8,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { NumberInput } from '@/components/ui/number-input';
 import { IsraelCitiesAutocomplete } from '@/components/ui/israel-cities-autocomplete';
 import Image from 'next/image';
+import { RadioButton } from '../ui';
 
 interface FormField {
   id: string;
@@ -129,16 +130,15 @@ export function FormFieldRenderer({ field, value, onChange, error, locale, quest
               const isSelected = value === option.value || (typeof value === 'object' && value?.value === option.value);
               return (
                 <div key={index} className="flex items-center">
-                  <input
-                    type="radio"
+                  <RadioButton
                     id={`${field.id}-${index}`}
                     name={field.id}
                     value={option.value}
                     checked={isSelected}
                     onChange={() => handleRadioChange(option.value)}
-                    className="w-4 h-4 text-brand-main focus:ring-brand-main border-gray-300"
                     required={field.required}
                   />
+
                   <label
                     htmlFor={`${field.id}-${index}`}
                     className="ms-2 text-sm text-text dark:text-text-dark cursor-pointer"
@@ -151,14 +151,13 @@ export function FormFieldRenderer({ field, value, onChange, error, locale, quest
             {field.hasOtherOption && (
               <div className="space-y-2">
                 <div className="flex items-center">
-                  <input
-                    type="radio"
+      
+                  <RadioButton
                     id={`${field.id}-other`}
                     name={field.id}
                     value="other"
                     checked={typeof value === 'object' && value?.value === 'other'}
                     onChange={() => handleRadioChange('other')}
-                    className="w-4 h-4 text-brand-main focus:ring-brand-main border-gray-300"
                     required={field.required}
                   />
                   <label
@@ -181,6 +180,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale, quest
                         placeholder={field.otherPlaceholder?.[locale] || (locale === 'en' ? 'Please specify...' : 'אנא ציין...')}
                         rows={3}
                         required={field.required}
+                        className="w-full max-w-[500px]"
                       />
                     ) : (
                       <Input
@@ -192,6 +192,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale, quest
                         }}
                         placeholder={field.otherPlaceholder?.[locale] || (locale === 'en' ? 'Please specify...' : 'אנא ציין...')}
                         required={field.required}
+                        className="w-full max-w-[500px]"
                       />
                     )}
                   </div>
@@ -282,6 +283,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale, quest
                   }}
                   placeholder={field.otherPlaceholder?.[locale] || (locale === 'en' ? 'Please specify...' : 'אנא ציין...')}
                   required={field.required}
+                  className="max-w-[300px]"
                 />
               )}
             </div>

@@ -361,10 +361,10 @@ export default function FormFillPage() {
         </Card>
 
         {/* Submit Button */}
-        <div className="flex justify-center">
+        <div className="flex justify-center pb-16">
           <Button
             type="submit"
-            variant="green"
+            variant="primary"
             size="lg"
             disabled={submitting}
             className="min-w-[200px]"

@@ -13,6 +13,8 @@ export { Slider } from './slider';
 export { Drawer } from './drawer';
 export { Checkbox } from './checkbox';
 export { Switch } from './switch';
+export { RadioButton, RadioButtonGroup } from './radio-button';
+export type { RadioButtonProps, RadioButtonGroupProps } from './radio-button';
 export { Popover, PopoverTrigger, PopoverContent } from './popover';
 export { Badge } from './badge';
 export { Separator } from './separator';
