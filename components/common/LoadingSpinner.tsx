@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeProvider';
 
 export const LoadingSpinner: React.FC<{ 
   className?: string;
-  variant?: 'default' | 'error' | 'brand' | 'info' | 'success' | 'warning' | 'header';
+  variant?: 'default' | 'error' | 'brand' | 'info' | 'success' | 'warning' | 'header' | 'blue';
   size?: number;
 }> = ({ className, variant = 'default', size = 48 }) => {
   const { theme } = useTheme();
@@ -13,7 +13,9 @@ export const LoadingSpinner: React.FC<{
   const getVariantColors = () => {
     switch (variant) {
       case 'error':
-        return { active: '#ef4444', track: '#fee2e2' };
+        return theme === 'dark' 
+          ? { active: '#f3394c', track: '#5d2227' }
+          : { active: '#cc2a2a', track: '#5d2227' };
       case 'brand':
         return { active: '#143116', track: '#29652d' };
       case 'info':
@@ -22,6 +24,10 @@ export const LoadingSpinner: React.FC<{
         return { active: '#22c55e', track: '#dcfce7' };
       case 'warning':
         return { active: '#eab308', track: '#fef9c3' };
+      case 'blue':
+        return theme === 'dark' 
+          ? { active: '#93c5fd', track: '#195570' }
+          : { active: '#1d4ed8', track: '#b6d9fd' };
       case 'header':
         return theme === 'dark' 
           ? { active: '#f9fafb', track: '#374151' }

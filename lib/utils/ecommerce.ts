@@ -65,3 +65,37 @@ export function isLoginEnabled(): boolean {
     return envValue !== 'false';
   }
 }
+
+/**
+ * Utility function to check if Growth Lab feature is enabled
+ * Uses NEXT_PUBLIC_ENABLE_GROWTH_LAB environment variable
+ * Defaults to true if not set (backward compatibility)
+ */
+export function isGrowthLabEnabled(): boolean {
+  if (typeof window === 'undefined') {
+    // Server-side: use process.env
+    const envValue = process.env.NEXT_PUBLIC_ENABLE_GROWTH_LAB;
+    return envValue !== 'false';
+  } else {
+    // Client-side: use window.env or process.env
+    const envValue = process.env.NEXT_PUBLIC_ENABLE_GROWTH_LAB;
+    return envValue !== 'false';
+  }
+}
+
+/**
+ * Utility function to check if Community feature is enabled
+ * Uses NEXT_PUBLIC_ENABLE_COMMUNITY environment variable
+ * Defaults to true if not set (backward compatibility)
+ */
+export function isCommunityEnabled(): boolean {
+  if (typeof window === 'undefined') {
+    // Server-side: use process.env
+    const envValue = process.env.NEXT_PUBLIC_ENABLE_COMMUNITY;
+    return envValue !== 'false';
+  } else {
+    // Client-side: use window.env or process.env
+    const envValue = process.env.NEXT_PUBLIC_ENABLE_COMMUNITY;
+    return envValue !== 'false';
+  }
+}

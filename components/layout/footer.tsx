@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Icon } from '@/components/icons/Icon';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LanguageSwitcher } from '@/components/ui/language-switcher';
+import { isCommunityEnabled } from '@/lib/utils/ecommerce';
 import { 
   Instagram, 
   Facebook, 
@@ -22,6 +23,7 @@ import {
 export function Footer() {
   const locale = useLocale();
   const t = useTranslations('common');
+  const communityEnabled = isCommunityEnabled();
 
   const [email, setEmail] = useState('');
   const [isSubscribing, setIsSubscribing] = useState(false);
@@ -179,14 +181,16 @@ export function Footer() {
                   {t('footer.guidesTips')}
                 </Link>
               </li>
-              <li>
-                <Link
-                  href={`/${locale}/community`}
-                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-main dark:hover:text-brand-main transition-colors"
-                >
-                  {t('footer.community')}
-                </Link>
-              </li>
+              {communityEnabled && (
+                <li>
+                  <Link
+                    href={`/${locale}/community`}
+                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-main dark:hover:text-brand-main transition-colors"
+                  >
+                    {t('footer.community')}
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 

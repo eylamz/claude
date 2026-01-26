@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
-import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
+import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled, isGrowthLabEnabled } from '@/lib/utils/ecommerce';
 import { Separator } from '@/components/ui/separator';
 
 interface MobileSidebarProps {
@@ -86,6 +86,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const ecommerceEnabled = isEcommerceEnabled();
   const trainersEnabled = isTrainersEnabled();
   const loginEnabled = isLoginEnabled();
+  const growthLabEnabled = isGrowthLabEnabled();
 
   // 1. Navigation Configuration (Grid Cards)
   const navCards: NavCard[] = [
@@ -119,12 +120,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       label: tMobileNav('guides'),
       description: tMobileNav('guidesDesc'),
     },
-    {
+    ...(growthLabEnabled ? [{
       href: `/${locale}/growth-lab`,
       icon: 'messages' as IconName,
       label: locale === 'en' ? 'Growth Lab' : 'המרחב',
       description: locale === 'en' ? 'Share your thoughts and help the community grow' : 'שתפו את המחשבות שלכם ועזרו לקהילה לצמוח',
-    },
+    }] : []),
     ...(trainersEnabled ? [{
       href: `/${locale}/trainers`,
       icon: 'trainersBold' as IconName,

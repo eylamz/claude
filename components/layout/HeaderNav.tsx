@@ -41,7 +41,7 @@ import {
   type CartItem 
 } from '@/stores/cartStore';
 import { Input } from '@/components/ui';
-import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
+import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled, isGrowthLabEnabled, isCommunityEnabled } from '@/lib/utils/ecommerce';
 
 export default function HeaderNav() {
   const pathname = usePathname();
@@ -63,6 +63,8 @@ export default function HeaderNav() {
   const ecommerceEnabled = isEcommerceEnabled();
   const trainersEnabled = isTrainersEnabled();
   const loginEnabled = isLoginEnabled();
+  const growthLabEnabled = isGrowthLabEnabled();
+  const communityEnabled = isCommunityEnabled();
   const itemCount = useCartItemCount();
   const items = useCartItems();
   const totals = useCartTotals();
@@ -255,27 +257,7 @@ export default function HeaderNav() {
               </Link>
 
               {/* Trainers */}
-              {!trainersEnabled ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      href="#"
-                      onClick={(e) => e.preventDefault()}
-                      className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 relative cursor-not-allowed opacity-60 ${
-                        isActive(`/${locale}/trainers`) ? 'text-black dark:text-white' : ''
-                      }`}
-                    >
-                      {tAdmin('trainers')}
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent 
-                      variant="purple"
-                      side="bottom" 
-                      className='font-semibold'>
-                    {locale === 'he' ? 'בשלבי סיום' : 'Almost Done'}
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
+              {trainersEnabled && (
                 <Link
                   href={`/${locale}/trainers`}
                   className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
@@ -310,47 +292,31 @@ export default function HeaderNav() {
               </Link>
 
               {/* Growth Lab */}
-              <Link
-                href={`/${locale}/growth-lab`}
-                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
-                  isActive(`/${locale}/growth-lab`) ? 'text-black dark:text-white' : ''
-                }`}
-              >
-                {locale === 'en' ? 'Growth Lab' : 'המרחב'}
-              </Link>
+              {growthLabEnabled && (
+                <Link
+                  href={`/${locale}/growth-lab`}
+                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                    isActive(`/${locale}/growth-lab`) ? 'text-black dark:text-white' : ''
+                  }`}
+                >
+                  {locale === 'en' ? 'Growth Lab' : 'המרחב'}
+                </Link>
+              )}
 
               {/* Join Community (drive registration) */}
-              <Link
-                href={`/${locale}/community`}
-                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
-                  isActive(`/${locale}/community`) ? 'text-black dark:text-white' : ''
-                }`}
-              >
-                {tHomepage('community')}
-              </Link>
+              {communityEnabled && (
+                <Link
+                  href={`/${locale}/community`}
+                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                    isActive(`/${locale}/community`) ? 'text-black dark:text-white' : ''
+                  }`}
+                >
+                  {tHomepage('community')}
+                </Link>
+              )}
 
               {/* Shop */}
-              {!ecommerceEnabled ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      href="#"
-                      onClick={(e) => e.preventDefault()}
-                      className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 relative cursor-not-allowed opacity-60 ${
-                        isActive(`/${locale}/shop`) ? 'text-black dark:text-white' : ''
-                      }`}
-                    >
-                      {tShop('title')}
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent 
-                    variant="purple"
-                    side="bottom"
-                    className='font-semibold'>
-                    {locale === 'he' ? 'מסדרים מדפים' : 'Restocking Items'}
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
+              {ecommerceEnabled && (
                 <Link
                   href={`/${locale}/shop`}
                   className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
@@ -827,10 +793,14 @@ export default function HeaderNav() {
                             size="sm"
                             onClick={handleLogout}
                             disabled={isLoggingOut}
-                            className={`w-full flex gap-2 font-medium justify-start border border-transparent hover:border-red-border dark:hover:border-red-border-dark hover:bg-red-bg dark:hover:bg-red-bg-dark text-red dark:text-red-dark hover:text-red-dark dark:hover:text-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                            className={`w-full flex gap-2 font-medium justify-start border border-transparent hover:border-red-border dark:hover:border-red-border-dark hover:bg-red-bg dark:hover:bg-red-bg-dark text-red dark:text-red-dark hover:text-red dark:hover:text-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           >
                             {isLoggingOut ? (
-                              <LoadingSpinner size={16} variant="error" />
+                              <div className="flex items-center gap-2">
+                              <LoadingSpinner size={16} variant="error" className='animate-fadeIn'/>
+                                <span>{tCommon('logout') || 'Logout'}</span>
+
+                              </div>
                             ) : (
                               <>
                                 <Icon name="logoutBold" className="w-4 h-4" />

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import { isCommunityEnabled } from '@/lib/utils/ecommerce';
 import { 
   Users, 
   TrendingUp,
@@ -58,12 +59,52 @@ interface CommunityPost {
 
 export default function CommunityPage() {
   const pathname = usePathname();
+  const router = useRouter();
   const locale = useLocale();
   const isHebrew = locale === 'he';
   const t = useTranslations('common');
+  const communityEnabled = isCommunityEnabled();
   
   const [isScrolled, setIsScrolled] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'feed' | 'stories' | 'events'>('feed');
+
+  // Redirect if Community is disabled
+  useEffect(() => {
+    if (!communityEnabled) {
+      router.push(`/${locale}`);
+    }
+  }, [communityEnabled, locale, router]);
+
+  // Show "Page in construction" if Community is disabled
+  if (!communityEnabled) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 flex items-center justify-center">
+        <div className="text-center px-4 max-w-2xl mx-auto">
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-green-500/10 to-brand-main/10 dark:from-green-500/20 dark:to-brand-main/20 mb-6">
+            <svg className="w-10 h-10 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            {locale === 'he' ? 'דף בבנייה' : 'Page in Construction'}
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+            {locale === 'he' 
+              ? 'הדף זמין בקרוב. אנא נסו מאוחר יותר.'
+              : 'Page is coming soon. Please check back later.'
+            }
+          </p>
+          <Button
+            onClick={() => router.push(`/${locale}`)}
+            variant="brand"
+            className="px-6 py-3"
+          >
+            {locale === 'he' ? 'חזרה לדף הבית' : 'Back to Homepage'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Track scroll for sticky elements
   useEffect(() => {
