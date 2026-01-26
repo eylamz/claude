@@ -62,7 +62,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
 
 
 
-  const defaultIconColor = 'text-text-secondary dark:text-text-secondary';
+  const defaultIconColor = 'text-text-secondary dark:text-text-secondary border-red';
 
   const searchIconColor = variant === 'header'
 
@@ -84,9 +84,9 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
 
     : variant === 'error' 
 
-    ? '!bg-black/20 dark:!bg-black/40 placeholder:text-text-dark/60' 
+    ? '!bg-black/20 dark:!bg-black/40 placeholder:text-text-dark/60 ' 
 
-    : '';
+    : '!border-gray-border dark:!border-gray-border-dark ';
 
 
 
@@ -100,7 +100,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
 
   return (
 
-    <div className={`relative flex-1 group sm:max-w-[250px] ${className}`}>
+    <div className={` relative flex-1 group sm:max-w-[250px] ${className}`}>
 
       {label && (
 

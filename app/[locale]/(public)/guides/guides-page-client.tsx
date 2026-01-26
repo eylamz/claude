@@ -56,7 +56,7 @@ const SPORT_CONFIG = [
     value: 'scoot',
     iconName: 'scooter' as const,
     displayName: 'Scootering',
-    variant: 'green' as const,
+    variant: 'blue' as const,
     tooltipEn: 'Filter by Scootering guides',
     tooltipHe: 'סנן לפי מדריכי קורקינט',
   },
@@ -64,7 +64,7 @@ const SPORT_CONFIG = [
     value: 'bmx',
     iconName: 'bmx-icon' as const,
     displayName: 'BMXing',
-    variant: 'purple' as const,
+    variant: 'blue' as const,
     tooltipEn: 'Filter by BMX guides',
     tooltipHe: 'סנן לפי מדריכי BMX',
   },
@@ -72,7 +72,7 @@ const SPORT_CONFIG = [
     value: 'longboard',
     iconName: 'longboard' as const,
     displayName: 'Longboarding',
-    variant: 'orange' as const,
+    variant: 'blue' as const,
     tooltipEn: 'Filter by Longboarding guides',
     tooltipHe: 'סנן לפי מדריכי לונגבורד',
   }
@@ -211,12 +211,14 @@ const GuideCard = memo(({
   guide, 
   locale, 
   animationDelay = 0,
-  getSportTranslation
+  getSportTranslation,
+  getDifficultyTranslation
 }: { 
   guide: Guide; 
   locale: string; 
   animationDelay?: number;
   getSportTranslation: (sport: string) => string;
+  getDifficultyTranslation: (difficulty: string) => string;
 }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [showNameSection, setShowNameSection] = useState(false);
@@ -271,17 +273,25 @@ const GuideCard = memo(({
         {/* Sports Tags Overlay */}
         {guide.relatedSports && guide.relatedSports.length > 0 && (
           <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
-            {guide.relatedSports.slice(0, 3).map((sport, idx) => (
-              <div
-                key={idx}
-                className="flex items-center bg-black/45 backdrop-blur-sm px-2 py-1 rounded-lg"
-              >
-                <span className="text-xs font-medium text-white">{getSportTranslation(sport)}</span>
-              </div>
-            ))}
-            {guide.relatedSports.length > 3 && (
-              <div className="flex items-center bg-black/45 backdrop-blur-sm px-2 py-1 rounded-lg">
-                <span className="text-xs font-medium text-white">+{guide.relatedSports.length - 3}</span>
+            {guide.relatedSports.slice(0, 4).map((sport, idx) => {
+              const sportConfig = SPORT_CONFIG.find(s => s.value === sport.toLowerCase());
+              return (
+                <div
+                  key={idx}
+                  className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg"
+                  title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
+                >
+                  {sportConfig ? (
+                    <Icon name={sportConfig.iconName as any} className="w-4 h-4 text-white" />
+                  ) : (
+                    <span className="text-xs font-medium text-white">{getSportTranslation(sport)}</span>
+                  )}
+                </div>
+              );
+            })}
+            {guide.relatedSports.length > 4 && (
+              <div className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg">
+                <span className="text-xs font-medium text-white">+{guide.relatedSports.length - 4}</span>
               </div>
             )}
           </div>
@@ -291,7 +301,7 @@ const GuideCard = memo(({
         {guide.difficulty && (
           <div className="absolute bottom-2 left-0 z-10">
             <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
-              {guide.difficulty}
+              {getDifficultyTranslation(guide.difficulty)}
             </div>
           </div>
         )}
@@ -342,6 +352,20 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
     }
     // Fallback to original sport name (capitalize first letter)
     return sport.charAt(0).toUpperCase() + sport.slice(1);
+  }, [t]);
+
+  // Helper function to get translated difficulty name
+  const getDifficultyTranslation = useCallback((difficulty: string): string => {
+    if (!difficulty) return difficulty;
+    const difficultyKey = difficulty.toLowerCase();
+    const translationKey = `difficulty.${difficultyKey}`;
+    const translated = t(translationKey as any);
+    // If translation key doesn't exist, next-intl returns the key path, so check if it's different
+    if (translated && translated !== translationKey && !translated.startsWith('difficulty.')) {
+      return translated;
+    }
+    // Fallback to original difficulty name (capitalize first letter)
+    return difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
   }, [t]);
   
   const [guides, setGuides] = useState<Guide[]>(initialData?.guides || []);
@@ -767,7 +791,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             </div>
 
             {/* Right: Filters + Sort */}
-            <div className="flex items-center gap-0 xsm:gap-1">
+            <div className="flex items-center gap-3">
               {/* Sports Filter - Multi-select Buttons */}
               <TooltipProvider delayDuration={50}>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -793,7 +817,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                             }}
                             aria-label={tr(sport.tooltipEn, sport.tooltipHe)}
                           >
-                            <Icon name={sport.iconName} className="w-5 h-5" />
+                            <Icon name={sport.iconName as any} className="w-5 h-5" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent 
@@ -810,7 +834,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
               </TooltipProvider>
 
               {/* Difficulty Filter */}
-              {filtersData.difficulties.length > 0 && (
+              {filtersData.difficulties.length > 1 && (
                 <div className="flex-shrink-0">
                   <Select
                     value={difficulty || 'all'}
@@ -826,7 +850,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                       <SelectItem value="all">{tr('All Levels', 'כל הרמות')}</SelectItem>
                       {filtersData.difficulties.map((diff) => (
                         <SelectItem key={diff} value={diff}>
-                          {diff}
+                          {getDifficultyTranslation(diff)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -834,26 +858,6 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                 </div>
               )}
 
-              {/* Sort */}
-              <div className="flex-shrink-0">
-                <Select
-                  value={sortBy}
-                  onValueChange={(value) => {
-                    setSortBy(value);
-                    setPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder={t('sort.newest')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">{t('sort.newest')}</SelectItem>
-                    <SelectItem value="rating">{t('sort.rating')}</SelectItem>
-                    <SelectItem value="views">{t('sort.views')}</SelectItem>
-                    <SelectItem value="title">{t('sort.alphabetical')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </div>
 
@@ -910,7 +914,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-bg dark:bg-purple-bg-dark rounded-full border border-purple-border dark:border-purple-border-dark hover:bg-purple-hover-bg dark:hover:bg-purple-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {difficulty}
+                      {getDifficultyTranslation(difficulty)}
                     </span>
                     <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                   </button>
@@ -973,6 +977,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                   locale={locale} 
                   animationDelay={index * 50}
                   getSportTranslation={getSportTranslation}
+                  getDifficultyTranslation={getDifficultyTranslation}
                 />
               ))}
             </div>

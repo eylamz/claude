@@ -33,5 +33,11 @@
     "roller": "Roller",
     "skate": "Skate",
     "longboard": "Longboard"
+  },
+  "difficulty": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "expert": "Expert"
   }
 }

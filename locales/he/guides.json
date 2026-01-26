@@ -33,6 +33,12 @@
     "roller": "רולר",
     "skate": "סקייט",
     "longboard": "לונגבורד"
+  },
+  "difficulty": {
+    "beginner": "מתחילים",
+    "intermediate": "בינוני",
+    "advanced": "מתקדמים",
+    "expert": "מומחים"
   }
 }
 
