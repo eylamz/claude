@@ -224,7 +224,7 @@ export function FilterBar({
                   </div>
                 </TooltipTrigger>
                 <TooltipContent 
-                  variant={viewMode === 'grid' ? 'default' : 'orange'}
+                  variant={viewMode === 'grid' ? 'gray' : 'orange'}
                   side="bottom" 
                   className="text-center"
                 >

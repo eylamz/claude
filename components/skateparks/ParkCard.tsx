@@ -410,7 +410,7 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
       onKeyDown={handleCardKeyDown}
       tabIndex={0}
       role="button"
-      className={`h-fit cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 focus:outline-none focus:ring-2 focus:ring-brand-main focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-2xl ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+      className={`h-fit cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 outline-none  focus:outline-brand-main dark:focus:outline-brand-dark rounded-2xl ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
       style={{ animationDelay: `${animationDelay}ms` }}
       aria-label={`${name}${distanceText ? `, ${distanceText}` : ''}`}
     >

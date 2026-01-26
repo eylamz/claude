@@ -141,7 +141,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale, quest
 
                   <label
                     htmlFor={`${field.id}-${index}`}
-                    className="ms-2 text-sm text-text dark:text-text-dark cursor-pointer"
+                    className={`text-sm text-text dark:text-text-dark cursor-pointer ${locale === 'he' ? 'ms-2' : 'ms-6'}`}
                   >
                     {optionLabel}
                   </label>
@@ -162,13 +162,13 @@ export function FormFieldRenderer({ field, value, onChange, error, locale, quest
                   />
                   <label
                     htmlFor={`${field.id}-other`}
-                    className="ms-2 text-sm text-text dark:text-text-dark cursor-pointer"
+                    className={`text-sm text-text dark:text-text-dark cursor-pointer ${locale === 'he' ? 'ms-2' : 'ms-6'}`}
                   >
                     {field.otherLabel?.[locale] || (locale === 'en' ? 'Other' : 'אחר')}
                   </label>
                 </div>
                 {typeof value === 'object' && value?.value === 'other' && (
-                  <div className="ms-6">
+                  <div className={`${locale === 'he' ? 'ms-1' : 'ms-6'}`}>
                     {field.otherInputType === 'textarea' ? (
                       <Textarea
                         value={otherValue || value.other || ''}
@@ -180,7 +180,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale, quest
                         placeholder={field.otherPlaceholder?.[locale] || (locale === 'en' ? 'Please specify...' : 'אנא ציין...')}
                         rows={3}
                         required={field.required}
-                        className="w-full max-w-[500px]"
+                        className="w-full max-w-[300px] animate-popDown !outline-none"
                       />
                     ) : (
                       <Input
@@ -192,7 +192,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale, quest
                         }}
                         placeholder={field.otherPlaceholder?.[locale] || (locale === 'en' ? 'Please specify...' : 'אנא ציין...')}
                         required={field.required}
-                        className="w-full max-w-[500px]"
+                        className="w-full max-w-[300px] animate-popDown !outline-none"
                       />
                     )}
                   </div>

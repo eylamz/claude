@@ -100,10 +100,10 @@ const FormCard = memo(({
         
         {/* Submissions Badge */}
         <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
-          <div className="flex items-center gap-1.5 bg-black/45 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+          {/* <div className="flex items-center gap-1.5 bg-black/45 backdrop-blur-sm px-3 py-1.5 rounded-lg">
             <Users className="w-3.5 h-3.5 text-white" />
             <span className="text-xs font-medium text-white">{form.submissionsCount}</span>
-          </div>
+          </div> */}
           {/* Submitted Badge */}
           {isSubmitted && (
             <div className="flex items-center gap-1.5 bg-green-500/90 backdrop-blur-sm px-3 py-1.5 rounded-lg animate-fadeIn">
@@ -123,7 +123,7 @@ const FormCard = memo(({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <p className="text-xs text-text-secondary dark:text-text-secondary-dark line-clamp-2 max-w-[200px]">
+            <p className="text-xs text-gray dark:text-gray-dark line-clamp-2 max-w-[200px]">
               {truncateDescription(formDescription, 60)}
             </p>
           </div>

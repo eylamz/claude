@@ -520,14 +520,14 @@ border-top-left-radius: 12px;
 /* Popover animations are now handled via Tailwind classes in the PopoverContent component */
 
 .hero-title-gradient {
-  background: linear-gradient(135deg, var(--text-primary) 0%, #0D7377 100%);
+  background: linear-gradient(135deg, #368639 0%, theme('colors.brand.main') 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .dark .hero-title-gradient {
-  background: linear-gradient(135deg, #E0E0E0 0%, #14A3A8 100%);
+  background: linear-gradient(135deg, #c7c7c7 0%, theme('colors.brand.dark') 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

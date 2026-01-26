@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { HeroCarousel, FixedBanner, SkeletonSection, ProductSection, ParkSection, PhotoCollage, GuideSection, ArrowRight } from '@/components/home';
 import { Button } from '@/components/ui';
 import { Locale } from '@/i18n';
@@ -181,9 +182,9 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="w-full h-[70vh] flex items-center justify-center">
+      <div className="w-full h-[95vh] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 dark:border-white mx-auto"></div>
+          <LoadingSpinner size={48} variant="default" />
         </div>
       </div>
     );
@@ -191,7 +192,98 @@ export default function HomePage() {
 
 
   return (
-    <main className="pt-20 w-full bg-background dark:bg-background-dark">
+    <main className=" w-full bg-background dark:bg-background-dark">
+
+            {/* Hero Section */}
+            <section className="relative h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple/10 via-transparent to-brand-main/10 dark:from-purple/5 dark:to-brand-dark/5">
+        {/* Animated gradient overlay */}
+        <div 
+          className="absolute inset-0 hero-gradient z-[1] bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]"
+        ></div>
+        
+        {/* Hero content */}
+        <div className="relative z-10 text-center px-5 max-w-[1000px]">
+          {/* Main title */}
+          <h1 
+            className="hero-title-gradient font-extrabold mb-6 leading-[1.1] tracking-[-0.02em]"
+            style={{
+              fontSize: 'clamp(2.5rem, 8vw, 6rem)',
+              animation: 'fadeInUp 1s ease-out'
+            }}
+          >
+            {t('heroTitle').split('<br/>').map((line, i, arr) => (
+              <span key={i}>
+                {line}
+                {i < arr.length - 1 && <br />}
+              </span>
+            ))}
+          </h1>
+          
+          {/* Subtitle */}
+          <p 
+            className="font-normal mb-8 max-w-3xl mx-auto leading-relaxed text-[#5C5C5C] dark:text-[#A0A0A0]"
+            style={{
+              fontSize: 'clamp(1.1rem, 2.5vw, 1.5rem)',
+              lineHeight: '1.6',
+              animation: 'fadeInUp 1s ease-out 0.2s backwards'
+            }}
+          >
+            {t('heroSubtitle')}
+          </p>
+          
+          {/* Tagline */}
+          <div 
+            className="font-bold mb-12 text-brand-main dark:text-brand-dark"
+            style={{
+              fontSize: 'clamp(1.3rem, 3vw, 2rem)',
+              letterSpacing: '-0.01em',
+              animation: 'fadeInUp 1s ease-out 0.3s backwards'
+            }}
+          >
+            {t('heroTagline')}
+          </div>
+          
+          {/* CTA Button */}
+          <Link href={`/${locale}/skateparks`}>
+            <Button
+              variant="primary"
+              className="opacity-0 inline-block !px-12 !py-[18px] !text-lg dark:text-white font-semibold !h-auto rounded-full transition-all duration-300"
+              style={{
+                background: '#3caa41',
+                boxShadow: '0 10px 40px rgba(13, 119, 19, 0.3)',
+                animation: 'popUp 0.3s ease-out 0.6s forwards'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = '0 15px 50px rgba(13, 119, 19, 0.5)';
+                e.currentTarget.style.background = '#389f3c';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 10px 40px rgba(13, 119, 19, 0.3)';
+                e.currentTarget.style.background = '#3fb344';
+              }}
+            >
+              {t('discoverSkateparks')}
+            </Button>
+          </Link>
+        </div>
+        
+        {/* Scroll indicator */}
+        <div 
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 text-[#5C5C5C] dark:text-[#A0A0A0]"
+          style={{
+            fontSize: '0.85rem',
+            animation: 'bounce 2s infinite'
+          }}
+        >
+          <div className="text-center">
+            <div>↓</div>
+            <div style={{ marginTop: '4px' }}>{t('scrollToExplore')}</div>
+          </div>
+        </div>
+      </section>
+
             {/* Final CTA Section */}
             <section className="py-32 sm:py-40 px-4 sm:px-6 lg:px-8 bg-background dark:bg-background-dark text-center">
         <div className="max-w-4xl mx-auto">
@@ -318,97 +410,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-[#FAFAFA] dark:bg-[#1A1A1A]">
-        {/* Animated gradient overlay */}
-        <div 
-          className="absolute inset-0 hero-gradient z-[1]"
-          style={{
-            background: 'radial-gradient(circle at 30% 50%, rgba(13, 115, 119, 0.15) 0%, transparent 50%), radial-gradient(circle at 70% 50%, rgba(50, 205, 50, 0.1) 0%, transparent 50%)'
-          }}
-        ></div>
-        
-        {/* Hero content */}
-        <div className="relative z-10 text-center px-5 max-w-[1000px]">
-          {/* Main title */}
-          <h1 
-            className="hero-title-gradient font-extrabold mb-6 leading-[1.1] tracking-[-0.02em]"
-            style={{
-              fontSize: 'clamp(2.5rem, 8vw, 6rem)',
-              animation: 'fadeInUp 1s ease-out'
-            }}
-          >
-            {t('heroTitle').split('<br/>').map((line, i, arr) => (
-              <span key={i}>
-                {line}
-                {i < arr.length - 1 && <br />}
-              </span>
-            ))}
-          </h1>
-          
-          {/* Subtitle */}
-          <p 
-            className="font-normal mb-8 max-w-3xl mx-auto leading-relaxed text-[#5C5C5C] dark:text-[#A0A0A0]"
-            style={{
-              fontSize: 'clamp(1.1rem, 2.5vw, 1.5rem)',
-              lineHeight: '1.6',
-              animation: 'fadeInUp 1s ease-out 0.2s backwards'
-            }}
-          >
-            {t('heroSubtitle')}
-          </p>
-          
-          {/* Tagline */}
-          <div 
-            className="font-bold mb-12 text-[#0D7377] dark:text-[#14A3A8]"
-            style={{
-              fontSize: 'clamp(1.3rem, 3vw, 2rem)',
-              letterSpacing: '-0.01em',
-              animation: 'fadeInUp 1s ease-out 0.3s backwards'
-            }}
-          >
-            {t('heroTagline')}
-          </div>
-          
-          {/* CTA Button */}
-          <Link href={`/${locale}/skateparks`}>
-            <button
-              className="inline-block px-12 py-[18px] text-lg font-semibold text-white rounded-full transition-all duration-300"
-              style={{
-                background: '#0D7377',
-                boxShadow: '0 10px 40px rgba(13, 115, 119, 0.3)',
-                animation: 'fadeInUp 1s ease-out 0.4s backwards'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 15px 50px rgba(13, 115, 119, 0.5)';
-                e.currentTarget.style.background = '#005F60';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 10px 40px rgba(13, 115, 119, 0.3)';
-                e.currentTarget.style.background = '#0D7377';
-              }}
-            >
-              {t('discoverSkateparks')}
-            </button>
-          </Link>
-        </div>
-        
-        {/* Scroll indicator */}
-        <div 
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 text-[#5C5C5C] dark:text-[#A0A0A0]"
-          style={{
-            fontSize: '0.85rem',
-            animation: 'bounce 2s infinite'
-          }}
-        >
-          <div className="text-center">
-            <div>↓</div>
-            <div style={{ marginTop: '4px' }}>{t('scrollToExplore')}</div>
-          </div>
-        </div>
-      </section>
 
       {/* Features Section */}
       <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">

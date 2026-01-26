@@ -611,10 +611,12 @@ export default function HeaderNav() {
                       </span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className={`w-fit min-w-[280px] p-2 ${locale === 'he' ? '!left-0 !right-auto' : '!right-0 !left-auto'}`}>
+                  <PopoverContent className={`w-fit min-w-[330px] p-2 ${locale === 'he' ? '!left-0 !right-auto' : '!right-0 !left-auto'}`}>
                     <div className="space-y-2">
                       {/* Theme Toggle */}
-                      <button
+                      <Button
+                        variant="none"
+                        size="sm"
                         onClick={() => {
                           if (!hasConsent('essential')) {
                             toast({
@@ -641,85 +643,97 @@ export default function HeaderNav() {
                           }
                           toggleTheme();
                         }}
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                        className={`w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                         aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
                       >
                         {theme === 'dark' ? (
-                          <Icon name="sunBold" className="w-4 h-4 text-text/80 dark:text-text-dark/80 transition-colors duration-200" />
+                          <Icon name="sunBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
                         ) : (
-                          <Icon name="moonBold" className="w-4 h-4 text-text/80 dark:text-text-dark/80 transition-colors duration-200" />
+                          <Icon name="moonBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
                         )}
-                        <span>{theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}</span>
-                      </button>
+                        <span className="text-text dark:text-text-dark/90">{theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}</span>
+                      </Button>
 
                       {/* Language Switcher */}
-                      <button
+                      <Button
+                        variant="none"
+                        size="sm"
                         onClick={async () => {
                           const newLang = locale === 'en' ? 'he' : 'en';
                           const segments = pathname.split('/');
                           segments[1] = newLang;
                           await router.push(segments.join('/'));
                         }}
-                        className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                        className={`w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                         aria-label={tCommon('toggle_language') || 'Toggle language'}
                       >
                         {locale === 'en' ? (
-                          <Icon name="hebrewBold" className="w-4 h-4 text-text/80 dark:text-text-dark/80" />
+                          <Icon name="hebrewBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
                         ) : (
-                          <Icon name="englishBold" className="w-4 h-4 text-text/80 dark:text-text-dark/80" />
+                          <Icon name="englishBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
                         )}
-                        <span>{locale === 'en' ? 'עברית' : 'English'}</span>
-                      </button>
+                        <span className="text-text dark:text-text-dark/90">{locale === 'en' ? 'עברית' : 'English'}</span>
+                      </Button>
 
                       {/* Login Button */}
                       {loginEnabled && !session && (
                         <>
-                          <Separator className="bg-popover-border/80 dark:bg-popover-border-dark/50 transition-colors duration-200" />
-                          <Link
-                            href={`/${locale}/login`}
-                            className={`flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                          <Button
+                            variant="none"
+                            size="sm"
+                            asChild
+                            className={`w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           >
-                            <Icon name="account" className="w-4 h-4 text-text/80 dark:text-text-dark/80 transition-colors duration-200" />
-                            <span>{tCommon('login') || 'Login'}</span>
-                          </Link>
+                            <Link href={`/${locale}/login`}>
+                              <Icon name="account" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
+                              <span className="text-text dark:text-text-dark/90">{tCommon('login') || 'Login'}</span>
+                            </Link>
+                          </Button>
                         </>
                       )}
 
                       {/* User Profile Link */}
                       {loginEnabled && session && (
                         <>
-                          <Separator className="bg-popover-border/50 dark:bg-popover-border-dark/50 transition-colors duration-200" />
-                          <Link
-                            href={`/${locale}/account`}
-                            className={`flex items-center gap-3 px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                          <Button
+                            variant="none"
+                            size="sm"
+                            asChild
+                            className={`w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           >
-                            <Icon name="accountBold" className="w-4 h-4 text-text dark:text-text-dark transition-colors duration-200" />
-                            <span>{tCommon('profile')}</span>
-                          </Link>
+                            <Link href={`/${locale}/account`}>
+                              <Icon name="accountBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
+                              <span className="text-text dark:text-text-dark/90">{tCommon('profile')}</span>
+                            </Link>
+                          </Button>
                         </>
                       )}
 
                       {/* Admin Menu */}
                       {loginEnabled && isAdmin && (
                         <>
-                          <Separator className="bg-popover-border/50 dark:bg-popover-border-dark/50 transition-colors duration-200" />
+                          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
                           <Popover>
                             <PopoverTrigger asChild>
-                              <button
-                                className={`w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors duration-200 ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                              <Button
+                                variant="none"
+                                size="sm"
+                                className={`w-full flex items-center justify-between font-medium ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                               >
-                                <div className={`flex items-center gap-3 ${locale === 'he' ? 'flex-row-reverse' : ''}`}>
-                                  <Icon name="adminBold" className=" w-4 h-4 text-text/80 dark:text-text-dark/80 transition-colors duration-200" />
-                                  <span className="flex-1">{tCommon('admin') || 'Admin'}</span>
+                                <div className={`flex items-center gap-2 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
+                                  <Icon name="adminBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
+                                  <span className="flex-1 text-text dark:text-text-dark/90">{tCommon('admin') || 'Admin'}</span>
                                 </div>
-                                <ChevronRight className={`w-4 h-4 text-text-secondary dark:text-text-secondary-dark transition-colors duration-200 ${locale === 'he' ? 'rotate-180' : ''}`} />
-                              </button>
+                                <ChevronRight className={`w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 ${locale === 'he' ? 'rotate-180' : ''}`} />
+                              </Button>
                             </PopoverTrigger>
                             <PopoverContent 
                               side={locale === 'he' ? 'left' : 'right'}
                               align="start"
                               sideOffset={8}
-                              className="w-fit min-w-[280px] p-2"
+                              className="w-fit min-w-[330px] p-2"
                             >
                               <div className="space-y-2">
                                 {/* Admin Links */}
@@ -784,18 +798,18 @@ export default function HeaderNav() {
                                   const IconComponent = item.icon;
                                   
                                   return (
-                                    <Link
+                                    <Button
                                       key={item.href}
-                                      href={item.href}
-                                      className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                                        isActive
-                                          ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
-                                          : 'text-text dark:text-text-dark/90 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                      } ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                                      variant={isActive ? "info" : "none"}
+                                      size="sm"
+                                      asChild
+                                      className={`w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                                     >
-                                      <IconComponent className="w-4 h-4 text-text-secondary dark:text-text-secondary-dark" />
-                                      <span>{tMobileNav(item.labelKey)}</span>
-                                    </Link>
+                                      <Link href={item.href}>
+                                        <IconComponent className={`w-4 h-4 transition-all duration-200 ${isActive ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'}`} />
+                                        <span className={isActive ? '' : 'text-text dark:text-text-dark/90'}>{tMobileNav(item.labelKey)}</span>
+                                      </Link>
+                                    </Button>
                                   );
                                 })}
                               </div>
@@ -807,21 +821,23 @@ export default function HeaderNav() {
                       {/* Logout Button */}
                       {loginEnabled && session && (
                         <>
-                          <Separator className="bg-popover-border dark:bg-popover-border-dark transition-colors duration-200" />
-                          <button
+                          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                          <Button
+                            variant="none"
+                            size="sm"
                             onClick={handleLogout}
                             disabled={isLoggingOut}
-                            className={`w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${locale === 'he' ? 'flex-row-reverse' : ''}`}
+                            className={`w-full flex gap-2 font-medium justify-start border border-transparent hover:border-red-border dark:hover:border-red-border-dark hover:bg-red-bg dark:hover:bg-red-bg-dark text-red dark:text-red-dark hover:text-red-dark dark:hover:text-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           >
                             {isLoggingOut ? (
                               <LoadingSpinner size={16} variant="error" />
                             ) : (
                               <>
-                                <LogOut className="w-4 h-4" />
+                                <Icon name="logoutBold" className="w-4 h-4" />
                                 <span>{tCommon('logout') || 'Logout'}</span>
                               </>
                             )}
-                          </button>
+                          </Button>
                         </>
                       )}
                     </div>
