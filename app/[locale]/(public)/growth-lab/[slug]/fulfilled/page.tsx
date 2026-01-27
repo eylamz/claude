@@ -54,10 +54,10 @@ export default function FormFulfilledPage() {
 
   return (
     <div className="pt-16 min-h-screen flex items-center justify-center px-4">
-      <Card className="max-w-2xl w-full bg-card dark:bg-card-dark">
+      <Card className="max-w-2xl w-full">
         <CardContent className="p-12 text-center space-y-6">
           <div className="flex justify-center">
-            <Info className="w-20 h-20 text-blue-500 dark:text-blue-400" />
+            <Info className="w-20 h-20 text-blue dark:text-blue-dark" />
           </div>
           <h1 className="text-3xl font-bold text-text dark:text-text-dark">
             {locale === 'en' ? 'Already Submitted' : 'כבר נשלח'}

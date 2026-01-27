@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import {
-  LogOut,
+  TestTubeDiagonal,
   Trash2,
   Minus,
   Plus,
@@ -587,7 +587,7 @@ export default function HeaderNav() {
                       </span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className={`w-fit min-w-[330px] p-2 ${locale === 'he' ? '!left-0 !right-auto' : '!right-0 !left-auto'}`}>
+                  <PopoverContent className={`w-fit p-2 ${locale === 'he' ? '!left-0 !right-auto' : '!right-0 !left-auto'}`}>
                     <div className="space-y-2">
                       {/* Theme Toggle */}
                       <Button
@@ -619,7 +619,7 @@ export default function HeaderNav() {
                           }
                           toggleTheme();
                         }}
-                        className={`w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                        className={`!px-6 w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                         aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
                       >
                         {theme === 'dark' ? (
@@ -640,7 +640,7 @@ export default function HeaderNav() {
                           segments[1] = newLang;
                           await router.push(segments.join('/'));
                         }}
-                        className={`w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                        className={`!px-6 w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                         aria-label={tCommon('toggle_language') || 'Toggle language'}
                       >
                         {locale === 'en' ? (
@@ -659,10 +659,10 @@ export default function HeaderNav() {
                             variant="none"
                             size="sm"
                             asChild
-                            className={`w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                            className={`!px-6 w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           >
                             <Link href={`/${locale}/login`}>
-                              <Icon name="account" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
+                              <Icon name="accountBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
                               <span className="text-text dark:text-text-dark/90">{tCommon('login') || 'Login'}</span>
                             </Link>
                           </Button>
@@ -677,7 +677,7 @@ export default function HeaderNav() {
                             variant="none"
                             size="sm"
                             asChild
-                            className={`w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                            className={`!px-6 w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           >
                             <Link href={`/${locale}/account`}>
                               <Icon name="accountBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
@@ -696,20 +696,19 @@ export default function HeaderNav() {
                               <Button
                                 variant="none"
                                 size="sm"
-                                className={`w-full flex items-center justify-between font-medium ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                                className={`!px-6 w-full flex items-center justify-between font-medium ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                               >
                                 <div className={`flex items-center gap-2 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
                                   <Icon name="adminBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
                                   <span className="flex-1 text-text dark:text-text-dark/90">{tCommon('admin') || 'Admin'}</span>
                                 </div>
-                                <ChevronRight className={`w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 ${locale === 'he' ? 'rotate-180' : ''}`} />
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent 
                               side={locale === 'he' ? 'left' : 'right'}
                               align="start"
                               sideOffset={8}
-                              className="w-fit min-w-[330px] p-2"
+                              className="w-fit px-6 py-2"
                             >
                               <div className="space-y-2">
                                 {/* Admin Links */}
@@ -762,7 +761,7 @@ export default function HeaderNav() {
                                   {
                                     href: `/${locale}/admin/forms`,
                                     labelKey: 'forms',
-                                    icon: BookOpen,
+                                    icon: TestTubeDiagonal,
                                   },
                                   {
                                     href: `/${locale}/admin/settings`,
@@ -803,7 +802,7 @@ export default function HeaderNav() {
                             size="sm"
                             onClick={handleLogout}
                             disabled={isLoggingOut}
-                            className={`w-full flex gap-2 font-medium justify-start border border-transparent hover:border-red-border dark:hover:border-red-border-dark hover:bg-red-bg dark:hover:bg-red-bg-dark text-red dark:text-red-dark hover:text-red dark:hover:text-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                            className={`!px-6 w-full flex gap-2 font-medium justify-start border border-transparent hover:border-red-border dark:hover:border-red-border-dark hover:bg-red-bg dark:hover:bg-red-bg-dark text-red dark:text-red-dark hover:text-red dark:hover:text-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           >
                             {isLoggingOut ? (
                               <div className="flex items-center gap-2">

@@ -72,6 +72,7 @@ import NoWax from './Wax.svg';
 import NearbyRestaurants from './nearbyResturants.svg';
 import Roller from './Roller.svg';
 import Skate from './Skate.svg';
+import Longboard from './longboard.svg';
 import Search from './search.svg';
 import SearchBold from './SearchBold.svg';
 import SearchQuest from './searchQuest.svg';
@@ -359,6 +360,7 @@ const iconMap: Record<string, SvgComponent> = {
   // Guide Icons
   Roller: Roller,
   Skate: Skate,
+  Longboard: Longboard,
   
   // Banner Icons
   oferSesh: oferSesh,
@@ -468,6 +470,7 @@ export type IconName =
   | 'favIconNew'
   | 'springjam25'
   | 'Skate'
+  | 'Longboard'
   | 'Roller'
   | 'Wax'
   | 'bmx-icon'

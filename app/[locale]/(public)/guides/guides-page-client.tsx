@@ -70,7 +70,7 @@ const SPORT_CONFIG = [
   },
   {
     value: 'longboard',
-    iconName: 'longboard' as const,
+    iconName: 'Longboard' as const,
     displayName: 'Longboarding',
     variant: 'blue' as const,
     tooltipEn: 'Filter by Longboarding guides',
