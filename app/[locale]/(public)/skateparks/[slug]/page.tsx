@@ -1689,7 +1689,7 @@ export default function SkateparkPage() {
                                     }`}
                                   />
                                 </div>
-                                <p className={`text-xs xsm:text-sm font-thin transition-all duration-300 ${
+                                <p className={`text-xs xsm:text-sm font-medium transition-all duration-300 ${
                                   amenitiesActive
                                   ? isParkClosed
                                     ? 'text-red dark:text-red-dark'
@@ -1717,7 +1717,7 @@ export default function SkateparkPage() {
                                 className="w-5 h-5 mx-auto text-gray-dark dark:text-gray"
                                 />
                             </div>
-                            <p className="text-xs xsm:text-sm font-thin text-gray-dark dark:text-gray line-through">
+                            <p className="text-xs xsm:text-sm font-medium text-gray-dark dark:text-gray line-through">
                               {t(`amenities.${key}`) || key.replace(/([A-Z])/g, ' $1').trim()}
                             </p>
                           </div>

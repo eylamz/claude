@@ -5,7 +5,7 @@
 
 :root {
   --font-poppins: 'Poppins', sans-serif;
-  --font-arimo:  'Arimo', system-ui, sans-serif;
+  --font-assistant:  'Assistant', system-ui, sans-serif;
   --background: #ffffff;
   --foreground: #171717;
   --text-primary: #1A1A1A;
@@ -260,7 +260,7 @@ html {
 /* Hebrew (RTL) font */
 [dir="rtl"],
 [lang="he"] {
-  font-family: var(--font-arimo), sans-serif;
+  font-family: var(--font-assistant), sans-serif;
 }
 
 /* English (LTR) font */
@@ -274,8 +274,8 @@ html {
   font-family: var(--font-poppins), sans-serif;
 }
 
-.arimo {
-  font-family: var(--font-arimo), sans-serif;
+.assistant {
+  font-family: var(--font-assistant), sans-serif;
 }
 
 

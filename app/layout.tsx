@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Poppins, Arimo } from 'next/font/google';
+import { Poppins, Assistant } from 'next/font/google';
 import './globals.css';
 
 const poppins = Poppins({
@@ -9,15 +9,15 @@ const poppins = Poppins({
   display: 'swap',
 });
 
-const arimo = Arimo({
+const assistant = Assistant({
   subsets: ['latin', 'hebrew'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-arimo',
+  weight: ['200', '300', '400', '500', '600', '700', '800'],
+  variable: '--font-assistant',
   display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: 'Skatepark Directory',
+  title: 'ENBOSS - No Rider Left Behind',
   description: 'Find the best skateparks near you',
 };
 
@@ -28,7 +28,7 @@ export default function RootLayout({
 }) {
   return (
     <html suppressHydrationWarning>
-      <body className={`${poppins.variable} ${arimo.variable}`}>
+      <body className={`${poppins.variable} ${assistant.variable}`}>
         <script
           dangerouslySetInnerHTML={{
             __html: `

@@ -205,7 +205,7 @@ export default function HomePage() {
         <div className="relative z-10 text-center px-5 max-w-[1000px]">
           {/* Main title */}
           <h1 
-            className="hero-title-gradient font-extrabold mb-6 leading-[1.1] tracking-[-0.02em]"
+            className="hero-title-gradient font-extrabold mb-6 leading-[1] tracking-[-0.02em]"
             style={{
               fontSize: 'clamp(2.5rem, 8vw, 6rem)',
               animation: 'fadeInUp 1s ease-out'

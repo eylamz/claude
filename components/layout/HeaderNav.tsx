@@ -249,7 +249,7 @@ export default function HeaderNav() {
               {/* Skateparks */}
               <Link
                 href={`/${locale}/skateparks`}
-                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                   isActive(`/${locale}/skateparks`) ? 'text-black dark:text-white' : ''
                 }`}
               >
@@ -260,7 +260,7 @@ export default function HeaderNav() {
               {trainersEnabled && (
                 <Link
                   href={`/${locale}/trainers`}
-                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
+                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                     isActive(`/${locale}/trainers`) ? 'text-black dark:text-white' : ''
                   }`}
                 >
@@ -274,7 +274,7 @@ export default function HeaderNav() {
               {/* Events */}
               <Link
                 href={`/${locale}/events`}
-                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                   isActive(`/${locale}/events`) ? 'text-black dark:text-white' : ''
                 }`}
               >
@@ -284,7 +284,7 @@ export default function HeaderNav() {
               {/* Guides */}
               <Link
                 href={`/${locale}/guides`}
-                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                   isActive(`/${locale}/guides`) ? 'text-black dark:text-white' : ''
                 }`}
               >
@@ -295,7 +295,7 @@ export default function HeaderNav() {
               {growthLabEnabled && (
                 <Link
                   href={`/${locale}/growth-lab`}
-                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                     isActive(`/${locale}/growth-lab`) ? 'text-black dark:text-white' : ''
                   }`}
                 >
@@ -307,7 +307,7 @@ export default function HeaderNav() {
               {communityEnabled && (
                 <Link
                   href={`/${locale}/community`}
-                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                     isActive(`/${locale}/community`) ? 'text-black dark:text-white' : ''
                   }`}
                 >
@@ -318,7 +318,7 @@ export default function HeaderNav() {
               {/* About */}
               <Link
                 href={`/${locale}/about`}
-                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${
+                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                   isActive(`/${locale}/about`) ? 'text-black dark:text-white' : ''
                 }`}
               >
@@ -329,7 +329,7 @@ export default function HeaderNav() {
               {ecommerceEnabled && (
                 <Link
                   href={`/${locale}/shop`}
-                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200 font-medium text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${
+                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                     isActive(`/${locale}/shop`) ? 'text-black dark:text-white' : ''
                   }`}
                 >
@@ -344,7 +344,7 @@ export default function HeaderNav() {
             </nav>
 
             {/* RIGHT: Actions (Search, Cart, Settings) */}
-            <div className="flex items-center gap-0">
+            <div className="flex items-center gap-0 w-[124px] sm:w-[128px]">
               {/* Search (more prominent) */}
               <button
                 onClick={() => setIsSearchOpen(true)}
@@ -619,13 +619,13 @@ export default function HeaderNav() {
                           }
                           toggleTheme();
                         }}
-                        className={`!px-6 w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                        className={`!px-6 group w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                         aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
                       >
                         {theme === 'dark' ? (
-                          <Icon name="sunBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
+                          <Icon name="sunBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-yellow-500" />
                         ) : (
-                          <Icon name="moonBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
+                          <Icon name="moonBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-blue" />
                         )}
                         <span className="text-text dark:text-text-dark/90">{theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}</span>
                       </Button>
@@ -696,11 +696,11 @@ export default function HeaderNav() {
                               <Button
                                 variant="none"
                                 size="sm"
-                                className={`!px-6 w-full flex items-center justify-between font-medium ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                                className={`group !px-6 w-full flex items-center justify-between font-medium hover:!bg-blue-bg dark:hover:!bg-blue-bg-dark  hover:!border-blue-border dark:hover:!border-blue-border-dark ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                               >
                                 <div className={`flex items-center gap-2 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                  <Icon name="adminBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
-                                  <span className="flex-1 text-text dark:text-text-dark/90">{tCommon('admin') || 'Admin'}</span>
+                                  <Icon name="adminBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:!text-blue dark:group-hover:!text-blue-dark" />
+                                  <span className="flex-1 text-text dark:text-text-dark/90 group-hover:!text-blue dark:group-hover:!text-blue-dark">{tCommon('admin') || 'Admin'}</span>
                                 </div>
                               </Button>
                             </PopoverTrigger>

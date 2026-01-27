@@ -9,12 +9,9 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { Icon, type IconName } from '@/components/icons/Icon';
 import { useTheme } from '@/context/ThemeProvider';
-import { hasConsent } from '@/lib/utils/cookie-consent';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
 import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
-import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled, isGrowthLabEnabled } from '@/lib/utils/ecommerce';
+import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
 import { Separator } from '@/components/ui/separator';
 
 interface MobileSidebarProps {
@@ -68,7 +65,6 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const locale = useLocale();
   const { data: session } = useSession();
   const tCommon = useTranslations('common');
-  const { toast } = useToast();
   const tMobileNav = useTranslations('common.mobileNav');
   const { theme, toggleTheme } = useTheme();
 
@@ -86,7 +82,6 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const ecommerceEnabled = isEcommerceEnabled();
   const trainersEnabled = isTrainersEnabled();
   const loginEnabled = isLoginEnabled();
-  const growthLabEnabled = isGrowthLabEnabled();
 
   // 1. Navigation Configuration (Grid Cards)
   const navCards: NavCard[] = [
@@ -120,12 +115,6 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       label: tMobileNav('guides'),
       description: tMobileNav('guidesDesc'),
     },
-    ...(growthLabEnabled ? [{
-      href: `/${locale}/growth-lab`,
-      icon: 'messages' as IconName,
-      label: locale === 'en' ? 'Growth Lab' : 'המרחב',
-      description: locale === 'en' ? 'Share your thoughts and help the community grow' : 'שתפו את המחשבות שלכם ועזרו לקהילה לצמוח',
-    }] : []),
     ...(trainersEnabled ? [{
       href: `/${locale}/trainers`,
       icon: 'trainersBold' as IconName,
@@ -256,31 +245,6 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
   // Theme toggle handler with animation
   const handleThemeToggle = () => {
-    // Check if user has consented to essential cookies
-    if (!hasConsent('essential')) {
-      toast({
-        title: tCommon('cookieConsent.functionalConsentRequired'),
-        description: tCommon('cookieConsent.functionalConsentMessage'),
-        action: (
-          <Button
-            size="sm"
-            variant="blue"
-            className="!px-4 w-fit"
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                const event = new CustomEvent('showCookieSettings');
-                window.dispatchEvent(event);
-              }
-            }}
-          >
-            {tCommon('cookieConsent.openCookieSettings')}
-          </Button>
-        ),
-        variant: 'default',
-      });
-      return;
-    }
-    
     setShouldAnimate(true);
     toggleTheme();
     setTimeout(() => setShouldAnimate(false), 300);
@@ -584,8 +548,9 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 (card.href !== `/${locale}` && pathname.startsWith(card.href));
 
               return (
-                <div key={card.href} className="rounded overflow-hidden">
+                <div className="rounded overflow-hidden">
                 <Link
+                  key={card.href}
                   href={card.href}
                   onClick={onClose}
                   className={`flex items-center gap-2 px-2 py-3 text-3xl ${
@@ -688,15 +653,6 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                     icon: (
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/forms`,
-                    labelKey: 'forms',
-                    icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     ),
                   },

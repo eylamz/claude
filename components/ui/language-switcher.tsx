@@ -48,7 +48,7 @@ export default function LanguageToggle({ className = '', lng }: LanguageTogglePr
         {currentLng === 'en' ? (
           <div className="flex items-center gap-2">
             <Icon name="israelFlag" className="w-6 h-6" />
-            <p className="font-arimo">עברית</p>
+            <p className="font-assistant">עברית</p>
           </div>
         ) : (
           <div className="flex items-center gap-2">
@@ -74,7 +74,7 @@ export default function LanguageToggle({ className = '', lng }: LanguageTogglePr
           {currentLng === 'en' ? (
             <div className="flex items-center gap-2">
               <Icon name="israelFlag" className="w-6 h-6" />
-              <p className="font-arimo transition-all duration-200 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">עברית</p>
+              <p className="font-assistant transition-all duration-200 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">עברית</p>
             </div>
           ) : (
             <div className="flex items-center gap-2">

@@ -27,7 +27,7 @@ export default async function LocaleLayout({
   // Determine HTML attributes based on locale
   const htmlDir = locale === 'he' ? 'rtl' : 'ltr';
   const htmlLang = locale === 'he' ? 'he' : 'en';
-  const fontClass = locale === 'he' ? 'font-arimo' : 'font-poppins';
+  const fontClass = locale === 'he' ? 'font-assistant' : 'font-poppins';
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>

@@ -29,8 +29,8 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-poppins)', 'system-ui', 'sans-serif'],
         'poppins': ['var(--font-poppins)', 'system-ui', 'sans-serif'],
-        'arimo': ['var(--font-arimo)', 'system-ui', 'sans-serif'],
-        rtl: ['var(--font-arimo)', 'system-ui', 'sans-serif'],
+        'assistant': ['var(--font-assistant)', 'system-ui', 'sans-serif'],
+        rtl: ['var(--font-assistant)', 'system-ui', 'sans-serif'],
         ltr: ['var(--font-poppins)', 'system-ui', 'sans-serif'],
       },
       backdropBlur: {
