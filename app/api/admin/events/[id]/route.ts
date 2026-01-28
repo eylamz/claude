@@ -5,6 +5,7 @@ import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import Event from '@/lib/models/Event';
 import EventSignup from '@/lib/models/EventSignup';
+import Settings from '@/lib/models/Settings';
 import mongoose from 'mongoose';
 
 export async function GET(
@@ -162,6 +163,12 @@ export async function PUT(
 
     await event.save();
 
+    // Increment events version to invalidate client caches
+    const settings = await Settings.findOrCreate();
+    const currentVersion = settings.eventsVersion || 1;
+    settings.eventsVersion = currentVersion + 0.00001;
+    await settings.save();
+
     // Format response
     const formattedEvent = {
       id: event._id.toString(),
@@ -269,6 +276,12 @@ export async function DELETE(
     }
 
     await event.deleteOne();
+
+    // Increment events version to invalidate client caches
+    const settings = await Settings.findOrCreate();
+    const currentVersion = settings.eventsVersion || 1;
+    settings.eventsVersion = currentVersion + 0.00001;
+    await settings.save();
 
     return NextResponse.json({ message: 'Event deleted successfully' });
   } catch (error: any) {

@@ -121,7 +121,6 @@ const EventSignupSchema: Schema<IEventSignup> = new Schema<IEventSignup>(
       type: String,
       required: true,
       unique: true,
-      index: true,
     },
     status: {
       type: String,
@@ -158,7 +157,6 @@ EventSignupSchema.index({ eventId: 1, status: 1 });
 EventSignupSchema.index({ userId: 1, eventId: 1 });
 EventSignupSchema.index({ userEmail: 1, eventId: 1 });
 EventSignupSchema.index({ ipAddress: 1, eventId: 1, submittedAt: -1 });
-EventSignupSchema.index({ confirmationNumber: 1 }, { unique: true });
 
 /**
  * Static method: Find signup by confirmation number

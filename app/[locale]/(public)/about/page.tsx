@@ -1,12 +1,13 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Instagram, Youtube } from 'lucide-react';
 import { Icon } from '@/components/icons/Icon';
 import { AboutPhotoCollage } from '@/components/home';
 
 export default function AboutPage() {
   const t = useTranslations('about');
+  const locale = useLocale();
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark">
@@ -15,9 +16,13 @@ export default function AboutPage() {
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-10 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           {/* Header - visually aligned with guides header, without animations */}
           <header>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-white leading-tight mb-3 text-center">
+            <div className={`flex items-center justify-center ${locale === 'he' ? 'gap-2' : 'gap-3'}`}>
+
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-text dark:text-text-dark leading-tight mb-3 text-center">
               {t('title')}
             </h1>
+            <Icon name="logo" className={` h-auto text-gray-900 dark:text-white ${locale === 'he' ? '-mt-[0.25rem] w-[7.5rem]' : '-mt-[0.45rem] w-[9.75rem]'}`} />
+            </div>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-center">
               {t('subtitle')}
             </p>

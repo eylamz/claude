@@ -9,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Popover, PopoverContent } from '@/components/ui/popover';
+import { NumberInput } from '@/components/ui/number-input';
 import { useToast } from '@/hooks/use-toast';
 
 interface Event {
@@ -96,11 +97,58 @@ export default function EventsPage() {
   // Refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
   
+  // Cache version control
+  const [eventsVersion, setEventsVersion] = useState<number>(1);
+  const [savingVersion, setSavingVersion] = useState(false);
+  
   // Toast hook
   const { toast } = useToast();
   
   // Refs to prevent duplicate API calls
   const isFetchingRef = useRef(false);
+
+  // Fetch settings on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/admin/settings');
+        if (response.ok) {
+          const data = await response.json();
+          setEventsVersion(data.settings?.eventsVersion || 1);
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  // Save version
+  const handleSaveVersion = async () => {
+    try {
+      setSavingVersion(true);
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventsVersion }),
+      });
+      if (!response.ok) throw new Error('Failed to save version');
+      toast({
+        title: 'Success',
+        description: 'Events cache version saved successfully!',
+        variant: 'success',
+      });
+    } catch (error) {
+      console.error('Error saving version:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save events cache version',
+        variant: 'error',
+      });
+    } finally {
+      setSavingVersion(false);
+    }
+  };
 
   // Debounce search input
   useEffect(() => {
@@ -138,16 +186,25 @@ export default function EventsPage() {
       });
 
       const response = await fetch(`/api/admin/events?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch events');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch events: ${response.status} ${response.statusText}`);
+      }
 
       const data = await response.json();
-      setEvents(data.events);
-      setPagination(data.pagination);
+      setEvents(data.events || []);
+      setPagination(data.pagination || {
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        limit: pagination.limit,
+      });
     } catch (error) {
       console.error('Error fetching events:', error);
+      setEvents([]);
       toast({
         title: 'Error',
-        description: 'Failed to fetch events',
+        description: error instanceof Error ? error.message : 'Failed to fetch events',
         variant: 'error',
       });
     } finally {
@@ -483,6 +540,36 @@ export default function EventsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Cache Version Control */}
+      <Card className="bg-card dark:bg-card-dark">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Events Cache Version
+              </label>
+              <NumberInput
+                value={eventsVersion}
+                onChange={(e) => setEventsVersion(parseInt(e.target.value) || 1)}
+                min={1}
+                className="w-32"
+                showSpinner={true}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Increment this version to invalidate all client caches
+              </p>
+            </div>
+            <Button
+              variant="info"
+              onClick={handleSaveVersion}
+              disabled={savingVersion}
+            >
+              {savingVersion ? 'Saving...' : 'Save Version'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filters */}
       <Card className="!p-0 bg-card dark:bg-card-dark">

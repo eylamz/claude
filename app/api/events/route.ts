@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Event from '@/lib/models/Event';
 import EventSignup from '@/lib/models/EventSignup';
+import Settings from '@/lib/models/Settings';
 import { getLocalizedText } from '@/lib/seo/utils';
 
 /**
@@ -17,12 +18,20 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     const searchParams = request.nextUrl.searchParams;
+    const versionOnly = searchParams.get('versionOnly') === 'true';
     const locale = searchParams.get('locale') || 'en';
+    
+    // If only version is requested, return it without fetching events
+    if (versionOnly) {
+      const settings = await Settings.findOrCreate();
+      const version = settings.eventsVersion || 1;
+      return NextResponse.json({ version });
+    }
 
-    // Build query for published, public events
+    // Build query for published events
+    // Note: isPublic field doesn't exist in Event schema, so we only filter by status
     const query: any = {
       status: 'published',
-      isPublic: true,
     };
 
     // Fetch all published events
@@ -30,15 +39,21 @@ export async function GET(request: NextRequest) {
       .sort({ startDate: 1 })
       .lean();
 
+    console.log(`[Events API] Found ${events.length} events matching query:`, JSON.stringify(query));
+
     // Format events data to match the frontend interface
     const formattedEvents = await Promise.all(
       events.map(async (event: any) => {
         // Get current participant count
         const currentParticipants = await EventSignup.countByEventId(event._id);
         
-        // Format dates
-        const startDate = new Date(event.startDate);
-        const endDate = new Date(event.endDate || event.startDate);
+        // Handle both new format (dateTime.startDate) and old format (startDate)
+        const startDate = event.dateTime?.startDate 
+          ? new Date(event.dateTime.startDate) 
+          : (event.startDate ? new Date(event.startDate) : new Date());
+        const endDate = event.dateTime?.endDate 
+          ? new Date(event.dateTime.endDate) 
+          : (event.endDate ? new Date(event.endDate) : startDate);
         const now = new Date();
 
         // Determine if event is happening now or past
@@ -60,22 +75,72 @@ export async function GET(request: NextRequest) {
           return `${year}-${month}-${day}`;
         };
 
+        // Handle title - new format uses content[locale].title, old format uses title[locale] or title
+        const title = event.content?.[locale]?.title 
+          || event.content?.en?.title 
+          || event.title?.[locale] 
+          || event.title?.en 
+          || (typeof event.title === 'string' ? event.title : '')
+          || 'Untitled Event';
+
+        // Handle description - new format uses content[locale].description
+        const description = event.content?.[locale]?.description 
+          || event.content?.en?.description 
+          || event.description?.[locale] 
+          || event.description?.en 
+          || event.shortDescription?.[locale]
+          || event.shortDescription?.en
+          || (typeof event.description === 'string' ? event.description : '')
+          || '';
+
+        // Handle featured image
+        const featuredImage = typeof event.featuredImage === 'string' 
+          ? event.featuredImage 
+          : event.featuredImage?.url 
+          || event.images?.[0]?.url 
+          || '/placeholder-event.jpg';
+
+        // Handle location name
+        const locationName = event.location?.name?.[locale] 
+          || event.location?.name?.en 
+          || '';
+
+        // Handle location address
+        const locationAddress = event.location?.address?.[locale] 
+          || event.location?.address?.en 
+          || '';
+
+        // Handle isAllDay - check dateTime or event level
+        const isAllDay = event.dateTime?.isAllDay !== undefined 
+          ? event.dateTime.isAllDay 
+          : event.isAllDay || false;
+
+        // Handle start/end times from dateTime or calculate from dates
+        let startTime = event.dateTime?.startTime;
+        let endTime = event.dateTime?.endTime;
+        if (!startTime && !isAllDay) {
+          startTime = formatTime(startDate);
+        }
+        if (!endTime && !isAllDay) {
+          endTime = formatTime(endDate);
+        }
+
         return {
           id: event._id.toString(),
           slug: event.slug,
-          title: getLocalizedText(event.title, locale),
-          description: getLocalizedText(event.description || event.shortDescription, locale),
-          image: event.featuredImage || event.images?.[0]?.url || '/placeholder-event.jpg',
+          title,
+          description,
+          image: featuredImage,
           startDate: formatDate(startDate),
           endDate: formatDate(endDate),
-          startTime: event.isAllDay ? '00:00' : formatTime(startDate),
-          endTime: event.isAllDay ? '23:59' : formatTime(endDate),
-          location: getLocalizedText(event.location?.name, locale),
-          address: getLocalizedText(event.location?.address, locale),
+          startTime: isAllDay ? '00:00' : (startTime || formatTime(startDate)),
+          endTime: isAllDay ? '23:59' : (endTime || formatTime(endDate)),
+          location: locationName,
+          address: locationAddress,
           interestedCount: event.interestedCount || 0,
           maxParticipants: event.capacity,
           currentParticipants,
-          isFree: event.isFree || false,
+          isFree: event.isFree !== undefined ? event.isFree : true,
           price: event.price,
           sports: event.relatedSports || [],
           isHappeningNow,
@@ -84,8 +149,13 @@ export async function GET(request: NextRequest) {
       })
     );
 
+    // Get version from settings
+    const settings = await Settings.findOrCreate();
+    const version = settings.eventsVersion || 1;
+
     return NextResponse.json({
       events: formattedEvents,
+      version,
     });
   } catch (error: any) {
     console.error('Events API error:', error);

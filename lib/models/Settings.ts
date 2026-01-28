@@ -83,6 +83,7 @@ export interface ISettings extends Document {
   maintenance: IMaintenanceSettings;
   skateparksVersion: number;
   guidesVersion: number;
+  eventsVersion: number;
   createdAt: Date;
   updatedAt: Date;
   
@@ -283,6 +284,7 @@ SettingsSchema.statics.findOrCreate = async function (): Promise<ISettings> {
       },
       skateparksVersion: 1,
       guidesVersion: 1,
+      eventsVersion: 1,
     });
   }
   return settings;

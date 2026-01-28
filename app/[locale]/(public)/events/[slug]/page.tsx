@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -89,7 +89,6 @@ interface IEvent {
 export default function EventPage() {
   const params = useParams();
   const locale = useLocale() as 'en' | 'he';
-  const t = useTranslations('events');
   const slug = params.slug as string;
 
   const [event, setEvent] = useState<IEvent | null>(null);
@@ -97,11 +96,36 @@ export default function EventPage() {
   const [error, setError] = useState<string | null>(null);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [cacheInitialized, setCacheInitialized] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState<number | null>(null);
 
   const fetchEvent = async () => {
+    if (!cacheInitialized) return; // Wait for cache to initialize
+    
     setLoading(true);
     setError(null);
 
+    // Try to find event in cache first (for future optimization)
+    // Note: cached events have a simplified structure, so we'll still fetch full data
+    const cacheKey = 'events_cache';
+    const cachedData = localStorage.getItem(cacheKey);
+    
+    if (cachedData) {
+      try {
+        const allCachedEvents = JSON.parse(cachedData);
+        if (Array.isArray(allCachedEvents)) {
+          // Find event by slug in cached events
+          // Currently we still fetch full data from API, but cache check is here for future optimization
+          const cachedEvent = allCachedEvents.find((e: any) => e.slug === slug);
+          // If found, could use for initial display, but we fetch full data anyway
+        }
+      } catch (e) {
+        console.warn('Failed to parse cached events data', e);
+      }
+    }
+
+    // Always fetch full event data from API (for complete event details)
+    // This ensures we have complete data even if event was found in cache
     try {
       const response = await fetch(`/api/events/${slug}?locale=${locale}`);
       if (!response.ok) {
@@ -124,9 +148,72 @@ export default function EventPage() {
     }
   };
 
+  // Check version and cache on mount (similar to guides)
   useEffect(() => {
+    const checkVersionAndCache = async () => {
+      const cacheKey = 'events_cache';
+      const versionKey = 'events_version';
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedVersion = localStorage.getItem(versionKey);
+
+      // If no cache or version, fetch and cache all events
+      if (!cachedData || !cachedVersion) {
+        try {
+          const response = await fetch(`/api/events`);
+          if (response.ok) {
+            const data = await response.json();
+            const currentVersion = data.version || 1;
+            const allEvents = data.events || [];
+            
+            // Store in cache
+            localStorage.setItem(cacheKey, JSON.stringify(allEvents));
+            localStorage.setItem(versionKey, currentVersion.toString());
+            setCurrentVersion(currentVersion);
+          }
+        } catch (error) {
+          console.error('Error fetching events for cache:', error);
+        }
+      } else {
+        // Cache exists, check version in background
+        try {
+          const versionResponse = await fetch('/api/events?versionOnly=true');
+          if (versionResponse.ok) {
+            const versionData = await versionResponse.json();
+            const fetchedVersion = versionData.version || 1;
+            setCurrentVersion(fetchedVersion);
+            const storedVersion = parseInt(cachedVersion);
+
+            // If versions don't match, update cache
+            if (storedVersion !== fetchedVersion) {
+              const response = await fetch(`/api/events`);
+              if (response.ok) {
+                const data = await response.json();
+                const newVersion = data.version || 1;
+                const allEvents = data.events || [];
+                
+                // Update cache
+                localStorage.setItem(cacheKey, JSON.stringify(allEvents));
+                localStorage.setItem(versionKey, newVersion.toString());
+                setCurrentVersion(newVersion);
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to check events version', error);
+        }
+      }
+      
+      setCacheInitialized(true);
+    };
+
+    checkVersionAndCache();
+  }, [locale]);
+
+  // Fetch event only when cache is initialized
+  useEffect(() => {
+    if (!cacheInitialized) return;
     fetchEvent();
-  }, [slug, locale]);
+  }, [slug, locale, cacheInitialized]);
 
   // Loading state - Duolingo style skeleton
   if (loading) {

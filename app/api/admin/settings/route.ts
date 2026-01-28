@@ -62,6 +62,9 @@ export async function PUT(request: NextRequest) {
     if (body.guidesVersion !== undefined) {
       settings.guidesVersion = body.guidesVersion;
     }
+    if (body.eventsVersion !== undefined) {
+      settings.eventsVersion = body.eventsVersion;
+    }
     
     await settings.save();
     

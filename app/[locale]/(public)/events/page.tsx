@@ -366,6 +366,8 @@ export default function EventsPage() {
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [filtersData, setFiltersData] = useState<{ sports: string[] }>({ sports: [] });
   const [loading, setLoading] = useState(true);
+  const [cacheInitialized, setCacheInitialized] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState<number | null>(null);
   
   // Filters
   const [selectedSports, setSelectedSports] = useState<string[]>(
@@ -408,10 +410,99 @@ export default function EventsPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Fetch events
+  // Check version and cache on mount
   useEffect(() => {
-    fetchEvents();
+    const checkVersionAndCache = async () => {
+      const cacheKey = 'events_cache';
+      const versionKey = 'events_version';
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedVersion = localStorage.getItem(versionKey);
+
+      // If no cache or version, fetch and cache all events
+      if (!cachedData || !cachedVersion) {
+        console.log('No cache found, fetching events for initial cache');
+        try {
+          const response = await fetch(`/api/events?locale=${locale}`);
+          if (response.ok) {
+            const data = await response.json();
+            const currentVersion = data.version || 1;
+            const allEvents = data.events || [];
+            
+            console.log('Initial cache fetch:', allEvents.length, 'events');
+            // Store in cache
+            localStorage.setItem(cacheKey, JSON.stringify(allEvents));
+            localStorage.setItem(versionKey, currentVersion.toString());
+            setCurrentVersion(currentVersion);
+          }
+        } catch (error) {
+          console.error('Error fetching events for cache:', error);
+        }
+      } else {
+        // Cache exists, check if it has data
+        try {
+          const parsedCache = JSON.parse(cachedData);
+          if (!Array.isArray(parsedCache) || parsedCache.length === 0) {
+            console.log('Cache exists but is empty, will fetch fresh data');
+            // Clear empty cache
+            localStorage.removeItem(cacheKey);
+            localStorage.removeItem(versionKey);
+          } else {
+            console.log('Cache exists with', parsedCache.length, 'events, checking version');
+            // Cache exists with data, check version in background
+            try {
+              const versionResponse = await fetch('/api/events?versionOnly=true');
+              if (versionResponse.ok) {
+                const versionData = await versionResponse.json();
+                const fetchedVersion = versionData.version || 1;
+                setCurrentVersion(fetchedVersion);
+                const storedVersion = parseInt(cachedVersion);
+
+                // If versions don't match, update cache
+                if (storedVersion !== fetchedVersion) {
+                  console.log('Version mismatch, updating cache');
+                  const response = await fetch(`/api/events`);
+                  if (response.ok) {
+                    const data = await response.json();
+                    const newVersion = data.version || 1;
+                    const allEvents = data.events || [];
+                    
+                    // Update cache
+                    localStorage.setItem(cacheKey, JSON.stringify(allEvents));
+                    localStorage.setItem(versionKey, newVersion.toString());
+                    setCurrentVersion(newVersion);
+                  }
+                } else {
+                  // Versions match, set current version from cache
+                  setCurrentVersion(storedVersion);
+                }
+              }
+            } catch (error) {
+              console.warn('Failed to check events version', error);
+              // If version check fails, still set currentVersion from cache
+              if (cachedVersion) {
+                setCurrentVersion(parseInt(cachedVersion));
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to parse cache, clearing it', e);
+          localStorage.removeItem(cacheKey);
+          localStorage.removeItem(versionKey);
+        }
+      }
+      
+      setCacheInitialized(true);
+    };
+
+    checkVersionAndCache();
   }, [locale]);
+
+  // Fetch events only when cache is initialized
+  useEffect(() => {
+    if (!cacheInitialized) return;
+    fetchEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale, cacheInitialized]);
 
   // Extract filters from events data - normalize to SPORT_CONFIG values
   useEffect(() => {
@@ -448,11 +539,96 @@ export default function EventsPage() {
   const fetchEvents = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/events?locale=${locale}`);
+      const cacheKey = 'events_cache';
+      const versionKey = 'events_version';
+      const cachedData = localStorage.getItem(cacheKey);
+      const cachedVersion = localStorage.getItem(versionKey);
+
+      // Try to use cache first if available and valid
+      if (cachedData && cachedVersion) {
+        try {
+          const allCachedEvents = JSON.parse(cachedData);
+          const storedVersion = parseInt(cachedVersion);
+          
+          // Check if cache has valid data
+          if (Array.isArray(allCachedEvents) && allCachedEvents.length > 0) {
+            // Use the version from state if available (from initial check)
+            let versionMatches = true;
+            if (currentVersion !== null) {
+              versionMatches = storedVersion === currentVersion;
+            }
+
+            // If version matches (or not checked yet), use cached events immediately
+            if (versionMatches) {
+              console.log('Using cached events:', allCachedEvents.length);
+              setEvents(allCachedEvents);
+              setLoading(false);
+              
+              // Check version in background and update if needed
+              (async () => {
+                try {
+                  const versionResponse = await fetch('/api/events?versionOnly=true');
+                  if (versionResponse.ok) {
+                    const versionData = await versionResponse.json();
+                    const fetchedVersion = versionData.version || 1;
+                    setCurrentVersion(fetchedVersion);
+
+                    // If versions don't match, refetch events data and update both cache and version
+                    if (storedVersion !== fetchedVersion) {
+                      console.log('Version mismatch, fetching fresh events');
+                      const response = await fetch(`/api/events`);
+                      if (response.ok) {
+                        const data = await response.json();
+                        const newVersion = data.version || 1;
+                        const allEvents = data.events || [];
+                        
+                        // Update cache and state
+                        localStorage.setItem(cacheKey, JSON.stringify(allEvents));
+                        localStorage.setItem(versionKey, newVersion.toString());
+                        setCurrentVersion(newVersion);
+                        setEvents(allEvents);
+                      }
+                    }
+                  }
+                } catch (error) {
+                  console.warn('Failed to check events version in background', error);
+                }
+              })();
+              
+              return;
+            } else {
+              console.log('Version mismatch, will fetch fresh data');
+            }
+          } else {
+            console.log('Cache exists but is empty, fetching fresh data');
+          }
+        } catch (e) {
+          console.warn('Failed to parse cached events data', e);
+          // Clear invalid cache
+          localStorage.removeItem(cacheKey);
+          localStorage.removeItem(versionKey);
+        }
+      } else {
+        console.log('No cache found, fetching fresh data');
+      }
+
+      // No valid cache or version mismatch, fetch fresh data
+      console.log('Fetching fresh events from API');
+      const response = await fetch(`/api/events`);
       if (response.ok) {
         const data = await response.json();
-        setEvents(data.events || []);
+        const fetchedVersion = data.version || 1;
+        const allEvents = data.events || [];
+        
+        console.log('Fetched events from API:', allEvents.length);
+        setEvents(allEvents);
+        
+        // Update cache if we got events
+        localStorage.setItem(cacheKey, JSON.stringify(allEvents));
+        localStorage.setItem(versionKey, fetchedVersion.toString());
+        setCurrentVersion(fetchedVersion);
       } else {
+        console.error('Failed to fetch events:', response.status, response.statusText);
         setEvents([]);
       }
     } catch (error) {
