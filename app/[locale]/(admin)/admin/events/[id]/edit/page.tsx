@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Toaster } from '@/components/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Toaster, Skeleton } from '@/components/ui';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
@@ -63,12 +63,20 @@ const CATEGORIES = [
   'Other',
 ];
 
-export default function NewEventPage() {
+export default function EditEventPage() {
   const locale = useLocale();
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+  
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'en' | 'he'>('en');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isPageVisible, setIsPageVisible] = useState(true);
+  const lastSavedDataRef = useRef<string | null>(null);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState<EventFormData>({
@@ -108,21 +116,142 @@ export default function NewEventPage() {
     notes: '',
   });
 
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  };
+  // Fetch event data
+  useEffect(() => {
+    const fetchEvent = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch(`/api/admin/events/${id}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Event not found');
+          }
+          throw new Error('Failed to fetch event');
+        }
+
+        const data = await response.json();
+        const event = data.event;
+
+        // Format dates for datetime-local input
+        const formatDateForInput = (date: string | Date) => {
+          if (!date) return '';
+          const d = new Date(date);
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          const hours = String(d.getHours()).padStart(2, '0');
+          const minutes = String(d.getMinutes()).padStart(2, '0');
+          return `${year}-${month}-${day}T${hours}:${minutes}`;
+        };
+
+        setFormData({
+          title: event.title || { en: '', he: '' },
+          slug: event.slug || '',
+          description: event.description || { en: '', he: '' },
+          shortDescription: event.shortDescription || { en: '', he: '' },
+          startDate: formatDateForInput(event.startDate),
+          endDate: formatDateForInput(event.endDate),
+          timezone: event.timezone || 'Asia/Jerusalem',
+          isAllDay: event.isAllDay || false,
+          location: event.location || {
+            name: { en: '', he: '' },
+            address: { en: '', he: '' },
+          },
+          featuredImage: event.featuredImage || '',
+          videoUrl: event.videoUrl || '',
+          relatedSports: event.relatedSports || [],
+          category: event.category || '',
+          organizer: event.organizer || {
+            name: '',
+            email: '',
+            phone: '',
+          },
+          capacity: event.capacity || '',
+          isFree: event.isFree !== undefined ? event.isFree : true,
+          price: event.price || '',
+          currency: event.currency || 'ILS',
+          registrationUrl: event.registrationUrl || '',
+          status: event.status || 'draft',
+          isFeatured: event.isFeatured || false,
+          isPublic: event.isPublic !== undefined ? event.isPublic : true,
+          registrationRequired: event.registrationRequired || false,
+          metaTitle: event.metaTitle || { en: '', he: '' },
+          metaDescription: event.metaDescription || { en: '', he: '' },
+          tags: event.tags || [],
+          notes: event.notes || '',
+        });
+      } catch (err: any) {
+        setError(err.message || 'Failed to load event');
+        console.error('Error fetching event:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchEvent();
+    }
+  }, [id]);
+
+  // Track page visibility to avoid auto-saving when tab is in background
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(!document.hidden);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // Track initial form data after load
+  useEffect(() => {
+    if (formData.slug && !lastSavedDataRef.current) {
+      lastSavedDataRef.current = JSON.stringify(formData);
+    }
+  }, [formData.slug]);
+
+  // Auto-save functionality
+  const autoSave = useCallback(async () => {
+    if (!id || !formData.slug || isSubmitting || !isPageVisible) {
+      return;
+    }
+    
+    const currentDataString = JSON.stringify(formData);
+    if (lastSavedDataRef.current === currentDataString) {
+      return;
+    }
+    
+    try {
+      const submitData = {
+        ...formData,
+        capacity: formData.capacity === '' ? undefined : formData.capacity,
+        price: formData.price === '' ? undefined : formData.price,
+      };
+
+      const response = await fetch(`/api/admin/events/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submitData),
+      });
+
+      if (response.ok) {
+        setLastSaved(new Date());
+        lastSavedDataRef.current = currentDataString;
+        console.log('Auto-saved event');
+      }
+    } catch (error) {
+      console.error('Error auto-saving:', error);
+    }
+  }, [formData, id, isSubmitting, isPageVisible]);
+
+  useEffect(() => {
+    const interval = setInterval(autoSave, 30000); // Every 30 seconds
+    return () => clearInterval(interval);
+  }, [autoSave]);
 
   const handleTitleChange = (lang: 'en' | 'he', value: string) => {
-    setFormData(prev => {
-      const newData = { ...prev, title: { ...prev.title, [lang]: value } };
-      if (lang === 'en' && (!prev.slug || prev.slug === generateSlug(prev.title.en))) {
-        newData.slug = generateSlug(value);
-      }
-      return newData;
-    });
+    setFormData(prev => ({ ...prev, title: { ...prev.title, [lang]: value } }));
   };
 
   const handleInputChange = (field: string, value: any) => {
@@ -183,57 +312,50 @@ export default function NewEventPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e?: React.FormEvent, saveAsDraft: boolean = false) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    if (!saveAsDraft && !validate()) {
-      return;
-    }
-
     setIsSubmitting(true);
+    setError(null);
     
     try {
       const submitData = {
         ...formData,
         capacity: formData.capacity === '' ? undefined : formData.capacity,
         price: formData.price === '' ? undefined : formData.price,
-        status: saveAsDraft ? 'draft' : 'published',
+        status: formData.status || 'draft',
       };
 
-      const response = await fetch('/api/admin/events', {
-        method: 'POST',
+      const response = await fetch(`/api/admin/events/${id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submitData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create event');
+        throw new Error(errorData.error || 'Failed to save event');
       }
 
       const data = await response.json();
+      console.log('Event saved successfully:', data);
+      setLastSaved(new Date());
+      const submitDataString = JSON.stringify(submitData);
+      lastSavedDataRef.current = submitDataString;
       
-      if (saveAsDraft) {
-        toast({
-          title: 'Success',
-          description: 'Draft saved successfully!',
-          variant: 'success',
-        });
-      } else {
-        toast({
-          title: 'Success',
-          description: 'Event published successfully!',
-          variant: 'success',
-        });
-        setTimeout(() => {
-          router.push(`/${locale}/admin/events`);
-        }, 2500);
-      }
+      const statusMessage = formData.status === 'published' ? 'published' : 'saved';
+      toast({
+        title: 'Success',
+        description: `Event ${statusMessage} successfully!`,
+        variant: 'success',
+      });
     } catch (error: any) {
       console.error('Error submitting:', error);
+      const errorMessage = error.message || 'Failed to save event';
+      setError(errorMessage);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to save event',
+        description: errorMessage,
         variant: 'error',
       });
     } finally {
@@ -241,29 +363,62 @@ export default function NewEventPage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error && !formData.slug) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-text dark:text-text-dark">Edit Event</h1>
+            <p className="text-sm text-red-500 mt-1">{error}</p>
+          </div>
+          <Button variant="gray" onClick={() => router.back()}>
+            Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <Toaster />
       {/* Header */}
       <div className="pt-16 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-text dark:text-text-dark">Create New Event</h1>
+          <h1 className="text-3xl font-bold text-text dark:text-text-dark">Edit Event</h1>
+          <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">
+            {lastSaved && `Last saved: ${lastSaved.toLocaleTimeString()}`}
+            {error && <span className="text-red-500 ml-2">{error}</span>}
+          </p>
         </div>
         <div className="flex items-center space-x-3">
           <Button type="button" variant="red" onClick={() => router.back()}>
             Cancel
           </Button>
-          <Button type="button" variant="orange" onClick={(e) => {
-            e.preventDefault();
-            handleSubmit(undefined, true);
-          }} disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : 'Save Draft'}
-          </Button>
           <Button type="button" variant="green" onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             handleSubmit();
           }} disabled={isSubmitting}>
-            {isSubmitting ? 'Publishing...' : 'Publish Event'}
+            {isSubmitting ? 'Saving...' : 'Save Event'}
           </Button>
         </div>
       </div>

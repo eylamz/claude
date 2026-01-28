@@ -1,873 +1,707 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useParams, usePathname } from 'next/navigation';
-import { useTranslations, useLocale } from 'next-intl';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import Script from 'next/script';
-import {
-  Calendar,
-  Clock,
-  MapPin,
-  Share2,
-  Plus,
-  Heart,
-  Users,
-  CheckCircle,
-  Loader2,
-  Copy,
-  ExternalLink,
-  ChevronLeft,
-  User,
-  Mail,
-  Phone,
-} from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, Textarea, Skeleton } from '@/components/ui';
+import { useParams } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
+import { ChevronLeft, Share2 } from 'lucide-react';
+import { Icon } from '@/components/icons';
+import { Skeleton } from '@/components/ui';
+import FullscreenImageViewer from '@/components/skateparks/FullscreenImageViewer';
 
-interface Event {
+interface IEvent {
   _id: string;
   slug: string;
-  title: { en: string; he: string } | string;
-  description: { en: string; he: string } | string;
-  shortDescription: { en: string; he: string } | string;
-  startDate: string;
-  endDate: string;
-  timezone: string;
-  isAllDay: boolean;
-  location: {
-    name: { en: string; he: string } | string;
-    address: { en: string; he: string } | string;
-    coordinates?: { latitude: number; longitude: number };
-    venueUrl?: string;
-  };
-  images: Array<{ url: string; alt: { en: string; he: string } | string; order: number }>;
-  featuredImage: string;
-  videoUrl?: string;
-  relatedSports: string[];
-  category: string;
-  organizer: {
-    name: string;
-    email: string;
-    phone?: string;
-  };
-  capacity?: number;
-  isFree: boolean;
-  price?: number;
-  currency?: string;
-  registrationUrl?: string;
-  viewsCount: number;
-  interestedCount: number;
-  attendedCount: number;
-  status: string;
+  category: 'roller' | 'skate' | 'scoot' | 'bike';
+  type: 'competition' | 'workshop' | 'event' | 'meetup' | 'jam';
+  status: 'draft' | 'published' | 'archived' | 'cancelled';
   isFeatured: boolean;
-  isPublic: boolean;
-  registrationRequired: boolean;
-  metaTitle?: { en: string; he: string } | string;
-  metaDescription?: { en: string; he: string } | string;
-  tags: string[];
-}
-
-interface Attendee {
-  id: string;
-  name: string;
-  avatar?: string;
-}
-
-interface RelatedEvent {
-  _id: string;
-  slug: string;
-  title: { en: string; he: string } | string;
-  featuredImage: string;
-  startDate: string;
-  location: {
-    name: { en: string; he: string } | string;
+  
+  // Event timing
+  dateTime: {
+    startDate: Date | string;
+    endDate?: Date | string;
+    startTime?: string;
+    endTime?: string;
+    timezone: {
+      he: string;
+      en: string;
+    };
   };
+  
+  // Event location
+  location: {
+    name: {
+      he: string;
+      en: string;
+    };
+    address?: {
+      he: string;
+      en: string;
+    };
+    url?: string;
+    coordinates?: {
+      lat: number;
+      lng: number;
+    };
+  };
+  
+  // Engagement metrics
+  viewCount: number;
+  interestedCount: number;
+  attendingCount: number;
+  
+  // Localized content
+  content: {
+    he: {
+      title: string;
+      description: string;
+      tags: string[];
+      sections: any[];
+    };
+    en: {
+      title: string;
+      description: string;
+      tags: string[];
+      sections: any[];
+    };
+  };
+  
+  // Media management
+  media: any[];
+  featuredImage: {
+    url: string;
+    cloudinaryId?: string;
+    altText: {
+      he: string;
+      en: string;
+    };
+  };
+  
+  // Event specific fields
+  isOnline: boolean;
+  isFree: boolean;
+  registrationRequired: boolean;
+  registrationUrl?: string;
 }
 
-export default function EventDetailPage() {
+export default function EventPage() {
   const params = useParams();
-  const pathname = usePathname();
-  const locale = useLocale();
+  const locale = useLocale() as 'en' | 'he';
   const t = useTranslations('events');
-  
   const slug = params.slug as string;
-  
-  const [event, setEvent] = useState<Event | null>(null);
-  const [relatedEvents, setRelatedEvents] = useState<RelatedEvent[]>([]);
-  const [attendees, setAttendees] = useState<Attendee[]>([]);
+
+  const [event, setEvent] = useState<IEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Interaction states
-  const [isInterested, setIsInterested] = useState(false);
-  const [isGoing, setIsGoing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showShareMenu, setShowShareMenu] = useState(false);
-  
-  // Countdown state
-  const [countdown, setCountdown] = useState<{
-    days: number;
-    hours: number;
-    minutes: number;
-    seconds: number;
-  } | null>(null);
-  
-  // Registration form state
-  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
-  const [formData, setFormData] = useState<Record<string, any>>({});
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [submissionSuccess, setSubmissionSuccess] = useState(false);
-  const [confirmationNumber, setConfirmationNumber] = useState<string | null>(null);
-  
-  // Refresh attendance counter
-  const refreshAttendance = async () => {
-    if (!event) return;
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  const fetchEvent = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      const response = await fetch(`/api/events/${slug}`);
-      if (response.ok) {
-        const data = await response.json();
-        setEvent(data.event);
+      const response = await fetch(`/api/events/${slug}?locale=${locale}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          setError('Event not found');
+        } else {
+          setError('Failed to load event');
+        }
+        setLoading(false);
+        return;
       }
-    } catch (error) {
-      console.error('Error refreshing attendance:', error);
+
+      const data = await response.json();
+      setEvent(data.event);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching event:', err);
+      setError('Failed to load event');
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchEvent();
-    
-    // Set up interval to refresh attendance every 30 seconds
-    const interval = setInterval(refreshAttendance, 30000);
-    return () => clearInterval(interval);
   }, [slug, locale]);
 
-  // Countdown timer
-  useEffect(() => {
-    if (!event) return;
-    
-    const eventStart = new Date(event.startDate);
-    const updateCountdown = () => {
-      const now = new Date();
-      const diff = eventStart.getTime() - now.getTime();
-      
-      if (diff > 0) {
-        setCountdown({
-          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((diff % (1000 * 60)) / 1000),
-        });
-      } else {
-        setCountdown(null);
-      }
-    };
-    
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, [event]);
-
-  const fetchEvent = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/events/${slug}?locale=${locale}`);
-      if (!response.ok) {
-        throw new Error('Event not found');
-      }
-      const data = await response.json();
-      setEvent(data.event);
-      setRelatedEvents(data.relatedEvents || []);
-      setAttendees(data.attendees || []);
-      
-      // Check user's interaction status
-      // TODO: Implement API to check if user is interested/going
-    } catch (err: any) {
-      setError(err.message || 'Failed to load event');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getLocalizedField = (field: { en: string; he: string } | string): string => {
-    if (typeof field === 'string') return field;
-    return field[locale as 'en' | 'he'] || field.en || field.he;
-  };
-
-  const handleInterested = async () => {
-    try {
-      // TODO: Implement API call to toggle interest
-      setIsInterested(!isInterested);
-      if (event) {
-        setEvent({
-          ...event,
-          interestedCount: event.interestedCount + (isInterested ? -1 : 1),
-        });
-      }
-    } catch (error) {
-      console.error('Error toggling interest:', error);
-    }
-  };
-
-  const handleGoing = async () => {
-    try {
-      // TODO: Implement API call to toggle going
-      setIsGoing(!isGoing);
-    } catch (error) {
-      console.error('Error toggling going:', error);
-    }
-  };
-
-  const handleShare = async () => {
-    const url = `${window.location.origin}${pathname}`;
-    const title = event ? getLocalizedField(event.title) : '';
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title,
-          text: event ? getLocalizedField(event.shortDescription || event.description) : '',
-          url,
-        });
-      } catch (error) {
-        console.error('Error sharing:', error);
-      }
-    } else {
-      await navigator.clipboard.writeText(url);
-      setShowShareMenu(false);
-      // Show toast notification
-    }
-  };
-
-  const handleAddToCalendar = () => {
-    if (!event) return;
-    
-    const startDateTime = new Date(event.startDate);
-    const endDateTime = new Date(event.endDate || event.startDate);
-    
-    const formatDate = (date: Date) => {
-      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    };
-
-    const calendarUrl = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'BEGIN:VEVENT',
-      `DTSTART:${formatDate(startDateTime)}`,
-      `DTEND:${formatDate(endDateTime)}`,
-      `SUMMARY:${getLocalizedField(event.title)}`,
-      `DESCRIPTION:${getLocalizedField(event.description)}`,
-      `LOCATION:${getLocalizedField(event.location.name || event.location.address)}`,
-      'END:VEVENT',
-      'END:VCALENDAR',
-    ].join('\n');
-
-    const blob = new Blob([calendarUrl], { type: 'text/calendar' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${event.slug}.ics`;
-    link.click();
-  };
-
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!event) return;
-    
-    setIsSubmitting(true);
-    setFormErrors({});
-    
-    try {
-      // Convert form data to array format
-      const formDataArray = Object.entries(formData).map(([name, value]) => ({
-        name,
-        value,
-        type: name.toLowerCase().includes('email') ? 'email' : 
-              name.toLowerCase().includes('phone') ? 'phone' :
-              name.toLowerCase().includes('number') ? 'number' : 'text',
-        label: name,
-      }));
-      
-      const response = await fetch(`/api/events/${slug}/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ formData: formDataArray }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        if (data.errors) {
-          setFormErrors(data.errors);
-        } else {
-          setFormErrors({ submit: data.message || 'An error occurred' });
-        }
-        return;
-      }
-      
-      setSubmissionSuccess(true);
-      setConfirmationNumber(data.confirmationNumber);
-      setShowRegistrationForm(false);
-      
-      // Refresh attendance
-      setTimeout(refreshAttendance, 1000);
-    } catch (error) {
-      setFormErrors({ submit: 'Failed to submit registration' });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const isPast = event ? new Date(event.endDate || event.startDate) < new Date() : false;
-  const isHappeningNow = event ? 
-    new Date(event.startDate) <= new Date() && new Date(event.endDate || event.startDate) >= new Date() : false;
-  const hasSpotsAvailable = event?.capacity ? 
-    (event.attendedCount < event.capacity) : true;
-  const spotsRemaining = event?.capacity ? event.capacity - event.attendedCount : null;
-
+  // Loading state - Duolingo style skeleton
   if (loading) {
     return (
-      <div className="min-h-screen ">
-        <Skeleton className="h-96 w-full" />
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Skeleton className="h-8 w-3/4 mb-4" />
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-2/3" />
+      <div className="min-h-screen bg-white dark:bg-gray-950">
+        <div className="max-w-3xl mx-auto px-5 sm:px-6 py-12">
+          <Skeleton className="h-4 w-32 mb-2" />
+          <Skeleton className="h-12 w-full mb-4" />
+          <Skeleton className="h-6 w-3/4 mb-8" />
+          <Skeleton className="h-80 w-full rounded-2xl mb-8" />
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
         </div>
       </div>
     );
   }
 
+  // Error state
   if (error || !event) {
     return (
-      <div className="min-h-screen  flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+        <div className="text-center px-5">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            {error || 'Event not found'}
+            {error || (locale === 'he' ? 'אירוע לא נמצא' : 'Event not found')}
           </h1>
-          <Link href={`/${locale}/events`}>
-            <Button>Back to Events</Button>
+          <Link
+            href={`/${locale}/events`}
+            className="inline-flex items-center gap-2 text-brand-main hover:text-brand-main/80 dark:text-brand-dark font-medium"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            {locale === 'he' ? 'חזרה לאירועים' : 'Back to Events'}
           </Link>
         </div>
       </div>
     );
   }
 
-  // Social meta tags structured data
-  const eventImage = event.featuredImage || event.images?.[0]?.url || '/placeholder-event.jpg';
-  const eventTitle = getLocalizedField(event.title);
-  const eventDescription = getLocalizedField(event.description);
+  // Check if event has passed
+  const now = new Date();
+  const eventStartDate = event.dateTime?.startDate ? new Date(event.dateTime.startDate) : new Date();
+  const isEventPassed = eventStartDate < now;
+
+  const getLocalizedTitle = () => {
+    if (!event.content) return '';
+    return locale === 'he' ? (event.content.he?.title || '') : (event.content.en?.title || '');
+  };
+  const getLocalizedDescription = () => {
+    if (!event.content) return '';
+    return locale === 'he' ? (event.content.he?.description || '') : (event.content.en?.description || '');
+  };
+  const getLocalizedTags = () => {
+    if (!event.content) return [];
+    const tags = locale === 'he' ? event.content.he?.tags : event.content.en?.tags;
+    return tags || [];
+  };
+  const getLocalizedLocationName = () => {
+    if (!event.location?.name) return '';
+    return locale === 'he' ? (event.location.name.he || '') : (event.location.name.en || '');
+  };
+  const getLocalizedAddress = () => {
+    if (!event.location?.address) return null;
+    return locale === 'he' ? (event.location.address.he || null) : (event.location.address.en || null);
+  };
+  const getLocalizedTimezone = () => {
+    if (!event.dateTime?.timezone) return locale === 'he' ? 'אסיה/ירושלים' : 'Asia/Jerusalem';
+    return locale === 'he' ? (event.dateTime.timezone.he || 'אסיה/ירושלים') : (event.dateTime.timezone.en || 'Asia/Jerusalem');
+  };
+  const getLocalizedAltText = () => {
+    if (!event.featuredImage?.altText) return getLocalizedTitle() || 'Event image';
+    return locale === 'he' ? (event.featuredImage.altText.he || getLocalizedTitle()) : (event.featuredImage.altText.en || getLocalizedTitle());
+  };
+
+  const formatDate = (date: Date | string) => {
+    const dateObj = new Date(date);
+    return dateObj.toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const formatTime = (time: string) => {
+    return time;
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const iconMap: Record<string, string> = {
+      roller: 'roller',
+      skate: 'skate',
+      scoot: 'scoot',
+      bike: 'bike'
+    };
+    return iconMap[category] || 'calendar';
+  };
+
+  const getTypeIcon = (type: string) => {
+    const iconMap: Record<string, string> = {
+      competition: 'rankingBold',
+      workshop: 'books',
+      event: 'calendarBold',
+      meetup: 'user',
+      jam: 'music'
+    };
+    return iconMap[type] || 'calendar';
+  };
+
+  /**
+   * Share Button Component
+   */
+  const ShareButton = ({ title, url }: { title: string; url: string }) => {
+    const [copied, setCopied] = useState(false);
+    
+    const handleShare = async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, url });
+        } catch (err) {
+          // User cancelled or error
+        }
+      } else {
+        // Fallback: copy to clipboard
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    };
+    
+    return (
+      <button
+        onClick={handleShare}
+        className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium transition-colors"
+        aria-label={locale === 'he' ? 'שתף את האירוע' : 'Share this event'}
+      >
+        <Share2 className="w-4 h-4" />
+        <span>{copied ? (locale === 'he' ? 'הועתק!' : 'Copied!') : (locale === 'he' ? 'שתף' : 'Share')}</span>
+      </button>
+    );
+  };
+
+  // Handle opening the image viewer
+  const handleOpenImageViewer = (index: number) => {
+    setSelectedImageIndex(index);
+    setIsImageViewerOpen(true);
+  };
+
+  // Handle closing the image viewer
+  const handleCloseImageViewer = () => {
+    setIsImageViewerOpen(false);
+  };
+
+  // Prepare media array for the fullscreen viewer
+  const mediaArray: { url: string }[] = [];
+  
+  // Add featured image first if it exists
+  if (event?.featuredImage?.url && typeof event.featuredImage.url === 'string' && event.featuredImage.url.trim() !== '') {
+    mediaArray.push({ url: event.featuredImage.url });
+  }
+  
+  // Add other media items
+  if (event.media && Array.isArray(event.media)) {
+    event.media.forEach((mediaItem: any) => {
+      if (mediaItem && typeof mediaItem === 'object' && mediaItem.url && typeof mediaItem.url === 'string' && mediaItem.url.trim() !== '') {
+        // Don't add featured image twice
+        if (mediaItem.url !== event.featuredImage?.url) {
+          mediaArray.push({ url: mediaItem.url });
+        }
+      }
+    });
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+  const canonicalUrl = event ? `${siteUrl}/${locale}/events/${event.slug}` : '';
 
   return (
-    <>
-      {/* Structured Data for SEO */}
-      <Script
-        id="event-structured-data"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'Event',
-            name: eventTitle,
-            description: eventDescription,
-            startDate: event.startDate,
-            endDate: event.endDate || event.startDate,
-            eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-            eventStatus: isPast ? 'https://schema.org/EventScheduled' : 'https://schema.org/EventScheduled',
-            location: {
-              '@type': 'Place',
-              name: getLocalizedField(event.location.name),
-              address: {
-                '@type': 'PostalAddress',
-                streetAddress: getLocalizedField(event.location.address),
-              },
-              ...(event.location.coordinates && {
-                geo: {
-                  '@type': 'GeoCoordinates',
-                  latitude: event.location.coordinates.latitude,
-                  longitude: event.location.coordinates.longitude,
-                },
-              }),
-            },
-            image: eventImage,
-            organizer: {
-              '@type': 'Organization',
-              name: event.organizer.name,
-              email: event.organizer.email,
-            },
-            ...(event.price && {
-              offers: {
-                '@type': 'Offer',
-                price: event.price,
-                priceCurrency: event.currency || 'ILS',
-                availability: hasSpotsAvailable
-                  ? 'https://schema.org/InStock'
-                  : 'https://schema.org/SoldOut',
-              },
-            }),
-          }),
-        }}
-      />
+    <div className="min-h-screen bg-background dark:bg-background-dark">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* Article Header - Duolingo Style */}
+        <header className="my-10">
+          {/* Badges */}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            {event.isFeatured && (
+              <span className="px-2 py-1 rounded-lg text-xs font-semibold bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200 flex items-center gap-1">
+                <Icon name="star" className="w-3 h-3" />
+                <span>{locale === 'he' ? 'אירוע מומלץ' : 'Featured Event'}</span>
+              </span>
+            )}
+            <span className="px-2 py-1 rounded-lg text-xs font-medium bg-brand-main/10 text-brand-main dark:bg-brand-main/20 dark:text-brand-dark flex items-center gap-1 capitalize">
+              <Icon name={getCategoryIcon(event.category) as any} className="w-3 h-3" />
+              {event.category}
+            </span>
+            <span className="px-2 py-1 rounded-lg text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 flex items-center gap-1 capitalize">
+              <Icon name={getTypeIcon(event.type) as any} className="w-3 h-3" />
+              {event.type}
+            </span>
+          </div>
 
-      {/* Meta tags */}
-      <meta property="og:title" content={eventTitle} />
-      <meta property="og:description" content={eventDescription} />
-      <meta property="og:image" content={eventImage} />
-      <meta property="og:type" content="event" />
-      <meta property="og:url" content={`${typeof window !== 'undefined' ? window.location.origin : ''}${pathname}`} />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={eventTitle} />
-      <meta name="twitter:description" content={eventDescription} />
-      <meta name="twitter:image" content={eventImage} />
+          {/* Title - Large and bold */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mb-4">
+            {getLocalizedTitle()}
+          </h1>
 
-      <div className="min-h-screen ">
-        {/* Hero Image with Overlay */}
-        <div className="relative h-[60vh] min-h-[400px] bg-gray-900">
-          <Image
-            src={eventImage}
-            alt={eventTitle}
-            fill
-            className="object-cover opacity-60"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-          
-          {/* Overlay Content */}
-          <div className="absolute inset-0 flex flex-col justify-end p-4 sm:p-6 lg:p-8">
-            <div className="max-w-6xl mx-auto w-full">
-              {isHappeningNow && (
-                <div className="mb-4 inline-block bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                  {t('happeningNow')}
+          {/* Description/Subtitle - Hook line */}
+          <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed mb-6">
+            {getLocalizedDescription()}
+          </p>
+
+          {/* Date, Time, and Location - Second appearance (below description) */}
+          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mb-8">
+            {event.dateTime?.startDate && (
+              <>
+                <div className="flex items-center gap-1">
+                  <Icon name="calendar" className="w-4 h-4" />
+                  <span>{formatDate(event.dateTime.startDate)}</span>
                 </div>
-              )}
-              
-              {countdown && (
-                <div className="mb-4 flex gap-4 text-white">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold">{countdown.days}</div>
-                    <div className="text-sm opacity-80">{t('countdown.days')}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold">{countdown.hours}</div>
-                    <div className="text-sm opacity-80">{t('countdown.hours')}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold">{countdown.minutes}</div>
-                    <div className="text-sm opacity-80">{t('countdown.minutes')}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold">{countdown.seconds}</div>
-                    <div className="text-sm opacity-80">{t('countdown.seconds')}</div>
+                {event.dateTime.startTime && (
+                  <>
+                    <span>•</span>
+                    <div className="flex items-center gap-1">
+                      <Icon name="clockBold" className="w-4 h-4" />
+                      <span>{formatTime(event.dateTime.startTime)}</span>
+                      {locale !== 'he' && (
+                        <span className="text-xs opacity-80">({getLocalizedTimezone()})</span>
+                      )}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+            {getLocalizedLocationName() && (
+              <>
+                {event.dateTime?.startDate && <span>•</span>}
+                <div className="flex items-center gap-1">
+                  <Icon name="location" className="w-4 h-4" />
+                  <span>{getLocalizedLocationName()}</span>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Event Details Card */}
+          <div className="bg-card dark:bg-card-dark rounded-2xl p-6 mb-8">
+            <div className="space-y-4">
+              {getLocalizedAddress() && (
+                <div className="flex items-start gap-2">
+                  <Icon name="location" className="w-4 h-4 text-brand-main mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{getLocalizedAddress()}</p>
+                    {event.location.url && (
+                      <a 
+                        href={event.location.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-brand-main hover:text-brand-main/80 dark:text-brand-dark text-sm mt-1"
+                      >
+                        <Icon name="link" className="w-3 h-3" />
+                        <span>{locale === 'he' ? 'פתח במפה' : 'Open in Maps'}</span>
+                      </a>
+                    )}
                   </div>
                 </div>
               )}
-              
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
-                {eventTitle}
-              </h1>
-              
-              <div className="flex flex-wrap items-center gap-4 text-white">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  <span>
-                    {new Date(event.startDate).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </span>
-                </div>
-                
-                {!event.isAllDay && (
+
+              <div className="flex flex-wrap gap-4">
+                {event.isOnline && (
                   <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    <span>
-                      {new Date(event.startDate).toLocaleTimeString(locale === 'he' ? 'he-IL' : 'en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                    <Icon name="monitor" className="w-4 h-4 text-brand-main" />
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      {locale === 'he' ? 'אירוע מקוון' : 'Online Event'}
                     </span>
                   </div>
                 )}
                 
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  <span>{getLocalizedField(event.location.name || event.location.address)}</span>
+                  <Icon name={event.isFree ? "gift" : "tag"} className="w-4 h-4 text-brand-main" />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {event.isFree ? 
+                      (locale === 'he' ? 'השתתפות חינם' : 'Free participation') : 
+                      (locale === 'he' ? 'השתתפות בתשלום' : 'Paid')
+                    }
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Icon name="task" className="w-4 h-4 text-brand-main" />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {event.registrationRequired ? 
+                      (isEventPassed ? 
+                        (locale === 'he' ? 'הרשמה סגורה' : 'Registration Closed') : 
+                        (locale === 'he' ? 'נדרשת הרשמה מראש' : 'Registration Required')
+                      ) : 
+                      (locale === 'he' ? 'ללא הרשמה מראש' : 'No Registration')
+                    }
+                  </span>
+                </div>
+              </div>
+
+              {/* Registration Button */}
+              {event.registrationRequired && event.registrationUrl && !isEventPassed && (
+                <div className="pt-2">
+                  <a 
+                    href={event.registrationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block bg-brand-main hover:bg-brand-main/90 text-white font-semibold py-2.5 px-6 rounded-full text-center transition-colors"
+                  >
+                    {locale === 'he' ? 'הירשם עכשיו' : 'Register Now'}
+                  </a>
+                </div>
+              )}
+
+              {/* Statistics */}
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="text-center">
+                  <div className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                    {event.viewCount.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {locale === 'he' ? 'צפיות' : 'Views'}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                    {event.interestedCount.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {isEventPassed ? 
+                      (locale === 'he' ? 'התעניינו' : 'Were Interested') : 
+                      (locale === 'he' ? 'מתעניינים' : 'Interested')
+                    }
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                    {event.attendingCount.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {isEventPassed ? 
+                      (locale === 'he' ? 'הגיעו' : 'Attended') : 
+                      (locale === 'he' ? 'מגיעים' : 'Attending')
+                    }
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </header>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3 mb-8">
-            <Button
-              variant={isInterested ? 'primary' : 'outline'}
-              onClick={handleInterested}
-            >
-              <Heart className={`w-4 h-4 mr-2 ${isInterested ? 'fill-current' : ''}`} />
-              {isInterested ? t('interested') : t('markInterested')}
-            </Button>
-            
-            <Button
-              variant={isGoing ? 'primary' : 'outline'}
-              onClick={handleGoing}
-            >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              {isGoing ? t('going') : t('markGoing')}
-            </Button>
-            
-            <Button variant="outline" onClick={handleShare}>
-              <Share2 className="w-4 h-4 mr-2" />
-              {t('share')}
-            </Button>
-            
-            <Button variant="outline" onClick={handleAddToCalendar}>
-              <Plus className="w-4 h-4 mr-2" />
-              {t('addToCalendar')}
-            </Button>
+        {/* Cover Image - Full width with rounded corners */}
+        {event.featuredImage?.url && (
+          <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-10">
+            <Image
+              src={event.featuredImage.url}
+              alt={getLocalizedAltText()}
+              fill
+              className="object-cover"
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+            />
           </div>
+        )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-8">
-              {/* Event Description */}
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                    {t('about')}
-                  </h2>
-                  <div className="prose dark:prose-invert max-w-none">
-                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line">
-                      {eventDescription}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Location Map */}
-              {event.location.coordinates && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('location')}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="aspect-video rounded-lg overflow-hidden mb-4">
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        frameBorder="0"
-                        style={{ border: 0 }}
-                        src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&q=${event.location.coordinates?.latitude},${event.location.coordinates?.longitude}&zoom=15`}
-                        allowFullScreen
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <p className="font-semibold text-gray-900 dark:text-white">
-                        {getLocalizedField(event.location.name)}
-                      </p>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {getLocalizedField(event.location.address)}
-                      </p>
-                      {event.location.venueUrl && (
-                        <a
-                          href={event.location.venueUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
-                        >
-                          {t('viewVenue')} <ExternalLink className="w-4 h-4" />
-                        </a>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Related Sports */}
-              {event.relatedSports.length > 0 && (
-                <Card>
-                  <CardContent className="p-6">
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                      {t('relatedSports')}
-                    </h2>
-                    <div className="flex flex-wrap gap-2">
-                      {event.relatedSports.map((sport) => (
-                        <span
-                          key={sport}
-                          className="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm font-medium text-gray-900 dark:text-white"
-                        >
-                          {sport}
-                        </span>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Registration Form */}
-              {event.registrationRequired && !isPast && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('register')}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    {submissionSuccess ? (
-                      <div className="text-center py-8">
-                        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                          {t('registrationSuccess')}
-                        </h3>
-                        {confirmationNumber && (
-                          <p className="text-gray-600 dark:text-gray-400 mb-4">
-                            {t('confirmationNumber')}: <strong>{confirmationNumber}</strong>
-                          </p>
-                        )}
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {t('confirmationEmailSent')}
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        {!showRegistrationForm ? (
-                          <div className="text-center py-8">
-                            <Button onClick={() => setShowRegistrationForm(true)} disabled={!hasSpotsAvailable}>
-                              {t('registerNow')}
-                            </Button>
-                            {spotsRemaining !== null && (
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-4">
-                                {t('spotsRemaining', { count: spotsRemaining })}
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          <form onSubmit={handleFormSubmit} className="space-y-4">
-                            <Input
-                              label={t('form.name')}
-                              type="text"
-                              required
-                              value={formData.name || ''}
-                              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                              error={formErrors.name}
-                            />
-                            
-                            <Input
-                              label={t('form.email')}
-                              type="email"
-                              required
-                              value={formData.email || ''}
-                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                              error={formErrors.email}
-                            />
-                            
-                            <Input
-                              label={t('form.phone')}
-                              type="tel"
-                              value={formData.phone || ''}
-                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                              error={formErrors.phone}
-                            />
-                            
-                            {formErrors.submit && (
-                              <div className="text-red-600 dark:text-red-400 text-sm">
-                                {formErrors.submit}
-                              </div>
-                            )}
-                            
-                            <div className="flex gap-3">
-                              <Button
-                                type="submit"
-                                variant="primary"
-                                disabled={isSubmitting}
-                                className="flex-1"
-                              >
-                                {isSubmitting ? (
-                                  <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    {t('submitting')}
-                                  </>
-                                ) : (
-                                  t('submit')
-                                )}
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setShowRegistrationForm(false)}
-                              >
-                                {t('cancel')}
-                              </Button>
-                            </div>
-                          </form>
-                        )}
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Related Events */}
-              {relatedEvents.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t('relatedEvents')}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {relatedEvents.map((relatedEvent) => (
-                        <Link
-                          key={relatedEvent._id}
-                          href={`/${locale}/events/${relatedEvent.slug}`}
-                          className="block"
-                        >
-                          <Card className="hover:shadow-lg transition-shadow">
-                            <div className="relative aspect-video">
-                              <Image
-                                src={relatedEvent.featuredImage || '/placeholder-event.jpg'}
-                                alt={getLocalizedField(relatedEvent.title)}
-                                fill
-                                className="object-cover rounded-t-lg"
-                              />
-                            </div>
-                            <CardContent className="p-4">
-                              <h3 className="font-bold text-gray-900 dark:text-white mb-2">
-                                {getLocalizedField(relatedEvent.title)}
-                              </h3>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {new Date(relatedEvent.startDate).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US')}
-                              </p>
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Sidebar */}
+        {/* Article Content */}
+        <article className="mb-12">
+          {/* Content Sections */}
+          {event.content?.[locale]?.sections && event.content[locale].sections.length > 0 && (
             <div className="space-y-6">
-              {/* Event Info Card */}
-              <Card>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                        {t('price')}
-                      </div>
-                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {event.isFree ? t('free') : `₪${event.price}`}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                        {t('category')}
-                      </div>
-                      <div className="text-gray-900 dark:text-white">{event.category}</div>
-                    </div>
-                    
-                    <div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                        {t('organizer')}
-                      </div>
-                      <div className="text-gray-900 dark:text-white">{event.organizer.name}</div>
-                      {event.organizer.email && (
-                        <a
-                          href={`mailto:${event.organizer.email}`}
-                          className="text-blue-600 dark:text-blue-400 text-sm hover:underline"
-                        >
-                          <Mail className="w-4 h-4 inline mr-1" />
-                          {event.organizer.email}
-                        </a>
-                      )}
-                      {event.organizer.phone && (
-                        <a
-                          href={`tel:${event.organizer.phone}`}
-                          className="text-blue-600 dark:text-blue-400 text-sm hover:underline block mt-1"
-                        >
-                          <Phone className="w-4 h-4 inline mr-1" />
-                          {event.organizer.phone}
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {(event.content[locale]?.sections || []).map((section: any, index: number) => {
+                switch (section.type) {
+                  case 'heading':
+                    const HeadingTag = section.level === 1 ? 'h2' : section.level === 2 ? 'h3' : 'h4';
+                    const headingClasses = {
+                      h2: 'text-[1.225rem] sm:text-3xl font-extrabold mt-12 mb-4 text-gray-900 dark:text-white',
+                      h3: 'text-xl sm:text-[1.225rem] font-bold mt-10 mb-3 text-gray-900 dark:text-white',
+                      h4: 'text-lg sm:text-xl font-bold mt-8 mb-2 text-gray-900 dark:text-white',
+                    };
+                    return (
+                      <HeadingTag
+                        key={index}
+                        className={headingClasses[HeadingTag as 'h2' | 'h3' | 'h4'] || headingClasses.h2}
+                      >
+                        {section.content}
+                      </HeadingTag>
+                    );
 
-              {/* Attendance Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('attendance')}</CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {t('interested')}
-                        </span>
-                        <span className="text-lg font-bold text-gray-900 dark:text-white">
-                          {event.interestedCount}
-                        </span>
+                  case 'text':
+                    return (
+                      <p key={index} className="text-[1rem] leading-relaxed text-gray-700 dark:text-gray-300">
+                        {section.content}
+                      </p>
+                    );
+
+                  case 'list':
+                    const ListTag = section.listType === 'numbered' ? 'ol' : 'ul';
+                    const isNumbered = section.listType === 'numbered';
+                    const isRTL = locale === 'he';
+                    return (
+                      <ListTag 
+                        key={index} 
+                        className={`my-6 space-y-3 ${isNumbered ? 'list-decimal' : 'list-none'} ${isRTL ? 'pr-0' : 'pl-0'}`}
+                      >
+                        {section.items && section.items.map((item: { title: string; content: string }, itemIndex: number) => (
+                          <li 
+                            key={itemIndex} 
+                            className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3`}
+                          >
+                            {!isNumbered && (
+                              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+                            )}
+                            <div>
+                              {item.title && (
+                                <>
+                                  <span className="font-semibold text-gray-900 dark:text-white">
+                                    {item.title}
+                                  </span>
+                                  <br />
+                                </>
+                              )}
+                              {item.content}
+                            </div>
+                          </li>
+                        ))}
+                      </ListTag>
+                    );
+
+                  case 'image':
+                    return (
+                      <figure key={index} className="my-8">
+                        <Image
+                          src={section.data.url}
+                          alt={section.data.alt || ''}
+                          width={section.data.width || 800}
+                          height={section.data.height || 450}
+                          className="w-full h-auto rounded-2xl"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+                        />
+                        {section.data.caption && (
+                          <figcaption className="text-center text-sm text-gray-500 dark:text-gray-400 mt-3 italic">
+                            {section.data.caption}
+                          </figcaption>
+                        )}
+                      </figure>
+                    );
+
+                  case 'info-box':
+                    return (
+                      <div 
+                        key={index}
+                        className={`p-4 rounded-lg text-sm ${
+                          section.boxStyle === 'warning' ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200' :
+                          section.boxStyle === 'highlight' ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200' :
+                          'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
+                        }`}
+                      >
+                        {section.content}
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {t('attending')}
-                        </span>
-                        <span className="text-lg font-bold text-gray-900 dark:text-white">
-                          {event.attendedCount}
-                          {event.capacity && ` / ${event.capacity}`}
-                        </span>
+                    );
+
+                  case 'divider':
+                    return (
+                      <hr key={index} className="my-12 border-t-2 border-gray-200 dark:border-gray-700" />
+                    );
+
+                  default:
+                    return null;
+                }
+              })}
+            </div>
+          )}
+
+          {/* Media Gallery */}
+          {mediaArray.length > 0 && (
+            <div className="my-8">
+              <h2 className="text-[1.225rem] sm:text-3xl font-extrabold mb-6 text-gray-900 dark:text-white">
+                {locale === 'he' ? 'גלריית תמונות' : 'Photo Gallery'}
+              </h2>
+              <div 
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                role="region"
+                aria-label={locale === 'he' ? 'גלריית תמונות אירוע' : 'Event media gallery'}
+              >
+                {mediaArray.map((mediaItem: any, index: number) => {
+                  if (!mediaItem || typeof mediaItem !== 'object' || !mediaItem.url || typeof mediaItem.url !== 'string' || mediaItem.url.trim() === '') return null;
+                  
+                  return (
+                    <div 
+                      key={index} 
+                      className="relative h-[250px] rounded-2xl overflow-hidden cursor-pointer group"
+                      onClick={() => handleOpenImageViewer(index)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleOpenImageViewer(index);
+                        }
+                      }}
+                      aria-label={`${locale === 'he' ? 'לחץ להגדלה' : 'Click to zoom'} - ${locale === 'he' ? 'פריט מדיה' : 'Media item'} ${index + 1} ${locale === 'he' ? 'עבור' : 'for'} ${getLocalizedTitle() || (locale === 'he' ? 'אירוע' : 'event')}`}
+                    >
+                      <Image
+                        src={mediaItem.url}
+                        alt={`${locale === 'he' ? 'פריט מדיה' : 'Media item'} ${index + 1} ${locale === 'he' ? 'עבור' : 'for'} ${getLocalizedTitle() || (locale === 'he' ? 'אירוע' : 'event')}`}
+                        fill
+                        className="object-cover transition-all duration-200 group-hover:scale-[1.02]"
+                      />
+                      {/* Overlay with zoom icon */}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 flex items-center justify-center">
+                        <div className="opacity-0 group-hover:opacity-100 shadow-lg transition-opacity duration-200 bg-white/20 backdrop-blur-sm rounded-full p-2">
+                          <Icon name="zoomIn" className="w-5 h-5 text-white" />
+                        </div>
                       </div>
                     </div>
-                    
-                    {/* Attendee Avatars */}
-                    {attendees.length > 0 && (
-                      <div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                          {t('attendees')}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {attendees.slice(0, 10).map((attendee) => (
-                            <div
-                              key={attendee.id}
-                              className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-300"
-                              title={attendee.name}
-                            >
-                              {attendee.avatar ? (
-                                <Image
-                                  src={attendee.avatar}
-                                  alt={attendee.name}
-                                  width={40}
-                                  height={40}
-                                  className="rounded-full"
-                                />
-                              ) : (
-                                <User className="w-5 h-5" />
-                              )}
-                            </div>
-                          ))}
-                          {attendees.length > 10 && (
-                            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-medium text-gray-700 dark:text-gray-300">
-                              +{attendees.length - 10}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </article>
+
+        {/* Tags Section - Duolingo Style */}
+        {getLocalizedTags().length > 0 && (
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Icon name="tagBold" className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                {locale === 'he' ? 'תגיות' : 'Tags'}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {getLocalizedTags().map((tag, index) => (
+                <Link
+                  key={index}
+                  href={`/${locale}/events?tag=${encodeURIComponent(tag)}`}
+                  className="capitalize px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] transition-colors"
+                >
+                  {tag}
+                </Link>
+              ))}
             </div>
           </div>
+        )}
+
+        {/* Share Section */}
+        <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-12">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              {locale === 'he' ? 'שתף אירוע' : 'Share Event'}
+            </span>
+            <ShareButton title={getLocalizedTitle()} url={canonicalUrl} />
+          </div>
         </div>
-      </div>
-    </>
+
+        {/* Back to Events - Bottom CTA */}
+        <div className="text-center pt-8">
+          <Link
+            href={`/${locale}/events`}
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-main hover:bg-brand-main/90 text-white font-semibold transition-colors ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+          >
+            <ChevronLeft className="w-4 h-4" />
+            {locale === 'he' ? 'חזרה לאירועים' : 'Back to Events'}
+          </Link>
+        </div>
+      </main>
+
+      {/* Fullscreen Image Viewer */}
+      {isImageViewerOpen && Array.isArray(mediaArray) && mediaArray.length > 0 && mediaArray.some(item => item && item.url) && (
+        <FullscreenImageViewer
+          images={mediaArray}
+          initialIndex={selectedImageIndex}
+          isOpen={isImageViewerOpen}
+          onClose={handleCloseImageViewer}
+        />
+      )}
+    </div>
   );
 }
-
-

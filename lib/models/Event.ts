@@ -1,93 +1,133 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-/**
- * Localized field interface
- */
-export interface ILocalizedField {
-  en: string;
-  he: string;
-}
-
-/**
- * Event image interface
- */
-export interface IEventImage {
-  url: string;
-  alt: ILocalizedField;
+// Content section interface for events
+export interface IEventContentSection {
+  type: 'intro' | 'heading' | 'text' | 'list' | 'image' | 'divider' | 'info-box';
   order: number;
-  publicId: string;
+  level?: number; // for headings (h1, h2, h3, etc.)
+  content?: string;
+  listType?: 'bullet' | 'numbered';
+  items?: Array<{
+    title: string;
+    content: string;
+  }>;
+  data?: {
+    url: string;
+    alt: string;
+    caption?: string;
+    width?: number;
+    height?: number;
+  };
+  links?: Array<{
+    text: string;
+    url: string;
+    target?: string;
+  }>;
+  boxStyle?: 'info' | 'warning' | 'highlight'; // for info-box type
 }
 
-/**
- * Event status type
- */
-export type EventStatus = 'draft' | 'published' | 'cancelled' | 'completed';
+// Event media asset interface
+export interface IEventMediaAsset {
+  id: string;
+  url: string;
+  type: 'image' | 'video';
+  cloudinaryId?: string;
+  altText: {
+    he: string;
+    en: string;
+  };
+  caption?: {
+    he: string;
+    en: string;
+  };
+  usedInSections: string[];
+  width?: number;
+  height?: number;
+}
 
-/**
- * Event interface extending Mongoose Document
- */
+// Event localized content interface
+export interface IEventLocalizedContent {
+  title: string;
+  description: string;
+  tags: string[];
+  sections: IEventContentSection[];
+}
+
+// Event location interface with localization
+export interface IEventLocation {
+  name: {
+    he: string;
+    en: string;
+  };
+  address?: {
+    he: string;
+    en: string;
+  };
+  url?: string; // Optional link to location (Google Maps, venue website, etc.)
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+}
+
+// Event date/time interface with localization
+export interface IEventDateTime {
+  startDate: Date;
+  endDate?: Date;
+  startTime?: string; // e.g., "18:00"
+  endTime?: string;   // e.g., "22:00"
+  timezone: {
+    he: string;
+    en: string;
+  };
+}
+
+// Main Event interface
 export interface IEvent extends Document {
   slug: string;
-  title: ILocalizedField;
-  description: ILocalizedField;
-  shortDescription: ILocalizedField;
+  category: 'roller' | 'skate' | 'scoot' | 'bike';
+  type: 'competition' | 'workshop' | 'event' | 'meetup' | 'jam';
+  status: 'draft' | 'published' | 'archived' | 'cancelled';
+  isFeatured: boolean;
   
-  // Date and time
-  startDate: Date;
-  endDate: Date;
-  timezone: string;
-  isAllDay: boolean;
+  // Event timing
+  dateTime: IEventDateTime;
   
-  // Location
-  location: {
-    name: ILocalizedField;
-    address: ILocalizedField;
-    coordinates?: {
-      latitude: number;
-      longitude: number;
+  // Event location
+  location: IEventLocation;
+  
+  // Engagement metrics
+  viewCount: number;
+  interestedCount: number; // people who marked "interested"
+  attendingCount: number;  // people who marked "attending"
+  
+  // Localized content
+  content: {
+    he: IEventLocalizedContent;
+    en: IEventLocalizedContent;
+  };
+  
+  // Media management
+  media: IEventMediaAsset[];
+  featuredImage: {
+    url: string;
+    cloudinaryId?: string;
+    altText: {
+      he: string;
+      en: string;
     };
-    venueUrl?: string;
   };
   
-  // Media
-  images: IEventImage[];
-  featuredImage: string;
-  videoUrl?: string;
+  // SEO and search
+  searchableText: string;
   
-  // Related sports
-  relatedSports: string[];
-  
-  // Event details
-  category: string;
-  organizer: {
-    name: string;
-    email: string;
-    phone?: string;
-  };
-  capacity?: number;
+  // Event specific fields
+  isOnline: boolean;
   isFree: boolean;
-  price?: number;
-  currency?: string;
+  registrationRequired: boolean;
   registrationUrl?: string;
   
-  // Statistics
-  viewsCount: number;
-  interestedCount: number;
-  attendedCount: number;
-  
-  // Status and settings
-  status: EventStatus;
-  isFeatured: boolean;
-  isPublic: boolean;
-  registrationRequired: boolean;
-  
-  // SEO
-  metaTitle?: ILocalizedField;
-  metaDescription?: ILocalizedField;
-  
-  // Additional
-  tags: string[];
-  notes?: string;
+  // Timestamps (from mongoose timestamps)
   createdAt: Date;
   updatedAt: Date;
   
@@ -98,321 +138,187 @@ export interface IEvent extends Document {
   getAttendanceRate(): number;
 }
 
-/**
- * Event Model interface with static methods
- */
+// Event Model interface with static methods
 export interface IEventModel extends Model<IEvent> {
   findBySlug(slug: string): Promise<IEvent | null>;
   findUpcoming(): Promise<IEvent[]>;
   findPast(): Promise<IEvent[]>;
   findFeatured(): Promise<IEvent[]>;
-  findBySport(sport: string): Promise<IEvent[]>;
+  findByCategory(category: string): Promise<IEvent[]>;
   findPublished(): Promise<IEvent[]>;
   searchEvents(query: string): Promise<IEvent[]>;
 }
 
-/**
- * Event schema definition
- */
-const EventSchema: Schema<IEvent> = new Schema<IEvent>(
+// Schema definition
+const EventContentSectionSchema = new Schema<IEventContentSection>({
+  type: { 
+    type: String, 
+    required: true, 
+    enum: ['intro', 'heading', 'text', 'list', 'image', 'divider', 'info-box'] 
+  },
+  order: { type: Number, required: true },
+  level: { type: Number },
+  content: { type: String },
+  listType: { type: String, enum: ['bullet', 'numbered'] },
+  items: [{
+    title: { type: String, required: true },
+    content: { type: String, required: true }
+  }],
+  data: {
+    url: { type: String },
+    alt: { type: String },
+    caption: { type: String },
+    width: { type: Number },
+    height: { type: Number }
+  },
+  links: [{
+    text: { type: String, required: true },
+    url: { type: String, required: true },
+    target: { type: String }
+  }],
+  boxStyle: { type: String, enum: ['info', 'warning', 'highlight'] }
+}, { _id: false });
+
+const EventMediaAssetSchema = new Schema<IEventMediaAsset>({
+  id: { type: String, required: true },
+  url: { type: String, required: true },
+  type: { type: String, required: true, enum: ['image', 'video'] },
+  cloudinaryId: { type: String },
+  altText: {
+    he: { type: String, required: true },
+    en: { type: String, required: true }
+  },
+  caption: {
+    he: { type: String },
+    en: { type: String }
+  },
+  usedInSections: [{ type: String }],
+  width: { type: Number },
+  height: { type: Number }
+}, { _id: false });
+
+const EventLocalizedContentSchema = new Schema<IEventLocalizedContent>({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  tags: [{ type: String }],
+  sections: [EventContentSectionSchema]
+}, { _id: false });
+
+const EventLocationSchema = new Schema<IEventLocation>({
+  name: {
+    he: { type: String, required: true },
+    en: { type: String, required: true }
+  },
+  address: {
+    he: { type: String },
+    en: { type: String }
+  },
+  url: { type: String }, // Link to location
+  coordinates: {
+    lat: { type: Number },
+    lng: { type: Number }
+  }
+}, { _id: false });
+
+const EventDateTimeSchema = new Schema<IEventDateTime>({
+  startDate: { type: Date, required: true },
+  endDate: { type: Date },
+  startTime: { type: String },
+  endTime: { type: String },
+  timezone: {
+    he: { type: String, required: true, default: 'אסיה/ירושלים' },
+    en: { type: String, required: true, default: 'Asia/Jerusalem' }
+  }
+}, { _id: false });
+
+const EventSchema = new Schema<IEvent>(
   {
-    slug: {
-      type: String,
-      required: [true, 'Slug is required'],
+    slug: { 
+      type: String, 
+      required: true, 
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'],
+      match: [/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens']
     },
-    title: {
-      en: {
-        type: String,
-        required: [true, 'English title is required'],
-        trim: true,
-        maxlength: [200, 'English title cannot exceed 200 characters'],
-      },
-      he: {
-        type: String,
-        required: [true, 'Hebrew title is required'],
-        trim: true,
-        maxlength: [200, 'Hebrew title cannot exceed 200 characters'],
-      },
+    category: { 
+      type: String, 
+      required: true, 
+      enum: ['roller', 'skate', 'scoot', 'bike'] 
     },
-    description: {
-      en: {
-        type: String,
-        required: [true, 'English description is required'],
-        trim: true,
-        maxlength: [5000, 'English description cannot exceed 5000 characters'],
-      },
-      he: {
-        type: String,
-        required: [true, 'Hebrew description is required'],
-        trim: true,
-        maxlength: [5000, 'Hebrew description cannot exceed 5000 characters'],
-      },
+    type: { 
+      type: String, 
+      required: true, 
+      enum: ['competition', 'workshop', 'event', 'meetup', 'jam'] 
     },
-    shortDescription: {
-      en: {
-        type: String,
-        trim: true,
-        maxlength: [500, 'English short description cannot exceed 500 characters'],
-      },
-      he: {
-        type: String,
-        trim: true,
-        maxlength: [500, 'Hebrew short description cannot exceed 500 characters'],
-      },
+    status: { 
+      type: String, 
+      required: true, 
+      enum: ['draft', 'published', 'archived', 'cancelled'], 
+      default: 'draft' 
     },
-    startDate: {
-      type: Date,
-      required: [true, 'Start date is required'],
-      index: true,
+    isFeatured: { type: Boolean, default: false },
+    
+    // Event timing
+    dateTime: { type: EventDateTimeSchema, required: true },
+    
+    // Event location
+    location: { type: EventLocationSchema, required: true },
+    
+    // Engagement metrics
+    viewCount: { type: Number, default: 0, min: 0 },
+    interestedCount: { type: Number, default: 0, min: 0 },
+    attendingCount: { type: Number, default: 0, min: 0 },
+    
+    // Localized content
+    content: {
+      he: { type: EventLocalizedContentSchema, required: true },
+      en: { type: EventLocalizedContentSchema, required: true }
     },
-    endDate: {
-      type: Date,
-      required: [true, 'End date is required'],
-      validate: {
-        validator: function (this: IEvent, value: Date) {
-          return value >= this.startDate;
-        },
-        message: 'End date must be after or equal to start date',
-      },
-    },
-    timezone: {
-      type: String,
-      default: 'Asia/Jerusalem',
-    },
-    isAllDay: {
-      type: Boolean,
-      default: false,
-    },
-    location: {
-      name: {
-        en: {
-          type: String,
-          required: true,
-          trim: true,
-        },
-        he: {
-          type: String,
-          required: true,
-          trim: true,
-        },
-      },
-      address: {
-        en: {
-          type: String,
-          required: true,
-          trim: true,
-        },
-        he: {
-          type: String,
-          required: true,
-          trim: true,
-        },
-      },
-      coordinates: {
-        latitude: {
-          type: Number,
-          min: [-90, 'Latitude must be between -90 and 90'],
-          max: [90, 'Latitude must be between -90 and 90'],
-        },
-        longitude: {
-          type: Number,
-          min: [-180, 'Longitude must be between -180 and 180'],
-          max: [180, 'Longitude must be between -180 and 180'],
-        },
-      },
-      venueUrl: {
-        type: String,
-        trim: true,
-      },
-    },
-    images: [
-      {
-        url: {
-          type: String,
-          required: true,
-          trim: true,
-        },
-        alt: {
-          en: {
-            type: String,
-            required: true,
-            trim: true,
-          },
-          he: {
-            type: String,
-            required: true,
-            trim: true,
-          },
-        },
-        order: {
-          type: Number,
-          default: 0,
-        },
-        publicId: {
-          type: String,
-          required: true,
-          trim: true,
-        },
-      },
-    ],
+    
+    // Media management
+    media: [EventMediaAssetSchema],
     featuredImage: {
-      type: String,
-      trim: true,
+      url: { type: String, required: true },
+      cloudinaryId: { type: String },
+      altText: {
+        he: { type: String, required: true },
+        en: { type: String, required: true }
+      }
     },
-    videoUrl: {
-      type: String,
-      trim: true,
-    },
-    relatedSports: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
-    category: {
-      type: String,
-      required: [true, 'Category is required'],
-      trim: true,
-      index: true,
-    },
-    organizer: {
-      name: {
-        type: String,
-        required: true,
-        trim: true,
-      },
-      email: {
-        type: String,
-        required: true,
-        lowercase: true,
-        trim: true,
-      },
-      phone: {
-        type: String,
-        trim: true,
-      },
-    },
-    capacity: {
-      type: Number,
-      min: [1, 'Capacity must be at least 1'],
-    },
-    isFree: {
-      type: Boolean,
-      default: true,
-    },
-    price: {
-      type: Number,
-      min: [0, 'Price cannot be negative'],
-    },
-    currency: {
-      type: String,
-      default: 'ILS',
-    },
-    registrationUrl: {
-      type: String,
-      trim: true,
-    },
-    viewsCount: {
-      type: Number,
-      default: 0,
-      min: [0, 'Views count cannot be negative'],
-    },
-    interestedCount: {
-      type: Number,
-      default: 0,
-      min: [0, 'Interested count cannot be negative'],
-    },
-    attendedCount: {
-      type: Number,
-      default: 0,
-      min: [0, 'Attended count cannot be negative'],
-    },
-    status: {
-      type: String,
-      enum: ['draft', 'published', 'cancelled', 'completed'],
-      default: 'draft',
-    },
-    isFeatured: {
-      type: Boolean,
-      default: false,
-      index: true,
-    },
-    isPublic: {
-      type: Boolean,
-      default: true,
-    },
-    registrationRequired: {
-      type: Boolean,
-      default: false,
-    },
-    metaTitle: {
-      en: {
-        type: String,
-        trim: true,
-        maxlength: [70, 'Meta title cannot exceed 70 characters'],
-      },
-      he: {
-        type: String,
-        trim: true,
-        maxlength: [70, 'Meta title cannot exceed 70 characters'],
-      },
-    },
-    metaDescription: {
-      en: {
-        type: String,
-        trim: true,
-        maxlength: [160, 'Meta description cannot exceed 160 characters'],
-      },
-      he: {
-        type: String,
-        trim: true,
-        maxlength: [160, 'Meta description cannot exceed 160 characters'],
-      },
-    },
-    tags: [
-      {
-        type: String,
-        trim: true,
-      },
-    ],
-    notes: {
-      type: String,
-      trim: true,
-      maxlength: [1000, 'Notes cannot exceed 1000 characters'],
-    },
+    
+    // SEO and search
+    searchableText: { type: String },
+    
+    // Event specific fields
+    isOnline: { type: Boolean, default: false },
+    isFree: { type: Boolean, default: true },
+    registrationRequired: { type: Boolean, default: false },
+    registrationUrl: { type: String }
   },
   {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
 
-/**
- * Indexes for performance
- */
-// Note: slug already has unique: true which creates a unique index automatically
-// Note: startDate already has index: true in field definition
-EventSchema.index({ status: 1 });
-EventSchema.index({ isFeatured: 1, status: 1 });
-EventSchema.index({ category: 1, status: 1 });
-EventSchema.index({
-  'title.en': 'text',
-  'title.he': 'text',
-  'description.en': 'text',
-  'description.he': 'text',
-  tags: 'text',
-});
+// Indexes for performance
+EventSchema.index({ category: 1, status: 1, isFeatured: -1 });
+EventSchema.index({ status: 1, 'dateTime.startDate': 1 });
+EventSchema.index({ 'dateTime.startDate': 1, status: 1 });
+EventSchema.index({ searchableText: 'text' });
+EventSchema.index({ 'content.he.tags': 1 });
+EventSchema.index({ 'content.en.tags': 1 });
+EventSchema.index({ viewCount: -1 });
+EventSchema.index({ type: 1, category: 1 });
 
 /**
  * Instance method: Get duration in hours
  */
 EventSchema.methods.getDurationHours = function (): number {
-  const durationMs = this.endDate.getTime() - this.startDate.getTime();
+  const endDate = this.dateTime.endDate || this.dateTime.startDate;
+  const durationMs = endDate.getTime() - this.dateTime.startDate.getTime();
   return Math.round((durationMs / (1000 * 60 * 60)) * 100) / 100;
 };
 
@@ -420,22 +326,24 @@ EventSchema.methods.getDurationHours = function (): number {
  * Instance method: Check if event is upcoming
  */
 EventSchema.methods.isUpcoming = function (): boolean {
-  return this.startDate > new Date();
+  return this.dateTime.startDate > new Date();
 };
 
 /**
  * Instance method: Check if event is past
  */
 EventSchema.methods.isPast = function (): boolean {
-  return this.endDate < new Date();
+  const endDate = this.dateTime.endDate || this.dateTime.startDate;
+  return endDate < new Date();
 };
 
 /**
  * Instance method: Get attendance rate
  */
 EventSchema.methods.getAttendanceRate = function (): number {
-  if (!this.capacity || this.capacity === 0) return 0;
-  return Math.round((this.attendedCount / this.capacity) * 100);
+  // Note: This method assumes capacity might be stored elsewhere or calculated
+  // For now, return 0 as capacity is not in the new model
+  return 0;
 };
 
 /**
@@ -450,9 +358,9 @@ EventSchema.statics.findBySlug = function (slug: string) {
  */
 EventSchema.statics.findUpcoming = function () {
   return this.find({
-    startDate: { $gte: new Date() },
+    'dateTime.startDate': { $gte: new Date() },
     status: 'published',
-  }).sort({ startDate: 1 });
+  }).sort({ 'dateTime.startDate': 1 });
 };
 
 /**
@@ -460,9 +368,12 @@ EventSchema.statics.findUpcoming = function () {
  */
 EventSchema.statics.findPast = function () {
   return this.find({
-    endDate: { $lte: new Date() },
+    $or: [
+      { 'dateTime.endDate': { $lte: new Date() } },
+      { 'dateTime.endDate': { $exists: false }, 'dateTime.startDate': { $lte: new Date() } }
+    ],
     status: 'published',
-  }).sort({ startDate: -1 });
+  }).sort({ 'dateTime.startDate': -1 });
 };
 
 /**
@@ -472,32 +383,34 @@ EventSchema.statics.findFeatured = function () {
   return this.find({
     isFeatured: true,
     status: 'published',
-  }).sort({ startDate: 1 });
+  }).sort({ 'dateTime.startDate': 1 });
 };
 
 /**
- * Static method: Find events by sport
+ * Static method: Find events by category
  */
-EventSchema.statics.findBySport = function (sport: string) {
+EventSchema.statics.findByCategory = function (category: string) {
   return this.find({
-    relatedSports: { $in: [sport] },
+    category: category,
     status: 'published',
-  }).sort({ startDate: 1 });
+  }).sort({ 'dateTime.startDate': 1 });
 };
 
 /**
  * Static method: Find published events
  */
 EventSchema.statics.findPublished = function () {
-  return this.find({ status: 'published' }).sort({ startDate: 1 });
+  return this.find({ status: 'published' }).sort({ 'dateTime.startDate': 1 });
 };
 
 /**
  * Static method: Search events by text
  */
 EventSchema.statics.searchEvents = function (query: string) {
-  return this.find({ $text: { $search: query }, status: 'published' })
-    .sort({ score: { $meta: 'textScore' } });
+  return this.find({ 
+    $text: { $search: query }, 
+    status: 'published' 
+  }).sort({ score: { $meta: 'textScore' } });
 };
 
 /**
@@ -505,29 +418,21 @@ EventSchema.statics.searchEvents = function (query: string) {
  */
 EventSchema.virtual('isHappening').get(function (this: IEvent): boolean {
   const now = new Date();
-  return this.startDate <= now && now <= this.endDate;
+  const endDate = this.dateTime.endDate || this.dateTime.startDate;
+  return this.dateTime.startDate <= now && now <= endDate;
 });
 
 /**
  * Virtual: Get formatted start date
  */
 EventSchema.virtual('formattedStartDate').get(function (this: IEvent): string {
-  return this.startDate.toLocaleDateString('en-US', {
+  return this.dateTime.startDate.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });
-});
-
-/**
- * Virtual: Get availability
- */
-EventSchema.virtual('availability').get(function (this: IEvent): string {
-  if (!this.capacity) return 'Unlimited';
-  const spots = this.capacity - this.attendedCount;
-  return `${spots}/${this.capacity} spots available`;
 });
 
 /**
@@ -538,6 +443,3 @@ const Event: IEventModel =
   mongoose.model<IEvent, IEventModel>('Event', EventSchema);
 
 export default Event;
-
-
-

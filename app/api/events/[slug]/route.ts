@@ -25,8 +25,7 @@ export async function GET(
 
     const event = await Event.findOne({ 
       slug: slug.toLowerCase(), 
-      status: 'published',
-      isPublic: true
+      status: 'published'
     }).lean();
 
     if (!event) {
@@ -40,42 +39,105 @@ export async function GET(
     const currentParticipants = await EventSignup.countByEventId(event._id);
 
     // Increment views count (async, don't wait)
-    Event.findByIdAndUpdate(event._id, { $inc: { viewsCount: 1 } }).exec().catch(console.error);
+    Event.findByIdAndUpdate(event._id, { $inc: { viewCount: 1 } }).exec().catch(console.error);
 
-    // Format response
+    // Format response - handle both old and new format
     const formattedEvent = {
       _id: event._id.toString(),
       slug: event.slug,
-      title: event.title,
-      description: event.description,
-      shortDescription: event.shortDescription,
-      startDate: event.startDate,
-      endDate: event.endDate,
-      timezone: event.timezone,
-      isAllDay: event.isAllDay,
-      location: event.location,
-      images: event.images || [],
-      featuredImage: event.featuredImage,
-      videoUrl: event.videoUrl,
-      relatedSports: event.relatedSports || [],
-      category: event.category,
-      organizer: event.organizer,
-      capacity: event.capacity,
-      isFree: event.isFree || false,
-      price: event.price,
-      currency: event.currency || 'ILS',
-      registrationUrl: event.registrationUrl,
-      viewsCount: (event.viewsCount || 0) + 1,
-      interestedCount: event.interestedCount || 0,
-      attendedCount: currentParticipants,
-      status: event.status,
+      category: event.category || 'roller',
+      type: event.type || 'event',
+      status: event.status || 'published',
       isFeatured: event.isFeatured || false,
-      isPublic: event.isPublic,
+      
+      // Event timing - new format
+      dateTime: event.dateTime || {
+        startDate: event.startDate || new Date(),
+        endDate: event.endDate,
+        startTime: event.startTime,
+        endTime: event.endTime,
+        timezone: event.timezone ? 
+          (typeof event.timezone === 'string' ? 
+            { he: event.timezone, en: event.timezone } : 
+            event.timezone
+          ) : 
+          { he: 'אסיה/ירושלים', en: 'Asia/Jerusalem' }
+      },
+      
+      // Event location - new format
+      location: event.location || {
+        name: {
+          he: event.location?.name?.he || '',
+          en: event.location?.name?.en || ''
+        },
+        address: event.location?.address ? {
+          he: event.location.address.he || '',
+          en: event.location.address.en || ''
+        } : undefined,
+        url: event.location?.url || event.location?.venueUrl,
+        coordinates: event.location?.coordinates ? {
+          lat: event.location.coordinates.lat || event.location.coordinates.latitude,
+          lng: event.location.coordinates.lng || event.location.coordinates.longitude
+        } : undefined
+      },
+      
+      // Engagement metrics
+      viewCount: (event.viewCount || event.viewsCount || 0) + 1,
+      interestedCount: event.interestedCount || 0,
+      attendingCount: event.attendingCount || currentParticipants || 0,
+      
+      // Localized content - new format
+      content: event.content || {
+        he: {
+          title: event.title?.he || event.content?.he?.title || '',
+          description: event.description?.he || event.content?.he?.description || '',
+          tags: event.content?.he?.tags || event.tags || [],
+          sections: event.content?.he?.sections || []
+        },
+        en: {
+          title: event.title?.en || event.content?.en?.title || '',
+          description: event.description?.en || event.content?.en?.description || '',
+          tags: event.content?.en?.tags || event.tags || [],
+          sections: event.content?.en?.sections || []
+        }
+      },
+      
+      // Media management
+      media: event.media || (event.images || []).map((img: any) => ({
+        id: img._id?.toString() || Math.random().toString(),
+        url: img.url,
+        type: 'image',
+        cloudinaryId: img.publicId || img.cloudinaryId,
+        altText: {
+          he: img.alt?.he || '',
+          en: img.alt?.en || ''
+        },
+        caption: img.caption,
+        usedInSections: []
+      })),
+      
+      featuredImage: event.featuredImage ? 
+        (typeof event.featuredImage === 'string' ? 
+          {
+            url: event.featuredImage,
+            altText: {
+              he: event.title?.he || '',
+              en: event.title?.en || ''
+            }
+          } : 
+          event.featuredImage
+        ) : 
+        {
+          url: '',
+          altText: { he: '', en: '' }
+        },
+      
+      // Event specific fields
+      isOnline: event.isOnline || false,
+      isFree: event.isFree !== undefined ? event.isFree : true,
       registrationRequired: event.registrationRequired || false,
-      metaTitle: event.metaTitle,
-      metaDescription: event.metaDescription,
-      tags: event.tags || [],
-      notes: event.notes,
+      registrationUrl: event.registrationUrl,
+      
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
     };
