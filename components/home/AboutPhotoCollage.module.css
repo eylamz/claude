@@ -25,7 +25,7 @@
 }
 
 :global(.dark) .wrapper::before {
-  background: linear-gradient(0deg, rgb(3, 7, 18), rgba(60, 5, 118, 0) 25%, rgba(60, 5, 118, 0) 75%, rgb(3, 7, 18));
+  background: linear-gradient(0deg, rgb(27, 27, 29), rgba(60, 5, 118, 0) 25%, rgba(60, 5, 118, 0) 75%, rgb(27, 27, 29));
 }
 
 /* Container with global rotation */

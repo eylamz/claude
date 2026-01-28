@@ -114,7 +114,7 @@ export default function TermsPage() {
         <div className="space-y-2 p-4">
           <p className="">1.1 האתר מופעל ומנוהל על ידי ENBOSS (להלן: "החברה").</p>
           <p className="">1.2 כל שימוש באתר, לרבות גלישה, רכישת מוצרים, השתתפות בדירוג פארקים או כל פעילות אחרת, מהווה הסכמה לתנאי השימוש ומדיניות הפרטיות המפורטים במסמך זה.</p>
-          <p className="">1.3 החברה שומרת לעצמה את הזכות לשנות, למחוק או להוסיף על תנאי השימוש ומדיניות הפרטיות בכל עת וללא הודעה מוקדמת. באחריות המשתמש להתעדכן בשינויים אלו מעת לעת.</p>
+          <p className="">1.3 החברה שומרת לעצמה את הזכות לשנות את התנאים הללו בכל עת. שינויים מהותיים יועברו למשתמשים באמצעות דוא"ל או הודעה באתר. באחריות המשתמש להתעדכן בשינויים אלו מעת לעת.</p>
           <p className="">1.4 במקרה של סתירה בין האמור בתנאי השימוש לבין כל פרסום אחר, יגברו הוראות תנאי השימוש.</p>
         </div>
       </div>
@@ -175,6 +175,7 @@ export default function TermsPage() {
           <p className="">7.2 המשתמש מתחייב לדרג באופן אמין והוגן, על בסיס ניסיונו האישי.</p>
           <p className="">7.3 החברה שומרת לעצמה את הזכות להסיר כל תוכן פוגעני, מעליב, גזעני, מאיים, לא חוקי או לא ראוי, לפי שיקול דעתה הבלעדי.</p>
           <p className="">7.4 המשתמש מעניק לחברה רישיון בלתי חוזר, עולמי וללא תמלוגים להשתמש, להעתיק, להפיץ ולפרסם כל תוכן שהועלה על ידו לאתר.</p>
+          <p className="">7.5 במקרה של מחיקת חשבון המשתמש, תוכן שנוצר על ידי המשתמש (כגון דירוגים וביקורות) עשוי להישמר באתר אך יוצג כאנונימי. הרישיון שהוענק בחלק 7.4 ימשיך לחול גם לאחר מחיקת החשבון. המשתמש רשאי לבקש להסיר תוכן ספציפי שנוצר על ידו על ידי פנייה לשירות הלקוחות.</p>
         </div>
       </div>
 
@@ -218,6 +219,9 @@ export default function TermsPage() {
             </li>
           </ul>
           <p className="">8.5 החברה תשלח הודעות שיווקיות ופרסומיות רק למשתמשים שנתנו הסכמתם המפורשת לכך בעת ההרשמה. המשתמש יוכל לבטל את הסכמתו בכל עת באמצעות הקישור להסרה המופיע בתחתית ההודעות או על ידי פנייה לשירות הלקוחות.</p>
+          <p className="">8.6 זכויות המשתמש לגישה ולמחיקת מידע: למשתמש יש זכות לבקש גישה למידע האישי שלו, לתקן מידע לא מדויק, ולבקש מחיקה של המידע האישי שלו. בקשות כאלה יש להגיש בכתב לכתובת הדוא"ל של שירות הלקוחות. החברה תטפל בבקשות אלה תוך 30 ימים ממועד קבלתן, אלא אם כן קיימות התחייבויות משפטיות או עסקאות מתמשכות המצדיקות שמירה על המידע.</p>
+          <p className="">8.7 שמירת מידע: החברה תשמור על המידע האישי של המשתמשים למשך תקופות שונות בהתאם לסוג המידע ולצורך המשפטי או העסקי. מידע הקשור לעסקאות יישמר למשך תקופה הנדרשת על פי חוק, בדרך כלל 7 שנים. מידע אחר יימחק אוטומטית לאחר תקופה של חוסר פעילות או לפי בקשת המשתמש, בכפוף להתחייבויות משפטיות.</p>
+          <p className="">8.8 התראה על הפרת אבטחה: במקרה של הפרת אבטחה העלולה להשפיע על פרטיות המשתמשים, החברה מחויבת להודיע למשתמשים הנפגעים תוך 72 שעות מגילוי ההפרה. ההודעה תישלח לכתובת הדוא"ל הרשומה ותכלול פרטים על אופי ההפרה, המידע שנחשף, והצעדים שהחברה נקטה כדי לטפל בבעיה ולמנוע הישנותה.</p>
         </div>
       </div>
 
@@ -252,10 +256,20 @@ export default function TermsPage() {
       </div>
 
       <div className="">
-        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">12. שונות</h2>
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">12. ביטול והשעיית חשבון</h2>
         <div className="space-y-2 text-base text-text dark:text-text-dark">
-          <p className="">12.1 אם הוראה כלשהי בתנאי שימוש אלה תימצא בלתי חוקית, בטלה או בלתי ניתנת לאכיפה מכל סיבה שהיא, הדבר לא ישפיע על תוקפן ואכיפתן של שאר ההוראות.</p>
-          <p className="">12.2 אי עמידה של החברה על קיום הוראה כלשהי מתנאי השימוש אינה מהווה ויתור מצידה על זכות כלשהי.</p>
+          <p className="">12.1 החברה שומרת לעצמה את הזכות להשעות או לבטל את חשבון המשתמש בכל עת, ללא הודעה מוקדמת, במקרים הבאים: הפרת תנאי השימוש, פעילות לא חוקית, הונאה, התנהגות פוגענית או מטרידה כלפי משתמשים אחרים, או כל פעולה אחרת המהווה הפרה של החוק או המדיניות של החברה.</p>
+          <p className="">12.2 המשתמש רשאי לבטל את חשבונו בכל עת על ידי פנייה לשירות הלקוחות בכתב. ביטול החשבון ייכנס לתוקף תוך 30 ימים ממועד הבקשה, אלא אם כן קיימות עסקאות מתמשכות או התחייבויות אחרות המצדיקות תקופת המתנה ארוכה יותר.</p>
+          <p className="">12.3 עם ביטול או השעיית החשבון, המשתמש יאבד את הגישה לשירותי האתר, לרבות חשבון המשתמש, היסטוריית הרכישות, והעדפות אישיות. עסקאות ממתינות יטופלו בהתאם למדיניות ההחזרה והביטול המפורטת בחלק 5.</p>
+          <p className="">12.4 למרות ביטול החשבון, החברה עשויה לשמור על חלק מהמידע למטרות משפטיות, ציות לחוק, פתרון מחלוקות, ואכיפת תנאי השימוש. מידע זה יישמר בהתאם למדיניות שמירת המידע המפורטת בחלק 8.7.</p>
+        </div>
+      </div>
+
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">13. שונות</h2>
+        <div className="space-y-2 text-base text-text dark:text-text-dark">
+          <p className="">13.1 אם הוראה כלשהי בתנאי שימוש אלה תימצא בלתי חוקית, בטלה או בלתי ניתנת לאכיפה מכל סיבה שהיא, הדבר לא ישפיע על תוקפן ואכיפתן של שאר ההוראות.</p>
+          <p className="">13.2 אי עמידה של החברה על קיום הוראה כלשהי מתנאי השימוש אינה מהווה ויתור מצידה על זכות כלשהי.</p>
         </div>
       </div>
 
@@ -290,7 +304,7 @@ export default function TermsPage() {
         <div className="space-y-2 px-6 text-base text-text dark:text-text-dark">
           <p className="">1.1 The Website is operated and managed by ENBOSS (hereinafter: "the Company").</p>
           <p className="">1.2 Any use of the Website, including browsing, purchasing products, participating in skatepark ratings, or any other activity, constitutes agreement to the Terms of Use and Privacy Policy detailed in this document.</p>
-          <p className="">1.3 The Company reserves the right to change, delete, or add to the Terms of Use and Privacy Policy at any time without prior notice. It is the user's responsibility to stay updated on these changes from time to time.</p>
+          <p className="">1.3 The Company reserves the right to change these terms at any time. Material changes will be notified via email or website notice. It is the user's responsibility to stay updated on these changes from time to time.</p>
           <p className="">1.4 In case of contradiction between the provisions of the Terms of Use and any other publication, the provisions of the Terms of Use shall prevail.</p>
         </div>
       </div>
@@ -351,6 +365,7 @@ export default function TermsPage() {
           <p className="">7.2 The user undertakes to rate in a reliable and fair manner, based on their personal experience.</p>
           <p className="">7.3 The Company reserves the right to remove any offensive, insulting, racist, threatening, illegal, or inappropriate content, at its sole discretion.</p>
           <p className="">7.4 The user grants the Company an irrevocable, worldwide, royalty-free license to use, copy, distribute, and publish any content uploaded by them to the Website.</p>
+          <p className="">7.5 In case of account deletion by the user, user-generated content (such as ratings and reviews) may be retained on the Website but will be displayed as anonymous. The license granted in section 7.4 shall continue to apply even after account deletion. The user may request removal of specific content they created by contacting customer service.</p>
         </div>
       </div>
 
@@ -394,6 +409,9 @@ export default function TermsPage() {
             </li>
           </ul>
           <p className="">8.5 The Company will send marketing and promotional messages only to users who have explicitly consented to it during registration. The user may withdraw their consent at any time via the unsubscribe link appearing at the bottom of the messages or by contacting customer service.</p>
+          <p className="">8.6 User Rights to Access and Delete Data: The user has the right to request access to their personal information, to correct inaccurate information, and to request deletion of their personal information. Such requests must be submitted in writing to the customer service email address. The Company will process these requests within 30 days of receipt, unless there are legal obligations or ongoing transactions that justify retaining the information.</p>
+          <p className="">8.7 Data Retention: The Company will retain users' personal information for different periods depending on the type of information and legal or business necessity. Information related to transactions will be retained for the period required by law, typically 7 years. Other information will be automatically deleted after a period of inactivity or upon user request, subject to legal obligations.</p>
+          <p className="">8.8 Data Breach Notification: In case of a security breach that may affect user privacy, the Company is committed to notifying affected users within 72 hours of discovering the breach. The notification will be sent to the registered email address and will include details about the nature of the breach, the information that was exposed, and the steps the Company has taken to address the issue and prevent recurrence.</p>
         </div>
       </div>
 
@@ -428,10 +446,20 @@ export default function TermsPage() {
       </div>
 
       <div className="">
-        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">12. Miscellaneous</h2>
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">12. Account Termination and Suspension</h2>
         <div className="space-y-2 px-6 text-base text-text dark:text-text-dark">
-          <p className="">12.1 If any provision of these Terms of Use is found to be illegal, void, or unenforceable for any reason, it will not affect the validity and enforceability of the remaining provisions.</p>
-          <p className="">12.2 The Company's failure to enforce any provision of the Terms of Use does not constitute a waiver of any right.</p>
+          <p className="">12.1 The Company reserves the right to suspend or terminate a user's account at any time, without prior notice, in the following cases: violation of the Terms of Use, illegal activity, fraud, offensive or harassing behavior towards other users, or any other action that constitutes a violation of the law or the Company's policies.</p>
+          <p className="">12.2 The user may terminate their account at any time by contacting customer service in writing. Account termination will take effect within 30 days of the request, unless there are ongoing transactions or other obligations that justify a longer waiting period.</p>
+          <p className="">12.3 Upon account termination or suspension, the user will lose access to the Website's services, including their user account, purchase history, and personal preferences. Pending transactions will be handled in accordance with the return and cancellation policy detailed in section 5.</p>
+          <p className="">12.4 Despite account termination, the Company may retain some information for legal purposes, law compliance, dispute resolution, and enforcement of the Terms of Use. This information will be retained in accordance with the data retention policy detailed in section 8.7.</p>
+        </div>
+      </div>
+
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">13. Miscellaneous</h2>
+        <div className="space-y-2 px-6 text-base text-text dark:text-text-dark">
+          <p className="">13.1 If any provision of these Terms of Use is found to be illegal, void, or unenforceable for any reason, it will not affect the validity and enforceability of the remaining provisions.</p>
+          <p className="">13.2 The Company's failure to enforce any provision of the Terms of Use does not constitute a waiver of any right.</p>
         </div>
       </div>
 

@@ -33,6 +33,13 @@
     "minutes": "דקות",
     "seconds": "שניות"
   },
+  "sports": {
+    "roller": "רולר",
+    "skate": "סקייט",
+    "scoot": "קורקינט",
+    "bmx": "BMX",
+    "longboard": "לונגבורד"
+  },
   "about": "אודות",
   "location": "מיקום",
   "viewVenue": "הצג מקום",

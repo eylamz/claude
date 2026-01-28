@@ -3,7 +3,6 @@
 import { useEffect, useMemo } from 'react';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
 
 export default function CookiePolicyPage() {
   const locale = useLocale();
@@ -16,8 +15,17 @@ export default function CookiePolicyPage() {
       : 'Cookie Policy for ENBOSS - Learn how we use cookies on our website and how you can manage your cookie preferences.';
   }, [isHebrew]);
 
+  // Generate keywords based on language
+  const getMetaKeywords = useMemo(() => {
+    return isHebrew
+      ? 'מדיניות עוגיות, עוגיות, ENBOSS, פרטיות, ניהול עוגיות, ישראל'
+      : 'cookie policy, cookies, ENBOSS, privacy, cookie management, Israel';
+  }, [isHebrew]);
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
   const canonicalUrl = `${siteUrl}/${locale}/cookies`;
+  const alternateEnUrl = `${siteUrl}/en/cookies`;
+  const alternateHeUrl = `${siteUrl}/he/cookies`;
 
   // Set SEO meta tags dynamically
   useEffect(() => {
@@ -36,383 +44,482 @@ export default function CookiePolicyPage() {
       meta.setAttribute('content', content);
     };
 
-    setMetaTag('description', getMetaDescription);
-    setMetaTag('og:title', isHebrew ? 'מדיניות עוגיות - ENBOSS' : 'Cookie Policy - ENBOSS', true);
-    setMetaTag('og:description', getMetaDescription, true);
-    setMetaTag('og:url', canonicalUrl, true);
-    setMetaTag('og:type', 'website', true);
-    setMetaTag('twitter:card', 'summary_large_image');
-    setMetaTag('twitter:title', isHebrew ? 'מדיניות עוגיות - ENBOSS' : 'Cookie Policy - ENBOSS');
-    setMetaTag('twitter:description', getMetaDescription);
+    const setLinkTag = (rel: string, href: string, hreflang?: string) => {
+      const selector = hreflang 
+        ? `link[rel="${rel}"][hreflang="${hreflang}"]`
+        : `link[rel="${rel}"]`;
+      let link = document.querySelector(selector);
+      if (!link) {
+        link = document.createElement('link');
+        link.setAttribute('rel', rel);
+        if (hreflang) link.setAttribute('hreflang', hreflang);
+        document.head.appendChild(link);
+      }
+      link.setAttribute('href', href);
+    };
 
-    // Canonical URL
-    let canonical = document.querySelector('link[rel="canonical"]');
-    if (!canonical) {
-      canonical = document.createElement('link');
-      canonical.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonical);
+    setMetaTag('description', getMetaDescription);
+    if (getMetaKeywords) {
+      setMetaTag('keywords', getMetaKeywords);
     }
-    canonical.setAttribute('href', canonicalUrl);
-  }, [isHebrew, getMetaDescription, canonicalUrl]);
+
+    if (canonicalUrl) {
+      setLinkTag('canonical', canonicalUrl);
+      setLinkTag('alternate', alternateEnUrl, 'en');
+      setLinkTag('alternate', alternateHeUrl, 'he');
+      setLinkTag('alternate', alternateEnUrl, 'x-default');
+    }
+
+    const metaTitle = isHebrew 
+      ? 'מדיניות עוגיות - ENBOSS'
+      : 'Cookie Policy - ENBOSS';
+
+    setMetaTag('og:title', metaTitle, true);
+    setMetaTag('og:description', getMetaDescription, true);
+    if (canonicalUrl) {
+      setMetaTag('og:url', canonicalUrl, true);
+    }
+    setMetaTag('og:type', 'website', true);
+    setMetaTag('og:locale', locale === 'he' ? 'he_IL' : 'en_US', true);
+    if (locale === 'en') {
+      setMetaTag('og:locale:alternate', 'he_IL', true);
+    } else {
+      setMetaTag('og:locale:alternate', 'en_US', true);
+    }
+
+    setMetaTag('twitter:card', 'summary');
+    setMetaTag('twitter:title', metaTitle);
+    setMetaTag('twitter:description', getMetaDescription);
+  }, [locale, isHebrew, getMetaDescription, getMetaKeywords, canonicalUrl, alternateEnUrl, alternateHeUrl]);
 
   // Hebrew content
   const hebrewContent = (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Header */}
-      <div className="mb-8">
-        <Link
-          href={`/${locale}`}
-          className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-brand-main dark:hover:text-brand-dark mb-6 transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          חזרה לעמוד הבית
-        </Link>
-        <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-          מדיניות עוגיות
-        </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400">
-          עודכן לאחרונה: {new Date().toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' })}
-        </p>
+    <div className="space-y-6 px-2 font-medium">
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">1. מה הן עוגיות?</h2>
+        <div className="space-y-2 text-base text-text dark:text-text-dark">
+          <p className="">
+            עוגיות הן קבצי טקסט קטנים המאוחסנים במכשיר שלך (מחשב, טאבלט או טלפון) כאשר אתה מבקר באתר שלנו. 
+            עוגיות מאפשרות לאתר לזכור את הפעולות וההעדפות שלך, כך שאינך צריך להזין אותן מחדש בכל פעם שאתה חוזר לאתר או עובר מדף אחד למשנהו.
+          </p>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="prose prose-lg dark:prose-invert max-w-none space-y-8">
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">1. מה הן עוגיות?</h2>
-          <div className="space-y-4 text-base text-gray-700 dark:text-gray-300">
-            <p>
-              עוגיות הן קבצי טקסט קטנים המאוחסנים במכשיר שלך (מחשב, טאבלט או טלפון) כאשר אתה מבקר באתר שלנו. 
-              עוגיות מאפשרות לאתר לזכור את הפעולות וההעדפות שלך, כך שאינך צריך להזין אותן מחדש בכל פעם שאתה חוזר לאתר או עובר מדף אחד למשנהו.
-            </p>
-          </div>
-        </section>
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">2. אילו סוגי עוגיות אנו משתמשים?</h2>
+        <div className="space-y-2 text-base text-text dark:text-text-dark">
+          <p className="">2.1 עוגיות חיוניות</p>
+          <p className="">
+            עוגיות אלה נחוצות לתפקוד הבסיסי של האתר ואינן יכולות להיות מושבתות. הן כוללות:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>עוגיות אימות - לניהול סשן המשתמש והתחברות</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>עוגיות אבטחה - להגנה מפני פעילות זדונית</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>עוגיות תפקודיות בסיסיות - להבטחת פעולת האתר</span>
+            </li>
+          </ul>
+          <p className="">2.2 עוגיות אנליטיקה</p>
+          <p className="">
+            עוגיות אלה עוזרות לנו להבין כיצד מבקרים משתמשים באתר שלנו. הן אוספות מידע באופן אנונימי על:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>מספר המבקרים והדפים שהם מבקרים</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>זמן הביקור באתר</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>דפים שמהם הגיעו המבקרים</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>ביצועי האתר</span>
+            </li>
+          </ul>
+          <p className="">
+            אנו משתמשים ב-Google Analytics לאיסוף מידע זה. תוכל לקרוא עוד על מדיניות הפרטיות של Google 
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-main dark:text-brand-dark hover:underline ml-1">
+              כאן
+            </a>.
+          </p>
+          <p className="">2.3 עוגיות פונקציונליות</p>
+          <p className="">
+            עוגיות אלה מאפשרות לאתר לזכור את ההעדפות שלך ולספק תכונות משופרות:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>העדפות שפה - זכירת השפה שבחרת</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>העדפות ערכת נושא - זכירת מצב כהה/בהיר</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>הגדרות אחרות - כל העדפה אישית אחרת</span>
+            </li>
+          </ul>
+        </div>
+      </div>
 
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">2. אילו סוגי עוגיות אנו משתמשים?</h2>
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">2.1 עוגיות חיוניות</h3>
-              <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
-                עוגיות אלה נחוצות לתפקוד הבסיסי של האתר ואינן יכולות להיות מושבתות. הן כוללות:
-              </p>
-              <ul className="space-y-2 list-disc list-inside text-base text-gray-700 dark:text-gray-300">
-                <li>עוגיות אימות - לניהול סשן המשתמש והתחברות</li>
-                <li>עוגיות אבטחה - להגנה מפני פעילות זדונית</li>
-                <li>עוגיות תפקודיות בסיסיות - להבטחת פעולת האתר</li>
-              </ul>
-            </div>
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">3. ניהול העדפות עוגיות</h2>
+        <div className="space-y-2 text-base text-text dark:text-text-dark">
+          <p className="">
+            אתה יכול לנהל את העדפות העוגיות שלך בכל עת. כאשר אתה מבקר באתר שלנו בפעם הראשונה, 
+            תראה באנר עוגיות המאפשר לך לבחור אילו סוגי עוגיות אתה מסכים לקבל.
+          </p>
+          <p className="">
+            אתה יכול גם לשנות את ההעדפות שלך בכל עת על ידי:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>מחיקת העוגיות בדפדפן שלך</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>שימוש בהגדרות הדפדפן שלך לחסימת עוגיות</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>ביטול הסכמה לעוגיות מסוימות דרך באנר העוגיות</span>
+            </li>
+          </ul>
+          <p className="">
+            <strong>הערה:</strong> חסימת עוגיות מסוימות עלולה להשפיע על חוויית השימוש שלך באתר.
+          </p>
+        </div>
+      </div>
 
-            <div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">2.2 עוגיות אנליטיקה</h3>
-              <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
-                עוגיות אלה עוזרות לנו להבין כיצד מבקרים משתמשים באתר שלנו. הן אוספות מידע באופן אנונימי על:
-              </p>
-              <ul className="space-y-2 list-disc list-inside text-base text-gray-700 dark:text-gray-300">
-                <li>מספר המבקרים והדפים שהם מבקרים</li>
-                <li>זמן הביקור באתר</li>
-                <li>דפים שמהם הגיעו המבקרים</li>
-                <li>ביצועי האתר</li>
-              </ul>
-              <p className="text-base text-gray-700 dark:text-gray-300 mt-3">
-                אנו משתמשים ב-Google Analytics לאיסוף מידע זה. תוכל לקרוא עוד על מדיניות הפרטיות של Google 
-                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-main dark:text-brand-dark hover:underline ml-1">
-                  כאן
-                </a>.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">2.3 עוגיות פונקציונליות</h3>
-              <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
-                עוגיות אלה מאפשרות לאתר לזכור את ההעדפות שלך ולספק תכונות משופרות:
-              </p>
-              <ul className="space-y-2 list-disc list-inside text-base text-gray-700 dark:text-gray-300">
-                <li>העדפות שפה - זכירת השפה שבחרת</li>
-                <li>העדפות ערכת נושא - זכירת מצב כהה/בהיר</li>
-                <li>הגדרות אחרות - כל העדפה אישית אחרת</li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">3. ניהול העדפות עוגיות</h2>
-          <div className="space-y-4 text-base text-gray-700 dark:text-gray-300">
-            <p>
-              אתה יכול לנהל את העדפות העוגיות שלך בכל עת. כאשר אתה מבקר באתר שלנו בפעם הראשונה, 
-              תראה באנר עוגיות המאפשר לך לבחור אילו סוגי עוגיות אתה מסכים לקבל.
-            </p>
-            <p>
-              אתה יכול גם לשנות את ההעדפות שלך בכל עת על ידי:
-            </p>
-            <ul className="space-y-2 list-disc list-inside">
-              <li>מחיקת העוגיות בדפדפן שלך</li>
-              <li>שימוש בהגדרות הדפדפן שלך לחסימת עוגיות</li>
-              <li>ביטול הסכמה לעוגיות מסוימות דרך באנר העוגיות</li>
-            </ul>
-            <p className="mt-4">
-              <strong>הערה:</strong> חסימת עוגיות מסוימות עלולה להשפיע על חוויית השימוש שלך באתר.
-            </p>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">4. עוגיות של צד שלישי</h2>
-          <div className="space-y-4 text-base text-gray-700 dark:text-gray-300">
-            <p>
-              אנו משתמשים בשירותים של צד שלישי שעשויים להגדיר עוגיות במכשיר שלך:
-            </p>
-            <ul className="space-y-2 list-disc list-inside">
-              <li>
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">4. עוגיות של צד שלישי</h2>
+        <div className="space-y-2 text-base text-text dark:text-text-dark">
+          <p className="">
+            אנו משתמשים בשירותים של צד שלישי שעשויים להגדיר עוגיות במכשיר שלך:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>
                 <strong>Google Analytics:</strong> לאיסוף נתונים אנליטיים על השימוש באתר. 
                 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-main dark:text-brand-dark hover:underline ml-1">
                   מדיניות הפרטיות של Google
                 </a>
-              </li>
-            </ul>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">5. משך זמן אחסון עוגיות</h2>
-          <div className="space-y-4 text-base text-gray-700 dark:text-gray-300">
-            <p>
-              עוגיות שונות נשמרות לפרקי זמן שונים:
-            </p>
-            <ul className="space-y-2 list-disc list-inside">
-              <li><strong>עוגיות סשן:</strong> נמחקות כאשר אתה סוגר את הדפדפן</li>
-              <li><strong>עוגיות קבועות:</strong> נשמרות עד שנה או עד שאתה מוחק אותן</li>
-              <li><strong>עוגיות העדפות:</strong> נשמרות עד שנה או עד שאתה משנה את ההעדפות שלך</li>
-            </ul>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">6. זכויותיך</h2>
-          <div className="space-y-4 text-base text-gray-700 dark:text-gray-300">
-            <p>
-              יש לך זכות:
-            </p>
-            <ul className="space-y-2 list-disc list-inside">
-              <li>לדעת אילו עוגיות אנו משתמשים ולמה</li>
-              <li>לבחור אילו עוגיות אתה מסכים לקבל</li>
-              <li>לבטל את הסכמתך בכל עת</li>
-              <li>למחוק עוגיות קיימות</li>
-            </ul>
-            <p className="mt-4">
-              אם יש לך שאלות או חששות לגבי השימוש שלנו בעוגיות, אנא 
-              <Link href={`/${locale}/contact`} className="text-brand-main dark:text-brand-dark hover:underline">
-                צור קשר
-              </Link> איתנו.
-            </p>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">7. שינויים במדיניות</h2>
-          <div className="space-y-4 text-base text-gray-700 dark:text-gray-300">
-            <p>
-              אנו עשויים לעדכן מדיניות עוגיות זו מעת לעת. כל שינוי יפורסם בדף זה עם תאריך העדכון. 
-              אנו ממליצים לך לבדוק דף זה מעת לעת כדי להישאר מעודכן.
-            </p>
-          </div>
-        </section>
-
-        <section className="pt-8 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            לשאלות נוספות, אנא עיין ב-
-            <Link href={`/${locale}/privacy`} className="text-brand-main dark:text-brand-dark hover:underline mx-1">
-              מדיניות הפרטיות
-            </Link>
-            שלנו או
-            <Link href={`/${locale}/terms`} className="text-brand-main dark:text-brand-dark hover:underline mx-1">
-              תנאי השימוש
-            </Link>.
-          </p>
-        </section>
+              </span>
+            </li>
+          </ul>
+        </div>
       </div>
+
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">5. משך זמן אחסון עוגיות</h2>
+        <div className="space-y-2 text-base text-text dark:text-text-dark">
+          <p className="">
+            עוגיות שונות נשמרות לפרקי זמן שונים:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span><strong>עוגיות סשן:</strong> נמחקות כאשר אתה סוגר את הדפדפן</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span><strong>עוגיות קבועות:</strong> נשמרות עד שנה או עד שאתה מוחק אותן</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span><strong>עוגיות העדפות:</strong> נשמרות עד שנה או עד שאתה משנה את ההעדפות שלך</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">6. זכויותיך</h2>
+        <div className="space-y-2 text-base text-text dark:text-text-dark">
+          <p className="">
+            יש לך זכות:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>לדעת אילו עוגיות אנו משתמשים ולמה</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>לבחור אילו עוגיות אתה מסכים לקבל</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>לבטל את הסכמתך בכל עת</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>למחוק עוגיות קיימות</span>
+            </li>
+          </ul>
+          <p className="">
+            אם יש לך שאלות או חששות לגבי השימוש שלנו בעוגיות, אנא 
+            <Link href={`/${locale}/contact`} className="text-brand-main dark:text-brand-dark hover:underline">
+              צור קשר
+            </Link> איתנו.
+          </p>
+        </div>
+      </div>
+
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">7. שינויים במדיניות</h2>
+        <div className="space-y-2 text-base text-text dark:text-text-dark">
+          <p className="">
+            אנו עשויים לעדכן מדיניות עוגיות זו מעת לעת. כל שינוי יפורסם בדף זה עם תאריך העדכון. 
+            אנו ממליצים לך לבדוק דף זה מעת לעת כדי להישאר מעודכן.
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-8 text-sm text-gray dark:text-gray-dark">
+        עדכון אחרון: {new Date().toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' })}
+      </p>
     </div>
   );
 
   // English content
   const englishContent = (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Header */}
-      <div className="mb-8">
-        <Link
-          href={`/${locale}`}
-          className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-brand-main dark:hover:text-brand-dark mb-6 transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          Back to Home
-        </Link>
-        <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-gray-900 dark:text-white">
-          Cookie Policy
-        </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400">
-          Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-        </p>
+    <div className="space-y-6 px-2 font-medium">
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">1. What Are Cookies?</h2>
+        <div className="space-y-2 px-6 text-base text-text dark:text-text-dark">
+          <p className="">
+            Cookies are small text files that are stored on your device (computer, tablet, or phone) when you visit our website. 
+            Cookies allow the website to remember your actions and preferences, so you don't have to re-enter them every time 
+            you return to the site or navigate from one page to another.
+          </p>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="prose prose-lg dark:prose-invert max-w-none space-y-8">
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">1. What Are Cookies?</h2>
-          <div className="space-y-4 text-base text-gray-700 dark:text-gray-300">
-            <p>
-              Cookies are small text files that are stored on your device (computer, tablet, or phone) when you visit our website. 
-              Cookies allow the website to remember your actions and preferences, so you don't have to re-enter them every time 
-              you return to the site or navigate from one page to another.
-            </p>
-          </div>
-        </section>
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">2. What Types of Cookies Do We Use?</h2>
+        <div className="space-y-2 px-6 text-base text-text dark:text-text-dark">
+          <p className="">2.1 Essential Cookies</p>
+          <p className="">
+            These cookies are necessary for the basic functioning of the website and cannot be disabled. They include:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Authentication cookies - for managing user sessions and login</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Security cookies - for protection against malicious activity</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Basic functional cookies - to ensure website operation</span>
+            </li>
+          </ul>
+          <p className="">2.2 Analytics Cookies</p>
+          <p className="">
+            These cookies help us understand how visitors use our website. They collect information anonymously about:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>The number of visitors and pages they visit</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Time spent on the website</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Pages visitors came from</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Website performance</span>
+            </li>
+          </ul>
+          <p className="">
+            We use Google Analytics to collect this information. You can read more about Google's privacy policy 
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-main dark:text-brand-dark hover:underline ml-1">
+              here
+            </a>.
+          </p>
+          <p className="">2.3 Functional Cookies</p>
+          <p className="">
+            These cookies allow the website to remember your preferences and provide enhanced features:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Language preferences - remembering your selected language</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Theme preferences - remembering dark/light mode</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Other settings - any other personal preferences</span>
+            </li>
+          </ul>
+        </div>
+      </div>
 
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">2. What Types of Cookies Do We Use?</h2>
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">2.1 Essential Cookies</h3>
-              <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
-                These cookies are necessary for the basic functioning of the website and cannot be disabled. They include:
-              </p>
-              <ul className="space-y-2 list-disc list-inside text-base text-gray-700 dark:text-gray-300">
-                <li>Authentication cookies - for managing user sessions and login</li>
-                <li>Security cookies - for protection against malicious activity</li>
-                <li>Basic functional cookies - to ensure website operation</li>
-              </ul>
-            </div>
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">3. Managing Cookie Preferences</h2>
+        <div className="space-y-2 px-6 text-base text-text dark:text-text-dark">
+          <p className="">
+            You can manage your cookie preferences at any time. When you first visit our website, 
+            you will see a cookie banner that allows you to choose which types of cookies you agree to receive.
+          </p>
+          <p className="">
+            You can also change your preferences at any time by:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Deleting cookies in your browser</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Using your browser settings to block cookies</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Withdrawing consent for certain cookies through the cookie banner</span>
+            </li>
+          </ul>
+          <p className="">
+            <strong>Note:</strong> Blocking certain cookies may affect your experience using the website.
+          </p>
+        </div>
+      </div>
 
-            <div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">2.2 Analytics Cookies</h3>
-              <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
-                These cookies help us understand how visitors use our website. They collect information anonymously about:
-              </p>
-              <ul className="space-y-2 list-disc list-inside text-base text-gray-700 dark:text-gray-300">
-                <li>The number of visitors and pages they visit</li>
-                <li>Time spent on the website</li>
-                <li>Pages visitors came from</li>
-                <li>Website performance</li>
-              </ul>
-              <p className="text-base text-gray-700 dark:text-gray-300 mt-3">
-                We use Google Analytics to collect this information. You can read more about Google's privacy policy 
-                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-main dark:text-brand-dark hover:underline ml-1">
-                  here
-                </a>.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">2.3 Functional Cookies</h3>
-              <p className="text-base text-gray-700 dark:text-gray-300 mb-3">
-                These cookies allow the website to remember your preferences and provide enhanced features:
-              </p>
-              <ul className="space-y-2 list-disc list-inside text-base text-gray-700 dark:text-gray-300">
-                <li>Language preferences - remembering your selected language</li>
-                <li>Theme preferences - remembering dark/light mode</li>
-                <li>Other settings - any other personal preferences</li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">3. Managing Cookie Preferences</h2>
-          <div className="space-y-4 text-base text-gray-700 dark:text-gray-300">
-            <p>
-              You can manage your cookie preferences at any time. When you first visit our website, 
-              you will see a cookie banner that allows you to choose which types of cookies you agree to receive.
-            </p>
-            <p>
-              You can also change your preferences at any time by:
-            </p>
-            <ul className="space-y-2 list-disc list-inside">
-              <li>Deleting cookies in your browser</li>
-              <li>Using your browser settings to block cookies</li>
-              <li>Withdrawing consent for certain cookies through the cookie banner</li>
-            </ul>
-            <p className="mt-4">
-              <strong>Note:</strong> Blocking certain cookies may affect your experience using the website.
-            </p>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">4. Third-Party Cookies</h2>
-          <div className="space-y-4 text-base text-gray-700 dark:text-gray-300">
-            <p>
-              We use third-party services that may set cookies on your device:
-            </p>
-            <ul className="space-y-2 list-disc list-inside">
-              <li>
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">4. Third-Party Cookies</h2>
+        <div className="space-y-2 px-6 text-base text-text dark:text-text-dark">
+          <p className="">
+            We use third-party services that may set cookies on your device:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>
                 <strong>Google Analytics:</strong> For collecting analytical data about website usage. 
                 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-main dark:text-brand-dark hover:underline ml-1">
                   Google's Privacy Policy
                 </a>
-              </li>
-            </ul>
-          </div>
-        </section>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
 
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">5. Cookie Storage Duration</h2>
-          <div className="space-y-4 text-base text-gray-700 dark:text-gray-300">
-            <p>
-              Different cookies are stored for different periods:
-            </p>
-            <ul className="space-y-2 list-disc list-inside">
-              <li><strong>Session cookies:</strong> Deleted when you close your browser</li>
-              <li><strong>Persistent cookies:</strong> Stored for up to one year or until you delete them</li>
-              <li><strong>Preference cookies:</strong> Stored for up to one year or until you change your preferences</li>
-            </ul>
-          </div>
-        </section>
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">5. Cookie Storage Duration</h2>
+        <div className="space-y-2 px-6 text-base text-text dark:text-text-dark">
+          <p className="">
+            Different cookies are stored for different periods:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span><strong>Session cookies:</strong> Deleted when you close your browser</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span><strong>Persistent cookies:</strong> Stored for up to one year or until you delete them</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span><strong>Preference cookies:</strong> Stored for up to one year or until you change your preferences</span>
+            </li>
+          </ul>
+        </div>
+      </div>
 
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">6. Your Rights</h2>
-          <div className="space-y-4 text-base text-gray-700 dark:text-gray-300">
-            <p>
-              You have the right to:
-            </p>
-            <ul className="space-y-2 list-disc list-inside">
-              <li>Know which cookies we use and why</li>
-              <li>Choose which cookies you agree to receive</li>
-              <li>Withdraw your consent at any time</li>
-              <li>Delete existing cookies</li>
-            </ul>
-            <p className="mt-4">
-              If you have questions or concerns about our use of cookies, please 
-              <Link href={`/${locale}/contact`} className="text-brand-main dark:text-brand-dark hover:underline">
-                contact us
-              </Link>.
-            </p>
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-900 dark:text-white">7. Changes to This Policy</h2>
-          <div className="space-y-4 text-base text-gray-700 dark:text-gray-300">
-            <p>
-              We may update this Cookie Policy from time to time. Any changes will be posted on this page with the update date. 
-              We recommend that you check this page periodically to stay informed.
-            </p>
-          </div>
-        </section>
-
-        <section className="pt-8 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            For additional questions, please refer to our 
-            <Link href={`/${locale}/privacy`} className="text-brand-main dark:text-brand-dark hover:underline mx-1">
-              Privacy Policy
-            </Link>
-            or
-            <Link href={`/${locale}/terms`} className="text-brand-main dark:text-brand-dark hover:underline mx-1">
-              Terms of Service
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">6. Your Rights</h2>
+        <div className="space-y-2 px-6 text-base text-text dark:text-text-dark">
+          <p className="">
+            You have the right to:
+          </p>
+          <ul className="my-6 space-y-3 list-none pl-0">
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Know which cookies we use and why</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Choose which cookies you agree to receive</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Withdraw your consent at any time</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Delete existing cookies</span>
+            </li>
+          </ul>
+          <p className="">
+            If you have questions or concerns about our use of cookies, please 
+            <Link href={`/${locale}/contact`} className="text-brand-main dark:text-brand-dark hover:underline">
+              contact us
             </Link>.
           </p>
-        </section>
+        </div>
       </div>
+
+      <div className="">
+        <h2 className="text-lg sm:text-3xl font-bold mb-2  text-gray-900 dark:text-white">7. Changes to This Policy</h2>
+        <div className="space-y-2 px-6 text-base text-text dark:text-text-dark">
+          <p className="">
+            We may update this Cookie Policy from time to time. Any changes will be posted on this page with the update date. 
+            We recommend that you check this page periodically to stay informed.
+          </p>
+        </div>
+      </div>
+
+      <p className="mt-8 text-sm text-gray dark:text-gray-dark">
+        Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+      </p>
     </div>
   );
 
-  return isHebrew ? hebrewContent : englishContent;
+  return (
+    <div className="min-h-screen bg-background dark:bg-background-dark">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* Article Header - Duolingo Style */}
+        <header className="my-10">
+          {/* Title - Large and bold */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 text-gray-900 dark:text-white leading-tight py-3">
+            {isHebrew ? 'מדיניות עוגיות' : 'Cookie Policy'}
+          </h1>
+        </header>
+
+        {/* Article Content */}
+        <article className="">
+          {isHebrew ? hebrewContent : englishContent}
+        </article>
+
+      </main>
+    </div>
+  );
 }

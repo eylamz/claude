@@ -33,6 +33,13 @@
     "minutes": "Minutes",
     "seconds": "Seconds"
   },
+  "sports": {
+    "roller": "Roller",
+    "skate": "Skate",
+    "scoot": "Scoot",
+    "bmx": "BMX",
+    "longboard": "Longboard"
+  },
   "about": "About",
   "location": "Location",
   "viewVenue": "View Venue",

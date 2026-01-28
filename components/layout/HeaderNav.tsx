@@ -344,7 +344,7 @@ export default function HeaderNav() {
             </nav>
 
             {/* RIGHT: Actions (Search, Cart, Settings) */}
-            <div className="flex items-center gap-0 w-[124px] sm:w-[128px]">
+            <div className="flex items-center justify-end gap-0 w-[124px] sm:w-[128px]">
               {/* Search (more prominent) */}
               <button
                 onClick={() => setIsSearchOpen(true)}
@@ -640,13 +640,13 @@ export default function HeaderNav() {
                           segments[1] = newLang;
                           await router.push(segments.join('/'));
                         }}
-                        className={`!px-6 w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                        className={`!px-6 group w-full flex gap-2 font-medium justify-center ${locale === 'he' ? 'flex-row-reverse' : 'flex-row -ms-1'}`}
                         aria-label={tCommon('toggle_language') || 'Toggle language'}
                       >
                         {locale === 'en' ? (
-                          <Icon name="hebrewBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
+                          <Icon name="hebrewBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-brand-main" />
                         ) : (
-                          <Icon name="englishBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
+                          <Icon name="englishBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-brand-main" />
                         )}
                         <span className="text-text dark:text-text-dark/90">{locale === 'en' ? 'עברית' : 'English'}</span>
                       </Button>
@@ -708,7 +708,7 @@ export default function HeaderNav() {
                               side={locale === 'he' ? 'left' : 'right'}
                               align="start"
                               sideOffset={8}
-                              className="w-fit px-6 py-2"
+                              className="w-fit p-2"
                             >
                               <div className="space-y-2">
                                 {/* Admin Links */}
@@ -778,7 +778,7 @@ export default function HeaderNav() {
                                       variant={isActive ? "info" : "none"}
                                       size="sm"
                                       asChild
-                                      className={`w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                                      className={`!px-4 w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                                     >
                                       <Link href={item.href}>
                                         <IconComponent className={`w-4 h-4 transition-all duration-200 ${isActive ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'}`} />

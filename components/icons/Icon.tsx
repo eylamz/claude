@@ -59,6 +59,7 @@ import GymWeightBold from './gymWeightBold.svg';
 import GymWeight from './gymWeight.svg';
 import Wrench from './wrench.svg';
 import WrenchBold from './wrenchBold.svg';
+import PlantBold from './plantBold.svg';
 import GoogleMaps from './googleMaps.svg';
 import newGoogleMaps from './newGoogleMaps.svg';
 import newAppleMaps from './newAppleMaps.svg';
@@ -213,6 +214,7 @@ const iconMap: Record<string, SvgComponent> = {
   X: X,
   menu: Menu,
   cart: Cart,
+  plantBold: PlantBold,
   backpack: Backpack,
   backpackBold: BackpackBold,
   shop: Shop,
@@ -417,6 +419,7 @@ export type IconName =
   | 'close'
   | 'X'
   | 'cart'
+  | 'plantBold'
   | 'cookie'  | 'cookieBold'
   | 'backpack'  | 'backpackBold'
   | 'shopCart'  | 'shopCartBold'

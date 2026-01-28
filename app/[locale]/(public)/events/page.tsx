@@ -1,28 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, useCallback, memo, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import Image from 'next/image';
-import Link from 'next/link';
-import {
-  Calendar,
-  CalendarDays,
-  List,
-  ChevronLeft,
-  ChevronRight,
-  MapPin,
-  Clock,
-  Users,
-  Share2,
-  Plus,
-  Filter,
-  Search,
-  X,
-  CheckCircle,
-} from 'lucide-react';
-import { Button, Card, CardContent, Accordion, Checkbox, Drawer, Input, Select, Skeleton } from '@/components/ui';
-import { Icon } from '@/components/icons/Icon';
+import { X, TrendingUp } from 'lucide-react';
+import { Button, TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { SearchInput } from '@/components/common/SearchInput';
+import { Icon } from '@/components/icons';
 
 interface Event {
   id: string;
@@ -46,113 +31,459 @@ interface Event {
   isPast: boolean;
 }
 
-interface CalendarEvent {
-  date: Date;
-  event: Event;
-}
+// Sport mapping configuration - matching guides page
+const SPORT_CONFIG = [
+  {
+    value: 'roller',
+    iconName: 'Roller' as const,
+    displayName: 'Rollerblading',
+    variant: 'purple' as const,
+    tooltipEn: 'Filter by Rollerblading events',
+    tooltipHe: 'סנן לפי אירועי רולר',
+  },
+  {
+    value: 'skate',
+    iconName: 'Skate' as const,
+    displayName: 'Skating',
+    variant: 'purple' as const,
+    tooltipEn: 'Filter by Skating events',
+    tooltipHe: 'סנן לפי אירועי סקייט',
+  },
+  {
+    value: 'scoot',
+    iconName: 'scooter' as const,
+    displayName: 'Scootering',
+    variant: 'purple' as const,
+    tooltipEn: 'Filter by Scootering events',
+    tooltipHe: 'סנן לפי אירועי קורקינט',
+  },
+  {
+    value: 'bmx',
+    iconName: 'bmx-icon' as const,
+    displayName: 'BMXing',
+    variant: 'purple' as const,
+    tooltipEn: 'Filter by BMX events',
+    tooltipHe: 'סנן לפי אירועי BMX',
+  },
+  {
+    value: 'longboard',
+    iconName: 'Longboard' as const,
+    displayName: 'Longboarding',
+    variant: 'purple' as const,
+    tooltipEn: 'Filter by Longboarding events',
+    tooltipHe: 'סנן לפי אירועי לונגבורד',
+  }
+] as const;
+
+// Utility function to optimize image URLs
+const getOptimizedImageUrl = (originalUrl: string): string | null => {
+  if (!originalUrl || originalUrl.trim() === '') return null;
+  
+  if (originalUrl.includes('cloudinary.com')) {
+    const urlParts = originalUrl.split('/upload/');
+    if (urlParts.length === 2) {
+      return `${urlParts[0]}/upload/w_800,c_fill,q_auto:good,f_auto/${urlParts[1]}`;
+    }
+  }
+  return originalUrl;
+};
+
+// Memoized thumbnail component
+const EventThumbnail = memo(({ 
+  photoUrl, 
+  eventTitle, 
+  onLoad,
+  alwaysSaturated = false
+}: { 
+  photoUrl: string, 
+  eventTitle: string,
+  onLoad?: () => void,
+  alwaysSaturated?: boolean
+}) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  
+  useEffect(() => {
+    setIsLoaded(false);
+    setHasError(false);
+  }, [photoUrl]);
+  
+  useEffect(() => {
+    const checkImageLoaded = () => {
+      if (imgRef.current) {
+        const img = imgRef.current;
+        if (img.complete && img.naturalHeight !== 0) {
+          setIsLoaded(true);
+          setHasError(false);
+          onLoad?.();
+          return true;
+        } else if (img.complete && img.naturalHeight === 0) {
+          setIsLoaded(true);
+          setHasError(true);
+          return true;
+        }
+      }
+      return false;
+    };
+    
+    if (checkImageLoaded()) return;
+    
+    const timeout1 = setTimeout(() => {
+      checkImageLoaded();
+    }, 100);
+    
+    const timeout2 = setTimeout(() => {
+      if (!isLoaded && !hasError && imgRef.current) {
+        const img = imgRef.current;
+        if (!img.complete || img.naturalHeight === 0) {
+          setIsLoaded(true);
+          setHasError(true);
+        }
+      }
+    }, 3000);
+    
+    return () => {
+      clearTimeout(timeout1);
+      clearTimeout(timeout2);
+    };
+  }, [photoUrl, onLoad]);
+  
+  const handleImageLoad = () => {
+    setIsLoaded(true);
+    setHasError(false);
+    onLoad?.();
+  };
+
+  const handleImageError = () => {
+    setIsLoaded(true);
+    setHasError(true);
+  };
+
+  const optimizedUrl = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
+
+  return (
+    <>
+      {!isLoaded && !hasError && (
+        <div className="absolute inset-0 bg-background/20 dark:bg-background/20 flex items-center justify-center z-10">
+          <LoadingSpinner />
+        </div>
+      )}
+      {optimizedUrl ? (
+        <img
+          ref={imgRef}
+          src={optimizedUrl}
+          alt={eventTitle}
+          className={`w-full h-full rounded-xl object-cover transition-all duration-200 select-none ${
+            alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
+          } ${
+            isLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+        />
+      ) : (
+        <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <div className="w-16 h-16 opacity-50 bg-card-muted dark:bg-card-muted-dark rounded" />
+        </div>
+      )}
+    </>
+  );
+});
+EventThumbnail.displayName = 'EventThumbnail';
+
+/**
+ * Event Card Component
+ */
+const EventCard = memo(({ 
+  event, 
+  locale, 
+  animationDelay = 0,
+  getSportTranslation
+}: { 
+  event: Event; 
+  locale: string; 
+  animationDelay?: number;
+  getSportTranslation: (sport: string) => string;
+}) => {
+  const [isClicked, setIsClicked] = useState(false);
+  const [showNameSection, setShowNameSection] = useState(false);
+  const [showEventName, setShowEventName] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowNameSection(true);
+      setTimeout(() => {
+        setShowEventName(true);
+      }, 0);
+    }, 300 + animationDelay);
+    return () => clearTimeout(timer);
+  }, [animationDelay]);
+
+  const handleCardClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsClicked(true);
+    setTimeout(() => {
+      window.location.href = `/${locale}/events/${event.slug}`;
+    }, 300);
+  }, [event.slug, locale]);
+
+  const isPast = event.isPast;
+  const isFull = event.maxParticipants && event.currentParticipants >= event.maxParticipants;
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  return (
+    <div
+      ref={cardRef}
+      onClick={handleCardClick}
+      className={`h-fit group rounded-xl cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} ${isPast ? 'opacity-60' : ''}`}
+      style={{ animationDelay: `${animationDelay}ms` }}
+      aria-label={event.title}
+    >
+      <div className="group-hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden"
+              style={{
+                filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
+              }}
+      >
+        {/* Sports Tags Overlay */}
+        {event.sports && event.sports.length > 0 && (
+          <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
+            {event.sports.slice(0, 4).map((sport, idx) => {
+              const sportLower = sport.toLowerCase();
+              const sportConfig = SPORT_CONFIG.find(s => 
+                s.value === sportLower || 
+                sportLower.includes(s.value) ||
+                s.displayName.toLowerCase() === sportLower
+              );
+              return (
+                <div
+                  key={idx}
+                  className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg"
+                  title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
+                >
+                  {sportConfig ? (
+                    <Icon name={sportConfig.iconName as any} className="w-4 h-4 text-white" />
+                  ) : (
+                    <span className="text-xs font-medium text-white">{getSportTranslation(sport)}</span>
+                  )}
+                </div>
+              );
+            })}
+            {event.sports.length > 4 && (
+              <div className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg">
+                <span className="text-xs font-medium text-white">+{event.sports.length - 4}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Status Badges */}
+        {event.isHappeningNow && (
+          <div className="absolute top-2 right-2 z-10">
+            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-red-500 dark:bg-red-600 text-white text-xs md:text-sm font-semibold px-2 md:px-3 py-1 rounded-full shadow-lg">
+              {tr('Happening Now', 'קורה עכשיו')}
+            </div>
+          </div>
+        )}
+        {isFull && !event.isHappeningNow && (
+          <div className="absolute top-2 right-2 z-10">
+            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-gray-800 dark:bg-gray-700 text-white text-xs md:text-sm font-semibold px-2 md:px-3 py-1 rounded-full shadow-lg">
+              {tr('Full', 'מלא')}
+            </div>
+          </div>
+        )}
+
+        {/* Date Badge */}
+        <div className="absolute bottom-2 left-0 z-10">
+          <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
+            {formatDate(event.startDate)}
+          </div>
+        </div>
+
+        <EventThumbnail
+          photoUrl={event.image || ''}
+          eventTitle={event.title}
+        />
+      </div>
+
+      {/* Name Section */}
+      <div 
+          className="space-y-1 overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            maxHeight: showNameSection ? '200px' : '0',
+            paddingTop: showNameSection ? '0.5rem' : '0',
+            paddingBottom: showNameSection ? '0.5rem' : '0',
+          }}
+        >
+          <h3 
+            className={`text-lg font-medium opacity-0 ${showEventName ? 'animate-fadeInDown animation-delay-[1s]' : ''}`}
+          >
+            {event.title}
+          </h3>
+         
+        </div>
+    </div>
+  );
+});
+EventCard.displayName = 'EventCard';
 
 export default function EventsPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations('events');
   
+  const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
+  
+  // Helper function to get translated sport name
+  const getSportTranslation = useCallback((sport: string): string => {
+    if (!sport) return sport;
+    const sportKey = sport.toLowerCase();
+    const translationKey = `sports.${sportKey}`;
+    try {
+      const translated = t(translationKey as any);
+      if (translated && translated !== translationKey && !translated.startsWith('sports.')) {
+        return translated;
+      }
+    } catch (e) {
+      // Translation key doesn't exist
+    }
+    return sport.charAt(0).toUpperCase() + sport.slice(1);
+  }, [t]);
+
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
-  const [sports, setSports] = useState<string[]>([]);
+  const [filtersData, setFiltersData] = useState<{ sports: string[] }>({ sports: [] });
   const [loading, setLoading] = useState(true);
-  
-  // View and filter states
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>(
-    searchParams.get('view') === 'calendar' ? 'calendar' : 'list'
-  );
-  const [timeFilter, setTimeFilter] = useState<'upcoming' | 'past'>(
-    searchParams.get('time') === 'past' ? 'past' : 'upcoming'
-  );
-  
-  // Calendar state
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedDateEvents, setSelectedDateEvents] = useState<Event[]>([]);
   
   // Filters
   const [selectedSports, setSelectedSports] = useState<string[]>(
     searchParams.get('sports')?.split(',').filter(Boolean) || []
   );
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-  const [freeOnly, setFreeOnly] = useState(searchParams.get('freeOnly') === 'true');
   const [hasSpotsAvailable, setHasSpotsAvailable] = useState(searchParams.get('hasSpots') === 'true');
-  const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
-    start: searchParams.get('startDate') || '',
-    end: searchParams.get('endDate') || '',
-  });
   
-  // Mobile drawer
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // Pagination
+  const [page, setPage] = useState(1);
+  const limit = 12;
+  
+  // UI State
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const prevScrollYRef = useRef(0);
+
+  // Track scroll position for sticky header
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const prevScrollY = prevScrollYRef.current;
+      
+      if (currentScrollY < prevScrollY || currentScrollY < 10) {
+        setIsHeaderVisible(true);
+      } else if (currentScrollY > prevScrollY) {
+        setIsHeaderVisible(false);
+      }
+      
+      prevScrollYRef.current = currentScrollY;
+      setIsScrolled(currentScrollY > 240);
+    };
+
+    const initialScrollY = window.scrollY;
+    prevScrollYRef.current = initialScrollY;
+    setIsHeaderVisible(initialScrollY < 10);
+    setIsScrolled(initialScrollY > 240);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Fetch events
   useEffect(() => {
     fetchEvents();
-    fetchSports();
   }, [locale]);
+
+  // Extract filters from events data - normalize to SPORT_CONFIG values
+  useEffect(() => {
+    if (events.length > 0) {
+      const sportsSet = new Set<string>();
+      events.forEach((event) => {
+        event.sports?.forEach(sport => {
+          // Normalize sport name to match SPORT_CONFIG values
+          const sportLower = sport.toLowerCase();
+          const matchingConfig = SPORT_CONFIG.find(config => 
+            config.value === sportLower ||
+            sportLower.includes(config.value) ||
+            config.displayName.toLowerCase() === sportLower
+          );
+          if (matchingConfig) {
+            sportsSet.add(matchingConfig.value);
+          } else {
+            // If no match, add the original sport name
+            sportsSet.add(sport);
+          }
+        });
+      });
+      setFiltersData({
+        sports: Array.from(sportsSet).sort(),
+      });
+    }
+  }, [events]);
 
   // Filter events
   useEffect(() => {
     filterEvents();
-  }, [events, timeFilter, selectedSports, searchQuery, freeOnly, hasSpotsAvailable, dateRange]);
+  }, [events, selectedSports, searchQuery, hasSpotsAvailable]);
 
   const fetchEvents = async () => {
     setLoading(true);
     try {
-      // Simulated API call - replace with actual API endpoint
       const response = await fetch(`/api/events?locale=${locale}`);
       if (response.ok) {
         const data = await response.json();
         setEvents(data.events || []);
       } else {
-        // Mock data for development
-        setEvents(mockEvents);
+        setEvents([]);
       }
     } catch (error) {
       console.error('Error fetching events:', error);
-      // Mock data for development
-      setEvents(mockEvents);
+      setEvents([]);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchSports = async () => {
-    try {
-      const response = await fetch(`/api/events/sports?locale=${locale}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSports(data.sports || []);
-      } else {
-        // Mock sports
-        setSports(['Skateboarding', 'BMX', 'Scooter', 'Roller Skates', 'Longboard']);
-      }
-    } catch (error) {
-      console.error('Error fetching sports:', error);
-      setSports(['Skateboarding', 'BMX', 'Scooter', 'Roller Skates', 'Longboard']);
     }
   };
 
   const filterEvents = () => {
     let filtered = [...events];
 
-    // Time filter
-    const now = new Date();
-    if (timeFilter === 'upcoming') {
-      filtered = filtered.filter(event => new Date(event.startDate + 'T' + event.startTime) >= now);
-    } else {
-      filtered = filtered.filter(event => new Date(event.startDate + 'T' + event.startTime) < now);
-    }
-
-    // Sports filter
+    // Sports filter - using relatedSports like guides
     if (selectedSports.length > 0) {
       filtered = filtered.filter(event =>
-        event.sports.some(sport => selectedSports.includes(sport))
+        event.sports?.some(sport => {
+          const sportLower = sport.toLowerCase();
+          return selectedSports.some(selectedSport => {
+            // Check if sport matches selected sport (config value)
+            if (selectedSport === sportLower) return true;
+            // Check if sport matches any SPORT_CONFIG
+            const matchingConfig = SPORT_CONFIG.find(config => 
+              config.value === selectedSport &&
+              (config.value === sportLower ||
+               sportLower.includes(config.value) ||
+               config.displayName.toLowerCase() === sportLower)
+            );
+            return !!matchingConfig;
+          });
+        })
       );
     }
 
@@ -166,11 +497,6 @@ export default function EventsPage() {
       );
     }
 
-    // Free only
-    if (freeOnly) {
-      filtered = filtered.filter(event => event.isFree);
-    }
-
     // Has spots available
     if (hasSpotsAvailable) {
       filtered = filtered.filter(event =>
@@ -178,717 +504,327 @@ export default function EventsPage() {
       );
     }
 
-    // Date range
-    if (dateRange.start) {
-      const startDate = new Date(dateRange.start);
-      filtered = filtered.filter(event => new Date(event.startDate) >= startDate);
-    }
-    if (dateRange.end) {
-      const endDate = new Date(dateRange.end);
-      endDate.setHours(23, 59, 59);
-      filtered = filtered.filter(event => new Date(event.startDate) <= endDate);
-    }
-
     setFilteredEvents(filtered);
-  };
-
-  const handleSportToggle = (sport: string) => {
-    setSelectedSports((prev) =>
-      prev.includes(sport) ? prev.filter((s) => s !== sport) : [...prev, sport]
-    );
   };
 
   const handleClearFilters = () => {
     setSelectedSports([]);
     setSearchQuery('');
-    setFreeOnly(false);
     setHasSpotsAvailable(false);
-    setDateRange({ start: '', end: '' });
+    setPage(1);
   };
 
-  const handleDateClick = (date: Date) => {
-    setSelectedDate(date);
-    const dateStr = date.toISOString().split('T')[0];
-    const eventsOnDate = filteredEvents.filter(event => event.startDate === dateStr);
-    setSelectedDateEvents(eventsOnDate);
-  };
+  // Calculate pagination info
+  const totalResults = filteredEvents.length;
+  const totalPages = Math.ceil(totalResults / limit);
+  const currentPage = page;
+  const paginatedEvents = filteredEvents.slice((currentPage - 1) * limit, currentPage * limit);
+  const showingFrom = (currentPage - 1) * limit + 1;
+  const showingTo = Math.min(currentPage * limit, totalResults);
 
-  const updateURL = useCallback(() => {
-    const params = new URLSearchParams();
-    if (viewMode === 'calendar') params.set('view', 'calendar');
-    if (timeFilter === 'past') params.set('time', 'past');
-    if (selectedSports.length > 0) params.set('sports', selectedSports.join(','));
-    if (searchQuery) params.set('search', searchQuery);
-    if (freeOnly) params.set('freeOnly', 'true');
-    if (hasSpotsAvailable) params.set('hasSpots', 'true');
-    if (dateRange.start) params.set('startDate', dateRange.start);
-    if (dateRange.end) params.set('endDate', dateRange.end);
-    
-    router.push(`/${locale}/events?${params.toString()}`);
-  }, [viewMode, timeFilter, selectedSports, searchQuery, freeOnly, hasSpotsAvailable, dateRange, locale, router]);
+  const hasAnyFilter = selectedSports.length > 0 || hasSpotsAvailable || searchQuery.trim();
+  
+  const activeFiltersCount = 
+    selectedSports.length + 
+    (hasSpotsAvailable ? 1 : 0) + 
+    (searchQuery.trim() ? 1 : 0);
+  const hasMultipleFilters = activeFiltersCount > 1;
 
-  useEffect(() => {
-    updateURL();
-  }, [updateURL]);
-
-  const handleShareEvent = async (event: Event) => {
-    const url = `${window.location.origin}/${locale}/events/${event.slug}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: event.title,
-          text: event.description,
-          url,
-        });
-      } catch (error) {
-        console.error('Error sharing:', error);
-      }
-    } else {
-      // Fallback: copy to clipboard
-      await navigator.clipboard.writeText(url);
-      // You might want to show a toast notification here
-    }
-  };
-
-  const handleAddToCalendar = (event: Event) => {
-    const startDateTime = new Date(`${event.startDate}T${event.startTime}`);
-    const endDateTime = new Date(`${event.endDate || event.startDate}T${event.endTime || event.startTime}`);
-    
-    const formatDate = (date: Date) => {
-      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    };
-
-    const calendarUrl = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'BEGIN:VEVENT',
-      `DTSTART:${formatDate(startDateTime)}`,
-      `DTEND:${formatDate(endDateTime)}`,
-      `SUMMARY:${event.title}`,
-      `DESCRIPTION:${event.description}`,
-      `LOCATION:${event.location}`,
-      'END:VEVENT',
-      'END:VCALENDAR',
-    ].join('\n');
-
-    const blob = new Blob([calendarUrl], { type: 'text/calendar' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${event.slug}.ics`;
-    link.click();
-  };
-
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-
-    const days: (Date | null)[] = [];
-    
-    // Add empty cells for days before the first day of the month
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(null);
-    }
-
-    // Add all days of the month
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(new Date(year, month, i));
-    }
-
-    return days;
-  };
-
-  const getEventsForDate = (date: Date | null): Event[] => {
-    if (!date) return [];
-    const dateStr = date.toISOString().split('T')[0];
-    return filteredEvents.filter(event => event.startDate === dateStr);
-  };
-
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    setCurrentMonth(prev => {
-      const newDate = new Date(prev);
-      if (direction === 'prev') {
-        newDate.setMonth(prev.getMonth() - 1);
-      } else {
-        newDate.setMonth(prev.getMonth() + 1);
-      }
-      return newDate;
-    });
-  };
-
-  const sidebarContent = (
-    <div className="space-y-6">
-      {/* Related Sports */}
-      {sports.length > 0 && (
-        <Accordion title={t('filters.sports')} defaultOpen>
-          <div className="space-y-2">
-            {sports.map((sport) => (
-              <Checkbox
-                key={sport}
-                id={`sport-${sport}`}
-                checked={selectedSports.includes(sport)}
-                onChange={() => handleSportToggle(sport)}
-                label={sport}
-              />
-            ))}
-          </div>
-        </Accordion>
-      )}
-      
-      {/* Date Range */}
-      <Accordion title={t('filters.dateRange')}>
-        <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('filters.startDate')}
-            </label>
-            <Input
-              type="date"
-              value={dateRange.start}
-              onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('filters.endDate')}
-            </label>
-            <Input
-              type="date"
-              value={dateRange.end}
-              onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-            />
-          </div>
-        </div>
-      </Accordion>
-      
-      {/* Free Events Only */}
-      <Checkbox
-        id="freeOnly"
-        checked={freeOnly}
-        onChange={setFreeOnly}
-        label={t('filters.freeOnly')}
-      />
-      
-      {/* Has Spots Available */}
-      <Checkbox
-        id="hasSpotsAvailable"
-        checked={hasSpotsAvailable}
-        onChange={setHasSpotsAvailable}
-        label={t('filters.hasSpotsAvailable')}
-      />
-      
-      {/* Clear Filters */}
-      <Button onClick={handleClearFilters} variant="outline" className="w-full">
-        {t('filters.clear')}
-      </Button>
-    </div>
-  );
+  // Filter sport buttons to only show those with available events (like guides)
+  const availableSportButtons = SPORT_CONFIG.filter(sport => {
+    return filtersData.sports.includes(sport.value);
+  });
 
   return (
-    <div className="min-h-screen ">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('title')}</h1>
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {filteredEvents.length} {filteredEvents.length === 1 ? t('event') : t('events')}
-              </span>
-            </div>
+    <div className="min-h-screen bg-background dark:bg-background-dark" dir={locale === 'he' ? 'rtl' : 'ltr'}>
+      
+      {/* ========================================
+          HERO SECTION - Brand Messaging  
+      ======================================== */}
+      <div className="relative pt-14 bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5">
+        <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
+              {t('title')}
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              {tr(
+                'Join exciting events and connect with the community.',
+                'הצטרף לאירועים מרגשים והתחבר לקהילה.'
+              )}
+            </p>
             
-            {/* Controls */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Search */}
-              <div className="flex-1 min-w-64">
-                <div className="relative">
-                  <Icon name="search" className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    type="text"
-                    placeholder={t('searchPlaceholder')}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
+            {/* Stats Bar */}
+            <div className="flex items-center justify-center gap-6 pt-4">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-2 h-2 rounded-full bg-brand-main animate-pulse" />
+                <span className="text-gray-600 dark:text-gray-400">
+                  {totalResults} {totalResults === 1 ? t('event') : t('events')}
+                </span>
+              </div>
+              <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
+              <div className="flex items-center gap-2 text-sm">
+                <TrendingUp className="w-4 h-4 text-green-500" />
+                <span className="text-gray-600 dark:text-gray-400">
+                  {tr('Updated Daily', 'מתעדכן יומי')}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================
+          STICKY FILTER BAR - Modern & Clean
+      ======================================== */}
+      <div 
+        className={`sticky z-40 transition-all duration-300 border-b-2 border-transparent ${
+          isHeaderVisible ? 'top-16 md:top-16' : 'top-0'
+        } ${
+          isScrolled 
+            ? 'shadow-xl bg-header dark:bg-header-dark border-header-border dark:border-header-border-dark py-3' 
+            : 'py-4'
+        }`}
+      >
+        <div className="max-w-6xl mx-auto px-4">
+          {/* Main Filter Row */}
+          <div className="flex flex-col xxs:flex-row items-stretch md:items-center gap-3">
+            
+            {/* Left: Search */}
+            <div className="flex items-center gap-1 flex-1">
+              <div className="flex-1 min-w-0">
+                <SearchInput
+                  placeholder={tr('Search events...', 'חפש אירועים...')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onClear={() => setSearchQuery('')}
+                  className="w-full"
+                />
+              </div>
+            </div>
+
+            {/* Right: Filters */}
+            <div className="flex items-center gap-3">
+              {/* Sports Filter - Multi-select Buttons (like guides) */}
+              <TooltipProvider delayDuration={50}>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {availableSportButtons.map((sport) => {
+                    const isSelected = selectedSports.includes(sport.value);
+
+                    return (
+                      <Tooltip key={sport.value}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant={isSelected ? sport.variant : 'gray'}
+                            size="md"
+                            onClick={() => {
+                              setSelectedSports((prev) =>
+                                prev.includes(sport.value)
+                                  ? prev.filter((s) => s !== sport.value)
+                                  : [...prev, sport.value]
+                              );
+                              setPage(1);
+                            }}
+                            aria-label={tr(sport.tooltipEn, sport.tooltipHe)}
+                          >
+                            <Icon name={sport.iconName as any} className="w-5 h-5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="bottom"
+                          className="text-center"
+                          variant={isSelected ? sport.variant : 'gray'}
+                        >
+                          {tr(sport.tooltipEn, sport.tooltipHe)}
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
+                </div>
+              </TooltipProvider>
+
+            </div>
+          </div>
+
+          {/* ========================================
+              ACTIVE FILTERS STATUS - Improved Layout
+          ======================================== */}
+          {hasAnyFilter && (
+            <div className="mt-3 pt-3 border-t border-border dark:border-border-dark">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Results Count Badge */}
+                {!loading && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark animate-pop">
+                    <Icon name="calendarBold" className="w-4 h-4 text-green" />
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {paginatedEvents.length}
+                    </span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {tr('of', 'מתוך')} {totalResults}
+                    </span>
+                  </div>
+                )}
+
+                {/* Search Query Badge */}
+                {searchQuery.trim() && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-bg dark:bg-orange-bg-dark rounded-full border border-orange-border dark:border-orange-border-dark hover:bg-orange-hover-bg dark:hover:bg-orange-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
+                  >
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      "{searchQuery}"
+                    </span>
+                    <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                  </button>
+                )}
+
+                {/* Sports Badges */}
+                {selectedSports.map((sport) => {
+                  const sportConfig = SPORT_CONFIG.find(s => s.value === sport);
+                  return (
+                    <button
+                      key={sport}
+                      onClick={() => setSelectedSports(prev => prev.filter(s => s !== sport))}
+                      className="inline-flex items-center gap-2 px-3 py-2 bg-purple-bg dark:bg-purple-bg-dark rounded-full border border-purple-border dark:border-purple-border-dark hover:bg-purple-hover-bg dark:hover:bg-purple-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
+                      title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
+                    >
+                      {sportConfig ? (
+                        <Icon name={sportConfig.iconName as any} className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                      ) : (
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          {getSportTranslation(sport)}
+                        </span>
+                      )}
+                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                    </button>
+                  );
+                })}
+
+                {/* Has Spots Available Badge */}
+                {hasSpotsAvailable && (
+                  <button
+                    onClick={() => setHasSpotsAvailable(false)}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors cursor-pointer"
+                  >
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {tr('Has Spots', 'יש מקומות')}
+                    </span>
+                    <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                  </button>
+                )}
+
+                {/* Clear All Filters Button */}
+                {hasMultipleFilters && (
+                  <button
+                    onClick={handleClearFilters}
+                    className="opacity-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-full transition-colors duration-200 animate-fadeIn"
+                    style={{ animationDelay: `400ms` }}
+                 >
+                    <X className="w-3.5 h-3.5" />
+                    {tr('Clear All', 'נקה הכל')}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ========================================
+          MAIN CONTENT AREA
+      ======================================== */}
+      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
+        {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="h-fit shadow-lg rounded-3xl overflow-hidden">
+                <div className="h-[12rem] md:h-[16rem] bg-gray-200 dark:bg-gray-700 animate-pulse" />
+                <div className="px-3 py-2 space-y-2">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3 animate-pulse" />
                 </div>
               </div>
-
-              {/* Upcoming/Past Toggle */}
-              <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-lg p-1 bg-white dark:bg-gray-800">
-                <button
-                  onClick={() => setTimeFilter('upcoming')}
-                  className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-                    timeFilter === 'upcoming'
-                      ? 'bg-blue-500 text-white'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {t('upcoming')}
-                </button>
-                <button
-                  onClick={() => setTimeFilter('past')}
-                  className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-                    timeFilter === 'past'
-                      ? 'bg-blue-500 text-white'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {t('past')}
-                </button>
-              </div>
-
-              {/* Calendar/List Toggle */}
-              <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 rounded-lg p-1 bg-white dark:bg-gray-800">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded transition-colors ${
-                    viewMode === 'list'
-                      ? 'bg-blue-500 text-white'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                  title={t('listView')}
-                >
-                  <List className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('calendar')}
-                  className={`p-2 rounded transition-colors ${
-                    viewMode === 'calendar'
-                      ? 'bg-blue-500 text-white'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                  title={t('calendarView')}
-                >
-                  <CalendarDays className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Mobile Filter Button */}
-              <button
-                onClick={() => setIsDrawerOpen(true)}
-                className="md:hidden px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                <Filter className="w-4 h-4 inline mr-2" />
-                {t('filters.title')}
-              </button>
-            </div>
+            ))}
           </div>
-        </div>
-      </div>
+        ) : paginatedEvents.length > 0 ? (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+              {paginatedEvents.map((event, index) => (
+                <EventCard 
+                  key={event.id} 
+                  event={event} 
+                  locale={locale} 
+                  animationDelay={index * 50}
+                  getSportTranslation={getSportTranslation}
+                />
+              ))}
+            </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-8">
-          {/* Desktop Sidebar */}
-          <aside className="hidden md:block w-64 shrink-0">
-            {sidebarContent}
-          </aside>
-          
-          {/* Mobile Drawer */}
-          <Drawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} title={t('filters.title')}>
-            {sidebarContent}
-          </Drawer>
-          
-          {/* Content */}
-          <main className="flex-1">
-            {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} className="h-64 rounded-lg" />
-                ))}
-              </div>
-            ) : viewMode === 'calendar' ? (
-              <CalendarView
-                currentMonth={currentMonth}
-                onMonthChange={navigateMonth}
-                events={filteredEvents}
-                onDateClick={handleDateClick}
-                selectedDate={selectedDate}
-                t={t}
-              />
-            ) : filteredEvents.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredEvents.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    locale={locale}
-                    onShare={() => handleShareEvent(event)}
-                    onAddToCalendar={() => handleAddToCalendar(event)}
-                    t={t}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-gray-600 dark:text-gray-400">{t('noEventsFound')}</p>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-8 flex items-center justify-between">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
+                  {tr('Showing', 'מציג')} {showingFrom} {tr('to', 'עד')} {showingTo} {tr('of', 'מתוך')} {totalResults} {totalResults === 1 ? t('event') : t('events')}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    {tr('Previous', 'הקודם')}
+                  </Button>
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1)
+                      .map((pageNum) => (
+                        <button
+                          key={pageNum}
+                          onClick={() => setPage(pageNum)}
+                          className={`px-3 py-1 text-sm rounded ${
+                            pageNum === currentPage
+                              ? 'bg-blue-600 dark:bg-blue-500 text-white'
+                              : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    {tr('Next', 'הבא')}
+                  </Button>
+                </div>
               </div>
             )}
-          </main>
-        </div>
+          </>
+        ) : (
+          <div className="text-center py-16">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-brand-main/10 to-green-500/10 dark:from-brand-main/20 dark:to-green-500/20 mb-4">
+              <Icon name="searchQuest" className="w-8 h-8 text-brand-main" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              {searchQuery 
+                ? tr('No events match your search', 'לא נמצאו אירועים') 
+                : tr('No events found', 'לא נמצאו אירועים')
+              }
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              {tr('Try adjusting your filters or search terms', 'נסה לשנות את הפילטרים או החיפוש')}
+            </p>
+            {hasAnyFilter && (
+              <Button variant="brand" onClick={handleClearFilters}>
+                {tr('Clear All Filters', 'נקה את כל הפילטרים')}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
-
-      {/* Selected Date Events Modal */}
-      {selectedDate && selectedDateEvents.length > 0 && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {t('eventsOnDate')}: {selectedDate.toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </h2>
-                <button
-                  onClick={() => setSelectedDate(null)}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <div className="space-y-4">
-                {selectedDateEvents.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    locale={locale}
-                    onShare={() => handleShareEvent(event)}
-                    onAddToCalendar={() => handleAddToCalendar(event)}
-                    t={t}
-                    compact
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }
-
-// Calendar View Component
-interface CalendarViewProps {
-  currentMonth: Date;
-  onMonthChange: (direction: 'prev' | 'next') => void;
-  events: Event[];
-  onDateClick: (date: Date) => void;
-  selectedDate: Date | null;
-  t: any;
-}
-
-function CalendarView({ currentMonth, onMonthChange, events, onDateClick, selectedDate, t }: CalendarViewProps) {
-  const days = getDaysInMonth(currentMonth);
-  const monthName = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  
-  const getEventsForDate = (date: Date | null): Event[] => {
-    if (!date) return [];
-    const dateStr = date.toISOString().split('T')[0];
-    return events.filter(event => event.startDate === dateStr);
-  };
-
-  const isToday = (date: Date | null): boolean => {
-    if (!date) return false;
-    const today = new Date();
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    );
-  };
-
-  const isSelected = (date: Date | null): boolean => {
-    if (!date || !selectedDate) return false;
-    return date.toISOString().split('T')[0] === selectedDate.toISOString().split('T')[0];
-  };
-
-  return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{monthName}</h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onMonthChange('prev')}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => onMonthChange('next')}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-7 gap-2">
-          {/* Day headers */}
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-            <div key={day} className="text-center text-sm font-semibold text-gray-600 dark:text-gray-400 py-2">
-              {day}
-            </div>
-          ))}
-          
-          {/* Calendar days */}
-          {days.map((date, index) => {
-            const dateEvents = getEventsForDate(date);
-            const hasEvents = dateEvents.length > 0;
-            const today = isToday(date);
-            const selected = isSelected(date);
-            
-            return (
-              <button
-                key={index}
-                onClick={() => date && onDateClick(date)}
-                disabled={!date}
-                className={`
-                  aspect-square p-2 border rounded-lg text-sm transition-colors
-                  ${!date ? 'border-transparent' : ''}
-                  ${date && !selected && !today ? 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800' : ''}
-                  ${today && !selected ? 'border-blue-400 bg-blue-50 dark:bg-blue-900' : ''}
-                  ${selected ? 'border-blue-500 bg-blue-500 text-white' : 'text-gray-900 dark:text-white'}
-                  ${!date ? 'cursor-default' : 'cursor-pointer'}
-                `}
-              >
-                {date && (
-                  <>
-                    <div className="font-medium">{date.getDate()}</div>
-                    {hasEvents && (
-                      <div className="flex justify-center gap-1 mt-1">
-                        {dateEvents.slice(0, 3).map((_, i) => (
-                          <div
-                            key={i}
-                            className={`w-1.5 h-1.5 rounded-full ${
-                              selected ? 'bg-white' : 'bg-blue-500'
-                            }`}
-                          />
-                        ))}
-                        {dateEvents.length > 3 && (
-                          <div className={`text-xs ${selected ? 'text-white' : 'text-blue-500'}`}>
-                            +{dateEvents.length - 3}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Event Card Component
-interface EventCardProps {
-  event: Event;
-  locale: string;
-  onShare: () => void;
-  onAddToCalendar: () => void;
-  t: any;
-  compact?: boolean;
-}
-
-function EventCard({ event, locale, onShare, onAddToCalendar, t, compact = false }: EventCardProps) {
-  const isPast = new Date(event.startDate + 'T' + event.startTime) < new Date();
-  const hasSpotsAvailable = !event.maxParticipants || event.currentParticipants < event.maxParticipants;
-  const isFull = event.maxParticipants && event.currentParticipants >= event.maxParticipants;
-
-  return (
-    <Card className={`overflow-hidden transition-all hover:shadow-lg ${isPast ? 'opacity-60' : ''}`}>
-      <Link href={`/${locale}/events/${event.slug}`}>
-        <div className="relative aspect-video">
-          <Image
-            src={event.image || '/placeholder-event.jpg'}
-            alt={event.title}
-            fill
-            className="object-cover"
-          />
-          {event.isHappeningNow && (
-            <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold">
-              {t('happeningNow')}
-            </div>
-          )}
-          {isFull && (
-            <div className="absolute top-2 right-2 bg-gray-800 text-white px-2 py-1 rounded text-xs font-semibold">
-              {t('full')}
-            </div>
-          )}
-        </div>
-      </Link>
-      
-      <CardContent className="p-4">
-        <Link href={`/${locale}/events/${event.slug}`}>
-          <h3 className={`font-bold text-gray-900 dark:text-white mb-2 ${compact ? 'text-lg' : 'text-xl'}`}>
-            {event.title}
-          </h3>
-        </Link>
-        
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-            <Calendar className="w-4 h-4 mr-2" />
-            {new Date(event.startDate).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-            })}
-            {event.endDate && event.endDate !== event.startDate && (
-              <> - {new Date(event.endDate).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
-                month: 'short',
-                day: 'numeric',
-              })}</>
-            )}
-          </div>
-          
-          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-            <Clock className="w-4 h-4 mr-2" />
-            {event.startTime}
-            {event.endTime && <> - {event.endTime}</>}
-          </div>
-          
-          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-            <MapPin className="w-4 h-4 mr-2" />
-            {event.location}
-          </div>
-          
-          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-            <Users className="w-4 h-4 mr-2" />
-            {event.interestedCount} {t('interested')}
-            {event.maxParticipants && (
-              <> ({event.currentParticipants}/{event.maxParticipants} {t('registered')})</>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between mb-4">
-          <div className="text-lg font-semibold text-gray-900 dark:text-white">
-            {event.isFree ? t('free') : `₪${event.price}`}
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {event.sports.map((sport) => (
-              <span
-                key={sport}
-                className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-xs rounded text-gray-700 dark:text-gray-300"
-              >
-                {sport}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            variant="primary"
-            className="flex-1"
-            onClick={(e) => {
-              e.preventDefault();
-              window.location.href = `/${locale}/events/${event.slug}`;
-            }}
-            disabled={isFull || isPast}
-          >
-            {isFull ? t('full') : isPast ? t('past') : t('signUp')}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={(e) => {
-              e.preventDefault();
-              onShare();
-            }}
-            title={t('share')}
-          >
-            <Share2 className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="outline"
-            onClick={(e) => {
-              e.preventDefault();
-              onAddToCalendar();
-            }}
-            title={t('addToCalendar')}
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Helper function for calendar
-function getDaysInMonth(date: Date) {
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const daysInMonth = lastDay.getDate();
-  const startingDayOfWeek = firstDay.getDay();
-
-  const days: (Date | null)[] = [];
-  
-  for (let i = 0; i < startingDayOfWeek; i++) {
-    days.push(null);
-  }
-
-  for (let i = 1; i <= daysInMonth; i++) {
-    days.push(new Date(year, month, i));
-  }
-
-  return days;
-}
-
-// Mock events data for development
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    slug: 'skateboard-competition-2024',
-    title: 'Tel Aviv Skateboard Competition',
-    description: 'Annual skateboard competition in Tel Aviv',
-    image: '/placeholder-event.jpg',
-    startDate: '2024-12-15',
-    endDate: '2024-12-15',
-    startTime: '10:00',
-    endTime: '18:00',
-    location: 'Tel Aviv Skatepark',
-    address: '123 Main St, Tel Aviv',
-    interestedCount: 45,
-    maxParticipants: 100,
-    currentParticipants: 67,
-    isFree: false,
-    price: 50,
-    sports: ['Skateboarding'],
-    isHappeningNow: false,
-    isPast: false,
-  },
-  {
-    id: '2',
-    slug: 'bmx-workshop',
-    title: 'BMX Freestyle Workshop',
-    description: 'Learn BMX tricks from professionals',
-    image: '/placeholder-event.jpg',
-    startDate: '2024-12-20',
-    endDate: '2024-12-20',
-    startTime: '14:00',
-    endTime: '16:00',
-    location: 'Haifa Skatepark',
-    address: '456 Park Ave, Haifa',
-    interestedCount: 32,
-    maxParticipants: 30,
-    currentParticipants: 30,
-    isFree: true,
-    sports: ['BMX'],
-    isHappeningNow: false,
-    isPast: false,
-  },
-];
-
-

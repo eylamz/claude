@@ -233,7 +233,7 @@ export default function HomePage() {
           
           {/* Tagline */}
           <div 
-            className="font-bold mb-12 text-brand-main dark:text-brand-dark"
+            className="font-bold mb-12 text-[#3ba540] dark:text-[#5fbb63]"
             style={{
               fontSize: 'clamp(1.3rem, 3vw, 2rem)',
               letterSpacing: '-0.01em',

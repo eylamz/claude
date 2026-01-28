@@ -100,7 +100,7 @@ export default function MobileNavMinimal() {
           {/* Center: Logo */}
           <Link href={`/${locale}`} className="flex flex-col items-center group">
             <Icon 
-              name="logo-hostage3" 
+              name="logo" 
               className="w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] text-brand-main dark:text-brand-dark transition-opacity group-hover:opacity-80" 
             />
           </Link>

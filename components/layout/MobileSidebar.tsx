@@ -1,7 +1,7 @@
 // nextjs-app/components/layout/MobileSidebar.tsx
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
@@ -98,6 +98,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       description: tMobileNav('findParksDesc'),
     },
     {
+      href: `/${locale}/guides`,
+      icon: 'books',
+      label: tMobileNav('guides'),
+      description: tMobileNav('guidesDesc'),
+    },
+    {
       href: `/${locale}/events`,
       icon: 'calendarBold',
       label: tMobileNav('events'),
@@ -109,11 +115,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       label: tMobileNav('shop'),
       description: tMobileNav('shopDesc'),
     }] : []),
+    
     {
-      href: `/${locale}/guides`,
-      icon: 'books',
-      label: tMobileNav('guides'),
-      description: tMobileNav('guidesDesc'),
+      href: `/${locale}/about`,
+      icon: 'targetBold',
+      label: tCommon('about'),
+      description: tCommon('aboutDesc'),
     },
     ...(trainersEnabled ? [{
       href: `/${locale}/trainers`,
@@ -126,7 +133,6 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   // 2. Secondary Links (Mini Cards)
   const miniCards: MiniCard[] = [
     { href: `/${locale}/contact`, icon: 'messages', label: tCommon('contact') },
-    { href: `/${locale}/about`, icon: 'targetBold', label: tCommon('about') },
     { href: `/${locale}/terms`, icon: 'termsBold', label: tMobileNav('termsAndConditions') },
     { href: `/${locale}/accessibility`, icon: 'accessibilityBold', label: tMobileNav('accessibility') },
 ];
@@ -186,6 +192,107 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     }
   }, [isSearchOpen]);
 
+  // Weighted search scoring function
+  const calculateSearchScore = (result: SearchResult, query: string): number => {
+    const q = query.toLowerCase().trim();
+    if (!q) return 0;
+
+    let score = 0;
+    const queryLower = q.toLowerCase();
+
+    // Field weights
+    const WEIGHTS = {
+      name: 1.0,        // Highest priority - exact name matches
+      title: 1.0,       // Highest priority - exact title matches
+      category: 0.7,    // Type/category matches
+      area: 0.5,        // Area matches (north, center, south)
+      description: 0.5, // Description matches
+      tags: 0.5,        // Tags/related sports
+    };
+
+    // Check name/title (weight 1.0)
+    const displayName = (result.name || result.title || '').toLowerCase();
+    if (displayName.includes(queryLower)) {
+      if (displayName.startsWith(queryLower)) {
+        score += WEIGHTS.name * 2; // Bonus for startsWith
+      } else {
+        score += WEIGHTS.name;
+      }
+    }
+
+    // Check category/type (weight 0.7)
+    const categoryMap: Record<string, string> = {
+      skateparks: 'skatepark',
+      products: 'product',
+      events: 'event',
+      guides: 'guide',
+      trainers: 'trainer',
+    };
+    const categoryName = categoryMap[result.type] || '';
+    if (categoryName && queryLower.includes(categoryName)) {
+      score += WEIGHTS.category;
+    }
+
+    // Check area (weight 0.5) - for skateparks and trainers
+    if (result.area) {
+      const areaMap: Record<string, string> = {
+        north: 'north',
+        center: 'center',
+        south: 'south',
+      };
+      const areaName = areaMap[result.area] || '';
+      if (areaName && queryLower.includes(areaName)) {
+        score += WEIGHTS.area;
+      }
+    }
+
+    // Check description (weight 0.5)
+    if (result.description) {
+      const descLower = result.description.toLowerCase();
+      if (descLower.includes(queryLower)) {
+        score += WEIGHTS.description;
+      }
+    }
+
+    // Check related sports/tags (weight 0.5)
+    if (result.relatedSports && Array.isArray(result.relatedSports)) {
+      const hasMatch = result.relatedSports.some(sport => 
+        sport.toLowerCase().includes(queryLower)
+      );
+      if (hasMatch) {
+        score += WEIGHTS.tags;
+      }
+    }
+
+    return score;
+  };
+
+  // Highlight matches in text (handles case-insensitive matching)
+  const highlightMatch = (text: string, query: string): React.ReactNode => {
+    if (!query.trim() || !text) return text;
+
+    const queryLower = query.toLowerCase().trim();
+    const textLower = text.toLowerCase();
+    const index = textLower.indexOf(queryLower);
+
+    if (index === -1) return text;
+
+    // Preserve original case for display
+    const before = text.slice(0, index);
+    const match = text.slice(index, index + query.length);
+    const after = text.slice(index + query.length);
+
+    return (
+      <>
+        {before}
+        <mark className="bg-transparent font-bold text-brand-main dark:text-brand-dark">
+          {match}
+        </mark>
+        {after}
+      </>
+    );
+  };
+
   // Fetch search results
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -209,8 +316,51 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         params.set('locale', locale);
         const res = await fetch(`/api/search?${params.toString()}`);
         if (!res.ok) throw new Error('Search failed');
+        
         const data = await res.json();
-        setSearchResults(data.results || []);
+        const rawResults = data.results || [];
+        const q = searchQuery.toLowerCase().trim();
+
+        // Calculate scores and sort by weighted relevance
+        type ScoredResult = SearchResult & { _score: number };
+        const scoredResults: ScoredResult[] = rawResults.map((result: SearchResult) => ({
+          ...result,
+          _score: calculateSearchScore(result, searchQuery),
+        }));
+
+        // Sort: Higher score first, then by startsWith, then alphabetically
+        const improvedResults = scoredResults.sort((a: ScoredResult, b: ScoredResult) => {
+          // First sort by score (descending)
+          if (b._score !== a._score) {
+            return b._score - a._score;
+          }
+
+          // If scores are equal, prioritize startsWith
+          const aName = (a.name || a.title || '').toLowerCase();
+          const bName = (b.name || b.title || '').toLowerCase();
+          
+          if (aName.startsWith(q) && !bName.startsWith(q)) return -1;
+          if (!aName.startsWith(q) && bName.startsWith(q)) return 1;
+          
+          // Finally, alphabetical
+          return aName.localeCompare(bName);
+        });
+
+        // Remove the temporary _score property
+        const finalResults: SearchResult[] = improvedResults
+          .map((item: ScoredResult) => {
+            const { _score, ...result } = item;
+            return result;
+          })
+          // Filter out products if ecommerce is disabled
+          .filter((result) => {
+            if (result.type === 'products' && !ecommerceEnabled) {
+              return false;
+            }
+            return true;
+          });
+
+        setSearchResults(finalResults);
       } catch (error) {
         console.error('Search error:', error);
         setSearchResults([]);
@@ -226,14 +376,30 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     };
   }, [searchQuery, locale]);
 
-  // Group results by category
-  const groupedResults = searchResults.reduce((acc, result) => {
-    if (!acc[result.type]) {
-      acc[result.type] = [];
-    }
-    acc[result.type].push(result);
-    return acc;
-  }, {} as Record<string, SearchResult[]>);
+  // Group results by category (now consumes the sorted results)
+  const groupedResults = useMemo(() => {
+    return searchResults
+      .filter((result) => {
+        // Filter out products if ecommerce is disabled
+        if (result.type === 'products' && !ecommerceEnabled) {
+          return false;
+        }
+        return true;
+      })
+      .reduce((acc, result) => {
+        if (!acc[result.type]) {
+          acc[result.type] = [];
+        }
+        acc[result.type].push(result);
+        return acc;
+      }, {} as Record<string, SearchResult[]>);
+  }, [searchResults, ecommerceEnabled]);
+
+  // Calculate max results per group: 6 if multiple groups, unlimited if single group
+  const maxResultsPerGroup = useMemo(() => {
+    const groupCount = Object.keys(groupedResults).length;
+    return groupCount > 1 ? 6 : Infinity;
+  }, [groupedResults]);
 
   const categoryLabels: Record<string, string> = {
     skateparks: tMobileNav('findParks') || 'Skateparks',
@@ -242,6 +408,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     guides: tMobileNav('guides') || 'Guides',
     trainers: tMobileNav('findCoaches') || 'Trainers',
   };
+
+  // Define category display order (skateparks before guides)
+  // Only include products if ecommerce is enabled
+  const categoryOrder = ecommerceEnabled 
+    ? ['skateparks', 'products', 'events', 'guides', 'trainers']
+    : ['skateparks', 'events', 'guides', 'trainers'];
 
   // Theme toggle handler with animation
   const handleThemeToggle = () => {
@@ -449,92 +621,107 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   {tCommon('noResults') || 'No results found'}
                 </div>
               ) : (
-                Object.entries(groupedResults).map(([category, results]) => (
-                  <div key={category} className="space-y-3">
-                    <h3 className="text-sm font-bold text-text dark:text-text-dark uppercase tracking-wider transition-colors duration-200">
-                      {categoryLabels[category] || category}
-                    </h3>
-                    <div className="space-y-1">
-                      {results.map((result) => {
-                        // Get image URL based on type
-                        let imageUrl = '';
-                        let name = '';
-                        let href = '';
+                Object.entries(groupedResults)
+                  .sort(([a], [b]) => {
+                    const indexA = categoryOrder.indexOf(a);
+                    const indexB = categoryOrder.indexOf(b);
+                    // If category not in order list, put it at the end
+                    if (indexA === -1 && indexB === -1) return 0;
+                    if (indexA === -1) return 1;
+                    if (indexB === -1) return -1;
+                    return indexA - indexB;
+                  })
+                  .map(([category, results]) => {
+                    // Limit results if there are multiple groups
+                    const displayResults = results.slice(0, maxResultsPerGroup);
+                    
+                    return (
+                      <div key={category} className="space-y-3">
+                        <h3 className="text-sm font-bold text-text dark:text-text-dark uppercase tracking-wider transition-colors duration-200">
+                          {categoryLabels[category] || category}
+                        </h3>
+                        <div className="space-y-1">
+                          {displayResults.map((result) => {
+                            // Get image URL based on type
+                            let imageUrl = '';
+                            let name = '';
+                            let href = '';
 
-                        if (result.type === 'skateparks') {
-                          imageUrl = result.imageUrl || '';
-                          name = typeof result.name === 'string' ? result.name : (result.name || '');
-                          href = `/${locale}/skateparks/${result.slug}`;
-                        } else if (result.type === 'products') {
-                          imageUrl = result.images?.[0]?.url || '';
-                          if (typeof result.name === 'string') {
-                            name = result.name;
-                          } else if (result.name && typeof result.name === 'object') {
-                            name = (result.name as { en?: string; he?: string }).en || (result.name as { en?: string; he?: string }).he || '';
-                          } else {
-                            name = '';
-                          }
-                          href = `/${locale}/shop/${result.slug}`;
-                        } else if (result.type === 'guides') {
-                          imageUrl = result.coverImage || '';
-                          name = result.title || '';
-                          href = `/${locale}/guides/${result.slug}`;
-                        } else if (result.type === 'trainers') {
-                          imageUrl = result.profileImage || '';
-                          name = result.name || '';
-                          href = `/${locale}/trainers/${result.slug}`;
-                        } else if (result.type === 'events') {
-                          imageUrl = result.image || '';
-                          name = result.title || '';
-                          href = `/${locale}/events/${result.slug}`;
-                        }
+                            if (result.type === 'skateparks') {
+                              imageUrl = result.imageUrl || '';
+                              name = typeof result.name === 'string' ? result.name : (result.name || '');
+                              href = `/${locale}/skateparks/${result.slug}`;
+                            } else if (result.type === 'products') {
+                              imageUrl = result.images?.[0]?.url || '';
+                              if (typeof result.name === 'string') {
+                                name = result.name;
+                              } else if (result.name && typeof result.name === 'object') {
+                                name = (result.name as { en?: string; he?: string }).en || (result.name as { en?: string; he?: string }).he || '';
+                              } else {
+                                name = '';
+                              }
+                              href = `/${locale}/shop/${result.slug}`;
+                            } else if (result.type === 'guides') {
+                              imageUrl = result.coverImage || '';
+                              name = result.title || '';
+                              href = `/${locale}/guides/${result.slug}`;
+                            } else if (result.type === 'trainers') {
+                              imageUrl = result.profileImage || '';
+                              name = result.name || '';
+                              href = `/${locale}/trainers/${result.slug}`;
+                            } else if (result.type === 'events') {
+                              imageUrl = result.image || '';
+                              name = result.title || '';
+                              href = `/${locale}/events/${result.slug}`;
+                            }
 
-                        return (
-                          <Link
-                            key={result.id}
-                            href={href}
-                            onClick={onClose}
-                            className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors duration-200 group"
-                          >
-                            {/* Thumbnail */}
-                            <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-card dark:bg-card-dark flex items-center justify-center transition-colors duration-200">
-                              {imageUrl ? (
-                                <Image
-                                  src={imageUrl}
-                                  alt={name}
-                                  width={180}
-                                  height={180}
-                                  quality={50}
-                                  className="w-full h-full object-cover saturate-125"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <Icon
-                                  name={
-                                    result.type === 'skateparks' ? 'trees' :
-                                    result.type === 'products' ? 'shopBold' :
-                                    result.type === 'guides' ? 'books' :
-                                    result.type === 'trainers' ? 'trainersBold' :
-                                    'calendarBold'
-                                  }
-                                  className="w-6 h-6 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-text dark:group-hover:text-text-dark transition-colors duration-200"
-                                />
-                              )}
-                            </div>
-                            {/* Name */}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-sidebar-text dark:text-sidebar-text-dark line-clamp-1 group-hover:text-text dark:group-hover:text-text-dark transition-colors duration-200">
-                                {name}
-                              </p>
-                            </div>
-                            {/* Arrow */}
-                            <ChevronRight className="rtl:rotate-180 w-4 h-4 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-text dark:group-hover:text-text-dark flex-shrink-0 transition-colors duration-200" />
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))
+                            return (
+                              <Link
+                                key={result.id}
+                                href={href}
+                                onClick={onClose}
+                                className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-bg dark:hover:bg-white/[2.5%] transition-colors duration-200 group"
+                              >
+                                {/* Thumbnail */}
+                                <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-card dark:bg-card-dark flex items-center justify-center transition-colors duration-200">
+                                  {imageUrl ? (
+                                    <Image
+                                      src={imageUrl}
+                                      alt={name}
+                                      width={180}
+                                      height={180}
+                                      quality={50}
+                                      className="w-full h-full object-cover saturate-125"
+                                      loading="lazy"
+                                    />
+                                  ) : (
+                                    <Icon
+                                      name={
+                                        result.type === 'skateparks' ? 'trees' :
+                                        result.type === 'products' ? 'shopBold' :
+                                        result.type === 'guides' ? 'books' :
+                                        result.type === 'trainers' ? 'trainersBold' :
+                                        'calendarBold'
+                                      }
+                                      className="w-6 h-6 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-text dark:group-hover:text-text-dark transition-colors duration-200"
+                                    />
+                                  )}
+                                </div>
+                                {/* Name */}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-sidebar-text dark:text-sidebar-text-dark line-clamp-1 group-hover:text-text dark:group-hover:text-text-dark transition-colors duration-200">
+                                    {highlightMatch(name, searchQuery)}
+                                  </p>
+                                </div>
+                                {/* Arrow */}
+                                <ChevronRight className="rtl:rotate-180 w-4 h-4 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-text dark:group-hover:text-text-dark flex-shrink-0 transition-colors duration-200" />
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })
               )}
             </div>
           ) : (
@@ -568,136 +755,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
 
 
-          {/* Admin Management Links */}
-          {loginEnabled && isAdmin && (
-            <nav className="text-base mt-12 px-6 transition-colors duration-200">
-            <Separator className="my-6 !w-[80%]" />
-              <ul className="grid grid-cols-2 gap-4">
-                {[
-                  {
-                    href: `/${locale}/admin`,
-                    labelKey: 'dashboard',
-                    icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/products`,
-                    labelKey: 'products',
-                    icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/orders`,
-                    labelKey: 'orders',
-                    icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/users`,
-                    labelKey: 'users',
-                    icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/skateparks`,
-                    labelKey: 'findParks',
-                    icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/reviews`,
-                    labelKey: 'reviews',
-                    icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/events`,
-                    labelKey: 'events',
-                    icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/trainers`,
-                    labelKey: 'findCoaches',
-                    icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/guides`,
-                    labelKey: 'guides',
-                    icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                      </svg>
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/settings`,
-                    labelKey: 'settings',
-                    icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    ),
-                  },
-                ].map((item) => {
-                  const isActive = pathname === item.href || (item.href !== `/${locale}/admin` && pathname.startsWith(item.href));
-                  
-                  
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        onClick={onClose}
-                        className={`block transition-colors duration-200 ${
-                          isActive
-                            ? 'text-[#16641a] dark:text-[#85ef8a] font-semibold'
-                            : 'text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className={`transition-colors duration-200 ${
-                            isActive
-                              ? 'text-[#16641a] dark:text-[#85ef8a]'
-                              : 'text-sidebar-text dark:text-sidebar-text-dark'
-                          }`}>
-                            {item.icon}
-                          </span>
-                          <span>{tMobileNav(item.labelKey)}</span>
-                        </div>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-          )}
+          
 
           {/* Separator between navCards and miniCards */}
           <Separator className="my-6 !w-[60%]" />
@@ -728,6 +786,122 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               })}
             </ul>
           </nav>
+
+          {/* Admin Management Links */}
+          {loginEnabled && isAdmin && (
+            <nav className="text-base mt-12 px-6 transition-colors duration-200">
+            <Separator className="my-6 !w-[80%]" />
+              <ul className="grid grid-cols-2 gap-4">
+                {[
+                  {
+                    href: `/${locale}/admin`,
+                    labelKey: 'dashboard',
+                    icon: (
+                      <Icon name="adminBold" className="w-4 h-4" />
+                    ),
+                  },
+                  {
+                    href: `/${locale}/admin/products`,
+                    labelKey: 'products',
+                    icon: (
+                      <Icon name="objectsBold" className="w-4 h-4" />
+                    ),
+                  },
+                  {
+                    href: `/${locale}/admin/orders`,
+                    labelKey: 'orders',
+                    icon: (
+                      <Icon name="taskBold" className="w-4 h-4" />
+                    ),
+                  },
+                  {
+                    href: `/${locale}/admin/users`,
+                    labelKey: 'users',
+                    icon: (
+                      <Icon name="accountBold" className="w-4 h-4" />
+                    ),
+                  },
+                  {
+                    href: `/${locale}/admin/forms`,
+                    labelKey: 'forms',
+                    icon: (
+                      <Icon name="plantBold" className="w-4 h-4" />
+                    ),
+                  },
+                  {
+                    href: `/${locale}/admin/skateparks`,
+                    labelKey: 'findParks',
+                    icon: (
+                      <Icon name="trees" className="w-4 h-4" />
+                    ),
+                  },
+                  {
+                    href: `/${locale}/admin/reviews`,
+                    labelKey: 'reviews',
+                    icon: (
+                      <Icon name="starWandBold" className="w-4 h-4" />
+                    ),
+                  },
+                  {
+                    href: `/${locale}/admin/events`,
+                    labelKey: 'events',
+                    icon: (
+                      <Icon name="calendarBold" className="w-4 h-4" />
+                    ),
+                  },
+                  {
+                    href: `/${locale}/admin/trainers`,
+                    labelKey: 'findCoaches',
+                    icon: (
+                      <Icon name="trainersBold" className="w-4 h-4" />
+                    ),
+                  },
+                  {
+                    href: `/${locale}/admin/guides`,
+                    labelKey: 'guides',
+                    icon: (
+                      <Icon name="bookBold" className="w-4 h-4" />
+                    ),
+                  },
+                  {
+                    href: `/${locale}/admin/settings`,
+                    labelKey: 'settings',
+                    icon: (
+                      <Icon name="settingsBold" className="w-4 h-4" />
+                    ),
+                  },
+                ].map((item) => {
+                  const isActive = pathname === item.href || (item.href !== `/${locale}/admin` && pathname.startsWith(item.href));
+                  
+                  
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        onClick={onClose}
+                        className={`block transition-colors duration-200 ${
+                          isActive
+                            ? 'text-[#16641a] dark:text-[#85ef8a] font-semibold'
+                            : 'text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className={`transition-colors duration-200 -mb-1 ${
+                            isActive
+                              ? 'text-[#16641a] dark:text-[#85ef8a]'
+                              : 'text-sidebar-text dark:text-sidebar-text-dark'
+                          }`}>
+                            {item.icon}
+                          </span>
+                          <span>{tMobileNav(item.labelKey)}</span>
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+          )}
             </>
           )}
         </div>
