@@ -1,103 +1,151 @@
 import * as React from "react";
-import * as SelectPrimitive from "@radix-ui/react-select";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const SelectRoot = SelectPrimitive.Root;
-const Select = SelectPrimitive.Root; // Keep for backward compatibility
+type SelectVariant = "purple" | "red" | "orange" | "green" | "gray" | "blue" | "default";
 
-const SelectGroup = SelectPrimitive.Group;
+const variants: Record<SelectVariant, string> = {
+  default: "bg-input dark:bg-input-dark border-border dark:border-border-dark text-text dark:text-text-dark",
+  purple: "border-purple-border dark:border-purple-border-dark bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark hover:bg-purple-hover-bg dark:hover:bg-purple-hover-bg-dark",
+  red: "border-red-border dark:border-red-border-dark bg-red-bg dark:bg-red-bg-dark text-red dark:text-red-dark hover:bg-red-hover-bg dark:hover:bg-red-hover-bg-dark",
+  orange: "border-orange-border dark:border-orange-border-dark bg-orange-bg dark:bg-orange-bg-dark text-orange dark:text-orange-dark hover:bg-orange-hover-bg dark:hover:bg-orange-hover-bg-dark",
+  green: "border-green-border dark:border-green-border-dark bg-green-bg dark:bg-green-bg-dark text-green dark:text-green-dark hover:bg-green-hover-bg dark:hover:bg-green-hover-bg-dark",
+  gray: "border-gray-border dark:border-gray-border-dark bg-gray-bg dark:bg-gray-bg-dark text-gray dark:text-gray-dark hover:bg-gray-hover-bg dark:hover:bg-gray-hover-bg-dark",
+  blue: "border-blue-border dark:border-blue-border-dark bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark",
+};
 
-const SelectValue = SelectPrimitive.Value;
+const SelectContext = React.createContext<{
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  value: string;
+  onValueChange: (value: string) => void;
+  variant: SelectVariant;
+} | null>(null);
+
+const Select = ({ 
+  children, 
+  value, 
+  onValueChange,
+  variant = "default" 
+}: { 
+  children: React.ReactNode; 
+  value?: string; 
+  onValueChange?: (val: string) => void;
+  variant?: SelectVariant;
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <SelectContext.Provider value={{ open, setOpen, value: value || "", onValueChange: onValueChange || (() => {}), variant }}>
+      <div className="relative w-full" ref={containerRef}>
+        {children}
+      </div>
+    </SelectContext.Provider>
+  );
+};
 
 const SelectTrigger = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "flex h-10 w-full items-center justify-between rounded-xl px-3 py-2 text-sm ring-offset-background",
-      "focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 select-none transition-colors duration-200",
-      "bg-input dark:bg-input-dark",
-      "border border-input-border dark:border-input-border-dark focus:border-opacity-40",
-      "hover:bg-input-hover dark:hover:bg-input-hover-dark",
-      "focus:bg-input-hover/70 dark:focus:bg-input-hover-dark/70",
-      "text-text dark:text-text-dark",
-      "placeholder:text-input-text dark:placeholder:text-input-text-dark",
-      "dark:focus:ring-offset-background-dark",
-      "rtl:flex-row-reverse",
-      className
-    )}
-    {...props}
-  >
-    {children}
-    <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 opacity-50" />
-    </SelectPrimitive.Icon>
-  </SelectPrimitive.Trigger>
-));
-SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement>
+>(({ className, children, ...props }, ref) => {
+  const context = React.useContext(SelectContext);
+  const hasValue = context?.value !== "" && context?.value !== undefined;
+  
+  // Apply variant only if a value is selected and variant isn't default
+  const activeVariantClass = (hasValue && context?.variant && context.variant !== "default") 
+    ? variants[context.variant] 
+    : variants.default;
 
-const SelectContent = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "popper", ...props }, ref) => (
-  <SelectPrimitive.Portal>
-    <SelectPrimitive.Content
+  return (
+    <button
       ref={ref}
+      type="button"
+      onClick={() => context?.setOpen(!context.open)}
       className={cn(
-        "relative z-50 px-[1px] overflow-hidden rounded-lg border border-popover-border dark:border-popover-border-dark bg-popover dark:bg-popover-dark shadow-xl text-text dark:text-text-dark data-[state=open]:animate-fadeInDown data-[state=closed]:animate-fadeOut data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-        position === "popper" &&
-          " data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+        "flex h-10 w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition-all duration-200 border",
+        "focus:outline-none select-none",
+        activeVariantClass,
         className
       )}
-      position={position}
       {...props}
     >
-      <SelectPrimitive.Viewport
-        className={cn(
-          "p-1",
-          position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
-        )}
-      >
-        {children}
-      </SelectPrimitive.Viewport>
-    </SelectPrimitive.Content>
-  </SelectPrimitive.Portal>
-));
-SelectContent.displayName = SelectPrimitive.Content.displayName;
+      {children}
+      <ChevronDown className={cn("h-4 w-4 opacity-50 transition-transform duration-200", context?.open && "rotate-180")} />
+    </button>
+  );
+});
+
+const SelectContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, children, ...props }, ref) => {
+  const context = React.useContext(SelectContext);
+  if (!context?.open) return null;
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-popover-border dark:border-popover-border-dark bg-popover dark:bg-popover-dark shadow-xl animate-in fade-in zoom-in-95",
+        className
+      )}
+      {...props}
+    >
+      <div className="p-1 flex flex-col gap-1">{children}</div>
+    </div>
+  );
+});
 
 const SelectItem = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Item
-    ref={ref}
-    className={cn(
-      "font-thin relative flex rtl:flex-row-reverse cursor-pointer mb-[2px] w-full select-none items-center rounded-lg py-1.5 px-3 text-sm outline-none transition-colors",
-      // Selected state styling
-      "data-[state=checked]:bg-brand-main/10 data-[state=checked]:text-brand-main dark:data-[state=checked]:text-brand-main data-[state=checked]:font-normal dark:data-[state=checked]:bg-brand-main/10",
-      // Focus styling
-      "focus:bg-sidebar-hover focus:text-text focus:dark:text-text-dark dark:focus:bg-sidebar-hover-dark focus:outline-none",
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { value: string }
+>(({ className, children, value, ...props }, ref) => {
+  const context = React.useContext(SelectContext);
+  const isSelected = context?.value === value;
+  const variant = context?.variant || "default";
 
-      // Disabled styling
-      "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      className
-    )}
-    {...props}
-  >
-    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-  </SelectPrimitive.Item>
-));
-SelectItem.displayName = SelectPrimitive.Item.displayName;
+  // Item styling uses bg/text colors from variant when selected, but no border
+  const selectedClasses = isSelected 
+    ? variant === "default" 
+      ? "bg-brand-main/10 text-brand-main" 
+      : variants[variant].replace(/border-[^\s]+/g, "") // Strip border classes for items
+    : "text-text dark:text-text-dark hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark";
 
-// Wrapper component for easier usage with options and onChange
+  return (
+    <div
+      ref={ref}
+      onClick={() => {
+        context?.onValueChange(value);
+        context?.setOpen(false);
+      }}
+      className={cn(
+        "relative flex w-full cursor-pointer select-none items-center rounded-lg py-0.5 px-3 text-sm transition-colors",
+        selectedClasses,
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+});
+
 interface SelectWrapperProps {
   value: string;
   onChange: (e: { target: { value: string } }) => void;
   options: Array<{ value: string; label: string }>;
+  variant?: SelectVariant;
   label?: string;
   error?: string;
   className?: string;
@@ -105,67 +153,37 @@ interface SelectWrapperProps {
 }
 
 const SelectWrapper = React.forwardRef<HTMLButtonElement, SelectWrapperProps>(
-  ({ value, onChange, options, label, error, className, disabled, ...props }, ref) => {
-    const selectId = React.useId();
-    const finalId = props.id || selectId;
-
-    // Find empty option for placeholder
-    const emptyOption = options.find(option => option.value === '');
-    
-    // Map empty string to __empty__ for Radix UI (which doesn't allow empty string values)
-    const selectValue = value === '' ? '__empty__' : value;
+  ({ value, onChange, options, variant = "default", label, error, className, disabled }, ref) => {
+    const currentLabel = options.find(opt => opt.value === value)?.label || options.find(o => o.value === '')?.label || "Select...";
 
     return (
       <div className={cn("relative w-full", className)}>
         {label && (
-          <label
-            htmlFor={finalId}
-            className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1.5"
-          >
+          <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1.5">
             {label}
           </label>
         )}
-        <SelectRoot
-          value={selectValue}
-          onValueChange={(newValue) => {
-            // Convert __empty__ back to empty string
-            const finalValue = newValue === '__empty__' ? '' : (newValue || '');
-            onChange({ target: { value: finalValue } });
-          }}
-          disabled={disabled}
-        >
-          <SelectTrigger
-            ref={ref}
-            id={finalId}
-            className={cn(error && "border-red-500")}
-          >
-            <SelectValue placeholder={emptyOption?.label || "Select..."} />
+        <Select value={value} onValueChange={(val) => onChange({ target: { value: val } })} variant={variant}>
+          <SelectTrigger ref={ref} className={cn(error && "border-red-500")} disabled={disabled}>
+             <span className="truncate">{currentLabel}</span>
           </SelectTrigger>
           <SelectContent>
             {options.map((option) => (
-              <SelectItem 
-                key={option.value || 'empty'} 
-                value={option.value || '__empty__'}
-              >
+              <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
             ))}
           </SelectContent>
-        </SelectRoot>
-        {error && (
-          <p className="text-xs text-red-500 mt-1">{error}</p>
-        )}
+        </Select>
+        {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
       </div>
     );
   }
 );
-SelectWrapper.displayName = "SelectWrapper";
 
 export {
-  SelectRoot,
   Select,
-  SelectGroup,
-  SelectValue,
+  Select as SelectRoot,
   SelectTrigger,
   SelectContent,
   SelectItem,

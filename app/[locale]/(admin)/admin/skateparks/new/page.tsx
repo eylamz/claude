@@ -55,6 +55,7 @@ interface SkateparkFormData {
     he?: string[];
   };
   isFeatured: boolean;
+  skillLevel: { beginners: boolean; advanced: boolean; pro: boolean };
   status: 'active' | 'inactive';
   mediaLinks: {
     youtube?: string;
@@ -135,6 +136,7 @@ export default function NewSkateparkPage() {
       he: [],
     },
     isFeatured: false,
+    skillLevel: { beginners: false, advanced: false, pro: false },
     status: 'active',
     mediaLinks: {
       youtube: '',
@@ -457,6 +459,45 @@ export default function NewSkateparkPage() {
                 label="Featured"
               />
             </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+            <p className="text-sm font-medium text-text dark:text-text-dark col-span-full">Skill level</p>
+            <Checkbox
+              variant="brand"
+              id="beginners"
+              checked={formData.skillLevel.beginners}
+              onChange={(checked) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  skillLevel: { ...prev.skillLevel, beginners: checked },
+                }))
+              }
+              label="Beginners"
+            />
+            <Checkbox
+              variant="brand"
+              id="advanced"
+              checked={formData.skillLevel.advanced}
+              onChange={(checked) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  skillLevel: { ...prev.skillLevel, advanced: checked },
+                }))
+              }
+              label="Advanced"
+            />
+            <Checkbox
+              variant="brand"
+              id="pro"
+              checked={formData.skillLevel.pro}
+              onChange={(checked) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  skillLevel: { ...prev.skillLevel, pro: checked },
+                }))
+              }
+              label="Pro"
+            />
           </div>
         </CardContent>
       </Card>

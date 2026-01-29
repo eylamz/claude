@@ -4,6 +4,7 @@ import { Icon } from '@/components/icons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useTranslations, useLocale } from 'next-intl';
+import { Separator } from '@/components/ui/separator';
 
 interface DailyForecast {
   date: string;
@@ -433,15 +434,15 @@ export default function ParkWeatherForecast({ slug, closingYear }: ParkWeatherFo
       {/* Hourly Forecast Modal */}
       {selectedDay && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
           onClick={() => setSelectedDay(null)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            className="bg-background dark:bg-background-dark rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between p-4 ">
               <div>
                 <h3 className="text-lg font-semibold text-text dark:text-text-dark">
                   {formatDateLong(selectedDay.date)}
@@ -461,7 +462,9 @@ export default function ParkWeatherForecast({ slug, closingYear }: ParkWeatherFo
               >
                 <Icon name="X" className="w-6 h-6" />
               </button>
+              
             </div>
+            <Separator className="mx-4"/>
 
             {/* Hourly Forecast Content */}
             <div className="p-4">
@@ -479,7 +482,7 @@ export default function ParkWeatherForecast({ slug, closingYear }: ParkWeatherFo
                     return (
                       <div
                         key={idx}
-                        className="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50"
+                        className="flex items-center justify-between p-3 rounded-lg bg-card dark:bg-card-dark"
                       >
                         <div className="flex items-center gap-3">
                           <p className="text-sm font-medium text-text dark:text-text-dark w-20">

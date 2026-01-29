@@ -119,6 +119,15 @@ export type Area = 'north' | 'center' | 'south';
 export type SkateparkStatus = 'active' | 'inactive';
 
 /**
+ * Skill level flags (beginners, advanced, pro)
+ */
+export interface ISkillLevel {
+  beginners: boolean;
+  advanced: boolean;
+  pro: boolean;
+}
+
+/**
  * Skatepark interface extending Mongoose Document
  */
 export interface ISkatepark extends Document {
@@ -143,6 +152,7 @@ export interface ISkatepark extends Document {
   totalReviews: number;
   seoMetadata?: ISEOMetadata;
   qualityRating?: IQualityRating;
+  skillLevel: ISkillLevel;
   createdAt: Date;
   updatedAt: Date;
 
@@ -254,6 +264,18 @@ const LightingHoursSchema = new Schema<ILightingHours>({
   },
   is24Hours: { type: Boolean, default: false },
 }, { _id: false });
+
+/**
+ * Skill level schema (no _id - embedded object only)
+ */
+const SkillLevelSchema = new Schema<ISkillLevel>(
+  {
+    beginners: { type: Boolean, default: false },
+    advanced: { type: Boolean, default: false },
+    pro: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
 
 /**
  * Skatepark image schema
@@ -562,6 +584,10 @@ const SkateparkSchema: Schema<ISkatepark> = new Schema<ISkatepark>(
           message: 'Maintenance must be between 1 and 5',
         },
       },
+    },
+    skillLevel: {
+      type: SkillLevelSchema,
+      default: () => ({ beginners: false, advanced: false, pro: false }),
     },
   },
   {

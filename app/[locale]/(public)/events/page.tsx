@@ -238,10 +238,13 @@ const EventCard = memo(({
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
-      month: 'short',
-      day: 'numeric',
+    const formatted = date.toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
     });
+    // Normalize to slashes (e.g. he-IL may use dots)
+    return formatted.replace(/\./g, '/');
   };
 
   return (

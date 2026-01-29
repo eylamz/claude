@@ -143,7 +143,7 @@ export const colors = {
       dark: 'hsl(220, 2%, 100%)',
     },
     secondary: {
-      light: 'hsl(0, 0%, 73%)',
+      light: 'hsl(0, 0%, 47%)',
       dark: 'A0A0A0',
     },
     guide: {

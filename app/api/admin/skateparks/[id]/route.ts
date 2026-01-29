@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import Skatepark from '@/lib/models/Skatepark';
+import Settings from '@/lib/models/Settings';
 import mongoose from 'mongoose';
 import { isBlocked, record404, recordSuccess } from '@/lib/utils/circuitBreaker';
 import { revalidatePath } from 'next/cache';
@@ -94,6 +95,9 @@ export async function GET(
       closingMonth: skatepark.closingMonth ?? null,
       notes: skatepark.notes || { en: '', he: '' },
       isFeatured: skatepark.isFeatured || false,
+      skillLevel: skatepark.skillLevel ?? (skatepark as any).beginners !== undefined
+        ? { beginners: (skatepark as any).beginners || false, advanced: (skatepark as any).advanced || false, pro: (skatepark as any).pro || false }
+        : { beginners: false, advanced: false, pro: false },
       status: skatepark.status || 'active',
       mediaLinks: skatepark.mediaLinks || { youtube: '', googleMapsFrame: '' },
       rating: skatepark.rating || 0,
@@ -194,6 +198,7 @@ export async function PUT(
       notes,
       is24Hours,
       isFeatured,
+      skillLevel,
       status,
       mediaLinks,
       seoMetadata,
@@ -384,6 +389,14 @@ export async function PUT(
     }
     if (is24Hours !== undefined) skatepark.is24Hours = is24Hours;
     if (isFeatured !== undefined) skatepark.isFeatured = isFeatured;
+    if (skillLevel !== undefined) {
+      skatepark.skillLevel = {
+        beginners: skillLevel.beginners ?? false,
+        advanced: skillLevel.advanced ?? false,
+        pro: skillLevel.pro ?? false,
+      };
+      skatepark.markModified('skillLevel');
+    }
     if (status !== undefined) skatepark.status = status;
     if (mediaLinks !== undefined) {
       skatepark.mediaLinks = mediaLinks;
@@ -506,6 +519,16 @@ export async function PUT(
       revalidatePath(`/${locale}/skateparks`, 'page');
     }
 
+    // Bump skateparks version so client caches (localStorage skateparks_cache) refetch
+    try {
+      const settings = await Settings.findOrCreate();
+      const currentVersion = settings.skateparksVersion || 1;
+      settings.skateparksVersion = currentVersion + 0.00001;
+      await settings.save();
+    } catch (versionError) {
+      console.error('Failed to increment skateparks version:', versionError);
+    }
+
     // Record success to reset counter
     recordSuccess(ENDPOINT, id);
 
@@ -579,6 +602,16 @@ export async function DELETE(
     // Also revalidate the skateparks listing page
     for (const locale of locales) {
       revalidatePath(`/${locale}/skateparks`, 'page');
+    }
+
+    // Bump skateparks version so client caches (localStorage skateparks_cache) refetch
+    try {
+      const settings = await Settings.findOrCreate();
+      const currentVersion = settings.skateparksVersion || 1;
+      settings.skateparksVersion = currentVersion + 0.00001;
+      await settings.save();
+    } catch (versionError) {
+      console.error('Failed to increment skateparks version:', versionError);
     }
 
     // Record success to reset counter (even for delete)

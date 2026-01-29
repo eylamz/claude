@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import Skatepark from '@/lib/models/Skatepark';
+import Settings from '@/lib/models/Settings';
 import { revalidatePath } from 'next/cache';
 import { locales } from '@/i18n';
 
@@ -110,6 +111,9 @@ export async function GET(request: Request) {
           totalReviews: skatepark.totalReviews || 0,
           is24Hours: skatepark.lightingHours?.is24Hours || false,
           isFeatured: skatepark.isFeatured || false,
+          skillLevel: skatepark.skillLevel ?? (skatepark as any).beginners !== undefined
+            ? { beginners: (skatepark as any).beginners || false, advanced: (skatepark as any).advanced || false, pro: (skatepark as any).pro || false }
+            : { beginners: false, advanced: false, pro: false },
           openingYear: skatepark.openingYear ?? null,
           openingMonth: skatepark.openingMonth ?? null,
           closingYear: skatepark.closingYear ?? null,
@@ -208,6 +212,7 @@ export async function POST(request: Request) {
       notes,
       is24Hours,
       isFeatured,
+      skillLevel,
       status,
       mediaLinks,
       seoMetadata,
@@ -327,6 +332,7 @@ export async function POST(request: Request) {
     skateparkData.notes = notes || { en: '', he: '' };
     skateparkData.is24Hours = is24Hours || false;
     skateparkData.isFeatured = isFeatured || false;
+    skateparkData.skillLevel = skillLevel || { beginners: false, advanced: false, pro: false };
     skateparkData.status = status || 'active';
     skateparkData.mediaLinks = mediaLinks || { youtube: '', googleMapsFrame: '' };
     if (seoMetadata !== undefined) {
@@ -349,6 +355,16 @@ export async function POST(request: Request) {
     // Also revalidate the skateparks listing page
     for (const locale of locales) {
       revalidatePath(`/${locale}/skateparks`, 'page');
+    }
+
+    // Bump skateparks version so client caches (localStorage skateparks_cache) refetch
+    try {
+      const settings = await Settings.findOrCreate();
+      const currentVersion = settings.skateparksVersion || 1;
+      settings.skateparksVersion = currentVersion + 0.00001;
+      await settings.save();
+    } catch (versionError) {
+      console.error('Failed to increment skateparks version:', versionError);
     }
 
     return NextResponse.json(

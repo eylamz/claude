@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { MapPin, X } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Button, SelectWrapper } from '@/components/ui';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import AmenitiesButton from '@/components/common/AmenitiesButton';
 import { SearchInput } from '@/components/common/SearchInput';
@@ -22,6 +22,8 @@ interface FilterBarProps {
   setSelectedAmenities: (amenities: string[] | ((prev: string[]) => string[])) => void;
   areaFilter: string;
   setAreaFilter: (area: string) => void;
+  skillLevelFilter: '' | 'beginners' | 'advanced' | 'pro';
+  setSkillLevelFilter: (level: '' | 'beginners' | 'advanced' | 'pro') => void;
   openNowOnly: boolean;
   userLocation: { lat: number; lng: number } | null;
   userCity: string | null;
@@ -59,6 +61,8 @@ export function FilterBar({
   setSelectedAmenities,
   areaFilter,
   setAreaFilter,
+  skillLevelFilter,
+  setSkillLevelFilter,
   openNowOnly,
   userLocation,
   userCity,
@@ -80,6 +84,7 @@ export function FilterBar({
   const [isScrolled, setIsScrolled] = useState(false);
   const [isScrollingUp, setIsScrollingUp] = useState(false);
   const prevScrollYRef = useRef(0);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   // Track scroll position for scroll direction
   useEffect(() => {
@@ -111,9 +116,10 @@ export function FilterBar({
 
   // Calculate active filters (each selected amenity counts as a separate filter)
   const hasAreaFilter = !!areaFilter;
+  const hasSkillLevelFilter = !!skillLevelFilter;
   const hasOpenNowFilter = openNowOnly;
   const hasSearchQuery = !!searchQuery.trim();
-  const activeFiltersCount = selectedAmenities.length + (hasAreaFilter ? 1 : 0) + (hasOpenNowFilter ? 1 : 0) + (hasSearchQuery ? 1 : 0);
+  const activeFiltersCount = selectedAmenities.length + (hasAreaFilter ? 1 : 0) + (hasSkillLevelFilter ? 1 : 0) + (hasOpenNowFilter ? 1 : 0) + (hasSearchQuery ? 1 : 0);
   const hasAnyFilter = activeFiltersCount > 0;
   const hasMultipleFilters = activeFiltersCount > 1;
   const hasLocationSorting = userLocation && sortBy === 'nearest';
@@ -134,10 +140,10 @@ export function FilterBar({
       <div className="max-w-6xl mx-auto px-4">
         {/* Main Filter Row */}
         <div className="flex flex-col xxs:flex-row items-stretch md:items-center gap-3">
-          {/* Left: Search + Amenities */}
-          <div className="flex items-center gap-1 flex-1">
-            {/* Search Input */}
-            <div className="flex-1 min-w-0">
+          {/* Left: Search + Skill level + Amenities */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {/* Search Input - desktop only */}
+            <div className="flex-1 min-w-0 hidden md:block">
               <SearchInput
                 placeholder={tr('Search parks...', 'חפש פארקים...')}
                 value={searchQuery}
@@ -146,10 +152,37 @@ export function FilterBar({
                 className="w-full "
               />
             </div>
+            {/* Skill level dropdown */}
+            <div className="w-[130px] flex-shrink-0 [&_[data-slot=select-trigger]]:h-9">
+              <SelectWrapper
+                value={skillLevelFilter}
+                variant='purple'
+                onChange={(e) => setSkillLevelFilter((e.target.value || '') as '' | 'beginners' | 'advanced' | 'pro')}
+                options={[
+                  { value: '', label: t('search.skillLevel.all') },
+                  { value: 'beginners', label: t('search.skillLevel.beginners') },
+                  { value: 'advanced', label: t('search.skillLevel.advanced') },
+                  { value: 'pro', label: t('search.skillLevel.pro') },
+                ]}
+              />
+            </div>
           </div>
 
           {/* Right: Location + View Toggle */}
           <div className="flex items-center gap-2 xsm:gap-3">
+                        {/* Mobile: Search toggle button (green, no tooltip) */}
+                        <div className="flex-shrink-0 md:hidden">
+              <Button
+                variant={mobileSearchOpen ? "orange" : "gray"}
+                size="sm"
+                onClick={() => setMobileSearchOpen((open) => !open)}
+                className="overflow-hidden"
+                aria-label={tr('Search parks...', 'חפש פארקים...')}
+              >
+                <Icon name={mobileSearchOpen ? "searchBold" : "search"} className="w-5 h-5" />
+              </Button>
+            </div>
+
             {/* Amenities Button */}
             <div className="flex-shrink-0">
               <AmenitiesButton
@@ -165,13 +198,13 @@ export function FilterBar({
                 <TooltipTrigger asChild>
                   <Button
                     variant={userLocation ? "green" : "gray"}
-                    size="md"
+                    size="sm"
                     onClick={requestLocation}
                     className='overflow-hidden'
                     aria-label={userLocation ? tr('Disable Location', 'כבה מיקום') : tr('Use My Location', 'השתמש במיקומי')}
                   >
                     <Icon 
-                      name={userLocation ? "locationOffBold" : "locationBold"}
+                      name={userLocation ? "locationBold" : "location"}
                       className={`w-5 h-5 ${userLocation ? '' : 'animate-locationPin'}`}
                     />
                   </Button>
@@ -190,8 +223,8 @@ export function FilterBar({
                 <TooltipTrigger asChild>
                   <div className="relative">
                     <Button
-                      variant={viewMode === 'map' ? "orange" : "gray"}
-                      size="md"
+                      variant={viewMode === 'map' ? "red" : "gray"}
+                      size="sm"
                       onClick={() => {
                         const newViewMode = viewMode === 'grid' ? 'map' : 'grid';
                         setViewMode(newViewMode);
@@ -216,15 +249,15 @@ export function FilterBar({
                       aria-label={viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
                     >
                       {viewMode === 'grid' ? (
-                        <Icon name="mapBold" className="w-5 h-5" />
+                        <Icon name="map" className="w-5 h-5" />
                       ) : (
-                        <Icon name="categoryBold" className="w-5 h-5" />
+                        <Icon name="mapBold" className="w-5 h-5" />
                       )}
                     </Button>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent 
-                  variant={viewMode === 'grid' ? 'gray' : 'orange'}
+                  variant={viewMode === 'grid' ? 'gray' : 'red'}
                   side="bottom" 
                   className="text-center"
                 >
@@ -235,14 +268,27 @@ export function FilterBar({
           </div>
         </div>
 
+        {/* Mobile: Search row (shown when search button clicked) */}
+        {mobileSearchOpen && (
+          <div className="mt-3 md:hidden animate-scaleFadeDown">
+            <SearchInput
+              placeholder={tr('Search parks...', 'חפש פארקים...')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onClear={() => setSearchQuery('')}
+              className="w-full"
+            />
+          </div>
+        )}
+
         {/* Active Filters Status */}
         {showStatus && (
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-800">
+          <div className="mt-3 pt-3 border-t border-border-border dark:border-border-dark">
             <div className="flex flex-wrap items-center gap-2">
               {/* Results Count Badge */}
               {hasAnyFilter && !loading && (
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark animate-pop">
-                  <Icon name="trees" className="w-4 h-4 text-green" />
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-bg dark:bg-gray-bg-dark rounded-full border border-gray-border dark:border-gray-border-dark animate-pop">
+                  <Icon name="trees" className="w-4 h-4 text-gray dark:text-gray-dark" />
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">
                     {skateparksCount}
                   </span>
@@ -274,6 +320,19 @@ export function FilterBar({
                   <MapPin className="w-3.5 h-3.5 text-purple dark:text-purple-dark" />
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {t(`search.area.${areaFilter}`)}
+                  </span>
+                  <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                </button>
+              )}
+
+              {/* Skill level filter badge */}
+              {hasSkillLevelFilter && (
+                <button
+                  onClick={() => setSkillLevelFilter('')}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-bg dark:bg-purple-bg-dark rounded-full border border-purple-border dark:border-purple-border-dark hover:bg-purple-bg/80 dark:hover:bg-purple-bg-dark/80 transition-colors cursor-pointer animate-pop"
+                >
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t(`search.skillLevel.${skillLevelFilter}`)}
                   </span>
                   <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                 </button>

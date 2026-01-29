@@ -75,7 +75,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
   const buttonElement = (
     <Button
       variant={isActive ? "blue" : "gray"}
-      size="md"
+      size="sm"
       className={`relative active:scale-95 transition-all duration-200 ${className || ''}`}
       aria-label={tSkateparks('amenities.filterBy') || 'Filter by amenities'}
       aria-expanded={isOpen}
@@ -83,7 +83,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
       style={style}
     >
       <Icon 
-        name="filterBold" 
+        name={isActive ? "filterBold" : "filter"} 
         className="w-5 h-5"
       />
       {isActive && (

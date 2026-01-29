@@ -69,6 +69,7 @@ interface Skatepark {
     he?: string[];
   };
   isFeatured: boolean;
+  skillLevel?: { beginners?: boolean; advanced?: boolean; pro?: boolean };
   status: 'active' | 'inactive';
   mediaLinks: {
     youtube?: string;
@@ -202,6 +203,13 @@ export default function SkateparkDetailPage() {
                 noWax: false,
                 nearbyRestaurants: false,
               };
+            }
+            if (!skateparkData.skillLevel) {
+              skateparkData.skillLevel = { beginners: false, advanced: false, pro: false };
+            } else {
+              if (skateparkData.skillLevel.beginners === undefined) skateparkData.skillLevel.beginners = false;
+              if (skateparkData.skillLevel.advanced === undefined) skateparkData.skillLevel.advanced = false;
+              if (skateparkData.skillLevel.pro === undefined) skateparkData.skillLevel.pro = false;
             }
             if (!skateparkData.notes) {
               skateparkData.notes = { en: [], he: [] };
@@ -360,6 +368,13 @@ export default function SkateparkDetailPage() {
           cleanliness: undefined,
           maintenance: undefined,
         };
+      }
+      if (!skateparkData.skillLevel) {
+        skateparkData.skillLevel = { beginners: false, advanced: false, pro: false };
+      } else {
+        if (skateparkData.skillLevel.beginners === undefined) skateparkData.skillLevel.beginners = false;
+        if (skateparkData.skillLevel.advanced === undefined) skateparkData.skillLevel.advanced = false;
+        if (skateparkData.skillLevel.pro === undefined) skateparkData.skillLevel.pro = false;
       }
       
       // Ensure rating and totalReviews have default values
@@ -522,6 +537,12 @@ export default function SkateparkDetailPage() {
         closingMonth: skatepark.closingMonth ?? null,
         notes: skatepark.notes,
         isFeatured: skatepark.isFeatured,
+        // Include skillLevel so checkbox values are sent and persisted by the API
+        skillLevel: {
+          beginners: skatepark.skillLevel?.beginners ?? false,
+          advanced: skatepark.skillLevel?.advanced ?? false,
+          pro: skatepark.skillLevel?.pro ?? false,
+        },
         status: skatepark.status,
         mediaLinks: skatepark.mediaLinks,
         is24Hours: skatepark.lightingHours?.is24Hours || false,
@@ -736,6 +757,45 @@ export default function SkateparkDetailPage() {
                 label="Featured"
               />
             </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+            <p className="text-sm font-medium text-text dark:text-text-dark col-span-full">Skill level</p>
+            <Checkbox
+              variant="brand"
+              id="beginners"
+              checked={skatepark.skillLevel?.beginners ?? false}
+              onChange={(checked) =>
+                setSkatepark({
+                  ...skatepark,
+                  skillLevel: { ...(skatepark.skillLevel || { beginners: false, advanced: false, pro: false }), beginners: checked },
+                })
+              }
+              label="Beginners"
+            />
+            <Checkbox
+              variant="brand"
+              id="advanced"
+              checked={skatepark.skillLevel?.advanced ?? false}
+              onChange={(checked) =>
+                setSkatepark({
+                  ...skatepark,
+                  skillLevel: { ...(skatepark.skillLevel || { beginners: false, advanced: false, pro: false }), advanced: checked },
+                })
+              }
+              label="Advanced"
+            />
+            <Checkbox
+              variant="brand"
+              id="pro"
+              checked={skatepark.skillLevel?.pro ?? false}
+              onChange={(checked) =>
+                setSkatepark({
+                  ...skatepark,
+                  skillLevel: { ...(skatepark.skillLevel || { beginners: false, advanced: false, pro: false }), pro: checked },
+                })
+              }
+              label="Pro"
+            />
           </div>
         </CardContent>
       </Card>

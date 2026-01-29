@@ -217,8 +217,9 @@ export default function SkateparksPage() {
   } | null>(null);
   const [activeTab, setActiveTab] = useState<'amenities' | 'openingYears' | 'openingMonths' | 'areas'>('amenities');
   
-  // Cache version control
+  // Cache version control: server version (from API) and client cache version (from localStorage)
   const [skateparksVersion, setSkateparksVersion] = useState<number>(1);
+  const [cacheVersionFromStorage, setCacheVersionFromStorage] = useState<string | null>(null);
   const [savingVersion, setSavingVersion] = useState(false);
   
   // Refresh state
@@ -229,8 +230,12 @@ export default function SkateparksPage() {
   const versionCheckInProgressRef = useRef(false);
   const lastVersionCheckRef = useRef<number>(0);
 
-  // Fetch settings on mount
+  // Fetch settings on mount and read localStorage cache version (client-only)
   useEffect(() => {
+    const versionKey = 'skateparks_version';
+    const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(versionKey) : null;
+    setCacheVersionFromStorage(stored);
+
     const fetchSettings = async () => {
       try {
         const response = await fetch('/api/admin/settings');
@@ -399,6 +404,7 @@ export default function SkateparksPage() {
                     
                     localStorage.setItem(cacheKey, JSON.stringify(publicData.skateparks || []));
                     localStorage.setItem(versionKey, newVersion.toString());
+                    setCacheVersionFromStorage(newVersion.toString());
                     
                     // Also fetch and cache inactive parks
                     try {
@@ -435,6 +441,7 @@ export default function SkateparksPage() {
         console.warn('Failed to parse cached skateparks data', e);
         localStorage.removeItem(cacheKey);
         localStorage.removeItem(versionKey);
+        setCacheVersionFromStorage(null);
       }
     }
 
@@ -468,6 +475,7 @@ export default function SkateparksPage() {
           
           localStorage.setItem(cacheKey, JSON.stringify(publicData.skateparks || []));
           localStorage.setItem(versionKey, currentVersion.toString());
+          setCacheVersionFromStorage(currentVersion.toString());
         }
         
         // Also fetch and cache inactive parks
@@ -737,6 +745,7 @@ export default function SkateparksPage() {
       const versionKey = 'skateparks_version';
       localStorage.removeItem(cacheKey);
       localStorage.removeItem(versionKey);
+      setCacheVersionFromStorage(null);
 
       // Refresh the list
       await fetchSkateparks();
@@ -785,6 +794,7 @@ export default function SkateparksPage() {
       const versionKey = 'skateparks_version';
       localStorage.removeItem(cacheKey);
       localStorage.removeItem(versionKey);
+      setCacheVersionFromStorage(null);
 
       // Clear selection
       setSelectedItems(new Set());
@@ -832,7 +842,7 @@ export default function SkateparksPage() {
     <div className="pt-16 space-y-6 w-full max-w-6xl mx-auto">
       <Toaster />
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('admin.title')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -852,7 +862,8 @@ export default function SkateparksPage() {
               localStorage.removeItem(cacheKey);
               localStorage.removeItem(versionKey);
               localStorage.removeItem(inactiveCacheKey);
-              
+              setCacheVersionFromStorage(null);
+
               // Fetch and cache inactive parks
               try {
                 const inactiveResponse = await fetch('/api/admin/skateparks?all=true&limit=10000&status=inactive');
@@ -905,29 +916,43 @@ export default function SkateparksPage() {
       {/* Cache Version Control */}
       <Card className="bg-card dark:bg-card-dark">
         <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
+          <div className="flex flex-wrap items-end gap-4">
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Skateparks Cache Version
+                Current cache version (localStorage)
               </label>
-              <NumberInput
-                value={skateparksVersion}
-                onChange={(e) => setSkateparksVersion(parseInt(e.target.value) || 1)}
-                min={1}
-                className="w-32"
-                showSpinner={true}
-              />
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-mono font-semibold text-gray-900 dark:text-white min-w-[4rem]">
+                  {cacheVersionFromStorage ?? '—'}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {cacheVersionFromStorage ? 'Stored in this browser' : 'No cache yet'}
+                </span>
+              </div>
+            </div>
+            <div className="border-l border-gray-200 dark:border-gray-700 pl-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Server version (invalidate caches)
+              </label>
+              <div className="flex items-center gap-2">
+                <NumberInput
+                  value={skateparksVersion}
+                  onChange={(e) => setSkateparksVersion(parseInt(e.target.value) || 1)}
+                  min={1}
+                  className="w-32"
+                />
+                <Button
+                  variant="info"
+                  onClick={handleSaveVersion}
+                  disabled={savingVersion}
+                >
+                  {savingVersion ? 'Saving...' : 'Save Version'}
+                </Button>
+              </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Increment this version to invalidate all client caches
+                Increment and save to invalidate all client caches
               </p>
             </div>
-            <Button
-              variant="info"
-              onClick={handleSaveVersion}
-              disabled={savingVersion}
-            >
-              {savingVersion ? 'Saving...' : 'Save Version'}
-            </Button>
           </div>
         </CardContent>
       </Card>

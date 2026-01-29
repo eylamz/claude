@@ -742,7 +742,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   onClick={onClose}
                   className={`flex items-center gap-2 px-2 py-3 text-3xl ${
                     isActive
-                      ? 'ps-3 bg-brand-main/20 dark:bg-brand-main/5 text-header-text-dark dark:text-brand-main ltr:border-l-4 rtl:border-r-4 border-brand-main'
+                      ? 'ps-3 bg-brand-main/20 dark:bg-brand-main/5 text-brand-main dark:text-brand-main ltr:border-l-4 rtl:border-r-4 border-brand-main'
                       : 'ms-2 text-black/80 dark:text-white/90'
                   }`}
                 >

@@ -129,6 +129,13 @@
       "center": "Center",
       "south": "South",
       "all": "All Areas"
+    },
+    "skillLevel": {
+      "label": "Skill level",
+      "all": "All levels",
+      "beginners": "Beginners",
+      "advanced": "Advanced",
+      "pro": "Pro"
     }
   },
   "admin": {

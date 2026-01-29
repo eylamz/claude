@@ -513,6 +513,16 @@ const config: Config = {
             transform: 'translateY(0)'
           }
         },
+        'scaleFadeDown': {
+          '0%': { 
+            opacity: '0',
+            transform: 'scale(0.96) translateY(-8px)'
+          },
+          '100%': { 
+            opacity: '1',
+            transform: 'scale(1) translateY(0)'
+          }
+        },
         'bounchInDown': {
           '0%': { 
             transform: 'translateY(-20px)',
@@ -843,6 +853,7 @@ const config: Config = {
         'fadeUpIn': 'fadeUpIn 0.6s ease-out forwards',
         'fadeInUp': 'fadeInUp 0.5s ease-out forwards',
         'fadeInDown': 'fadeInDown 0.2s ease-out forwards',
+        'scaleFadeDown': 'scaleFadeDown 0.25s ease-out forwards',
         'appearDown': 'appearDown 0.5s ease-out forwards',
         'bounchInDown': 'bounchInDown 0.2s forwards',
         'bounceDownSqueeze': 'bounceDownSqueeze 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',

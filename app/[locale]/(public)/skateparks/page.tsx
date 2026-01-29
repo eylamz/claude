@@ -47,6 +47,7 @@ interface Skatepark {
   totalReviews: number;
   is24Hours: boolean;
   isFeatured?: boolean;
+  skillLevel?: { beginners?: boolean; advanced?: boolean; pro?: boolean };
   openingYear?: number | null;
   closingYear?: number | null;
   createdAt?: string | null;
@@ -94,6 +95,7 @@ export default function SkateparksPage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [areaFilter, setAreaFilter] = useState('');
+  const [skillLevelFilter, setSkillLevelFilter] = useState<'beginners' | 'advanced' | 'pro' | ''>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [openNowOnly, setOpenNowOnly] = useState(false);
@@ -518,6 +520,16 @@ export default function SkateparksPage() {
       filtered = filtered.filter((park) => park.area === areaFilter);
     }
 
+    // Skill level filter (beginners, advanced, pro)
+    if (skillLevelFilter) {
+      filtered = filtered.filter((park) => {
+        const level = skillLevelFilter as 'beginners' | 'advanced' | 'pro';
+        const sl = park.skillLevel;
+        if (!sl) return false;
+        return sl[level] === true;
+      });
+    }
+
     // Search filter (text search in name only - both English and Hebrew)
     if (searchQuery.trim()) {
       const normalizedQuery = normalizeSearchText(searchQuery);
@@ -559,7 +571,7 @@ export default function SkateparksPage() {
     }
 
     return filtered;
-  }, [areaFilter, searchQuery, selectedAmenities, openNowOnly, locale, normalizeSearchText]);
+  }, [areaFilter, skillLevelFilter, searchQuery, selectedAmenities, openNowOnly, locale, normalizeSearchText]);
 
   // Client-side sorting function
   const sortSkateparks = useCallback((parks: Skatepark[], sortOption: SortOption): Skatepark[] => {
@@ -628,6 +640,7 @@ export default function SkateparksPage() {
 
   const clearFilters = () => {
     setAreaFilter('');
+    setSkillLevelFilter('');
     setSearchQuery('');
     setSelectedAmenities([]);
     setOpenNowOnly(false);
@@ -680,10 +693,12 @@ export default function SkateparksPage() {
       <FilterBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-                  selectedAmenities={selectedAmenities}
+        selectedAmenities={selectedAmenities}
         setSelectedAmenities={setSelectedAmenities}
         areaFilter={areaFilter}
         setAreaFilter={setAreaFilter}
+        skillLevelFilter={skillLevelFilter}
+        setSkillLevelFilter={setSkillLevelFilter}
         openNowOnly={openNowOnly}
         userLocation={userLocation}
         userCity={userCity}
@@ -760,7 +775,7 @@ export default function SkateparksPage() {
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
                   {tr('Try adjusting your filters or search terms', 'נסה לשנות את הפילטרים או החיפוש')}
                 </p>
-                {(searchQuery || selectedAmenities.length > 0 || areaFilter) && (
+                {(searchQuery || selectedAmenities.length > 0 || areaFilter || skillLevelFilter) && (
                   <Button variant="gray" onClick={clearFilters}>
                     {tr('Clear All Filters', 'נקה את כל הפילטרים')}
                   </Button>

@@ -122,6 +122,12 @@ export async function GET(request: NextRequest) {
         totalReviews: park.totalReviews || 0,
         is24Hours: park.is24Hours || false,
         isFeatured: park.isFeatured || false,
+        // Normalize skillLevel from nested object or legacy top-level beginners/advanced/pro
+        skillLevel: {
+          beginners: park.skillLevel?.beginners ?? (park as any).beginners ?? false,
+          advanced: park.skillLevel?.advanced ?? (park as any).advanced ?? false,
+          pro: park.skillLevel?.pro ?? (park as any).pro ?? false,
+        },
         openingYear: park.openingYear ?? null,
         openingMonth: park.openingMonth ?? null,
         closingYear: park.closingYear ?? null,

@@ -1213,10 +1213,21 @@ export default function SkateparkPage() {
   const generateMoovitUrl = (): string => {
     if (!skatepark) return '#';
     const { lng, lat } = getLocationCoords();
-    const baseUrl = 'https://moovit.onelink.me/3986059930';
-    const encodedParkName = encodeURIComponent(`סקייטפארק ${getLocalizedNameHe()}`);
-    const tll = `${lat}_${lng}`;
-    return `${baseUrl}?to=${encodedParkName}&tll=${tll}&lang=${locale}`;
+    const parkName = `סקייטפארק ${getLocalizedNameHe()}`;
+    const encodedName = encodeURIComponent(parkName);
+  
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
+    if (isMobile) {
+      /**
+       * Using 'directions' instead of 'nearby'
+       * auto_run=true triggers the search immediately
+       */
+      return `moovit://directions?dest_lat=${lat}&dest_lon=${lng}&dest_name=${encodedName}&auto_run=true&partner_id=SkateApp`;
+    }
+  
+    // Desktop/Web Fallback
+    return `https://moovitapp.com/directions?dest_lat=${lat}&dest_lon=${lng}&dest_name=${encodedName}&auto_run=true&lang=${locale}`;
   };
 
   const generateWazeUrl = (): string => {
@@ -1814,7 +1825,8 @@ export default function SkateparkPage() {
                         {tr('Rating', 'דירוג')}
                         <Icon 
                           name="logo" 
-                          className={`w-auto h-4 overflow-visible ${
+                          className={`w-auto  overflow-visible ${locale === 'he' ? 'h-3.5 -mb-0.5' : 'h-4'}
+                            ${
                             skatepark.closingYear 
                               ? 'text-error dark:text-error/80' 
                               : 'text-brand-main dark:text-brand-dark'
@@ -2018,7 +2030,7 @@ export default function SkateparkPage() {
           </div>
 
         {/* Weather Forecast */}
-        <div className="max-w-6xl mx-auto mb-8 px-4 sm:px-0">
+        <div className="max-w-6xl mx-auto mb-8 px-4 sm:px-4">
             <ParkWeatherForecast slug={slug} closingYear={skatepark.closingYear} />
           </div>
 

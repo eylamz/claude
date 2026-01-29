@@ -64,9 +64,7 @@ export function isLoginEnabled(): boolean {
     const envValue = process.env.NEXT_PUBLIC_ENABLE_LOGIN;
     return envValue !== 'false';
   }
-}
-
-/**
+}/**
  * Utility function to check if Growth Lab feature is enabled
  * Uses NEXT_PUBLIC_ENABLE_GROWTH_LAB environment variable
  * Defaults to true if not set (backward compatibility)
