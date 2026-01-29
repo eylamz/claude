@@ -9,7 +9,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
 import { Icon } from '@/components/icons';
-import { Button, Badge } from '@/components/ui';
+import { Button, Badge, Separator } from '@/components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui';
@@ -499,7 +499,7 @@ function FormattedHours({
       <div className="space-y-2">
         {/* Header with closed badge */}
         <div className="flex text-text dark:text-text-dark">
-          <span className="flex gap-2 items-center px-2 py-1 rounded text-xl font-semibold border border-red-border dark:border-red-border-dark bg-red-bg dark:bg-red-bg-dark text-red dark:text-red-dark">
+          <span className="flex gap-2 items-center px-2 py-1 rounded text-base sm:text-xl font-semibold border border-red-border dark:border-red-border-dark bg-red-bg dark:bg-red-bg-dark text-red dark:text-red-dark">
             {t('permanentlyClosed')}
           <Icon name="closedPark" className="w-5 h-5" />
           </span>
@@ -512,7 +512,7 @@ function FormattedHours({
             <h4 className="text-base font-semibold">{t('lightingHours')}: </h4>
           </div>
           <div>
-            <p className="ps-7 xsm:ps-0 text-lg text-gray-500">{t('notApplicable')}</p>
+            <p className="ps-7 xsm:ps-0 text-base sm:text-lg text-gray-500">{t('notApplicable')}</p>
           </div>
         </div>
       </div>
@@ -528,10 +528,10 @@ function FormattedHours({
         {/* 24/7 Header */}
         <div className="flex items-center gap-2 text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5" />
-          <h3 className="text-xl font-semibold">{t('openingHours')}: </h3>
+          <h3 className="text-base sm:text-xl font-semibold">{t('openingHours')}: </h3>
           <Badge 
           variant="brandOutline" 
-          className="inline-flex items-center px-2 py-1 !rounded !text-lg font-semibold"
+          className="inline-flex items-center px-2 py-1 !rounded !text-base sm:text-lg font-semibold"
             >
           {t('open247')}
           </Badge>
@@ -541,10 +541,10 @@ function FormattedHours({
         <div className={`flex flex-col lg:flex-row items-start gap-2 ${locale === 'he' ? 'flex-col xsm:flex-row' : ''}`}>
           <div className="flex items-center gap-2">
             <Icon name="sunset" className={`w-5 h-5 ${lightingHours?.endTime ? 'text-yellow-500 dark:text-yellow-300' : 'text-gray-500'}`} />
-            <h4 className="text-lg font-semibold text-text dark:text-text-dark">{t('lightingHours')}: </h4>
+            <h4 className="text-base sm:text-lg font-semibold text-text dark:text-text-dark">{t('lightingHours')}: </h4>
           </div>
           <div>
-            <p className={`ps-7 lg:ps-0 text-lg ${!lightingHours?.endTime ? 'text-gray-500' : 'text-text dark:text-text-dark'}`}>
+            <p className={`ps-7 lg:ps-0 text-base sm:text-lg ${!lightingHours?.endTime ? 'text-gray-500' : 'text-text dark:text-text-dark'}`}>
               {lightingHours?.endTime 
                 ? formatLightingHours(lightingHours.endTime, locale)
                 : t('noLighting')}
@@ -654,7 +654,7 @@ function FormattedHours({
       {/* Header */}
       <div className="flex items-center gap-2 text-text dark:text-text-dark">
         <Icon name="clockBold" className="w-4 h-4" />
-        <h3 className="text-xl font-semibold">{t('openingHours')}</h3>
+        <h3 className="text-base sm:text-xl font-semibold">{t('openingHours')}</h3>
       </div>
       
       {/* Hours by group */}
@@ -673,11 +673,11 @@ function FormattedHours({
           
           return (
             <div key={scheduleKey} className="flex items-center gap-1">
-              <p className="text-lg font-semibold text-text dark:text-text-dark mr-2">
+              <p className="text-base sm:text-lg font-semibold text-text dark:text-text-dark mr-2">
                 {daysDisplay} :
               </p>
               
-              <p className={`text-lg ${schedule.isOpen ? 'text-text dark:text-text-dark' : 'font-semibold text-red-600 dark:text-red-400'}`}>
+              <p className={`text-base sm:text-lg ${schedule.isOpen ? 'text-text dark:text-text-dark' : 'font-semibold text-red-600 dark:text-red-400'}`}>
                 {schedule.isOpen 
                   ? (scheduleKey === 'openAllDay' || (schedule.openTime === '00:00' && schedule.closeTime === '00:00'))
                     ? t('openAllDay')
@@ -1324,14 +1324,19 @@ export default function SkateparkPage() {
                 </div>
               </div>
 
-              {/* Mobile/Tablet Layout: Main image on top, 2 columns below */}
-              <div className="md:hidden flex flex-col gap-2 p-2">
-                {/* Main Image Skeleton - Full width */}
-                <Skeleton className="w-full aspect-video rounded-xl" />
-                {/* Side Images Skeleton - 2 columns grid */}
-                <div className="grid grid-cols-2 gap-2">
-                  <Skeleton className="aspect-video rounded-xl" />
-                  <Skeleton className="aspect-video rounded-xl" />
+              {/* Mobile/Tablet Layout: Horizontal carousel - single full-height slide + pagination dots */}
+              <div className="md:hidden relative">
+                <div
+                  className="relative w-full flex overflow-hidden"
+                  style={{ height: 'calc(70vh - 200px)' }}
+                >
+                  <Skeleton className="flex-shrink-0 w-full h-full rounded-none" />
+                </div>
+                {/* Pagination dots placeholder - matches Instagram-style fixed scrubbing */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+                  {[0, 1, 2].map((i) => (
+                    <Skeleton key={i} className="w-1.5 h-1.5 rounded-full flex-shrink-0" />
+                  ))}
                 </div>
               </div>
             </div>
@@ -1553,11 +1558,11 @@ export default function SkateparkPage() {
           ]}
         />
 
-        <div className="max-w-6xl mx-auto p-2 lg:p-4 space-y-6 overflow-x-hidden">
+        <div className="max-w-6xl mx-auto overflow-x-hidden">
           {/* Header */}
-          <h1 className="mb-5 mt-5 text-3xl font-bold text-center text-black dark:text-white">
+          <h1 className="my-5 text-3xl font-bold text-center text-text dark:text-text-dark z-10 hidden sm:block">
                     {/* Mobile version - splits on hyphens */}
-                    <span className="sm:hidden">
+                    <span className="hidden ">
                       {parkName.includes('-') ? 
                         parkName.split('-').map((part, index, array) => (
                           <Fragment key={index}>
@@ -1569,13 +1574,13 @@ export default function SkateparkPage() {
                       }
                     </span>
                     {/* Desktop version - no splitting */}
-                    <span className="hidden sm:inline">
+                    <span className="inline">
                       {parkName}
                     </span>
                   </h1>
 
           {/* Image Gallery */}
-        <div className="">
+        <div className="relative z-0">
           <div className="max-w-5xl mx-auto overflow-visible">
             <ParkImageGallery 
               images={getImageSliderImages(skatepark.images, parkName)} 
@@ -1589,12 +1594,42 @@ export default function SkateparkPage() {
         </div>
 
     
+        <div className="flex items-center justify-between px-4">
+          {/* Mobile-only H1 above operating hours */}
+          <h1 className="sm:hidden mb-1 text-xl font-semibold text-text dark:text-text-dark">
+            {parkName}
+          </h1>
+                                          {/* Mobile-only share button at top start, next to operating hours */}
+                                <div className="sm:hidden shrink-0">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (typeof navigator !== 'undefined' && navigator.share) {
+                        navigator.share({
+                          title: parkName,
+                          text: `${parkName} - Skatepark`,
+                          url: typeof window !== 'undefined' ? window.location.href : '',
+                        }).catch((error) => {
+                          console.error('Error sharing:', error);
+                        });
+                      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                          navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : '');
+                        }
+                    }}
+                    className="px-2 py-1 rounded-lg font-medium"
+                    aria-label="Share"
+                  >
+                    <Icon name="shareBold" className="-mt-[2px] w-4 h-4" />
+                  </Button>
+                </div>
+                </div>
+
 
           {/* Info Cards */}
-          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 ">
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 px-2 sm:px-0">
             {/* Hours Card - Now using FormattedHours component */}
             <Card className="text-text/80 dark:text-text-dark/80 md:p-4 shadow-none">
-              <div className="flex gap-4 mb-4 justify-between">
+              <div className="flex gap-4 mb-4 justify-between items-start">
                 <div className={locale === 'he' ? '-ml-10' : ''}>
                   <FormattedHours
                     operatingHours={skatepark.operatingHours}
@@ -1603,19 +1638,20 @@ export default function SkateparkPage() {
                     locale={locale}
                   />
                 </div>
+
               </div>
 
               {/* Address Section */}
               <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
                 <div className="flex items-center mb-3">
-                  <h3 className="text-xl font-semibold flex items-center gap-2 text-text dark:text-text-dark">
+                  <h3 className="text-base sm:text-xl font-semibold flex items-center gap-2 text-text dark:text-text-dark">
                     <Icon name="locationBold" className={`w-4 h-4`} />
                     {t('address')}
                   </h3>
                 </div>
 
                 <div className="flex flex-col gap-2 mb-2 text-text dark:text-text-dark">
-                  <p className="text-lg" itemProp="address">{address}.</p>
+                  <p className="text-base sm:text-lg" itemProp="address">{address}.</p>
                 </div>
               </div>
 
@@ -1623,7 +1659,7 @@ export default function SkateparkPage() {
               <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
                 <div className="flex flex-col flex-wrap gap-2 mb-2 text-text dark:text-text-dark">
                   {skatepark.openingYear && (
-                    <p className="text-lg">
+                    <p className="text-base sm:text-lg">
                       {skatepark.openingMonth 
                         ? `${t('openedDate')}${getMonthName(skatepark.openingMonth, locale)} ${skatepark.openingYear}`
                         : `${t('opened')} ${skatepark.openingYear}`
@@ -1631,7 +1667,7 @@ export default function SkateparkPage() {
                     </p>
                   )}
                   {skatepark.closingYear && (
-                    <p className="text-lg text-red dark:text-red-dark">
+                    <p className="text-base sm:text-lg text-red dark:text-red-dark">
                       {skatepark.closingMonth 
                         ? locale === 'he' 
                           ? `${t('closedYearDate')}${getMonthName(skatepark.closingMonth, locale)} ${skatepark.closingYear}`
@@ -1647,14 +1683,14 @@ export default function SkateparkPage() {
             {/* Amenities Card */}
             <Card className="md:p-4 text-clip shadow-none">
               <div className="flex items-center md:justify-center mb-3 text-text dark:text-text-dark">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
+                <h2 className="text-base sm:text-xl font-semibold flex items-center gap-2">
                   <Icon name="notesBold" className={`w-5 h-5`} />
                   {t('amenities.title')}
                 </h2>
               </div>
 
               {/* Amenities grid */}
-              <div className="grid grid-cols-4">
+              <div className="grid grid-cols-4 gap-1">
                 {Object.entries(skatepark.amenities).map(([key, value]) => {
                   const isAvailable = Boolean(value);
                   const isParkClosed = Boolean(skatepark.closingYear);
@@ -1663,7 +1699,7 @@ export default function SkateparkPage() {
                   if (!iconName) return null;
 
                   return (
-                    <div key={key} className="w-full px-1 mb-2">
+                    <div key={key} className="w-full">
                       {isAvailable ? (
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -1732,7 +1768,7 @@ export default function SkateparkPage() {
 
 
           {/* Notes and Get Directions Combined Section */}
-          <div className="max-w-6xl mx-auto mb-8 ">
+          <div className="max-w-6xl mx-auto mb-8 px-4 sm:px-0">
             <Card className={`!overflow-visible !p-0 shadow-none transition-all duration-200 transform-gpu ${
               (notes && notes.trim() !== '') || 
               (skatepark.qualityRating && (
@@ -1747,7 +1783,7 @@ export default function SkateparkPage() {
               {notes && notes.trim() !== '' && (
                 <div className="md:p-4">
                   <div className="flex items-center mb-3 text-text dark:text-text-dark">
-                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <h2 className="text-base sm:text-xl font-semibold flex items-center gap-2">
                       <Icon name="infoBold" className={`w-5 h-5`} />
                       {t('notes')}
                     </h2>
@@ -1756,7 +1792,7 @@ export default function SkateparkPage() {
                   <div className="space-y-2">
                     {notes.split('\n').filter(note => note.trim()).map((note, index) => (
                       <div key={index} className="w-fit px-2.5 py-1.5 rounded-md text-text dark:text-text-dark">
-                        <p className="text-lg">
+                        <p className="text-base sm:text-lg">
                           • {note.trim()}.
                         </p>
                       </div>
@@ -1772,9 +1808,9 @@ export default function SkateparkPage() {
                   skatepark.qualityRating.cleanliness || 
                   skatepark.qualityRating.maintenance
                 ) ? (
-                  <div className="md:p-4 space-y-6">
+                  <div className="px-1 sm:px-0 md:p-4 space-y-6">
                     <div className="flex items-center justify-center mb-4 text-text dark:text-text-dark">
-                      <h2 className={`text-xl font-semibold flex items-center gap-1 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
+                      <h2 className={`text-base sm:text-xl font-semibold flex items-center gap-1 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
                         {tr('Rating', 'דירוג')}
                         <Icon 
                           name="logo" 
@@ -1860,20 +1896,20 @@ export default function SkateparkPage() {
 
               {/* Get Directions Section */}
               <Suspense fallback={
-                <div className="w-full h-32 flex items-center justify-center">
+                <div className="w-full h-32 flex items-center justify-center px-2 sm:px-0">
                   <LoadingSpinner className="h-32" />
                 </div>
               }>
                 <section 
-                  aria-labelledby="directions-heading"
+                  aria-labelledby="directions-heading "
                   key={`map-links-${locale}`}
-                  className="space-y-4 md:p-4"
+                  className="space-y-4 sm:px-0 md:p-4"
                 >
                   <h2 id="directions-heading" className="sr-only">{t('getDirections')}</h2>
                   <div className="flex flex-col space-y-4 !mt-0">
                     <div className="flex items-center gap-2 justify-start md:justify-center">
                       <Icon name="mapBold" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
-                      <h3 className="font-semibold text-xl text-gray-900 dark:text-[#f2f2f2]">
+                      <h3 className="font-semibold text-base sm:text-xl text-gray-900 dark:text-[#f2f2f2]">
                         {t('getDirections')}
                       </h3>
                     </div>
@@ -1982,15 +2018,15 @@ export default function SkateparkPage() {
           </div>
 
         {/* Weather Forecast */}
-        <div className="max-w-6xl mx-auto mb-8">
+        <div className="max-w-6xl mx-auto mb-8 px-4 sm:px-0">
             <ParkWeatherForecast slug={slug} closingYear={skatepark.closingYear} />
           </div>
 
           {/* YouTube Embed */}
           {skatepark.mediaLinks.youtube && (
-            <Card className="!rounded-none !shadow-none !p-0 md:!p-4 w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
+            <Card className="!rounded-none !shadow-none !px-4 sm:!px-0 !py-0 md:!p-4 w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <CardTitle className="text-base sm:text-xl font-semibold flex items-center gap-2">
                   <Icon name="youtube" className="w-5 h-5" />
                   {t('video')}
                 </CardTitle>
@@ -2006,7 +2042,7 @@ export default function SkateparkPage() {
             const iframeSrc = getGoogleMapsIframeSrc();
             
             return (
-              <section aria-labelledby="location-heading" className="w-full max-w-6xl mx-auto md:px-4">
+              <section aria-labelledby="location-heading" className="w-full max-w-6xl mx-auto px-4 sm:px-0 md:px-4">
                 <h2 id="location-heading" className="sr-only">{parkName} {tCommon('location')}</h2>
 
                 <div className={`h-32 sm:h-60  rounded-xl mb-8 overflow-hidden relative border-2 border-gray-200 dark:border-gray-700`}>
@@ -2054,9 +2090,9 @@ export default function SkateparkPage() {
             skatepark.qualityRating.cleanliness || 
             skatepark.qualityRating.maintenance
           ) ? (
-            <Card className="md:p-4 shadow-none w-full max-w-6xl mx-auto mb-8">
+            <Card className="px-5 sm:px-0 md:p-4 shadow-none w-full max-w-6xl mx-auto mb-8">
               <div className="flex items-center md:justify-center mb-4 text-text dark:text-text-dark">
-                <h2 className={`text-xl font-semibold flex items-center gap-2 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
+                <h2 className={`text-base sm:text-xl font-semibold flex items-center gap-2 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
                 {tr('Rating', 'דירוג')}
                 <Icon 
                   name="logo" 
@@ -2154,10 +2190,10 @@ export default function SkateparkPage() {
 
           {/* Reviews Section */}
           <Card
-            className="!p-2 md:!p-4 !shadow-none m w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
+            className="!px-4 !py-2 md:!p-4 !shadow-none m w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
             <CardHeader className="">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                <CardTitle className="text-base sm:text-xl font-semibold flex items-center gap-2">
                   <Icon name="messages" className="w-5 h-5" />
                   {t('reviewsCount')}
                 </CardTitle>
@@ -2357,7 +2393,7 @@ export default function SkateparkPage() {
 
           {/* Nearby Parks */}
           {nearbyParks.length > 0 && (
-            <Card className="!overflow-visible !shadow-none w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
+            <Card className="!overflow-visible !shadow-none w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu !px-4 ">
               <CardHeader className="flex flex-row items-center justify-start gap-2  text-text dark:text-text-dark">
               <Icon name="trees" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
                 <CardTitle className="!mt-0 text-base font-medium">{t('nearbySkateparks')}</CardTitle>
@@ -2564,7 +2600,7 @@ export default function SkateparkPage() {
             }}
             >
               {/* Header */}
-              <div className="sticky top-0  border-b border-border-border-dark dark:border-border-dark p-6 flex items-center justify-between z-10">
+              <div className="sticky top-0  flex items-center justify-between z-10">
                 <h2 className="text-base font-bold text-gray-900 dark:text-white">{t('writeReview')}</h2>
                 <button
                   onClick={() => setShowAddReview(false)}
@@ -2574,9 +2610,10 @@ export default function SkateparkPage() {
                   <Icon name="X" className="w-5 h-5 text-text dark:text-text-dark" />
                 </button>
               </div>
+              <Separator className="my-2"/>
 
               {/* Content */}
-              <div className="p-6">
+              <div className="">
                 <ReviewForm
                   slug={slug}
                   onSubmitted={handleReviewSubmitted}

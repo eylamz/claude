@@ -123,7 +123,7 @@ const ImageContainer = ({
       ref={ref}
       className={cn(
         className,
-        isInViewport && 'animate-fadeInUp'
+        isInViewport && 'sm:animate-fadeInUp'
       )}
       style={{
         boxShadow: '0 1px 1px #66666612, 0 2px 2px #5e5e5e12, 0 4px 4px #7a5d4413, 0 8px 8px #5e5e5e12, 0 16px 16px #5e5e5e12'
@@ -148,7 +148,17 @@ const ParkImageGallery = ({
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showAllImages, setShowAllImages] = useState(false);
+  const [mobileCurrentIndex, setMobileCurrentIndex] = useState(0);
 
+  // Mobile swipe detection
+  const mobileGalleryRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef<number>(0);
+  const touchStartX = useRef<number>(0);
+  const touchStartTime = useRef<number>(0);
+  const isScrolling = useRef<boolean>(false);
+  const currentImageIndex = useRef<number>(0);
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  
   if (!images || images.length === 0) {
     return (
       <div className={cn('relative h-64 md:h-96 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center', className)}>
@@ -161,6 +171,111 @@ const ParkImageGallery = ({
     setSelectedImageIndex(index);
     setIsFullscreenOpen(true);
   };
+
+  // Mobile swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!mobileGalleryRef.current) return;
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
+    touchStartTime.current = Date.now();
+    isScrolling.current = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!mobileGalleryRef.current) return;
+    const deltaY = Math.abs(e.touches[0].clientY - touchStartY.current);
+    const deltaX = Math.abs(e.touches[0].clientX - touchStartX.current);
+    
+    // Track if user is scrolling (not just tapping)
+    if (deltaY > 5 || deltaX > 5) {
+      isScrolling.current = true;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!mobileGalleryRef.current) return;
+    
+    const touchEndY = e.changedTouches[0].clientY;
+    const touchEndX = e.changedTouches[0].clientX;
+    const deltaY = touchEndY - touchStartY.current;
+    const deltaX = touchEndX - touchStartX.current;
+    const touchDuration = Date.now() - touchStartTime.current;
+    const SWIPE_THRESHOLD = 50; // Minimum distance for swipe
+    const MAX_SWIPE_TIME = 300; // Maximum time for a swipe gesture (ms)
+    
+    // Only handle quick horizontal swipes (left/right)
+    const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
+    const isQuickSwipe = touchDuration < MAX_SWIPE_TIME && Math.abs(deltaX) > SWIPE_THRESHOLD;
+    
+    if (isHorizontalSwipe && isQuickSwipe) {
+      const container = mobileGalleryRef.current;
+      const imageWidth = container.clientWidth;
+      
+      if (deltaX < 0) {
+        // Swipe left - go to next image
+        if (currentImageIndex.current < images.length - 1) {
+          currentImageIndex.current += 1;
+          setMobileCurrentIndex(currentImageIndex.current);
+          container.scrollTo({
+            left: currentImageIndex.current * imageWidth,
+            behavior: 'smooth'
+          });
+        }
+      } else {
+        // Swipe right - go to previous image
+        if (currentImageIndex.current > 0) {
+          currentImageIndex.current -= 1;
+          setMobileCurrentIndex(currentImageIndex.current);
+          container.scrollTo({
+            left: currentImageIndex.current * imageWidth,
+            behavior: 'smooth'
+          });
+        }
+      }
+    }
+    
+    // Reset
+    isScrolling.current = false;
+  };
+
+  // Track visible slide with IntersectionObserver (reliable for snap scroll)
+  useEffect(() => {
+    const container = mobileGalleryRef.current;
+    if (!container) return;
+
+    const slideElements = container.querySelectorAll('[data-slide-index]');
+    if (!slideElements.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Among all intersecting entries, pick the one with the largest visible ratio
+        let bestIndex = currentImageIndex.current;
+        let bestRatio = 0;
+        entries.forEach((entry) => {
+          const indexAttr = entry.target.getAttribute('data-slide-index');
+          if (indexAttr === null) return;
+          const i = parseInt(indexAttr, 10);
+          if (entry.isIntersecting && entry.intersectionRatio > bestRatio) {
+            bestRatio = entry.intersectionRatio;
+            bestIndex = i;
+          }
+        });
+        if (bestRatio >= 0.5) {
+          currentImageIndex.current = bestIndex;
+          setMobileCurrentIndex(bestIndex);
+        }
+      },
+      {
+        root: container,
+        rootMargin: '0px',
+        threshold: [0, 0.25, 0.5, 0.75, 1],
+      }
+    );
+
+    slideElements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [images.length]);
 
   // Get main image (first image)
   const mainImage = images[0];
@@ -221,7 +336,7 @@ const ParkImageGallery = ({
 
   return (
     <>
-      <div className={cn('w-full', className)}>
+      <div className={cn('w-full relative z-0', className)}>
         <div className="-overflow-hidden">
           {/* Desktop Layout: Main image on left, 2 side images on right */}
           <div className="hidden md:flex md:flex-row gap-2 p-2">
@@ -266,174 +381,105 @@ const ParkImageGallery = ({
             )}
           </div>
 
-          {/* Mobile/Tablet Layout: Main image on top, 2 columns below */}
-          <div className="md:hidden flex flex-col gap-2 p-2">
-            {/* Main Image - Full width */}
-            <ImageContainer
-              className="relative w-full aspect-video rounded-xl overflow-hidden cursor-zoom-in"
-              onClick={() => handleImageClick(0)}
+          {/* Mobile/Tablet Layout: Horizontal scroll with swipe navigation */}
+          <div className="md:hidden relative">
+            <div 
+              ref={mobileGalleryRef}
+              id="product-gallery" 
+              className="npp-media-images relative w-full flex overflow-x-scroll snap-x snap-mandatory"
+              style={{
+                height: 'calc(70vh - 200px)',
+                WebkitOverflowScrolling: 'touch',
+              }}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
-              <OptimizedImage 
-                url={mainImage.url} 
-                index={0} 
-                alt={mainImage.alt}
-                onClick={handleImageClick}
-              />
-         
-            </ImageContainer>
-
-            {/* Side Images - 2 columns grid */}
-            {sideImages.length > 0 && (
-              <div className="grid grid-cols-2 gap-2">
-                {sideImages.map((image, index) => (
+              {images.map((image, index) => (
+                <div
+                  key={index}
+                  data-slide-index={index}
+                  className="snap-start snap-always relative flex-shrink-0 w-full"
+                  style={{
+                    height: 'calc(70vh - 200px)',
+                    minWidth: '100%',
+                  }}
+                >
                   <ImageContainer
-                    key={index + 1}
-                    className="relative aspect-video rounded-xl overflow-hidden cursor-zoom-in"
-                    onClick={() => handleImageClick(index + 1)}
+                    className="relative w-full h-full overflow-hidden cursor-zoom-in"
+                    onClick={() => handleImageClick(index)}
                   >
                     <OptimizedImage 
                       url={image.url} 
-                      index={index + 1} 
+                      index={index} 
                       alt={image.alt}
                       onClick={handleImageClick}
                     />
                   </ImageContainer>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
 
-            {/* Remaining Images - Alternating layout (shown when showAllImages is true) */}
-            {showAllImages && imageRows.length > 0 && (
-              <div className="space-y-2">
-                {imageRows.map((row, rowIndex) => {
-                  if (row.type === 'big-small-small') {
-                    // 1 big + 2 small
-                    return (
-                      <div key={rowIndex} className="flex flex-row gap-2">
-                        <ImageContainer
-                          className="relative w-2/3 aspect-[4/3] rounded-xl overflow-hidden cursor-zoom-in"
-                          onClick={() => handleImageClick(row.startIndex)}
-                        >
-                          <OptimizedImage 
-                            url={row.images[0].url} 
-                            index={row.startIndex} 
-                            alt={row.images[0].alt}
-                            onClick={handleImageClick}
-                          />
-                        </ImageContainer>
-                        <div className="flex flex-col w-1/3 gap-2">
-                          {row.images.slice(1).map((image, imgIndex) => (
-                            <ImageContainer
-                              key={imgIndex}
-                              className="relative flex-1 rounded-xl overflow-hidden cursor-zoom-in"
-                              onClick={() => handleImageClick(row.startIndex + imgIndex + 1)}
-                            >
-                              <OptimizedImage 
-                                url={image.url} 
-                                index={row.startIndex + imgIndex + 1} 
-                                alt={image.alt}
-                                onClick={handleImageClick}
-                              />
-                            </ImageContainer>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  } else if (row.type === 'small-small-big') {
-                    // 2 small + 1 big
-                    return (
-                      <div key={rowIndex} className="flex flex-row gap-2">
-                        <div className="flex flex-col w-1/3 gap-2">
-                          {row.images.slice(0, 2).map((image, imgIndex) => (
-                            <ImageContainer
-                              key={imgIndex}
-                              className="relative flex-1 rounded-xl overflow-hidden cursor-zoom-in"
-                              onClick={() => handleImageClick(row.startIndex + imgIndex)}
-                            >
-                              <OptimizedImage 
-                                url={image.url} 
-                                index={row.startIndex + imgIndex} 
-                                alt={image.alt}
-                                onClick={handleImageClick}
-                              />
-                            </ImageContainer>
-                          ))}
-                        </div>
-                        <ImageContainer
-                          className="relative w-2/3 aspect-[4/3] rounded-xl overflow-hidden cursor-zoom-in"
-                          onClick={() => handleImageClick(row.startIndex + 2)}
-                        >
-                          <OptimizedImage 
-                            url={row.images[2].url} 
-                            index={row.startIndex + 2} 
-                            alt={row.images[2].alt}
-                            onClick={handleImageClick}
-                          />
-                        </ImageContainer>
-                      </div>
-                    );
-                  } else if (row.type === 'three-small') {
-                    // 3 small in a row
-                    return (
-                      <div key={rowIndex} className="grid grid-cols-3 gap-2">
-                        {row.images.map((image, imgIndex) => (
-                          <ImageContainer
-                            key={imgIndex}
-                            className="relative aspect-video rounded-xl overflow-hidden cursor-zoom-in"
-                            onClick={() => handleImageClick(row.startIndex + imgIndex)}
-                          >
-                            <OptimizedImage 
-                              url={image.url} 
-                              index={row.startIndex + imgIndex} 
-                              alt={image.alt}
-                              onClick={handleImageClick}
-                            />
-                          </ImageContainer>
-                        ))}
-                      </div>
-                    );
-                  } else if (row.type === 'two-small') {
-                    // 2 small (50% width each)
-                    return (
-                      <div key={rowIndex} className="grid grid-cols-2 gap-2">
-                        {row.images.map((image, imgIndex) => (
-                          <ImageContainer
-                            key={imgIndex}
-                            className="relative aspect-video rounded-xl overflow-hidden cursor-zoom-in"
-                            onClick={() => handleImageClick(row.startIndex + imgIndex)}
-                          >
-                            <OptimizedImage 
-                              url={image.url} 
-                              index={row.startIndex + imgIndex} 
-                              alt={image.alt}
-                              onClick={handleImageClick}
-                            />
-                          </ImageContainer>
-                        ))}
-                      </div>
-                    );
-                  } else if (row.type === 'one-big') {
-                    // 1 big
-                    return (
-                      <div key={rowIndex} className="w-full">
-                        <ImageContainer
-                          className="relative aspect-[4/3] rounded-xl overflow-hidden cursor-zoom-in"
-                          onClick={() => handleImageClick(row.startIndex)}
-                        >
-                          <OptimizedImage 
-                            url={row.images[0].url} 
-                            index={row.startIndex} 
-                            alt={row.images[0].alt}
-                            onClick={handleImageClick}
-                          />
-                        </ImageContainer>
-                      </div>
-                    );
+            {/* Mobile-only Instagram-style pagination with Fixed Scrubbing - own div under gallery */}
+            <div className="flex justify-center py-2">
+              <div
+                className={cn(
+                  "w-[100px] overflow-hidden py-2 px-2 touch-none select-none transition-colors duration-200 rounded-full",
+                  isScrubbing ? "bg-[#e8e8e8] dark:bg-[#27272a]" : "bg-transparent"
+                )}
+                onTouchStart={() => setIsScrubbing(true)}
+                onTouchEnd={() => setIsScrubbing(false)}
+                onTouchMove={(e) => {
+                  const gallery = mobileGalleryRef.current;
+                  if (!gallery) return;
+
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const touchX = e.touches[0].clientX - rect.left;
+
+                  // Calculate progress
+                  let progress = Math.max(0, Math.min(1, touchX / rect.width));
+                  const maxScroll = gallery.scrollWidth - gallery.clientWidth;
+
+                  if (locale === 'he') {
+                    gallery.scrollLeft = -(progress * maxScroll);
+                  } else {
+                    gallery.scrollLeft = progress * maxScroll;
                   }
-                  return null;
-                })}
+                }}
+              >
+                <div
+                  className="flex items-center gap-2 transition-transform duration-300 ease-out pointer-events-none"
+                  style={{
+                    transform: `translateX(${
+                      (images.length <= 5
+                        ? 0
+                        : Math.min(Math.max(0, mobileCurrentIndex - 2), images.length - 5) * 14) * (locale === 'he' ? 1 : -1)
+                    }px)`
+                  }}
+                >
+                  {images.map((_, index) => {
+                    const distance = Math.abs(index - mobileCurrentIndex);
+                    let sizeClass = "scale-100 opacity-100";
+                    if (distance === 1) sizeClass = "scale-[0.85] opacity-80";
+                    if (distance === 2) sizeClass = "scale-75 opacity-60";
+                    if (distance >= 3) sizeClass = "scale-50 opacity-30";
+
+                    return (
+                      <span
+                        key={index}
+                        className={cn(
+                          'flex-shrink-0 block w-1.5 h-1.5 rounded-full transition-all duration-300 ease-in-out',
+                          index === mobileCurrentIndex
+                            ? 'bg-background-dark dark:bg-background'
+                            : 'bg-background-dark/60 dark:bg-background/60',
+                          sizeClass
+                        )}
+                      />
+                    );
+                  })}
+                </div>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Desktop: Remaining Images - Alternating layout (shown when showAllImages is true) */}
@@ -569,9 +615,9 @@ const ParkImageGallery = ({
             </div>
           )}
 
-          {/* Show More/Less Button */}
+          {/* Share + Show more/less + Last updated - hidden on mobile (share moved to page next to hours) */}
           {hasMoreImages && (
-            <div className="flex flex-col items-center gap-3 p-2 pb-0">
+            <div className="hidden sm:flex flex-col items-center gap-3 p-2 pb-0">
               <div className="grid grid-cols-3 items-start gap-4 w-full">
                 {/* Share Button */}
                 <div 
@@ -642,8 +688,6 @@ const ParkImageGallery = ({
                   )}
                 </div>
               </div>
-
-             
             </div>
           )}
         </div>

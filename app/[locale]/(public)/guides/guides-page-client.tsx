@@ -775,11 +775,11 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
       >
         <div className="max-w-6xl mx-auto px-4">
           {/* Main Filter Row */}
-          <div className="flex flex-col xxs:flex-row items-stretch md:items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch md:items-center gap-3">
             
             {/* Left: Search */}
             <div className="flex items-center gap-1 flex-1">
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 w-full">
                 <SearchInput
                   placeholder={tr('Search guides...', 'חפש מדריכים...')}
                   value={searchQuery}
@@ -870,7 +870,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                 {/* Results Count Badge */}
                 {!loading && (
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark animate-pop">
-                    <Icon name="mapBold" className="w-4 h-4 text-green" />
+                    <Icon name="bookBold" className="w-4 h-4 text-green" />
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       {guides.length}
                     </span>

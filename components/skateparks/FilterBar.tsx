@@ -242,7 +242,7 @@ export function FilterBar({
               {/* Results Count Badge */}
               {hasAnyFilter && !loading && (
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark animate-pop">
-                  <Icon name="mapBold" className="w-4 h-4 text-green" />
+                  <Icon name="trees" className="w-4 h-4 text-green" />
                   <span className="text-sm font-semibold text-gray-900 dark:text-white">
                     {skateparksCount}
                   </span>

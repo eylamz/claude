@@ -120,7 +120,7 @@ export const colors = {
     }
   },
   background: {
-    light: 'hsl(0, 0%, 100%)',
+    light: 'hsl(0, 0%, 97%)',
     dark: 'hsl(240, 4%, 11%)',
   },
   backgroundSecondary: {
@@ -132,7 +132,7 @@ export const colors = {
     dark: 'hsl(0, 0%, 9%)',
   },
   text: {
-    light: 'hsl(0, 0%, 13%)',
+    light: 'hsl(0, 0%, 19%)',
     dark: '#E0E0E0',
     hover: {
       light: '#1e293b',
@@ -143,7 +143,7 @@ export const colors = {
       dark: 'hsl(220, 2%, 100%)',
     },
     secondary: {
-      light: '#5C5C5C',
+      light: 'hsl(0, 0%, 73%)',
       dark: 'A0A0A0',
     },
     guide: {
