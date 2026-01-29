@@ -350,7 +350,7 @@ export default function ParkWeatherForecast({ slug, closingYear }: ParkWeatherFo
           {t('weatherForecast') || 'Weather Forecast'}
             </div>
               {/* Last updated */}
-        <p className="mb-1 text-xs text-text/50 dark:text-text-dark/50 mt-1 text-center">
+        <p className="font-medium mb-1 text-xs text-text/50 dark:text-text-dark/50 mt-1 text-center">
           {t('lastUpdated') || 'Updated'}: {formatLastUpdated(weather.lastUpdated)}
         </p>     
         </CardTitle>

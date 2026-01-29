@@ -643,7 +643,7 @@ export default function SkateparksPage() {
       {/* ========================================
           HERO SECTION - Brand Messaging  
       ======================================== */}
-      <div ref={heroSectionRef} className="sticky md:relative top-12 md:top-auto pt-14 md:pt-14 bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5 z-10">
+      <div ref={heroSectionRef} className="relative top-12 md:top-auto pt-14 md:pt-14 bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5 z-10">
         <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
@@ -709,7 +709,7 @@ export default function SkateparksPage() {
       ======================================== */}
       <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8  overflow-x-hidden">
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <ParkCardSkeleton key={i} />
             ))}
@@ -731,7 +731,7 @@ export default function SkateparksPage() {
           <>
             <section 
               aria-label={tr('Skatepark listings', 'רשימת פארקים')}
-              className=" grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6"
+              className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6"
             >
               {skateparks.map((park, index) => (
                 <ParkCard 

@@ -1619,7 +1619,7 @@ export default function SkateparkPage() {
                     className="px-2 py-1 rounded-lg font-medium"
                     aria-label="Share"
                   >
-                    <Icon name="shareBold" className="-mt-[2px] w-4 h-4" />
+                    <Icon name="shareBold" className="-mt-[2px] w-4 h-4 " />
                   </Button>
                 </div>
                 </div>

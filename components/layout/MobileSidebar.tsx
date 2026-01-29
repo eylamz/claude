@@ -691,7 +691,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                                       width={180}
                                       height={180}
                                       quality={50}
-                                      className="w-full h-full object-cover saturate-125"
+                                      className="w-full h-full object-cover saturate-150"
                                       loading="lazy"
                                     />
                                   ) : (

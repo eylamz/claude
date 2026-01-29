@@ -388,7 +388,7 @@ const ParkImageGallery = ({
               id="product-gallery" 
               className="npp-media-images relative w-full flex overflow-x-scroll snap-x snap-mandatory"
               style={{
-                height: 'calc(70vh - 200px)',
+                height: '400px',
                 WebkitOverflowScrolling: 'touch',
               }}
               onTouchStart={handleTouchStart}
@@ -401,7 +401,7 @@ const ParkImageGallery = ({
                   data-slide-index={index}
                   className="snap-start snap-always relative flex-shrink-0 w-full"
                   style={{
-                    height: 'calc(70vh - 200px)',
+                    height: '400px',
                     minWidth: '100%',
                   }}
                 >
@@ -424,7 +424,7 @@ const ParkImageGallery = ({
             <div className="flex justify-center py-2">
               <div
                 className={cn(
-                  "w-[100px] overflow-hidden py-2 px-2 touch-none select-none transition-colors duration-200 rounded-full",
+                  "w-fit max-w-[100px] overflow-hidden py-2 px-2 touch-none select-none transition-colors duration-200 rounded-full",
                   isScrubbing ? "bg-[#e8e8e8] dark:bg-[#27272a]" : "bg-transparent"
                 )}
                 onTouchStart={() => setIsScrubbing(true)}
