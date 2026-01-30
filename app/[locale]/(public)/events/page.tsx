@@ -8,6 +8,16 @@ import { Button, TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Icon } from '@/components/icons';
+import { fullEventToListEvent } from '@/lib/events/formatEvent';
+
+/** Cache stores full event objects; list page needs list shape. */
+function isFullFormatEvent(e: any): boolean {
+  return e && (e.content != null || (e.dateTime != null && e.featuredImage != null));
+}
+
+function cacheToListEvents(cache: any[], locale: 'en' | 'he') {
+  return cache.map((e) => (isFullFormatEvent(e) ? fullEventToListEvent(e, locale) : e));
+}
 
 interface Event {
   id: string;
@@ -310,7 +320,7 @@ const EventCard = memo(({
 
         {/* Date Badge */}
         <div className="absolute bottom-2 left-0 z-10">
-          <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
+          <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold px-2 md:px-3 py-1 rounded-r-full shadow-lg">
             {formatDate(event.startDate)}
           </div>
         </div>
@@ -387,6 +397,7 @@ export default function EventsPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevScrollYRef = useRef(0);
+  const versionCheckInFlightRef = useRef(false);
 
   // Track scroll position for sticky header
   useEffect(() => {
@@ -421,18 +432,16 @@ export default function EventsPage() {
       const cachedData = localStorage.getItem(cacheKey);
       const cachedVersion = localStorage.getItem(versionKey);
 
-      // If no cache or version, fetch and cache all events
+      // If no cache or version, fetch and cache all events (full format for slug page)
       if (!cachedData || !cachedVersion) {
-        console.log('No cache found, fetching events for initial cache');
+        console.log('No cache found, fetching events for initial cache (full format)');
         try {
-          const response = await fetch(`/api/events?locale=${locale}`);
+          const response = await fetch(`/api/events?full=true`);
           if (response.ok) {
             const data = await response.json();
             const currentVersion = data.version || 1;
             const allEvents = data.events || [];
-            
             console.log('Initial cache fetch:', allEvents.length, 'events');
-            // Store in cache
             localStorage.setItem(cacheKey, JSON.stringify(allEvents));
             localStorage.setItem(versionKey, currentVersion.toString());
             setCurrentVersion(currentVersion);
@@ -450,8 +459,14 @@ export default function EventsPage() {
             localStorage.removeItem(cacheKey);
             localStorage.removeItem(versionKey);
           } else {
+            // Avoid duplicate version check when effect runs twice (e.g. React Strict Mode)
+            if (versionCheckInFlightRef.current) {
+              setCacheInitialized(true);
+              return;
+            }
+            versionCheckInFlightRef.current = true;
             console.log('Cache exists with', parsedCache.length, 'events, checking version');
-            // Cache exists with data, check version in background
+            // Cache exists with data, check version once
             try {
               const versionResponse = await fetch('/api/events?versionOnly=true');
               if (versionResponse.ok) {
@@ -460,16 +475,14 @@ export default function EventsPage() {
                 setCurrentVersion(fetchedVersion);
                 const storedVersion = parseInt(cachedVersion);
 
-                // If versions don't match, update cache
+                // If versions don't match, update cache (full format)
                 if (storedVersion !== fetchedVersion) {
                   console.log('Version mismatch, updating cache');
-                  const response = await fetch(`/api/events`);
+                  const response = await fetch(`/api/events?full=true`);
                   if (response.ok) {
                     const data = await response.json();
                     const newVersion = data.version || 1;
                     const allEvents = data.events || [];
-                    
-                    // Update cache
                     localStorage.setItem(cacheKey, JSON.stringify(allEvents));
                     localStorage.setItem(versionKey, newVersion.toString());
                     setCurrentVersion(newVersion);
@@ -485,6 +498,8 @@ export default function EventsPage() {
               if (cachedVersion) {
                 setCurrentVersion(parseInt(cachedVersion));
               }
+            } finally {
+              versionCheckInFlightRef.current = false;
             }
           }
         } catch (e) {
@@ -561,43 +576,11 @@ export default function EventsPage() {
               versionMatches = storedVersion === currentVersion;
             }
 
-            // If version matches (or not checked yet), use cached events immediately
+            // If version matches (or not checked yet), use cached events (map full→list if needed).
             if (versionMatches) {
               console.log('Using cached events:', allCachedEvents.length);
-              setEvents(allCachedEvents);
+              setEvents(cacheToListEvents(allCachedEvents, locale as 'en' | 'he'));
               setLoading(false);
-              
-              // Check version in background and update if needed
-              (async () => {
-                try {
-                  const versionResponse = await fetch('/api/events?versionOnly=true');
-                  if (versionResponse.ok) {
-                    const versionData = await versionResponse.json();
-                    const fetchedVersion = versionData.version || 1;
-                    setCurrentVersion(fetchedVersion);
-
-                    // If versions don't match, refetch events data and update both cache and version
-                    if (storedVersion !== fetchedVersion) {
-                      console.log('Version mismatch, fetching fresh events');
-                      const response = await fetch(`/api/events`);
-                      if (response.ok) {
-                        const data = await response.json();
-                        const newVersion = data.version || 1;
-                        const allEvents = data.events || [];
-                        
-                        // Update cache and state
-                        localStorage.setItem(cacheKey, JSON.stringify(allEvents));
-                        localStorage.setItem(versionKey, newVersion.toString());
-                        setCurrentVersion(newVersion);
-                        setEvents(allEvents);
-                      }
-                    }
-                  }
-                } catch (error) {
-                  console.warn('Failed to check events version in background', error);
-                }
-              })();
-              
               return;
             } else {
               console.log('Version mismatch, will fetch fresh data');
@@ -615,18 +598,15 @@ export default function EventsPage() {
         console.log('No cache found, fetching fresh data');
       }
 
-      // No valid cache or version mismatch, fetch fresh data
-      console.log('Fetching fresh events from API');
-      const response = await fetch(`/api/events`);
+      // No valid cache or version mismatch, fetch full events for cache + list
+      console.log('Fetching fresh events from API (full format)');
+      const response = await fetch(`/api/events?full=true`);
       if (response.ok) {
         const data = await response.json();
         const fetchedVersion = data.version || 1;
         const allEvents = data.events || [];
-        
         console.log('Fetched events from API:', allEvents.length);
-        setEvents(allEvents);
-        
-        // Update cache if we got events
+        setEvents(cacheToListEvents(allEvents, locale as 'en' | 'he'));
         localStorage.setItem(cacheKey, JSON.stringify(allEvents));
         localStorage.setItem(versionKey, fetchedVersion.toString());
         setCurrentVersion(fetchedVersion);
@@ -914,7 +894,7 @@ export default function EventsPage() {
       ======================================== */}
       <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div key={i} className="h-fit shadow-lg rounded-3xl overflow-hidden">
                 <div className="h-[12rem] md:h-[16rem] bg-gray-200 dark:bg-gray-700 animate-pulse" />
@@ -927,7 +907,7 @@ export default function EventsPage() {
           </div>
         ) : paginatedEvents.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {paginatedEvents.map((event, index) => (
                 <EventCard 
                   key={event.id} 

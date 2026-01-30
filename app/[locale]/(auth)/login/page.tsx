@@ -6,11 +6,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks';
+import { useToast } from '@/hooks/use-toast';
 import { Button, FloatingInput } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { isRegisterEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
 import { emailExists } from '@/lib/actions/auth';
 import { Icon } from '@/components/icons/Icon';
+
+const LOGIN_EMAIL_FAIL_KEY = 'login_email_fail_count';
+const LOGIN_EMAIL_COOLDOWN_KEY = 'login_email_cooldown_end';
 
 interface LoginErrors {
   email?: string;
@@ -21,6 +25,7 @@ interface LoginErrors {
 export default function LoginPage() {
   const locale = useLocale();
   const t = useTranslation('auth');
+  const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -38,6 +43,8 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [cooldownEndMs, setCooldownEndMs] = useState<number | null>(null);
+  const [cooldownRemainingSec, setCooldownRemainingSec] = useState(0);
   const preferencesAppliedRef = useRef(false);
 
   // Update formData when email from params changes
@@ -49,6 +56,36 @@ export default function LoginPage() {
       }));
     }
   }, [emailFromParams]);
+
+  // Restore cooldown from sessionStorage on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = sessionStorage.getItem(LOGIN_EMAIL_COOLDOWN_KEY);
+    if (stored) {
+      const end = parseInt(stored, 10);
+      if (end > Date.now()) {
+        setCooldownEndMs(end);
+        setCooldownRemainingSec(Math.ceil((end - Date.now()) / 1000));
+      } else sessionStorage.removeItem(LOGIN_EMAIL_COOLDOWN_KEY);
+    }
+  }, []);
+
+  // Clear cooldown when time expires and update remaining seconds for button
+  useEffect(() => {
+    if (cooldownEndMs == null) return;
+    const tick = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((cooldownEndMs - now) / 1000));
+      setCooldownRemainingSec(remaining);
+      if (remaining <= 0) {
+        setCooldownEndMs(null);
+        sessionStorage.removeItem(LOGIN_EMAIL_COOLDOWN_KEY);
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownEndMs]);
 
   // Redirect to home page if login is disabled
   useEffect(() => {
@@ -159,6 +196,19 @@ export default function LoginPage() {
       return;
     }
 
+    // Check cooldown (from state or sessionStorage)
+    const now = Date.now();
+    const cooldownEnd = cooldownEndMs ?? (typeof window !== 'undefined' ? parseInt(sessionStorage.getItem(LOGIN_EMAIL_COOLDOWN_KEY) ?? '', 10) : 0);
+    if (cooldownEnd && now < cooldownEnd) {
+      const seconds = Math.ceil((cooldownEnd - now) / 1000);
+      toast({
+        title: t('login.cooldown.tooManyAttempts'),
+        description: t('login.cooldown.tryAgainInSeconds', { seconds: seconds.toString() }).replace('{seconds}', String(seconds)),
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -166,19 +216,45 @@ export default function LoginPage() {
       const exists = await emailExists(formData.email);
       
       if (!exists) {
-        // Email doesn't exist, redirect to register page with email
+        // Email doesn't exist
         if (registerEnabled) {
           startTransition(() => {
             router.push(`/${locale}/register?email=${encodeURIComponent(formData.email)}`);
           });
         } else {
+          // Count failed attempt and apply cooldown after 4 failures
+          const rawCount = typeof window !== 'undefined' ? sessionStorage.getItem(LOGIN_EMAIL_FAIL_KEY) : null;
+          const count = (rawCount ? parseInt(rawCount, 10) : 0) + 1;
+          sessionStorage.setItem(LOGIN_EMAIL_FAIL_KEY, String(count));
+
+          if (count >= 4) {
+            const cooldownSeconds = count === 4 ? 30 : 60;
+            const end = now + cooldownSeconds * 1000;
+            sessionStorage.setItem(LOGIN_EMAIL_COOLDOWN_KEY, String(end));
+            setCooldownEndMs(end);
+            setCooldownRemainingSec(cooldownSeconds);
+            toast({
+              title: t('login.cooldown.tooManyAttempts'),
+              description: cooldownSeconds === 30
+                ? t('login.cooldown.tryAgainInSeconds', { seconds: '30' }).replace('{seconds}', '30')
+                : t('login.cooldown.tryAgainInMinute'),
+              variant: 'destructive',
+            });
+          }
           setErrors({ general: t('login.errors.emailNotFound') || 'No account found with this email address.' });
         }
         setIsLoading(false);
         return;
       }
 
-      // Email exists, navigate to password page with email as query parameter
+      // Email exists: clear email fail count and cooldown
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(LOGIN_EMAIL_FAIL_KEY);
+        sessionStorage.removeItem(LOGIN_EMAIL_COOLDOWN_KEY);
+      }
+      setCooldownEndMs(null);
+
+      // Navigate to password page with email as query parameter
       startTransition(() => {
         router.push(`/${locale}/login/password?email=${encodeURIComponent(formData.email)}`);
       });
@@ -262,17 +338,21 @@ export default function LoginPage() {
         <div className="flex flex-col gap-4 p-8">
           {/* Header */}
           <div className="flex flex-col items-center gap-2">
-            {/* Logo Icon */}
-            <div className="flex justify-center">
+            {/* Logo Icon - links to homepage */}
+            <Link
+              href={`/${locale}`}
+              className="flex justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-main rounded-lg"
+              aria-label={t('login.backToHome') || 'Back to home'}
+            >
               <Icon
                 name="logo"
-                className={`w-[120px] h-auto transition-colors duration-300 ${
+                className={`w-[120px] h-auto transition-colors duration-300 hover:opacity-90 ${
                   showErrorState
                     ? 'text-red dark:text-red-dark'
                     : 'text-text dark:text-text-dark'
                 }`}
               />
-            </div>
+            </Link>
             <h1 className="text-[1rem] font-medium text-gray dark:text-gray-dark">
               {t('login.subtitle')}
             </h1>
@@ -312,12 +392,14 @@ export default function LoginPage() {
                   ? '!bg-red dark:!bg-red-dark'
                   : ''
               }`}
-              disabled={isLoading}
+              disabled={isLoading || cooldownRemainingSec > 0}
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <LoadingSpinner size={16} variant="brand" />
                 </span>
+              ) : cooldownRemainingSec > 0 ? (
+                t('login.cooldown.buttonWaitSeconds', { seconds: cooldownRemainingSec }).replace('{seconds}', String(cooldownRemainingSec))
               ) : (
                 t('login.continue') || 'Continue'
               )}

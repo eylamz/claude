@@ -355,7 +355,7 @@ const FormSchema: Schema<IForm> = new Schema<IForm>(
 /**
  * Indexes for performance
  */
-FormSchema.index({ slug: 1 }, { unique: true });
+// Note: slug already has unique: true in field definition, which creates the index
 FormSchema.index({ status: 1 });
 FormSchema.index({ visibleFrom: 1, visibleUntil: 1 });
 FormSchema.index({ 'title.en': 'text', 'title.he': 'text', 'description.en': 'text', 'description.he': 'text' });

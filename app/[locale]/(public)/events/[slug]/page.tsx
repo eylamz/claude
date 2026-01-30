@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { ChevronLeft, Share2 } from 'lucide-react';
 import { Icon } from '@/components/icons';
-import { Skeleton } from '@/components/ui';
+import { Skeleton, Card } from '@/components/ui';
 import FullscreenImageViewer from '@/components/skateparks/FullscreenImageViewer';
 
 interface IEvent {
@@ -100,32 +100,56 @@ export default function EventPage() {
   const [currentVersion, setCurrentVersion] = useState<number | null>(null);
 
   const fetchEvent = async () => {
-    if (!cacheInitialized) return; // Wait for cache to initialize
-    
+    if (!cacheInitialized) return;
+
     setLoading(true);
     setError(null);
 
-    // Try to find event in cache first (for future optimization)
-    // Note: cached events have a simplified structure, so we'll still fetch full data
     const cacheKey = 'events_cache';
-    const cachedData = localStorage.getItem(cacheKey);
-    
-    if (cachedData) {
+    const versionKey = 'events_version';
+
+    const getEventFromCache = (): IEvent | null => {
       try {
-        const allCachedEvents = JSON.parse(cachedData);
-        if (Array.isArray(allCachedEvents)) {
-          // Find event by slug in cached events
-          // Currently we still fetch full data from API, but cache check is here for future optimization
-          const cachedEvent = allCachedEvents.find((e: any) => e.slug === slug);
-          // If found, could use for initial display, but we fetch full data anyway
-        }
-      } catch (e) {
-        console.warn('Failed to parse cached events data', e);
+        const raw = localStorage.getItem(cacheKey);
+        if (!raw) return null;
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return null;
+        const e = arr.find((x: any) => x.slug && x.slug.toLowerCase() === slug.toLowerCase());
+        return e && e.content != null ? (e as IEvent) : null;
+      } catch {
+        return null;
       }
+    };
+
+    // 1) Try cache first (full format has content)
+    let eventFromCache = getEventFromCache();
+    if (eventFromCache) {
+      setEvent(eventFromCache);
+      setLoading(false);
+      return;
     }
 
-    // Always fetch full event data from API (for complete event details)
-    // This ensures we have complete data even if event was found in cache
+    // 2) Cache miss or list-format cache: ensure full cache then try again (no locale – full has he/en)
+    try {
+      const fullRes = await fetch(`/api/events?full=true`);
+      if (fullRes.ok) {
+        const { events: allEvents = [], version } = await fullRes.json();
+        if (Array.isArray(allEvents) && allEvents.length > 0) {
+          localStorage.setItem(cacheKey, JSON.stringify(allEvents));
+          localStorage.setItem(versionKey, String(version ?? 1));
+          eventFromCache = getEventFromCache();
+          if (eventFromCache) {
+            setEvent(eventFromCache);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to refresh events cache:', err);
+    }
+
+    // 3) Still not found (e.g. draft/deleted): fallback to slug API
     try {
       const response = await fetch(`/api/events/${slug}?locale=${locale}`);
       if (!response.ok) {
@@ -137,18 +161,17 @@ export default function EventPage() {
         setLoading(false);
         return;
       }
-
       const data = await response.json();
       setEvent(data.event);
-      setLoading(false);
     } catch (err) {
       console.error('Error fetching event:', err);
       setError('Failed to load event');
+    } finally {
       setLoading(false);
     }
   };
 
-  // Check version and cache on mount (similar to guides)
+  // Check version and cache on mount (full event data for slug page use)
   useEffect(() => {
     const checkVersionAndCache = async () => {
       const cacheKey = 'events_cache';
@@ -156,16 +179,13 @@ export default function EventPage() {
       const cachedData = localStorage.getItem(cacheKey);
       const cachedVersion = localStorage.getItem(versionKey);
 
-      // If no cache or version, fetch and cache all events
       if (!cachedData || !cachedVersion) {
         try {
-          const response = await fetch(`/api/events`);
+          const response = await fetch(`/api/events?full=true`);
           if (response.ok) {
             const data = await response.json();
             const currentVersion = data.version || 1;
             const allEvents = data.events || [];
-            
-            // Store in cache
             localStorage.setItem(cacheKey, JSON.stringify(allEvents));
             localStorage.setItem(versionKey, currentVersion.toString());
             setCurrentVersion(currentVersion);
@@ -174,7 +194,6 @@ export default function EventPage() {
           console.error('Error fetching events for cache:', error);
         }
       } else {
-        // Cache exists, check version in background
         try {
           const versionResponse = await fetch('/api/events?versionOnly=true');
           if (versionResponse.ok) {
@@ -182,16 +201,12 @@ export default function EventPage() {
             const fetchedVersion = versionData.version || 1;
             setCurrentVersion(fetchedVersion);
             const storedVersion = parseInt(cachedVersion);
-
-            // If versions don't match, update cache
             if (storedVersion !== fetchedVersion) {
-              const response = await fetch(`/api/events`);
+              const response = await fetch(`/api/events?full=true`);
               if (response.ok) {
                 const data = await response.json();
                 const newVersion = data.version || 1;
                 const allEvents = data.events || [];
-                
-                // Update cache
                 localStorage.setItem(cacheKey, JSON.stringify(allEvents));
                 localStorage.setItem(versionKey, newVersion.toString());
                 setCurrentVersion(newVersion);
@@ -202,7 +217,6 @@ export default function EventPage() {
           console.warn('Failed to check events version', error);
         }
       }
-      
       setCacheInitialized(true);
     };
 
@@ -215,19 +229,84 @@ export default function EventPage() {
     fetchEvent();
   }, [slug, locale, cacheInitialized]);
 
-  // Loading state - Duolingo style skeleton
+  // Loading state - Skeleton matching event page layout (skateparks-style)
   if (loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950">
-        <div className="max-w-3xl mx-auto px-5 sm:px-6 py-12">
-          <Skeleton className="h-4 w-32 mb-2" />
-          <Skeleton className="h-12 w-full mb-4" />
-          <Skeleton className="h-6 w-3/4 mb-8" />
-          <Skeleton className="h-80 w-full rounded-2xl mb-8" />
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
+      <div className="pt-14 min-h-screen">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6 overflow-visible">
+          {/* Back link / Breadcrumb Skeleton */}
+          <div className="mb-4 opacity-40">
+            <Skeleton className="h-4 w-32" />
+          </div>
+
+          {/* Badges row skeleton - Highest opacity */}
+          <div className="flex flex-wrap gap-2 mb-4 opacity-90">
+            <Skeleton className="h-6 w-20 rounded-lg" />
+            <Skeleton className="h-6 w-16 rounded-lg" />
+            <Skeleton className="h-6 w-14 rounded-lg" />
+          </div>
+
+          {/* Title & Description Skeleton */}
+          <div className="opacity-90">
+            <Skeleton className="h-12 w-full mb-4" />
+            <Skeleton className="h-6 w-3/4 mb-6" />
+          </div>
+
+          {/* Date / Location line skeleton */}
+          <div className="flex flex-wrap gap-3 opacity-60">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-5 w-24" />
+            <Skeleton className="h-5 w-40" />
+          </div>
+
+          {/* Event Details Card Skeleton - Medium opacity */}
+          <div className="opacity-50">
+            <Card className="rounded-2xl p-6 shadow-none">
+              <div className="space-y-4">
+                <div className="flex items-start gap-2">
+                  <Skeleton className="w-4 h-4 rounded flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 max-w-xs" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-4">
+                  <Skeleton className="h-5 w-28" />
+                  <Skeleton className="h-5 w-24" />
+                  <Skeleton className="h-5 w-36" />
+                </div>
+                <div className="pt-4 border-t border-border dark:border-border-dark/20">
+                  <Skeleton className="h-8 w-24 mb-4" />
+                </div>
+                <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border dark:border-border-dark/20">
+                  <div className="text-center">
+                    <Skeleton className="h-7 w-full mx-auto mb-1 max-w-[4rem]" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                  <div className="text-center">
+                    <Skeleton className="h-7 w-full mx-auto mb-1 max-w-[4rem]" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                  <div className="text-center">
+                    <Skeleton className="h-7 w-full mx-auto mb-1 max-w-[4rem]" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Cover Image Skeleton - High opacity */}
+          <div className="opacity-60">
+            <Skeleton className="w-full aspect-[16/9] rounded-2xl" />
+          </div>
+
+          {/* Article content lines skeleton - Lower opacity */}
+          <div className="space-y-4 opacity-30">
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-full" />
+            <Skeleton className="h-5 w-4/5" />
+            <Skeleton className="h-8 w-48 mt-8 rounded-full" />
           </div>
         </div>
       </div>

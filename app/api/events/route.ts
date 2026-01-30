@@ -3,14 +3,13 @@ import connectDB from '@/lib/db/mongodb';
 import Event from '@/lib/models/Event';
 import EventSignup from '@/lib/models/EventSignup';
 import Settings from '@/lib/models/Settings';
-import { getLocalizedText } from '@/lib/seo/utils';
+import { formatEventForDetail } from '@/lib/events/formatEvent';
 
 /**
  * Public Events API Route
- * 
+ *
  * GET /api/events?locale=en
- * 
- * Fetches all published public events
+ * GET /api/events?full=true - returns full event objects (same shape as GET /api/events/[slug]) for cache
  */
 
 export async function GET(request: NextRequest) {
@@ -19,8 +18,9 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const versionOnly = searchParams.get('versionOnly') === 'true';
+    const full = searchParams.get('full') === 'true';
     const locale = searchParams.get('locale') || 'en';
-    
+
     // If only version is requested, return it without fetching events
     if (versionOnly) {
       const settings = await Settings.findOrCreate();
@@ -28,20 +28,34 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ version });
     }
 
-    // Build query for published events
-    // Note: isPublic field doesn't exist in Event schema, so we only filter by status
     const query: any = {
       status: 'published',
     };
 
-    // Fetch all published events
     const events = await Event.find(query)
       .sort({ startDate: 1 })
       .lean();
 
     console.log(`[Events API] Found ${events.length} events matching query:`, JSON.stringify(query));
 
-    // Format events data to match the frontend interface
+    const settings = await Settings.findOrCreate();
+    const version = settings.eventsVersion || 1;
+
+    // Full format: same shape as GET /api/events/[slug] for cache (no view increment)
+    if (full) {
+      const fullEvents = await Promise.all(
+        events.map(async (event: any) => {
+          const currentParticipants = await EventSignup.countByEventId(event._id);
+          return formatEventForDetail(event, {
+            currentParticipants,
+            incrementView: false,
+          });
+        })
+      );
+      return NextResponse.json({ events: fullEvents, version });
+    }
+
+    // List format: summary for events list page
     const formattedEvents = await Promise.all(
       events.map(async (event: any) => {
         // Get current participant count
@@ -148,10 +162,6 @@ export async function GET(request: NextRequest) {
         };
       })
     );
-
-    // Get version from settings
-    const settings = await Settings.findOrCreate();
-    const version = settings.eventsVersion || 1;
 
     return NextResponse.json({
       events: formattedEvents,

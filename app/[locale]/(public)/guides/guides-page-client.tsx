@@ -803,7 +803,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                         <TooltipTrigger asChild>
                           <Button
                             variant={isSelected ? sport.variant : 'gray'}
-                            size="md"
+                            size="sm"
                             onClick={() => {
                               // Toggle this sport
                               setSelectedSports(prev => {
@@ -956,7 +956,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
       ======================================== */}
       <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <div key={i} className="h-fit shadow-lg rounded-3xl overflow-hidden">
                 <div className="h-[12rem] md:h-[16rem] bg-gray-200 dark:bg-gray-700 animate-pulse" />
@@ -969,7 +969,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
           </div>
         ) : guides.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {guides.map((guide, index) => (
                 <GuideCard 
                   key={guide.id} 

@@ -6,10 +6,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useTranslation } from '@/hooks';
+import { useToast } from '@/hooks/use-toast';
 import { Button, FloatingInput, Checkbox } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Icon } from '@/components/icons/Icon';
 import { isRegisterEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
+
+const LOGIN_PASSWORD_FAIL_KEY = 'login_password_fail_count';
+const LOGIN_PASSWORD_COOLDOWN_KEY = 'login_password_cooldown_end';
 
 interface LoginErrors {
   email?: string;
@@ -20,6 +24,7 @@ interface LoginErrors {
 export default function LoginPasswordPage() {
   const locale = useLocale();
   const t = useTranslation('auth');
+  const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -39,7 +44,39 @@ export default function LoginPasswordPage() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [cooldownEndMs, setCooldownEndMs] = useState<number | null>(null);
+  const [cooldownRemainingSec, setCooldownRemainingSec] = useState(0);
   const preferencesAppliedRef = useRef(false);
+
+  // Restore cooldown from sessionStorage on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = sessionStorage.getItem(LOGIN_PASSWORD_COOLDOWN_KEY);
+    if (stored) {
+      const end = parseInt(stored, 10);
+      if (end > Date.now()) {
+        setCooldownEndMs(end);
+        setCooldownRemainingSec(Math.ceil((end - Date.now()) / 1000));
+      } else sessionStorage.removeItem(LOGIN_PASSWORD_COOLDOWN_KEY);
+    }
+  }, []);
+
+  // Clear cooldown when time expires and update remaining seconds for button
+  useEffect(() => {
+    if (cooldownEndMs == null) return;
+    const tick = () => {
+      const now = Date.now();
+      const remaining = Math.max(0, Math.ceil((cooldownEndMs - now) / 1000));
+      setCooldownRemainingSec(remaining);
+      if (remaining <= 0) {
+        setCooldownEndMs(null);
+        sessionStorage.removeItem(LOGIN_PASSWORD_COOLDOWN_KEY);
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownEndMs]);
 
   // Redirect to login if no email is provided
   useEffect(() => {
@@ -168,6 +205,19 @@ export default function LoginPasswordPage() {
       return;
     }
 
+    // Check cooldown (from state or sessionStorage)
+    const now = Date.now();
+    const cooldownEnd = cooldownEndMs ?? (typeof window !== 'undefined' ? parseInt(sessionStorage.getItem(LOGIN_PASSWORD_COOLDOWN_KEY) ?? '', 10) : 0);
+    if (cooldownEnd && now < cooldownEnd) {
+      const seconds = Math.ceil((cooldownEnd - now) / 1000);
+      toast({
+        title: t('login.cooldown.tooManyAttempts'),
+        description: (t('login.cooldown.tryAgainInSeconds') || 'Please try again in {seconds} seconds.').replace('{seconds}', String(seconds)),
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -188,10 +238,36 @@ export default function LoginPasswordPage() {
           setIsLoading(false);
           return;
         }
+        // Invalid credentials: count failed attempt and apply cooldown after 4 failures
+        const rawCount = typeof window !== 'undefined' ? sessionStorage.getItem(LOGIN_PASSWORD_FAIL_KEY) : null;
+        const count = (rawCount ? parseInt(rawCount, 10) : 0) + 1;
+        sessionStorage.setItem(LOGIN_PASSWORD_FAIL_KEY, String(count));
+
+        if (count >= 4) {
+          const cooldownSeconds = count === 4 ? 30 : 60;
+          const end = now + cooldownSeconds * 1000;
+          sessionStorage.setItem(LOGIN_PASSWORD_COOLDOWN_KEY, String(end));
+          setCooldownEndMs(end);
+          setCooldownRemainingSec(cooldownSeconds);
+          toast({
+            title: t('login.cooldown.tooManyAttempts'),
+            description: cooldownSeconds === 30
+              ? (t('login.cooldown.tryAgainInSeconds') || 'Please try again in {seconds} seconds.').replace('{seconds}', '30')
+              : t('login.cooldown.tryAgainInMinute'),
+            variant: 'destructive',
+          });
+        }
         setErrors({ general: t('login.errors.invalidCredentials') });
         setIsLoading(false);
         return;
       }
+
+      // Success: clear password fail count and cooldown
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(LOGIN_PASSWORD_FAIL_KEY);
+        sessionStorage.removeItem(LOGIN_PASSWORD_COOLDOWN_KEY);
+      }
+      setCooldownEndMs(null);
 
       // Refresh router to ensure session is available
       router.refresh();
@@ -381,12 +457,14 @@ export default function LoginPasswordPage() {
               variant="primary"
               size="lg"
               className="w-full max-w-[270px]"
-              disabled={isLoading}
+              disabled={isLoading || cooldownRemainingSec > 0}
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <LoadingSpinner size={16} variant="brand" />
                 </span>
+              ) : cooldownRemainingSec > 0 ? (
+                (t('login.cooldown.buttonWaitSeconds') || 'Try again in {seconds}s').replace('{seconds}', String(cooldownRemainingSec))
               ) : (
                 t('login.signInButton')
               )}

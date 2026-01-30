@@ -735,9 +735,8 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 (card.href !== `/${locale}` && pathname.startsWith(card.href));
 
               return (
-                <div className="rounded overflow-hidden">
+                <div key={card.href} className="rounded overflow-hidden">
                 <Link
-                  key={card.href}
                   href={card.href}
                   onClick={onClose}
                   className={`flex items-center gap-2 px-2 py-3 text-3xl ${

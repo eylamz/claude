@@ -20,6 +20,8 @@ const SelectContext = React.createContext<{
   value: string;
   onValueChange: (value: string) => void;
   variant: SelectVariant;
+  displayLabel: React.ReactNode;
+  setDisplayLabel: (label: React.ReactNode) => void;
 } | null>(null);
 
 const Select = ({ 
@@ -34,6 +36,7 @@ const Select = ({
   variant?: SelectVariant;
 }) => {
   const [open, setOpen] = React.useState(false);
+  const [displayLabel, setDisplayLabel] = React.useState<React.ReactNode>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -47,7 +50,7 @@ const Select = ({
   }, []);
 
   return (
-    <SelectContext.Provider value={{ open, setOpen, value: value || "", onValueChange: onValueChange || (() => {}), variant }}>
+    <SelectContext.Provider value={{ open, setOpen, value: value || "", onValueChange: onValueChange || (() => {}), variant, displayLabel, setDisplayLabel }}>
       <div className="relative w-full" ref={containerRef}>
         {children}
       </div>
@@ -85,6 +88,12 @@ const SelectTrigger = React.forwardRef<
     </button>
   );
 });
+
+const SelectValue = ({ placeholder, children }: { placeholder?: React.ReactNode; children?: React.ReactNode }) => {
+  const context = React.useContext(SelectContext);
+  const content = context?.displayLabel ?? children ?? placeholder;
+  return content ? <span className="truncate">{content}</span> : null;
+};
 
 const SelectContent = React.forwardRef<
   HTMLDivElement,
@@ -185,6 +194,7 @@ export {
   Select,
   Select as SelectRoot,
   SelectTrigger,
+  SelectValue,
   SelectContent,
   SelectItem,
   SelectWrapper,
