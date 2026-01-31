@@ -29,6 +29,7 @@ import InfoBold from './infoBold.svg';
 import Target from './target.svg';
 import TargetBold from './targetBold.svg';
 import QuestionMark from './questionMark.svg';
+import Clock from './clock.svg';
 import ClockBold from './clockBold.svg';
 import LightbulbBold from './lightbulbBold.svg';
 import Sunset from './sunset.svg';
@@ -289,7 +290,7 @@ const iconMap: Record<string, SvgComponent> = {
   'logo-hostage': LogoHostage,
   'logo-hostage2': LogoHostage2,
   'logo-hostage3': LogoHostage3,
-  clock: ClockBold,
+  clock: Clock,
   clockBold: ClockBold,
   cookie: Cookie,
   cookieBold: CookieBold,
@@ -499,7 +500,7 @@ export type IconName =
   | 'searchQuest'
   | 'bulkImage'
   | 'imageBold'
-  | 'clockBold'
+  | 'clock' | 'clockBold' 
   | 'closedPark'
   | 'couch'
   | 'nearbyResturants'
@@ -534,7 +535,7 @@ export type IconName =
   | 'book'  | 'bookBold'
   | 'accessibility' | 'accessibilityBold'
   | 'terms'  | 'termsBold'
-  | 'clock'
+  | 'clock' | 'clockBold'
   | 'chart' | 'chartBold'
   | 'target' | 'targetBold'
   | 'wrench' | 'wrenchBold'

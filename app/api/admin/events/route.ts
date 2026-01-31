@@ -233,8 +233,88 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    // Create new event
-    const newEvent = new Event(body);
+    // Build event in new schema (content, dateTime, featuredImage) from flat form body
+    const newEvent = new Event({
+      slug: body.slug || body.title?.en?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'event',
+      category: (body.category || 'roller').toLowerCase(),
+      type: body.type || 'event',
+      status: body.status || 'draft',
+      isFeatured: body.isFeatured || false,
+      dateTime: {
+        startDate: body.startDate ? new Date(body.startDate) : new Date(),
+        endDate: body.endDate ? new Date(body.endDate) : undefined,
+        timezone: {
+          en: body.timezone || 'Asia/Jerusalem',
+          he: body.timezone === 'Asia/Jerusalem' ? 'אסיה/ירושלים' : (body.timezone || 'אסיה/ירושלים'),
+        },
+      },
+      location: body.location || { name: { en: '', he: '' }, address: { en: '', he: '' } },
+      content: {
+        en: {
+          title: body.title?.en ?? '',
+          description: body.description?.en ?? '',
+          tags: Array.isArray(body.tags) ? body.tags : [],
+          sections: Array.isArray(body.sections?.en) ? body.sections.en.map((s: any) => ({
+            type: s.type,
+            order: typeof s.order === 'number' ? s.order : 0,
+            level: s.level,
+            content: s.content,
+            listType: s.listType,
+            items: Array.isArray(s.items) ? s.items : [],
+            data: s.data,
+            links: Array.isArray(s.links) ? s.links : [],
+            boxStyle: s.boxStyle,
+          })) : [],
+        },
+        he: {
+          title: body.title?.he ?? '',
+          description: body.description?.he ?? '',
+          tags: Array.isArray(body.tags) ? body.tags : [],
+          sections: Array.isArray(body.sections?.he) ? body.sections.he.map((s: any) => ({
+            type: s.type,
+            order: typeof s.order === 'number' ? s.order : 0,
+            level: s.level,
+            content: s.content,
+            listType: s.listType,
+            items: Array.isArray(s.items) ? s.items : [],
+            data: s.data,
+            links: Array.isArray(s.links) ? s.links : [],
+            boxStyle: s.boxStyle,
+          })) : [],
+        },
+      },
+      featuredImage: (() => {
+        const fi = body.featuredImage;
+        const url = typeof fi === 'string' ? fi : (fi?.url || '');
+        const altText = typeof fi === 'object' && fi?.altText ? { en: fi.altText.en || '', he: fi.altText.he || '' } : { en: '', he: '' };
+        const cloudinaryId = typeof fi === 'object' && fi?.cloudinaryId ? fi.cloudinaryId : undefined;
+        return { url, altText, ...(cloudinaryId && { cloudinaryId }) };
+      })(),
+      media: Array.isArray(body.media)
+        ? body.media.map((m: any) => ({
+            id: m.id || `media-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            url: m.url || '',
+            type: m.type === 'video' ? 'video' : 'image',
+            cloudinaryId: m.cloudinaryId || undefined,
+            altText: {
+              en: m.altText?.en != null ? String(m.altText.en) : '',
+              he: m.altText?.he != null ? String(m.altText.he) : '',
+            },
+            caption: {
+              en: m.caption?.en != null ? String(m.caption.en) : '',
+              he: m.caption?.he != null ? String(m.caption.he) : '',
+            },
+            usedInSections: Array.isArray(m.usedInSections) ? m.usedInSections : [],
+          }))
+        : [],
+      isFree: body.isFree !== undefined ? body.isFree : true,
+      registrationRequired: body.registrationRequired || false,
+      registrationUrl: body.registrationUrl || '',
+      metaTitle: body.metaTitle ? { en: body.metaTitle.en ?? '', he: body.metaTitle.he ?? '' } : undefined,
+      metaDescription: body.metaDescription ? { en: body.metaDescription.en ?? '', he: body.metaDescription.he ?? '' } : undefined,
+      metaKeywords: body.metaKeywords ? { en: body.metaKeywords.en ?? '', he: body.metaKeywords.he ?? '' } : undefined,
+    });
+
     await newEvent.save();
 
     // Increment events version to invalidate client caches

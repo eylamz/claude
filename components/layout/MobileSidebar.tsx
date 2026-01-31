@@ -540,13 +540,13 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               {/* Language Switcher Button */}
               <button
                 onClick={handleLanguageToggle}
-                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
+                className=" p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
                 aria-label={tCommon('toggle_language') || 'Toggle language'}
               >
                 {locale === 'en' ? (
-                  <Icon name="hebrew" className="w-4 h-4" />
+                  <Icon name="hebrew" className="w-4 h-4 overflow-visible" />
                 ) : (
-                  <Icon name="english" className="w-4 h-4" />
+                  <Icon name="english" className="w-4 h-4 overflow-visible" />
                 )}
                 <span>{locale === 'en' ? 'עברית' : 'English'}</span>
               </button>

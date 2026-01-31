@@ -2,9 +2,32 @@ import { Metadata } from 'next';
 
 type LocalizedField = { en: string; he: string } | string;
 
+/** Default site meta title (same as root layout.tsx). Used as final fallback for page titles. */
+export const DEFAULT_META_TITLE = 'ENBOSS - No Rider Left Behind';
+
+/**
+ * Get localized text with fallback: if the requested locale's value is missing or empty,
+ * use the other locale (e.g. Hebrew missing → English, English missing → Hebrew).
+ */
 export function getLocalizedText(field: LocalizedField, locale: string): string {
   if (typeof field === 'string') return field;
-  return field[locale] || field.en || field.he || '';
+  const otherLocale = locale === 'he' ? 'en' : 'he';
+  const primary = (field[locale] ?? '').trim();
+  const fallback = (field[otherLocale] ?? '').trim();
+  return primary || fallback || '';
+}
+
+/**
+ * Get meta title with fallback chain: locale metaTitle → English metaTitle → DEFAULT_META_TITLE.
+ */
+export function getMetaTitleWithFallback(
+  field: { en: string; he: string } | undefined,
+  locale: string
+): string {
+  if (!field) return DEFAULT_META_TITLE;
+  const localeVal = (field[locale as 'en' | 'he'] ?? '').trim();
+  const enVal = (field.en ?? '').trim();
+  return localeVal || enVal || DEFAULT_META_TITLE;
 }
 
 export interface SEOConfig {

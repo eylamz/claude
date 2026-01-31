@@ -1,5 +1,13 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
+/**
+ * Localized field interface (e.g. for SEO)
+ */
+export interface ILocalizedField {
+  en: string;
+  he: string;
+}
+
 // Content section interface for events
 export interface IEventContentSection {
   type: 'intro' | 'heading' | 'text' | 'list' | 'image' | 'divider' | 'info-box';
@@ -86,7 +94,7 @@ export interface IEventDateTime {
 export interface IEvent extends Document {
   slug: string;
   category: 'roller' | 'skate' | 'scoot' | 'bike';
-  type: 'competition' | 'workshop' | 'event' | 'meetup' | 'jam';
+  type: 'competition' | 'session' | 'camp' | 'premiere' | 'jam' | 'workshop' | 'event' | 'meetup';
   status: 'draft' | 'published' | 'archived' | 'cancelled';
   isFeatured: boolean;
   
@@ -120,6 +128,11 @@ export interface IEvent extends Document {
   
   // SEO and search
   searchableText: string;
+  
+  // SEO
+  metaTitle?: ILocalizedField;
+  metaDescription?: ILocalizedField;
+  metaKeywords?: ILocalizedField;
   
   // Event specific fields
   isOnline: boolean;
@@ -185,8 +198,8 @@ const EventMediaAssetSchema = new Schema<IEventMediaAsset>({
   type: { type: String, required: true, enum: ['image', 'video'] },
   cloudinaryId: { type: String },
   altText: {
-    he: { type: String, required: true },
-    en: { type: String, required: true }
+    he: { type: String, default: '' },
+    en: { type: String, default: '' }
   },
   caption: {
     he: { type: String },
@@ -249,7 +262,7 @@ const EventSchema = new Schema<IEvent>(
     type: { 
       type: String, 
       required: true, 
-      enum: ['competition', 'workshop', 'event', 'meetup', 'jam'] 
+      enum: ['competition', 'session', 'camp', 'premiere', 'jam', 'workshop', 'event', 'meetup'] 
     },
     status: { 
       type: String, 
@@ -289,6 +302,20 @@ const EventSchema = new Schema<IEvent>(
     
     // SEO and search
     searchableText: { type: String },
+    
+    // SEO
+    metaTitle: {
+      en: { type: String, trim: true, maxlength: [70, 'Meta title cannot exceed 70 characters'] },
+      he: { type: String, trim: true, maxlength: [70, 'Meta title cannot exceed 70 characters'] },
+    },
+    metaDescription: {
+      en: { type: String, trim: true, maxlength: [160, 'Meta description cannot exceed 160 characters'] },
+      he: { type: String, trim: true, maxlength: [160, 'Meta description cannot exceed 160 characters'] },
+    },
+    metaKeywords: {
+      en: { type: String, trim: true },
+      he: { type: String, trim: true },
+    },
     
     // Event specific fields
     isOnline: { type: Boolean, default: false },

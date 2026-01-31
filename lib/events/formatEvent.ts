@@ -113,6 +113,10 @@ export function formatEventForDetail(
     price: event.price,
     relatedSports: event.relatedSports || [],
 
+    metaTitle: event.metaTitle,
+    metaDescription: event.metaDescription,
+    metaKeywords: event.metaKeywords,
+
     createdAt: event.createdAt,
     updatedAt: event.updatedAt,
   };

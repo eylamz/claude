@@ -105,7 +105,7 @@ export const colors = {
   },
   card: {
     light: 'hsl(60, 17%, 100%)',
-    dark: 'hsl(180, 3%, 13%)',
+    dark: 'hsl(240, 4%, 13%)',
     muted: {
       light: 'hsl(0, 0%, 88%)',
       dark: 'hsl(0, 0%, 20%)',
@@ -329,7 +329,7 @@ export const colors = {
     light: 'hsl(123, 48%, 45%)',
     dark: 'hsl(123, 44%, 50%)',
     bg: {
-      light: '#e3f6e4',
+      light: 'hsl(123, 83%, 91%)',
       dark: '#0f2f10',
     },
     border: {

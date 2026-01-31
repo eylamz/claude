@@ -7,6 +7,17 @@ import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper,
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { EventContentBuilder, ImageUploader, type EventSectionForm } from '@/components/admin';
+
+interface EventMediaItem {
+  id: string;
+  url: string;
+  type: 'image' | 'video';
+  cloudinaryId?: string;
+  altText: { en: string; he: string };
+  caption?: { en: string; he: string };
+  usedInSections?: string[];
+}
 
 interface EventFormData {
   title: { en: string; he: string };
@@ -21,10 +32,14 @@ interface EventFormData {
     name: { en: string; he: string };
     address: { en: string; he: string };
   };
-  featuredImage: string;
+  featuredImage: {
+    url: string;
+    cloudinaryId: string;
+    altText: { en: string; he: string };
+  };
   videoUrl: string;
   relatedSports: string[];
-  category: string;
+  type: string;
   organizer: {
     name: string;
     email: string;
@@ -41,8 +56,11 @@ interface EventFormData {
   registrationRequired: boolean;
   metaTitle: { en: string; he: string };
   metaDescription: { en: string; he: string };
+  metaKeywords: { en: string; he: string };
   tags: string[];
   notes: string;
+  sections: { en: EventSectionForm[]; he: EventSectionForm[] };
+  media: EventMediaItem[];
 }
 
 const SPORTS = [
@@ -53,14 +71,12 @@ const SPORTS = [
   'Longboard',
 ];
 
-const CATEGORIES = [
-  'Competition',
-  'Workshop',
-  'Jam',
-  'Tournament',
-  'Meetup',
-  'Demo',
-  'Other',
+const EVENT_TYPES = [
+  'competition',
+  'session',
+  'camp',
+  'premiere',
+  'jam',
 ];
 
 export default function NewEventPage() {
@@ -69,6 +85,7 @@ export default function NewEventPage() {
   const [activeTab, setActiveTab] = useState<'en' | 'he'>('en');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [expandedMediaId, setExpandedMediaId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState<EventFormData>({
@@ -84,10 +101,14 @@ export default function NewEventPage() {
       name: { en: '', he: '' },
       address: { en: '', he: '' },
     },
-    featuredImage: '',
+    featuredImage: {
+      url: '',
+      cloudinaryId: '',
+      altText: { en: '', he: '' },
+    },
     videoUrl: '',
     relatedSports: [],
-    category: '',
+    type: '',
     organizer: {
       name: '',
       email: '',
@@ -104,8 +125,11 @@ export default function NewEventPage() {
     registrationRequired: false,
     metaTitle: { en: '', he: '' },
     metaDescription: { en: '', he: '' },
+    metaKeywords: { en: '', he: '' },
     tags: [],
     notes: '',
+    sections: { en: [], he: [] },
+    media: [],
   });
 
   const generateSlug = (name: string) => {
@@ -175,7 +199,7 @@ export default function NewEventPage() {
     if (!formData.endDate) newErrors['endDate'] = 'End date is required';
     if (!formData.location.name.en) newErrors['location.name.en'] = 'Location name (EN) is required';
     if (!formData.location.name.he) newErrors['location.name.he'] = 'Location name (HE) is required';
-    if (!formData.category) newErrors['category'] = 'Category is required';
+    if (!formData.type) newErrors['type'] = 'Event type is required';
     if (!formData.organizer.name) newErrors['organizer.name'] = 'Organizer name is required';
     if (!formData.organizer.email) newErrors['organizer.email'] = 'Organizer email is required';
 
@@ -193,8 +217,20 @@ export default function NewEventPage() {
     setIsSubmitting(true);
     
     try {
+      const sectionsForApi = {
+        en: (formData.sections?.en || []).map(({ id, ...s }) => s),
+        he: (formData.sections?.he || []).map(({ id, ...s }) => s),
+      };
+      const mediaForApi = (formData.media || []).map((m) => ({
+        ...m,
+        altText: { en: m.altText?.en ?? '', he: m.altText?.he ?? '' },
+        caption: { en: m.caption?.en ?? '', he: m.caption?.he ?? '' },
+        usedInSections: m.usedInSections || [],
+      }));
       const submitData = {
         ...formData,
+        sections: sectionsForApi,
+        media: mediaForApi,
         capacity: formData.capacity === '' ? undefined : formData.capacity,
         price: formData.price === '' ? undefined : formData.price,
         status: saveAsDraft ? 'draft' : 'published',
@@ -360,26 +396,274 @@ export default function NewEventPage() {
             </div>
 
             {/* Featured Image */}
-            <div>
+            <div className="space-y-4">
               <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2">
-                Featured Image URL
+                Featured Image
               </label>
+              <p className="text-xs text-text-secondary dark:text-text-secondary-dark mb-2">
+                Upload to Cloudinary (saved with original filename) or paste URL/Cloudinary ID below.
+              </p>
+              <ImageUploader
+                images={formData.featuredImage.url ? [{ url: formData.featuredImage.url, publicId: formData.featuredImage.cloudinaryId || formData.featuredImage.url, alt: formData.featuredImage.altText.en }] : []}
+                onUpload={(uploaded) => {
+                  if (uploaded.length > 0) {
+                    setFormData(prev => ({
+                      ...prev,
+                      featuredImage: {
+                        ...prev.featuredImage,
+                        url: uploaded[0].url,
+                        cloudinaryId: uploaded[0].publicId,
+                      },
+                    }));
+                  } else {
+                    setFormData(prev => ({
+                      ...prev,
+                      featuredImage: { ...prev.featuredImage, url: '', cloudinaryId: '' },
+                    }));
+                  }
+                }}
+                maxImages={1}
+                folder="events"
+              />
               <Input
                 type="url"
-                value={formData.featuredImage}
-                onChange={(e) => handleInputChange('featuredImage', e.target.value)}
+                label="Image URL (or use upload above)"
+                value={formData.featuredImage.url}
+                onChange={(e) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    featuredImage: { ...prev.featuredImage, url: e.target.value },
+                  }))
+                }
                 placeholder="https://..."
               />
-              {formData.featuredImage && (
+              <Input
+                label="Cloudinary ID"
+                value={formData.featuredImage.cloudinaryId}
+                onChange={(e) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    featuredImage: { ...prev.featuredImage, cloudinaryId: e.target.value },
+                  }))
+                }
+                placeholder="e.g. events/OferSeshRoseStretch"
+              />
+              <Input
+                label="Alt text (English)"
+                value={formData.featuredImage.altText.en}
+                onChange={(e) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    featuredImage: {
+                      ...prev.featuredImage,
+                      altText: { ...prev.featuredImage.altText, en: e.target.value },
+                    },
+                  }))
+                }
+                placeholder="e.g. Ofer's Sesh - Memorial Competition"
+              />
+              <Input
+                label="Alt text (Hebrew)"
+                value={formData.featuredImage.altText.he}
+                onChange={(e) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    featuredImage: {
+                      ...prev.featuredImage,
+                      altText: { ...prev.featuredImage.altText, he: e.target.value },
+                    },
+                  }))
+                }
+                placeholder="e.g. הסשן של עופר - תחרות זיכרון"
+              />
+              {formData.featuredImage.url && (
                 <div className="mt-3">
                   <img
-                    src={formData.featuredImage}
-                    alt="Featured preview"
+                    src={formData.featuredImage.url}
+                    alt={formData.featuredImage.altText.en || formData.featuredImage.altText.he || 'Featured preview'}
                     className="max-w-full h-48 object-cover rounded"
                   />
                 </div>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Content (sections) */}
+        <EventContentBuilder
+          sections={formData.sections}
+          activeTab={activeTab}
+          onSectionsChange={(sections) => setFormData((prev) => ({ ...prev, sections }))}
+          onActiveTabChange={(tab) => setActiveTab(tab)}
+        />
+
+        {/* Media */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Media</CardTitle>
+              <Button
+                type="button"
+                variant="gray"
+                onClick={() => {
+                  const newItem: EventMediaItem = {
+                    id: `media-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                    url: '',
+                    type: 'image',
+                    cloudinaryId: '',
+                    altText: { en: '', he: '' },
+                    caption: { en: '', he: '' },
+                    usedInSections: [],
+                  };
+                  setFormData((prev) => ({ ...prev, media: [...(prev.media || []), newItem] }));
+                  setExpandedMediaId(newItem.id);
+                }}
+              >
+                + Add media
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-xs text-text-secondary dark:text-text-secondary-dark mb-2">
+                Upload images to Cloudinary (saved with original filename). Each upload is added as a new media item.
+              </p>
+              <ImageUploader
+                images={[]}
+                onUpload={(uploaded) => {
+                  const newItems: EventMediaItem[] = uploaded.map((img) => ({
+                    id: `media-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                    url: img.url,
+                    type: 'image',
+                    cloudinaryId: img.publicId,
+                    altText: { en: img.alt || '', he: '' },
+                    caption: { en: '', he: '' },
+                    usedInSections: [],
+                  }));
+                  setFormData((prev) => ({ ...prev, media: [...(prev.media || []), ...newItems] }));
+                  if (newItems.length > 0) setExpandedMediaId(newItems[0].id);
+                }}
+                maxImages={20}
+                folder="events/media"
+              />
+            </div>
+            {(!formData.media || formData.media.length === 0) ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">No media items. Upload above or add one manually below.</p>
+            ) : (
+              formData.media.map((m, index) => (
+                <div
+                  key={m.id}
+                  className={`rounded-lg border p-4 transition-all ${
+                    expandedMediaId === m.id ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/20' : 'border-gray-200 dark:border-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 text-left"
+                      onClick={() => setExpandedMediaId(expandedMediaId === m.id ? null : m.id)}
+                    >
+                      <span className="text-sm font-medium">
+                        {m.type === 'video' ? '🎥' : '🖼️'} Media {index + 1}
+                        {m.url ? ` · ${m.url.slice(0, 40)}...` : ' (no URL)'}
+                      </span>
+                    </button>
+                    <Button
+                      type="button"
+                      variant="red"
+                      size="sm"
+                      onClick={() => {
+                        setFormData((prev) => ({ ...prev, media: (prev.media || []).filter((x) => x.id !== m.id) }));
+                        if (expandedMediaId === m.id) setExpandedMediaId(null);
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                  {expandedMediaId === m.id && (
+                    <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <Input
+                        label="URL"
+                        type="url"
+                        value={m.url}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            media: (prev.media || []).map((x) => (x.id === m.id ? { ...x, url: e.target.value } : x)),
+                          }))
+                        }
+                        placeholder="https://..."
+                      />
+                      <Input
+                        label="Cloudinary ID"
+                        value={m.cloudinaryId || ''}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            media: (prev.media || []).map((x) => (x.id === m.id ? { ...x, cloudinaryId: e.target.value } : x)),
+                          }))
+                        }
+                      />
+                      <Input
+                        label="Alt text (EN)"
+                        value={m.altText?.en ?? ''}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            media: (prev.media || []).map((x) =>
+                              x.id === m.id ? { ...x, altText: { ...x.altText, en: e.target.value } } : x
+                            ),
+                          }))
+                        }
+                      />
+                      <Input
+                        label="Alt text (HE)"
+                        value={m.altText?.he ?? ''}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            media: (prev.media || []).map((x) =>
+                              x.id === m.id ? { ...x, altText: { ...x.altText, he: e.target.value } } : x
+                            ),
+                          }))
+                        }
+                        dir="rtl"
+                      />
+                      <Input
+                        label="Caption (EN)"
+                        value={m.caption?.en ?? ''}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            media: (prev.media || []).map((x) =>
+                              x.id === m.id ? { ...x, caption: { ...(x.caption || { en: '', he: '' }), en: e.target.value } } : x
+                            ),
+                          }))
+                        }
+                      />
+                      <Input
+                        label="Caption (HE)"
+                        value={m.caption?.he ?? ''}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            media: (prev.media || []).map((x) =>
+                              x.id === m.id ? { ...x, caption: { ...(x.caption || { en: '', he: '' }), he: e.target.value } } : x
+                            ),
+                          }))
+                        }
+                        dir="rtl"
+                      />
+                      {m.url && (
+                        <div className="mt-2">
+                          <img src={m.url} alt={m.altText?.en || m.altText?.he || ''} className="max-h-32 object-contain rounded" />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
 
@@ -507,18 +791,27 @@ export default function NewEventPage() {
             <CardTitle>Event Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Type */}
             <div>
-              <SelectWrapper
-                label="Category"
-                value={formData.category}
-                onChange={(e) => handleInputChange('category', e.target.value)}
-                options={[
-                  { value: '', label: 'Select Category' },
-                  ...CATEGORIES.map(c => ({ value: c, label: c }))
-                ]}
-                error={errors.category}
-                required
-              />
+              <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-2">
+                Event type
+              </label>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {EVENT_TYPES.map((eventType) => (
+                  <Button
+                    variant={formData.type === eventType ? 'blue' : 'gray'}
+                    key={eventType}
+                    type="button"
+                    onClick={() => handleInputChange('type', eventType)}
+                    className={`px-3 py-1 rounded`}
+                  >
+                    {eventType.charAt(0).toUpperCase() + eventType.slice(1)}
+                  </Button>
+                ))}
+              </div>
+              {errors.type && (
+                <p className="text-sm text-red-500 mt-1">{errors.type}</p>
+              )}
             </div>
 
             {/* Related Sports */}
@@ -725,7 +1018,31 @@ export default function NewEventPage() {
         {/* Settings & SEO */}
         <Card>
           <CardHeader>
-            <CardTitle>Settings & SEO</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-gray dark:text-gray-dark">Settings & SEO</CardTitle>
+              <div className="flex items-center gap-2 bg-gray-bg dark:bg-gray-bg-dark px-3 py-1.5 rounded-lg border border-gray-border dark:border-gray-border-dark">
+                <span className="text-xs font-semibold text-gray dark:text-gray-dark">Editing:</span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={activeTab === 'en' ? 'blue' : 'gray'}
+                    type="button"
+                    onClick={() => setActiveTab('en')}
+                    className="!rounded text-xs font-medium"
+                  >
+                    English
+                  </Button>
+                  <Button
+                    variant={activeTab === 'he' ? 'blue' : 'gray'}
+                    type="button"
+                    onClick={() => setActiveTab('he')}
+                    className="!rounded text-xs font-medium"
+                    dir="rtl"
+                  >
+                    עברית
+                  </Button>
+                </div>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -791,6 +1108,20 @@ export default function NewEventPage() {
                 maxLength={160}
               />
               <p className="text-xs text-text-secondary dark:text-text-secondary-dark">{formData.metaDescription[activeTab].length}/160 characters</p>
+            </div>
+
+            <div>
+              <Input
+                label="Meta Keywords"
+                value={formData.metaKeywords[activeTab]}
+                onChange={(e) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    metaKeywords: { ...prev.metaKeywords, [activeTab]: e.target.value },
+                  }))
+                }
+                placeholder={activeTab === 'en' ? 'SEO keywords (comma-separated)' : 'מילות מפתח SEO'}
+              />
             </div>
 
             <div>

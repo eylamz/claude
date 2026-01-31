@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
@@ -474,9 +475,10 @@ const FullscreenImageViewer = ({
 
   if (!isOpen) return null;
 
-  return (
+  // Render via portal into document.body so the viewer sits above HeaderNav/MobileNav (fixed z-50)
+  const overlay = (
     <div 
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center select-none"
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center select-none"
       onClick={handleBackgroundClick}
     >
       {animationStylesElement}
@@ -680,6 +682,9 @@ const FullscreenImageViewer = ({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') return null;
+  return createPortal(overlay, document.body);
 };
 
 export default FullscreenImageViewer;

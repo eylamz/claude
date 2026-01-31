@@ -2036,7 +2036,7 @@ export default function SkateparkPage() {
 
           {/* YouTube Embed */}
           {skatepark.mediaLinks.youtube && (
-            <Card className="!rounded-none !shadow-none !px-4 sm:!px-0 !py-0 md:!p-4 w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu">
+            <Card className="!rounded-none !shadow-none !px-4 sm:!px-0 !py-0 md:!p-4 w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu mb-8">
               <CardHeader>
                 <CardTitle className="text-base sm:text-xl font-semibold flex items-center gap-2">
                   <Icon name="youtube" className="w-5 h-5" />

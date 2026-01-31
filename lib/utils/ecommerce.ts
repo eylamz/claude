@@ -79,9 +79,7 @@ export function isGrowthLabEnabled(): boolean {
     const envValue = process.env.NEXT_PUBLIC_ENABLE_GROWTH_LAB;
     return envValue !== 'false';
   }
-}
-
-/**
+}/**
  * Utility function to check if Community feature is enabled
  * Uses NEXT_PUBLIC_ENABLE_COMMUNITY environment variable
  * Defaults to true if not set (backward compatibility)

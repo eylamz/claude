@@ -36,9 +36,20 @@
   "sports": {
     "roller": "Roller",
     "skate": "Skate",
-    "scoot": "Scoot",
+    "scoot": "Scooter",
+    "bike": "Bike",
     "bmx": "BMX",
     "longboard": "Longboard"
+  },
+  "types": {
+    "competition": "Competition",
+    "session": "Session",
+    "camp": "Camp",
+    "premiere": "Premiere",
+    "jam": "Jam",
+    "workshop": "Workshop",
+    "event": "Event",
+    "meetup": "Meetup"
   },
   "about": "About",
   "location": "Location",

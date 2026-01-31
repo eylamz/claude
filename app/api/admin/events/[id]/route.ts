@@ -43,25 +43,72 @@ export async function GET(
     // Get current participant count
     const currentParticipants = await EventSignup.countByEventId(event._id);
 
-    // Format event data
+    // Support both new schema (content, dateTime) and legacy flat fields
+    const hasNewSchema = event.content && event.dateTime;
+    const titleEn = hasNewSchema ? event.content.en?.title : (event.title?.en ?? '');
+    const titleHe = hasNewSchema ? event.content.he?.title : (event.title?.he ?? '');
+    const descEn = hasNewSchema ? event.content.en?.description : (event.description?.en ?? '');
+    const descHe = hasNewSchema ? event.content.he?.description : (event.description?.he ?? '');
+    const startDate = hasNewSchema ? event.dateTime?.startDate : event.startDate;
+    const endDate = hasNewSchema ? event.dateTime?.endDate : event.endDate;
+    const tzEn = hasNewSchema ? event.dateTime?.timezone?.en : null;
+    const tzHe = hasNewSchema ? event.dateTime?.timezone?.he : null;
+    const timezoneStr = tzEn || tzHe || event.timezone || 'Asia/Jerusalem';
+    const featuredImageObj = typeof event.featuredImage === 'object' && event.featuredImage?.url
+      ? {
+          url: event.featuredImage.url,
+          cloudinaryId: event.featuredImage.cloudinaryId || '',
+          altText: {
+            en: event.featuredImage.altText?.en || '',
+            he: event.featuredImage.altText?.he || '',
+          },
+        }
+      : {
+          url: typeof event.featuredImage === 'string' ? event.featuredImage : '',
+          cloudinaryId: '',
+          altText: { en: '', he: '' },
+        };
+    const tags = hasNewSchema
+      ? (event.content.en?.tags && event.content.he?.tags ? event.content.en.tags : event.content.en?.tags || event.content.he?.tags || [])
+      : (event.tags || []);
+
+    // Format event data for admin form (flat shape)
     const formattedEvent = {
       id: event._id.toString(),
       slug: event.slug,
-      title: event.title || { en: '', he: '' },
-      description: event.description || { en: '', he: '' },
-      shortDescription: event.shortDescription || { en: '', he: '' },
-      startDate: event.startDate,
-      endDate: event.endDate,
-      timezone: event.timezone || 'Asia/Jerusalem',
+      title: { en: titleEn || '', he: titleHe || '' },
+      description: { en: descEn || '', he: descHe || '' },
+      shortDescription: event.shortDescription || '',
+      startDate: startDate ?? null,
+      endDate: endDate ?? null,
+      timezone: timezoneStr,
       isAllDay: event.isAllDay || false,
       location: event.location || {
         name: { en: '', he: '' },
         address: { en: '', he: '' },
       },
       images: event.images || [],
-      featuredImage: event.featuredImage || '',
-      videoUrl: event.videoUrl,
+      media: Array.isArray(event.media)
+        ? event.media.map((m: any) => ({
+            id: m.id || '',
+            url: m.url || '',
+            type: m.type || 'image',
+            cloudinaryId: m.cloudinaryId || '',
+            altText: {
+              en: m.altText?.en != null ? String(m.altText.en) : '',
+              he: m.altText?.he != null ? String(m.altText.he) : '',
+            },
+            caption: {
+              en: m.caption?.en != null ? String(m.caption.en) : '',
+              he: m.caption?.he != null ? String(m.caption.he) : '',
+            },
+            usedInSections: Array.isArray(m.usedInSections) ? m.usedInSections : [],
+          }))
+        : [],
+      featuredImage: featuredImageObj,
+      videoUrl: event.videoUrl || '',
       relatedSports: event.relatedSports || [],
+      type: event.type || '',
       category: event.category || '',
       organizer: event.organizer || {
         name: '',
@@ -72,18 +119,25 @@ export async function GET(
       isFree: event.isFree !== undefined ? event.isFree : true,
       price: event.price,
       currency: event.currency || 'ILS',
-      registrationUrl: event.registrationUrl,
-      viewsCount: event.viewsCount || 0,
-      interestedCount: event.interestedCount || 0,
+      registrationUrl: event.registrationUrl || '',
+      viewsCount: event.viewCount ?? event.viewsCount ?? 0,
+      interestedCount: event.interestedCount ?? 0,
       attendedCount: currentParticipants,
       status: event.status || 'draft',
       isFeatured: event.isFeatured || false,
       isPublic: event.isPublic !== undefined ? event.isPublic : true,
       registrationRequired: event.registrationRequired || false,
-      metaTitle: event.metaTitle,
-      metaDescription: event.metaDescription,
-      tags: event.tags || [],
-      notes: event.notes,
+      metaTitle: event.metaTitle ?? { en: '', he: '' },
+      metaDescription: event.metaDescription ?? { en: '', he: '' },
+      metaKeywords: event.metaKeywords ?? { en: '', he: '' },
+      tags: Array.isArray(tags) ? tags : [],
+      notes: event.notes || '',
+      sections: hasNewSchema
+        ? {
+            en: Array.isArray(event.content.en?.sections) ? event.content.en.sections : [],
+            he: Array.isArray(event.content.he?.sections) ? event.content.he.sections : [],
+          }
+        : { en: [], he: [] },
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
     };
@@ -130,36 +184,179 @@ export async function PUT(
     }
 
     const body = await request.json();
-    
-    // Update fields
+
+    // DEBUG: log incoming media from client
+    console.log('[PUT event] body.media received:', body.media === undefined ? 'undefined' : Array.isArray(body.media), body.media?.length);
+    if (Array.isArray(body.media)) {
+      body.media.forEach((m: any, i: number) => {
+        console.log(`[PUT event] body.media[${i}]:`, {
+          id: m?.id,
+          altText: m?.altText,
+          'altText.en': m?.altText?.en,
+          'altText.he': m?.altText?.he,
+        });
+      });
+    }
+
+    // Event model uses content (en/he), dateTime, and featuredImage object — map flat form to schema
     if (body.slug !== undefined) event.slug = body.slug;
-    if (body.title !== undefined) event.title = body.title;
-    if (body.description !== undefined) event.description = body.description;
-    if (body.shortDescription !== undefined) event.shortDescription = body.shortDescription;
-    if (body.startDate !== undefined) event.startDate = new Date(body.startDate);
-    if (body.endDate !== undefined) event.endDate = new Date(body.endDate);
-    if (body.timezone !== undefined) event.timezone = body.timezone;
-    if (body.isAllDay !== undefined) event.isAllDay = body.isAllDay;
-    if (body.location !== undefined) event.location = body.location;
-    if (body.images !== undefined) event.images = body.images;
-    if (body.featuredImage !== undefined) event.featuredImage = body.featuredImage;
-    if (body.videoUrl !== undefined) event.videoUrl = body.videoUrl;
-    if (body.relatedSports !== undefined) event.relatedSports = body.relatedSports;
+    if (body.type !== undefined) event.type = body.type;
     if (body.category !== undefined) event.category = body.category;
-    if (body.organizer !== undefined) event.organizer = body.organizer;
-    if (body.capacity !== undefined) event.capacity = body.capacity;
-    if (body.isFree !== undefined) event.isFree = body.isFree;
-    if (body.price !== undefined) event.price = body.price;
-    if (body.currency !== undefined) event.currency = body.currency;
-    if (body.registrationUrl !== undefined) event.registrationUrl = body.registrationUrl;
     if (body.status !== undefined) event.status = body.status;
     if (body.isFeatured !== undefined) event.isFeatured = body.isFeatured;
-    if (body.isPublic !== undefined) event.isPublic = body.isPublic;
+    if (body.isFree !== undefined) event.isFree = body.isFree;
     if (body.registrationRequired !== undefined) event.registrationRequired = body.registrationRequired;
-    if (body.metaTitle !== undefined) event.metaTitle = body.metaTitle;
-    if (body.metaDescription !== undefined) event.metaDescription = body.metaDescription;
-    if (body.tags !== undefined) event.tags = body.tags;
-    if (body.notes !== undefined) event.notes = body.notes;
+    if (body.registrationUrl !== undefined) event.registrationUrl = body.registrationUrl || '';
+    if (body.location !== undefined) event.location = body.location;
+    if (body.metaTitle !== undefined) event.metaTitle = { en: body.metaTitle.en ?? '', he: body.metaTitle.he ?? '' };
+    if (body.metaDescription !== undefined) event.metaDescription = { en: body.metaDescription.en ?? '', he: body.metaDescription.he ?? '' };
+    if (body.metaKeywords !== undefined) event.metaKeywords = { en: body.metaKeywords.en ?? '', he: body.metaKeywords.he ?? '' };
+
+    // content (title, description, tags) — preserve existing sections
+    if (event.content) {
+      if (body.title !== undefined) {
+        if (event.content.en) event.content.en.title = body.title.en ?? event.content.en.title ?? '';
+        if (event.content.he) event.content.he.title = body.title.he ?? event.content.he.title ?? '';
+      }
+      if (body.description !== undefined) {
+        if (event.content.en) event.content.en.description = body.description.en ?? event.content.en.description ?? '';
+        if (event.content.he) event.content.he.description = body.description.he ?? event.content.he.description ?? '';
+      }
+      if (body.tags !== undefined && Array.isArray(body.tags)) {
+        if (event.content.en) event.content.en.tags = body.tags;
+        if (event.content.he) event.content.he.tags = body.tags;
+      }
+      if (body.sections !== undefined && typeof body.sections === 'object') {
+        if (Array.isArray(body.sections.en)) {
+          event.content.en.sections = body.sections.en.map((s: any) => ({
+            type: s.type,
+            order: typeof s.order === 'number' ? s.order : 0,
+            level: s.level,
+            content: s.content,
+            listType: s.listType,
+            items: Array.isArray(s.items) ? s.items : [],
+            data: s.data,
+            links: Array.isArray(s.links) ? s.links : [],
+            boxStyle: s.boxStyle,
+          }));
+        }
+        if (Array.isArray(body.sections.he)) {
+          event.content.he.sections = body.sections.he.map((s: any) => ({
+            type: s.type,
+            order: typeof s.order === 'number' ? s.order : 0,
+            level: s.level,
+            content: s.content,
+            listType: s.listType,
+            items: Array.isArray(s.items) ? s.items : [],
+            data: s.data,
+            links: Array.isArray(s.links) ? s.links : [],
+            boxStyle: s.boxStyle,
+          }));
+        }
+      }
+    } else {
+      event.content = {
+        en: {
+          title: body.title?.en ?? '',
+          description: body.description?.en ?? '',
+          tags: Array.isArray(body.tags) ? body.tags : [],
+          sections: [],
+        },
+        he: {
+          title: body.title?.he ?? '',
+          description: body.description?.he ?? '',
+          tags: Array.isArray(body.tags) ? body.tags : [],
+          sections: [],
+        },
+      };
+    }
+
+    // dateTime
+    if (event.dateTime) {
+      if (body.startDate !== undefined) event.dateTime.startDate = new Date(body.startDate);
+      if (body.endDate !== undefined) event.dateTime.endDate = new Date(body.endDate);
+      if (body.timezone !== undefined) {
+        event.dateTime.timezone = {
+          en: body.timezone,
+          he: event.dateTime.timezone?.he ?? body.timezone,
+        };
+      }
+    } else {
+      event.dateTime = {
+        startDate: body.startDate ? new Date(body.startDate) : new Date(),
+        endDate: body.endDate ? new Date(body.endDate) : undefined,
+        timezone: { en: body.timezone || 'Asia/Jerusalem', he: body.timezone || 'אסיה/ירושלים' },
+      };
+    }
+
+    // media array (each item: id, url, type, cloudinaryId, altText { en, he }, caption { en, he }, usedInSections)
+    if (body.media !== undefined && Array.isArray(body.media)) {
+      event.media = body.media.map((m: any, idx: number) => {
+        const en = m.altText?.en != null ? String(m.altText.en) : '';
+        const he = m.altText?.he != null ? String(m.altText.he) : '';
+        const item = {
+          id: m.id || `media-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          url: m.url || '',
+          type: m.type === 'video' ? 'video' : 'image',
+          cloudinaryId: m.cloudinaryId || undefined,
+          altText: { en, he },
+          caption: {
+            en: m.caption?.en != null ? String(m.caption.en) : '',
+            he: m.caption?.he != null ? String(m.caption.he) : '',
+          },
+          usedInSections: Array.isArray(m.usedInSections) ? m.usedInSections : [],
+        };
+        console.log(`[PUT event] mapped media[${idx}].altText:`, item.altText);
+        return item;
+      });
+    }
+
+    // featuredImage (model expects { url, altText, cloudinaryId? })
+    if (body.featuredImage !== undefined) {
+      const fi = body.featuredImage;
+      const url = typeof fi === 'string' ? fi : (fi?.url ?? '');
+      const cloudinaryId = typeof fi === 'object' && fi?.cloudinaryId !== undefined ? fi.cloudinaryId : (event.featuredImage && typeof event.featuredImage === 'object' ? event.featuredImage.cloudinaryId : undefined);
+      const altText = typeof fi === 'object' && fi?.altText
+        ? { en: fi.altText.en ?? '', he: fi.altText.he ?? '' }
+        : (event.featuredImage && typeof event.featuredImage === 'object' ? event.featuredImage.altText : { en: '', he: '' });
+      event.featuredImage = {
+        url,
+        ...(cloudinaryId !== undefined && cloudinaryId !== '' && { cloudinaryId: String(cloudinaryId) }),
+        altText,
+      };
+    }
+
+    // Ensure required fields pass validation (form may not send category; media may have empty altText)
+    if (!event.category || typeof event.category !== 'string') {
+      event.category = 'roller';
+    }
+    // Normalize media.altText so every item has en/he strings (required by schema). Build explicit plain objects.
+    if (Array.isArray(event.media)) {
+      event.media = event.media.map((m: any, idx: number) => {
+        const altEn = (m.altText?.en != null && m.altText?.en !== undefined ? String(m.altText.en) : '') as string;
+        const altHe = (m.altText?.he != null && m.altText?.he !== undefined ? String(m.altText.he) : '') as string;
+        const normalized = {
+          id: m.id || `media-${Date.now()}-${idx}`,
+          url: m.url || '',
+          type: m.type === 'video' ? 'video' : 'image',
+          cloudinaryId: m.cloudinaryId || undefined,
+          altText: { en: altEn, he: altHe },
+          caption: {
+            en: m.caption?.en != null ? String(m.caption.en) : '',
+            he: m.caption?.he != null ? String(m.caption.he) : '',
+          },
+          usedInSections: Array.isArray(m.usedInSections) ? m.usedInSections : [],
+        };
+        console.log(`[PUT event] before save media[${idx}].altText:`, normalized.altText, 'types:', typeof normalized.altText.en, typeof normalized.altText.he);
+        return normalized;
+      });
+    }
+
+    // DEBUG: log full event.media right before save
+    console.log('[PUT event] event.media before save (length):', event.media?.length);
+    event.media?.forEach((m: any, i: number) => {
+      console.log(`[PUT event] event.media[${i}] before save:`, JSON.stringify({ id: m.id, altText: m.altText }));
+    });
 
     await event.save();
 
@@ -169,39 +366,76 @@ export async function PUT(
     settings.eventsVersion = currentVersion + 0.00001;
     await settings.save();
 
-    // Format response
+    // Format response for form (same shape as GET)
+    const hasNewSchema = event.content && event.dateTime;
+    const titleEn = hasNewSchema ? event.content.en?.title : '';
+    const titleHe = hasNewSchema ? event.content.he?.title : '';
+    const descEn = hasNewSchema ? event.content.en?.description : '';
+    const descHe = hasNewSchema ? event.content.he?.description : '';
+    const startDate = event.dateTime?.startDate ?? null;
+    const endDate = event.dateTime?.endDate ?? null;
+    const timezoneStr = event.dateTime?.timezone?.en || event.dateTime?.timezone?.he || 'Asia/Jerusalem';
+    const featuredImageObj = typeof event.featuredImage === 'object' && event.featuredImage
+      ? {
+          url: event.featuredImage.url || '',
+          cloudinaryId: event.featuredImage.cloudinaryId || '',
+          altText: {
+            en: event.featuredImage.altText?.en || '',
+            he: event.featuredImage.altText?.he || '',
+          },
+        }
+      : { url: '', cloudinaryId: '', altText: { en: '', he: '' } };
+    const tags = event.content?.en?.tags ?? event.content?.he?.tags ?? [];
+
     const formattedEvent = {
       id: event._id.toString(),
       slug: event.slug,
-      title: event.title,
-      description: event.description,
-      shortDescription: event.shortDescription,
-      startDate: event.startDate,
-      endDate: event.endDate,
-      timezone: event.timezone,
-      isAllDay: event.isAllDay,
+      title: { en: titleEn || '', he: titleHe || '' },
+      description: { en: descEn || '', he: descHe || '' },
+      shortDescription: '',
+      startDate,
+      endDate,
+      timezone: timezoneStr,
+      isAllDay: false,
       location: event.location,
-      images: event.images,
-      featuredImage: event.featuredImage,
-      videoUrl: event.videoUrl,
-      relatedSports: event.relatedSports,
-      category: event.category,
-      organizer: event.organizer,
-      capacity: event.capacity,
+      images: [],
+      media: Array.isArray(event.media)
+        ? event.media.map((m: any) => ({
+            id: m.id || '',
+            url: m.url || '',
+            type: m.type || 'image',
+            cloudinaryId: m.cloudinaryId || '',
+            altText: { en: m.altText?.en ?? '', he: m.altText?.he ?? '' },
+            caption: { en: m.caption?.en ?? '', he: m.caption?.he ?? '' },
+            usedInSections: Array.isArray(m.usedInSections) ? m.usedInSections : [],
+          }))
+        : [],
+      featuredImage: featuredImageObj,
+      videoUrl: '',
+      relatedSports: [],
+      type: event.type || '',
+      category: event.category || '',
+      organizer: { name: '', email: '', phone: '' },
+      capacity: undefined,
       isFree: event.isFree,
-      price: event.price,
-      currency: event.currency,
-      registrationUrl: event.registrationUrl,
-      viewsCount: event.viewsCount,
-      interestedCount: event.interestedCount,
+      price: undefined,
+      currency: 'ILS',
+      registrationUrl: event.registrationUrl || '',
+      viewsCount: event.viewCount ?? event.viewsCount ?? 0,
+      interestedCount: event.interestedCount ?? 0,
       status: event.status,
       isFeatured: event.isFeatured,
-      isPublic: event.isPublic,
-      registrationRequired: event.registrationRequired,
-      metaTitle: event.metaTitle,
-      metaDescription: event.metaDescription,
-      tags: event.tags,
-      notes: event.notes,
+      isPublic: true,
+      registrationRequired: event.registrationRequired ?? false,
+      metaTitle: event.metaTitle ?? { en: '', he: '' },
+      metaDescription: event.metaDescription ?? { en: '', he: '' },
+      metaKeywords: event.metaKeywords ?? { en: '', he: '' },
+      tags: Array.isArray(tags) ? tags : [],
+      notes: '',
+      sections: {
+        en: event.content?.en?.sections ?? [],
+        he: event.content?.he?.sections ?? [],
+      },
     };
 
     return NextResponse.json({

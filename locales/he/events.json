@@ -37,8 +37,19 @@
     "roller": "רולר",
     "skate": "סקייט",
     "scoot": "קורקינט",
+    "bike": "אופניים",
     "bmx": "BMX",
     "longboard": "לונגבורד"
+  },
+  "types": {
+    "competition": "תחרות",
+    "session": "סשן",
+    "camp": "מחנה",
+    "premiere": "בכורה",
+    "jam": "ג'אם",
+    "workshop": "סדנה",
+    "event": "אירוע",
+    "meetup": "מפגש"
   },
   "about": "אודות",
   "location": "מיקום",

@@ -1,9 +1,11 @@
 import { Metadata } from 'next';
-import { generateMetadata as genMeta, getLocalizedText } from './utils';
+import { generateMetadata as genMeta, getLocalizedText, getMetaTitleWithFallback, DEFAULT_META_TITLE } from './utils';
 import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';
 import Guide from '@/lib/models/Guide';
 import Form from '@/lib/models/Form';
+import Event from '@/lib/models/Event';
+import { formatEventForDetail } from '@/lib/events/formatEvent';
 
 // Example metadata generators for different page types
 
@@ -237,39 +239,80 @@ export async function generateGuidesListingMetadata(params: { locale: string }):
 
 export async function generateEventMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
   const { slug, locale } = params;
-  
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
-  const res = await fetch(`${siteUrl}/api/events/${slug}`, { next: { revalidate: 1800 } });
-  
-  if (!res.ok) {
+
+  try {
+    await connectDB();
+
+    const eventDoc = await Event.findOne({
+      slug: slug.toLowerCase(),
+      status: 'published',
+    }).lean();
+
+    if (!eventDoc) {
+      return genMeta({
+        title: 'Event Not Found',
+        description: 'The event you are looking for could not be found.',
+        locale,
+      });
+    }
+
+    const event = formatEventForDetail(eventDoc, { incrementView: false }) as any;
+
+    const titleFromContent = event.content?.[locale]?.title ?? event.content?.en?.title ?? '';
+    const descriptionFromContent = event.content?.[locale]?.description ?? event.content?.en?.description ?? '';
+    const fallbackDescription = descriptionFromContent
+      ? descriptionFromContent.substring(0, 160)
+      : `Join us at ${titleFromContent}. Event details, location, and registration on ENBOSS.`;
+
+    // Meta title fallback: locale metaTitle → English metaTitle → layout default (DEFAULT_META_TITLE)
+    const metaTitleResolved = getMetaTitleWithFallback(event.metaTitle, locale);
+    const contentTitleFallback = event.dateTime?.startDate
+      ? `${titleFromContent} - ${new Date(event.dateTime.startDate).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US')}`
+      : titleFromContent;
+    const titleBase = (metaTitleResolved !== DEFAULT_META_TITLE ? metaTitleResolved : null)
+      || (contentTitleFallback || DEFAULT_META_TITLE);
+    const brand = locale === 'he' ? 'אנבוס' : 'ENBOSS';
+    const title = titleBase === DEFAULT_META_TITLE
+      ? DEFAULT_META_TITLE
+      : `${brand} | ${titleBase}`;
+    const metaDescription = event.metaDescription && (event.metaDescription.en || event.metaDescription.he)
+      ? getLocalizedText(event.metaDescription, locale)
+      : undefined;
+    const description = metaDescription || (() => {
+      const eventDate = event.dateTime?.startDate ? new Date(event.dateTime.startDate).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US') : '';
+      const locationName = event.location?.name ? getLocalizedText(event.location.name, locale) : '';
+      return `${fallbackDescription}${eventDate ? ` Date: ${eventDate}.` : ''}${locationName ? ` Location: ${locationName}.` : ''} ${event.isFree !== false ? 'Free event' : event.price ? `Price: ₪${event.price}` : ''}`.trim();
+    })();
+
+    const image = event.featuredImage?.url || (typeof event.featuredImage === 'string' ? event.featuredImage : '') || event.images?.[0]?.url || '/og-event-default.jpg';
+
+    const baseMeta = genMeta({
+      title,
+      description,
+      image,
+      url: `/${locale}/events/${slug}`,
+      type: 'article',
+      locale,
+      alternateLocales: locale === 'en' ? ['he'] : ['en'],
+      publishedTime: event.createdAt,
+      modifiedTime: event.updatedAt,
+    });
+
+    const keywords = event.metaKeywords && (event.metaKeywords.en || event.metaKeywords.he)
+      ? getLocalizedText(event.metaKeywords, locale)
+      : undefined;
+    if (keywords) {
+      baseMeta.keywords = keywords;
+    }
+    return baseMeta;
+  } catch (error) {
+    console.error('Error generating event metadata:', error);
     return genMeta({
       title: 'Event Not Found',
       description: 'The event you are looking for could not be found.',
       locale,
     });
   }
-
-  const { event } = await res.json();
-  const title = getLocalizedText(event.title, locale);
-  const description = event.shortDescription || event.description
-    ? getLocalizedText(event.shortDescription || event.description, locale).substring(0, 160)
-    : `Join us at ${title}. Event details, location, and registration on ENBOSS.`;
-  
-  const image = event.featuredImage || event.images?.[0]?.url || '/og-event-default.jpg';
-  const eventDate = new Date(event.startDate).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US');
-  const locationName = event.location?.name ? getLocalizedText(event.location.name, locale) : '';
-
-  return genMeta({
-    title: `${title} - ${eventDate}`,
-    description: `${description} Date: ${eventDate}.${locationName ? ` Location: ${locationName}.` : ''} ${event.isFree ? 'Free event' : `Price: ₪${event.price}`}.`,
-    image,
-    url: `/${locale}/events/${slug}`,
-    type: 'article',
-    locale,
-    alternateLocales: locale === 'en' ? ['he'] : ['en'],
-    publishedTime: event.createdAt,
-    modifiedTime: event.updatedAt,
-  });
 }
 
 export async function generateGuideMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
