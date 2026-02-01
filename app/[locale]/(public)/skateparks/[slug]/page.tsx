@@ -27,6 +27,7 @@ import {
   type OperatingHours as OperatingHoursType,
 } from '@/lib/utils/hoursFormatter';
 import { generateLocalBusinessStructuredData, generateBreadcrumbStructuredData } from '@/lib/seo/utils';
+import { PLACEHOLDER_SKATEPARK_IMAGE } from '@/lib/constants/placeholders';
 
 interface SkateparkImage {
   url: string;
@@ -773,20 +774,20 @@ export default function SkateparkPage() {
 
   // Validate image URL and return a safe fallback if invalid
   const getValidImageUrl = (url: string | undefined | null): string => {
-    if (!url) return '/placeholder-skatepark.jpg';
-    
+    if (!url) return PLACEHOLDER_SKATEPARK_IMAGE;
+
     // Check if URL is from allowed domains or is a relative path
     const allowedDomains = ['res.cloudinary.com', 'placehold.co'];
     const isRelative = url.startsWith('/');
     const isAllowedDomain = allowedDomains.some(domain => url.includes(domain));
-    
+
     // If it's a relative path or from allowed domain, use it
     if (isRelative || isAllowedDomain) {
       return url;
     }
-    
-    // Otherwise, use placeholder
-    return '/placeholder-skatepark.jpg';
+
+    // Otherwise, use inline placeholder (no network request)
+    return PLACEHOLDER_SKATEPARK_IMAGE;
   };
 
   const fetchSkatepark = async () => {

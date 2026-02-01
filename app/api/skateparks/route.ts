@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';
 import Settings from '@/lib/models/Settings';
+import { PLACEHOLDER_SKATEPARK_IMAGE } from '@/lib/constants/placeholders';
 
 /**
  * Skateparks API Route
@@ -113,7 +114,7 @@ export async function GET(request: NextRequest) {
           type: 'Point',
           coordinates: [parkLng, parkLat], // [longitude, latitude] format to match detail page
         },
-        imageUrl: park.images?.[0]?.url || '/placeholder-skatepark.jpg',
+        imageUrl: park.images?.[0]?.url || PLACEHOLDER_SKATEPARK_IMAGE,
         images: park.images || [],
         operatingHours: park.operatingHours || {},
         lightingHours: park.lightingHours || undefined,

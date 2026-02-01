@@ -105,7 +105,7 @@ export async function GET(
         _id: park._id.toString(),
         slug: park.slug,
         name: park.name,
-        imageUrl: park.images?.[0]?.url || '/placeholder-skatepark.jpg',
+        imageUrl: park.images?.[0]?.url || PLACEHOLDER_SKATEPARK_IMAGE,
         area: park.area,
         rating: park.rating || 0,
         totalReviews: park.totalReviews || 0,

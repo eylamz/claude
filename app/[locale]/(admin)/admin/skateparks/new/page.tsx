@@ -534,7 +534,7 @@ export default function NewSkateparkPage() {
                       alt={`Image ${index + 1}`}
                       className="w-full h-32 object-cover"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder-skatepark.jpg';
+                        (e.target as HTMLImageElement).src = PLACEHOLDER_SKATEPARK_IMAGE;
                       }}
                     />
                     {image.isFeatured && (
@@ -597,7 +597,7 @@ export default function NewSkateparkPage() {
                             alt={`Image ${imageIndex + 1}`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/placeholder-skatepark.jpg';
+                              (e.target as HTMLImageElement).src = PLACEHOLDER_SKATEPARK_IMAGE;
                             }}
                           />
                         </div>

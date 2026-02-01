@@ -102,7 +102,7 @@ export async function GET(request: Request) {
             type: 'Point',
             coordinates: [parkLng, parkLat], // [longitude, latitude]
           },
-          imageUrl: skatepark.images?.[0]?.url || '/placeholder-skatepark.jpg',
+          imageUrl: skatepark.images?.[0]?.url || PLACEHOLDER_SKATEPARK_IMAGE,
           images: skatepark.images || [],
           operatingHours: skatepark.operatingHours || {},
           lightingHours: skatepark.lightingHours || undefined,

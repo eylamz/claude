@@ -143,6 +143,40 @@ const AreasTooltip = ({ active, payload, t }: any) => {
   );
 };
 
+// Custom Tooltip for skill level chart
+const SkillLevelTooltip = ({ active, payload, t }: any) => {
+  if (!active || !payload || !payload[0]) return null;
+  
+  const data = payload[0].payload;
+  const parks = data.parks || [];
+  const value = data.value || 0;
+  const name = data.name || '';
+
+  return (
+    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 max-w-md">
+      <div className="font-semibold text-gray-900 dark:text-white mb-2">{name}</div>
+      <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+        {value} {value === 1 ? t('admin.statistics.amenities.park') : t('admin.statistics.amenities.parksPlural')}
+      </div>
+      {parks.length > 0 && (
+        <div className="mt-2 max-h-40 overflow-y-auto">
+          <div className="text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">{t('admin.statistics.amenities.parks')}:</div>
+          <ul className="list-disc list-inside text-xs space-y-0.5 text-gray-600 dark:text-gray-400">
+            {parks.slice(0, 15).map((park: string, idx: number) => (
+              <li key={idx}>{park}</li>
+            ))}
+            {parks.length > 15 && (
+              <li className="text-gray-500 dark:text-gray-500 italic">
+                {t('admin.statistics.amenities.andMore', { count: parks.length - 15 })}
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface Skatepark {
   _id?: string;
   id?: string;
@@ -160,6 +194,7 @@ interface Skatepark {
   isFeatured: boolean;
   openingYear?: number;
   openingMonth?: number;
+  skillLevel?: { beginners?: boolean; advanced?: boolean; pro?: boolean };
   image?: string; // Main image URL from API
   images?: Array<{
     url: string;
@@ -213,9 +248,10 @@ export default function SkateparksPage() {
     openingYears: Array<{ year: number; count: number; parks: string[] }>;
     openingMonths: Array<{ month: number; count: number; parks: string[] }>;
     areas: { north: number; center: number; south: number };
+    skillLevel: { beginners: { count: number; parks: string[] }; advanced: { count: number; parks: string[] }; pro: { count: number; parks: string[] } };
     totalParks: number;
   } | null>(null);
-  const [activeTab, setActiveTab] = useState<'amenities' | 'openingYears' | 'openingMonths' | 'areas'>('amenities');
+  const [activeTab, setActiveTab] = useState<'amenities' | 'openingYears' | 'openingMonths' | 'areas' | 'skillLevel'>('amenities');
   
   // Cache version control: server version (from API) and client cache version (from localStorage)
   const [skateparksVersion, setSkateparksVersion] = useState<number>(1);
@@ -536,6 +572,13 @@ export default function SkateparksPage() {
       south: 0,
     };
 
+    // Calculate skill level distribution with park names
+    const skillLevelStats = {
+      beginners: { count: 0, parks: [] as string[] },
+      advanced: { count: 0, parks: [] as string[] },
+      pro: { count: 0, parks: [] as string[] },
+    };
+
     allParks.forEach((skatepark: any) => {
       // Amenities with park names
       if (skatepark.amenities) {
@@ -623,6 +666,23 @@ export default function SkateparksPage() {
           areaStats.south++;
         }
       }
+
+      // Skill level distribution
+      const parkName = skatepark.name?.en || skatepark.name?.he || 'Unknown';
+      if (skatepark.skillLevel) {
+        if (skatepark.skillLevel.beginners === true) {
+          skillLevelStats.beginners.count++;
+          skillLevelStats.beginners.parks.push(parkName);
+        }
+        if (skatepark.skillLevel.advanced === true) {
+          skillLevelStats.advanced.count++;
+          skillLevelStats.advanced.parks.push(parkName);
+        }
+        if (skatepark.skillLevel.pro === true) {
+          skillLevelStats.pro.count++;
+          skillLevelStats.pro.parks.push(parkName);
+        }
+      }
     });
 
     // Generate all years from 2005 to current year
@@ -653,6 +713,7 @@ export default function SkateparksPage() {
       openingYears,
       openingMonths,
       areas: areaStats,
+      skillLevel: skillLevelStats,
       totalParks: allParks.length,
     };
   }, []);
@@ -1340,6 +1401,16 @@ export default function SkateparksPage() {
               >
                 {t('admin.statistics.tabs.areas')}
               </button>
+              <button
+                onClick={() => setActiveTab('skillLevel')}
+                className={`px-6 py-3 font-medium text-sm transition-colors ${
+                  activeTab === 'skillLevel'
+                    ? 'text-header-text dark:text-header-text-dark border-b-2 border-header-text dark:border-header-text-dark'
+                    : 'text-text-secondary dark:text-text-secondary-dark hover:text-text dark:hover:text-text-dark'
+                }`}
+              >
+                {t('admin.statistics.tabs.skillLevel')}
+              </button>
             </div>
 
             {/* Modal Content */}
@@ -1575,6 +1646,62 @@ export default function SkateparksPage() {
                             {statisticsData.areas.south}
                           </div>
                           <div className="text-sm text-gray-600 dark:text-gray-400">{t('admin.statistics.areas.south')}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Skill Level Chart */}
+                  {activeTab === 'skillLevel' && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold text-text dark:text-text-dark">
+                          {t('admin.statistics.skillLevel.title')}
+                        </h3>
+                        <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                          {t('admin.statistics.areas.totalParks')}: <span className="font-bold text-text dark:text-text-dark">{statisticsData.totalParks}</span>
+                        </div>
+                      </div>
+                      <ResponsiveContainer width="100%" height={320}>
+                        <BarChart
+                          data={[
+                            { key: 'beginners', name: t('admin.statistics.skillLevel.beginners'), value: statisticsData.skillLevel.beginners?.count || 0, parks: statisticsData.skillLevel.beginners?.parks || [] },
+                            { key: 'advanced', name: t('admin.statistics.skillLevel.advanced'), value: statisticsData.skillLevel.advanced?.count || 0, parks: statisticsData.skillLevel.advanced?.parks || [] },
+                            { key: 'pro', name: t('admin.statistics.skillLevel.pro'), value: statisticsData.skillLevel.pro?.count || 0, parks: statisticsData.skillLevel.pro?.parks || [] },
+                          ]}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" className="dark:stroke-gray-700" />
+                          <XAxis
+                            dataKey="name"
+                            tick={{ fontSize: 12, fill: 'currentColor' }}
+                            className="text-text-secondary dark:text-text-dark"
+                          />
+                          <YAxis
+                            tick={{ fontSize: 12, fill: 'currentColor' }}
+                            className="text-text-secondary dark:text-text-secondary-dark"
+                          />
+                          <Tooltip content={<SkillLevelTooltip t={t} />} />
+                          <Bar dataKey="value" fill="#006f4e" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                      <div className="grid grid-cols-3 gap-4 mt-4">
+                        <div className="text-center p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                          <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                            {statisticsData.skillLevel.beginners?.count ?? 0}
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">{t('admin.statistics.skillLevel.beginners')}</div>
+                        </div>
+                        <div className="text-center p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                            {statisticsData.skillLevel.advanced?.count ?? 0}
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">{t('admin.statistics.skillLevel.advanced')}</div>
+                        </div>
+                        <div className="text-center p-4 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
+                          <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">
+                            {statisticsData.skillLevel.pro?.count ?? 0}
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">{t('admin.statistics.skillLevel.pro')}</div>
                         </div>
                       </div>
                     </div>

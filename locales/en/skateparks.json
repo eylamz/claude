@@ -185,7 +185,8 @@
         "amenities": "Amenities",
         "openingYears": "Opening Years",
         "openingMonths": "Opening Months",
-        "areas": "Areas"
+        "areas": "Areas",
+        "skillLevel": "Skill Level"
       },
       "amenities": {
         "title": "Amenities Distribution",
@@ -226,6 +227,12 @@
         "center": "Center",
         "south": "South",
         "count": "{count} parks"
+      },
+      "skillLevel": {
+        "title": "Skill Level Distribution",
+        "beginners": "Beginners",
+        "advanced": "Advanced",
+        "pro": "Pro"
       }
     }
   }

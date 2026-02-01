@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Trainer from '@/lib/models/Trainer';
 import Skatepark from '@/lib/models/Skatepark';
+import { PLACEHOLDER_SKATEPARK_IMAGE } from '@/lib/constants/placeholders';
 
 /**
  * Trainer Detail API Route
@@ -54,7 +55,7 @@ export async function GET(
           _id: park._id.toString(),
           slug: park.slug,
           name: park.name,
-          imageUrl: park.images?.[0]?.url || '/placeholder-skatepark.jpg',
+          imageUrl: park.images?.[0]?.url || PLACEHOLDER_SKATEPARK_IMAGE,
           area: park.area,
           rating: park.rating || 0,
           totalReviews: park.totalReviews || 0,

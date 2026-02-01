@@ -181,7 +181,8 @@
         "amenities": "שירותים",
         "openingYears": "שנות פתיחה",
         "openingMonths": "חודשי פתיחה",
-        "areas": "אזורים"
+        "areas": "אזורים",
+        "skillLevel": "רמת מיומנות"
       },
       "amenities": {
         "title": "התפלגות שירותים",
@@ -222,6 +223,12 @@
         "center": "מרכז",
         "south": "דרום",
         "count": "{count} פארקים"
+      },
+      "skillLevel": {
+        "title": "התפלגות רמת מיומנות",
+        "beginners": "מתחילים",
+        "advanced": "מתקדמים",
+        "pro": "מקצוענים"
       }
     },
     "status":{
