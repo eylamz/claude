@@ -90,10 +90,14 @@ export interface IEventDateTime {
   };
 }
 
+/** Allowed values for event related sports (same as Guide) */
+export const EVENT_RELATED_SPORTS = ['roller', 'skate', 'scoot', 'bmx', 'longboard'] as const;
+export type EventRelatedSport = (typeof EVENT_RELATED_SPORTS)[number];
+
 // Main Event interface
 export interface IEvent extends Document {
   slug: string;
-  category: 'roller' | 'skate' | 'scoot' | 'bike';
+  relatedSports: string[];
   type: 'competition' | 'session' | 'camp' | 'premiere' | 'jam' | 'workshop' | 'event' | 'meetup';
   status: 'draft' | 'published' | 'archived' | 'cancelled';
   isFeatured: boolean;
@@ -157,7 +161,7 @@ export interface IEventModel extends Model<IEvent> {
   findUpcoming(): Promise<IEvent[]>;
   findPast(): Promise<IEvent[]>;
   findFeatured(): Promise<IEvent[]>;
-  findByCategory(category: string): Promise<IEvent[]>;
+  findByRelatedSport(sport: string): Promise<IEvent[]>;
   findPublished(): Promise<IEvent[]>;
   searchEvents(query: string): Promise<IEvent[]>;
 }
@@ -254,10 +258,9 @@ const EventSchema = new Schema<IEvent>(
       trim: true,
       match: [/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens']
     },
-    category: { 
-      type: String, 
-      required: true, 
-      enum: ['roller', 'skate', 'scoot', 'bike'] 
+    relatedSports: {
+      type: [{ type: String, trim: true, enum: EVENT_RELATED_SPORTS }],
+      default: [],
     },
     type: { 
       type: String, 
@@ -331,14 +334,14 @@ const EventSchema = new Schema<IEvent>(
 );
 
 // Indexes for performance
-EventSchema.index({ category: 1, status: 1, isFeatured: -1 });
+EventSchema.index({ relatedSports: 1, status: 1, isFeatured: -1 });
 EventSchema.index({ status: 1, 'dateTime.startDate': 1 });
 EventSchema.index({ 'dateTime.startDate': 1, status: 1 });
 EventSchema.index({ searchableText: 'text' });
 EventSchema.index({ 'content.he.tags': 1 });
 EventSchema.index({ 'content.en.tags': 1 });
 EventSchema.index({ viewCount: -1 });
-EventSchema.index({ type: 1, category: 1 });
+EventSchema.index({ type: 1, relatedSports: 1 });
 
 /**
  * Instance method: Get duration in hours
@@ -414,11 +417,11 @@ EventSchema.statics.findFeatured = function () {
 };
 
 /**
- * Static method: Find events by category
+ * Static method: Find events by related sport
  */
-EventSchema.statics.findByCategory = function (category: string) {
+EventSchema.statics.findByRelatedSport = function (sport: string) {
   return this.find({
-    category: category,
+    relatedSports: sport,
     status: 'published',
   }).sort({ 'dateTime.startDate': 1 });
 };
@@ -463,10 +466,12 @@ EventSchema.virtual('formattedStartDate').get(function (this: IEvent): string {
 });
 
 /**
- * Create and export the Event model
+ * Create and export the Event model.
+ * Delete cached model so schema changes (e.g. category -> relatedSports) are picked up after hot reload.
  */
-const Event: IEventModel =
-  (mongoose.models.Event as IEventModel) ||
-  mongoose.model<IEvent, IEventModel>('Event', EventSchema);
+if (mongoose.models.Event) {
+  delete mongoose.models.Event;
+}
+const Event: IEventModel = mongoose.model<IEvent, IEventModel>('Event', EventSchema);
 
 export default Event;

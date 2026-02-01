@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui';
 interface IEvent {
   _id: string;
   slug: string;
-  category: 'roller' | 'skate' | 'scoot' | 'bike';
+  relatedSports: string[];
   type: 'competition' | 'workshop' | 'event' | 'meetup' | 'jam';
   status: 'draft' | 'published' | 'archived' | 'cancelled';
   isFeatured: boolean;
@@ -425,15 +425,16 @@ export default function EventPage() {
   };
 
   // Same icon names as guides filter bar (guides-page-client SPORT_CONFIG)
-  const getCategoryIcon = (category: string) => {
+  const getSportIcon = (sport: string) => {
     const iconMap: Record<string, string> = {
       roller: 'Roller',
       skate: 'Skate',
       scoot: 'scooter',
-      bike: 'bmx-icon',
-      longboard: 'Longboard'
+      bmx: 'bmx-icon',
+      longboard: 'Longboard',
+      bike: 'bmx-icon', // legacy
     };
-    return iconMap[category] || 'calendar';
+    return iconMap[sport] || 'calendar';
   };
 
   const getTypeIcon = (type: string) => {
@@ -481,10 +482,12 @@ export default function EventPage() {
                 <span>{locale === 'he' ? 'אירוע מומלץ' : 'Featured Event'}</span>
               </span>
             )}
-            <span className="px-2 py-1 rounded-lg text-sm font-semibold bg-blue-bg dark:bg-blue-dark text-blue dark:text-blue-bg-dark flex items-center gap-1.5">
-              <Icon name={getCategoryIcon(event.category) as any} className="w-4 h-4" />
-              {t(`sports.${event.category}` as any) || event.category}
-            </span>
+            {(event.relatedSports && event.relatedSports.length > 0 ? event.relatedSports : []).map((sport: string) => (
+              <span key={sport} className="px-2 py-1 rounded-lg text-sm font-semibold bg-blue-bg dark:bg-blue-dark text-blue dark:text-blue-bg-dark flex items-center gap-1.5">
+                <Icon name={getSportIcon(sport) as any} className="w-4 h-4" />
+                {t(`sports.${sport}` as any) || sport}
+              </span>
+            ))}
             <span className="px-2 py-1 rounded-lg text-sm font-semibold bg-orange dark:bg-orange-dark text-orange-bg dark:text-orange-bg-dark flex items-center gap-1">
               <Icon name={getTypeIcon(event.type) as any} className="w-4 h-4" />
               {t(`types.${event.type}` as any) || event.type}

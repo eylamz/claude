@@ -14,28 +14,55 @@ export const LoadingSpinner: React.FC<{
     switch (variant) {
       case 'error':
         return theme === 'dark' 
-          ? { active: '#f3394c', track: '#5d2227' }
-          : { active: '#cc2a2a', track: '#5d2227' };
+          ? { active: '#f3394c', track: 'transparent' }
+          : { active: '#cc2a2a', track: 'transparent' };
       case 'brand':
-        return { active: '#143116', track: '#29652d' };
+        return { active: '#143116', track: 'transparent' };
       case 'info':
-        return { active: '#3b82f6', track: '#dbeafe' };
+        return { active: '#3b82f6', track: 'transparent' };
       case 'success':
-        return { active: '#22c55e', track: '#dcfce7' };
+        return { active: '#22c55e', track: 'transparent' };
       case 'warning':
-        return { active: '#eab308', track: '#fef9c3' };
+        return { active: '#eab308', track: 'transparent' };
       case 'blue':
         return theme === 'dark' 
-          ? { active: '#93c5fd', track: '#195570' }
-          : { active: '#1d4ed8', track: '#b6d9fd' };
+          ? { active: '#93c5fd', track: 'transparent' }
+          : { active: '#1d4ed8', track: 'transparent' };
       case 'header':
         return theme === 'dark' 
-          ? { active: '#f9fafb', track: '#374151' }
-          : { active: '#111827', track: '#e5e7eb' };
+          ? { active: '#f9fafb', track: 'transparent' }
+            : { active: '#111827', track: 'transparent' };
       default:
-        return { active: '#4d4d4d', track: '#cecece' };
+        return { active: '#4d4d4d', track: 'transparent' };
     }
   };
+
+  // const getVariantColors = () => {
+  //   switch (variant) {
+  //     case 'error':
+  //       return theme === 'dark' 
+  //         ? { active: '#f3394c', track: '#5d2227' }
+  //         : { active: '#cc2a2a', track: '#5d2227' };
+  //     case 'brand':
+  //       return { active: '#143116', track: '#29652d' };
+  //     case 'info':
+  //       return { active: '#3b82f6', track: '#dbeafe' };
+  //     case 'success':
+  //       return { active: '#22c55e', track: '#dcfce7' };
+  //     case 'warning':
+  //       return { active: '#eab308', track: '#fef9c3' };
+  //     case 'blue':
+  //       return theme === 'dark' 
+  //         ? { active: '#93c5fd', track: '#195570' }
+  //         : { active: '#1d4ed8', track: '#b6d9fd' };
+  //     case 'header':
+  //       return theme === 'dark' 
+  //         ? { active: '#f9fafb', track: '#374151' }
+  //         : { active: '#111827', track: '#e5e7eb' };
+  //     default:
+  //       return { active: '#4d4d4d', track: '#cecece' };
+  //   }
+  // };
 
   const colors = getVariantColors();
 

@@ -55,12 +55,7 @@ export async function GET(request: Request) {
       filter.status = status;
     }
 
-    // Category filter
-    if (category && category !== 'all') {
-      filter.category = category;
-    }
-
-    // Sport filter
+    // Sport filter (relatedSports)
     if (sport && sport !== 'all') {
       filter.relatedSports = { $in: [sport] };
     }
@@ -185,7 +180,6 @@ export async function GET(request: Request) {
           address: locationAddress,
         },
         relatedSports: event.relatedSports || [],
-        category: event.category || '',
         viewsCount: event.viewCount || event.viewsCount || 0,
         interestedCount: event.interestedCount || 0,
         attendedCount: event.attendingCount || event.attendedCount || 0,
@@ -234,9 +228,13 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Build event in new schema (content, dateTime, featuredImage) from flat form body
+    const relatedSports = Array.isArray(body.relatedSports)
+      ? body.relatedSports.map((s: string) => String(s).toLowerCase()).filter((s: string) => ['roller', 'skate', 'scoot', 'bmx', 'longboard'].includes(s))
+      : [];
+
     const newEvent = new Event({
       slug: body.slug || body.title?.en?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'event',
-      category: (body.category || 'roller').toLowerCase(),
+      relatedSports,
       type: body.type || 'event',
       status: body.status || 'draft',
       isFeatured: body.isFeatured || false,

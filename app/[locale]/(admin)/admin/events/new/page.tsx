@@ -231,10 +231,14 @@ export default function NewEventPage() {
         ...formData,
         sections: sectionsForApi,
         media: mediaForApi,
+        relatedSports: Array.isArray(formData.relatedSports) ? formData.relatedSports : [],
         capacity: formData.capacity === '' ? undefined : formData.capacity,
         price: formData.price === '' ? undefined : formData.price,
         status: saveAsDraft ? 'draft' : 'published',
       };
+
+      // DEBUG relatedSports (remove when done)
+      console.log('[New Event] Sending relatedSports:', submitData.relatedSports);
 
       const response = await fetch('/api/admin/events', {
         method: 'POST',

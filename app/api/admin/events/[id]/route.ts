@@ -109,7 +109,6 @@ export async function GET(
       videoUrl: event.videoUrl || '',
       relatedSports: event.relatedSports || [],
       type: event.type || '',
-      category: event.category || '',
       organizer: event.organizer || {
         name: '',
         email: '',
@@ -185,23 +184,19 @@ export async function PUT(
 
     const body = await request.json();
 
-    // DEBUG: log incoming media from client
-    console.log('[PUT event] body.media received:', body.media === undefined ? 'undefined' : Array.isArray(body.media), body.media?.length);
-    if (Array.isArray(body.media)) {
-      body.media.forEach((m: any, i: number) => {
-        console.log(`[PUT event] body.media[${i}]:`, {
-          id: m?.id,
-          altText: m?.altText,
-          'altText.en': m?.altText?.en,
-          'altText.he': m?.altText?.he,
-        });
-      });
-    }
+    // DEBUG relatedSports (remove when done)
+    console.log('[PUT event] body.relatedSports received:', body.relatedSports);
 
     // Event model uses content (en/he), dateTime, and featuredImage object — map flat form to schema
     if (body.slug !== undefined) event.slug = body.slug;
     if (body.type !== undefined) event.type = body.type;
-    if (body.category !== undefined) event.category = body.category;
+    // Always apply relatedSports when sent (client now sends it explicitly)
+    const allowedSports = ['roller', 'skate', 'scoot', 'bmx', 'longboard'];
+    event.relatedSports = Array.isArray(body.relatedSports)
+      ? body.relatedSports.map((s: string) => String(s).toLowerCase()).filter((s: string) => allowedSports.includes(s))
+      : (Array.isArray(event.relatedSports) ? event.relatedSports : []);
+
+    console.log('[PUT event] event.relatedSports after apply:', event.relatedSports);
     if (body.status !== undefined) event.status = body.status;
     if (body.isFeatured !== undefined) event.isFeatured = body.isFeatured;
     if (body.isFree !== undefined) event.isFree = body.isFree;
@@ -294,7 +289,7 @@ export async function PUT(
       event.media = body.media.map((m: any, idx: number) => {
         const en = m.altText?.en != null ? String(m.altText.en) : '';
         const he = m.altText?.he != null ? String(m.altText.he) : '';
-        const item = {
+        return {
           id: m.id || `media-${Date.now()}-${Math.random().toString(36).slice(2)}`,
           url: m.url || '',
           type: m.type === 'video' ? 'video' : 'image',
@@ -306,8 +301,6 @@ export async function PUT(
           },
           usedInSections: Array.isArray(m.usedInSections) ? m.usedInSections : [],
         };
-        console.log(`[PUT event] mapped media[${idx}].altText:`, item.altText);
-        return item;
       });
     }
 
@@ -326,16 +319,15 @@ export async function PUT(
       };
     }
 
-    // Ensure required fields pass validation (form may not send category; media may have empty altText)
-    if (!event.category || typeof event.category !== 'string') {
-      event.category = 'roller';
+    if (!Array.isArray(event.relatedSports)) {
+      event.relatedSports = [];
     }
-    // Normalize media.altText so every item has en/he strings (required by schema). Build explicit plain objects.
+    // Normalize media.altText so every item has en/he strings (required by schema).
     if (Array.isArray(event.media)) {
       event.media = event.media.map((m: any, idx: number) => {
         const altEn = (m.altText?.en != null && m.altText?.en !== undefined ? String(m.altText.en) : '') as string;
         const altHe = (m.altText?.he != null && m.altText?.he !== undefined ? String(m.altText.he) : '') as string;
-        const normalized = {
+        return {
           id: m.id || `media-${Date.now()}-${idx}`,
           url: m.url || '',
           type: m.type === 'video' ? 'video' : 'image',
@@ -347,16 +339,8 @@ export async function PUT(
           },
           usedInSections: Array.isArray(m.usedInSections) ? m.usedInSections : [],
         };
-        console.log(`[PUT event] before save media[${idx}].altText:`, normalized.altText, 'types:', typeof normalized.altText.en, typeof normalized.altText.he);
-        return normalized;
       });
     }
-
-    // DEBUG: log full event.media right before save
-    console.log('[PUT event] event.media before save (length):', event.media?.length);
-    event.media?.forEach((m: any, i: number) => {
-      console.log(`[PUT event] event.media[${i}] before save:`, JSON.stringify({ id: m.id, altText: m.altText }));
-    });
 
     await event.save();
 
@@ -412,9 +396,8 @@ export async function PUT(
         : [],
       featuredImage: featuredImageObj,
       videoUrl: '',
-      relatedSports: [],
+      relatedSports: event.relatedSports || [],
       type: event.type || '',
-      category: event.category || '',
       organizer: { name: '', email: '', phone: '' },
       capacity: undefined,
       isFree: event.isFree,

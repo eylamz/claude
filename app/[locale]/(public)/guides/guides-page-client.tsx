@@ -196,7 +196,7 @@ const GuideThumbnail = memo(({
         />
       ) : (
         <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-          <div className="w-16 h-16 opacity-50 bg-card-muted dark:bg-card-muted-dark rounded" />
+          <div className="w-16 h-16" />
         </div>
       )}
     </>

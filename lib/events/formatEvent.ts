@@ -18,7 +18,7 @@ export function formatEventForDetail(
   return {
     _id: event._id.toString(),
     slug: event.slug,
-    category: event.category || 'roller',
+    relatedSports: event.relatedSports || [],
     type: event.type || 'event',
     status: event.status || 'published',
     isFeatured: event.isFeatured || false,

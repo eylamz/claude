@@ -47,7 +47,7 @@ const SPORT_CONFIG = [
     value: 'roller',
     iconName: 'Roller' as const,
     displayName: 'Rollerblading',
-    variant: 'purple' as const,
+    variant: 'blue' as const,
     tooltipEn: 'Filter by Rollerblading events',
     tooltipHe: 'סנן לפי אירועי רולר',
   },
@@ -55,7 +55,7 @@ const SPORT_CONFIG = [
     value: 'skate',
     iconName: 'Skate' as const,
     displayName: 'Skating',
-    variant: 'purple' as const,
+    variant: 'blue' as const,
     tooltipEn: 'Filter by Skating events',
     tooltipHe: 'סנן לפי אירועי סקייט',
   },
@@ -63,7 +63,7 @@ const SPORT_CONFIG = [
     value: 'scoot',
     iconName: 'scooter' as const,
     displayName: 'Scootering',
-    variant: 'purple' as const,
+    variant: 'blue' as const,
     tooltipEn: 'Filter by Scootering events',
     tooltipHe: 'סנן לפי אירועי קורקינט',
   },
@@ -71,7 +71,7 @@ const SPORT_CONFIG = [
     value: 'bmx',
     iconName: 'bmx-icon' as const,
     displayName: 'BMXing',
-    variant: 'purple' as const,
+    variant: 'blue' as const,
     tooltipEn: 'Filter by BMX events',
     tooltipHe: 'סנן לפי אירועי BMX',
   },
@@ -79,7 +79,7 @@ const SPORT_CONFIG = [
     value: 'longboard',
     iconName: 'Longboard' as const,
     displayName: 'Longboarding',
-    variant: 'purple' as const,
+    variant: 'blue' as const,
     tooltipEn: 'Filter by Longboarding events',
     tooltipHe: 'סנן לפי אירועי לונגבורד',
   }
@@ -175,7 +175,7 @@ const EventThumbnail = memo(({
   return (
     <>
       {!isLoaded && !hasError && (
-        <div className="absolute inset-0 bg-background/20 dark:bg-background/20 flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-card dark:bg-card-dark flex items-center justify-center z-10">
           <LoadingSpinner />
         </div>
       )}
@@ -197,7 +197,7 @@ const EventThumbnail = memo(({
         />
       ) : (
         <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-          <div className="w-16 h-16 opacity-50 bg-card-muted dark:bg-card-muted-dark rounded" />
+          <div className="w-16 h-16 opacity-50 " />
         </div>
       )}
     </>
@@ -689,10 +689,11 @@ export default function EventsPage() {
     (searchQuery.trim() ? 1 : 0);
   const hasMultipleFilters = activeFiltersCount > 1;
 
-  // Filter sport buttons to only show those with available events (like guides)
-  const availableSportButtons = SPORT_CONFIG.filter(sport => {
-    return filtersData.sports.includes(sport.value);
-  });
+  // Show relatedSports filter buttons only when 2+ sports have events (no point filtering with one)
+  const sportFilterButtons =
+    filtersData.sports.length >= 2
+      ? SPORT_CONFIG.filter((sport) => filtersData.sports.includes(sport.value))
+      : [];
 
   return (
     <div className="min-h-screen bg-background dark:bg-background-dark" dir={locale === 'he' ? 'rtl' : 'ltr'}>
@@ -762,12 +763,11 @@ export default function EventsPage() {
               </div>
             </div>
 
-            {/* Right: Filters */}
+            {/* Right: Filters - relatedSports buttons (only sports with events) */}
             <div className="flex items-center gap-3">
-              {/* Sports Filter - Multi-select Buttons (like guides) */}
               <TooltipProvider delayDuration={50}>
                 <div className="flex items-center gap-2 flex-wrap">
-                  {availableSportButtons.map((sport) => {
+                  {sportFilterButtons.map((sport) => {
                     const isSelected = selectedSports.includes(sport.value);
 
                     return (
@@ -775,7 +775,7 @@ export default function EventsPage() {
                         <TooltipTrigger asChild>
                           <Button
                             variant={isSelected ? sport.variant : 'gray'}
-                            size="md"
+                            size="sm"
                             onClick={() => {
                               setSelectedSports((prev) =>
                                 prev.includes(sport.value)
@@ -801,7 +801,6 @@ export default function EventsPage() {
                   })}
                 </div>
               </TooltipProvider>
-
             </div>
           </div>
 
@@ -813,8 +812,8 @@ export default function EventsPage() {
               <div className="flex flex-wrap items-center gap-2">
                 {/* Results Count Badge */}
                 {!loading && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark animate-pop">
-                    <Icon name="calendarBold" className="w-4 h-4 text-green" />
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-bg dark:bg-gray-bg-dark rounded-full border border-gray-border dark:border-gray-border-dark animate-pop">
+                    <Icon name="calendarBold" className="w-4 h-4 text-gray dark:text-gray-dark" />
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       {paginatedEvents.length}
                     </span>
@@ -844,7 +843,7 @@ export default function EventsPage() {
                     <button
                       key={sport}
                       onClick={() => setSelectedSports(prev => prev.filter(s => s !== sport))}
-                      className="inline-flex items-center gap-2 px-3 py-2 bg-purple-bg dark:bg-purple-bg-dark rounded-full border border-purple-border dark:border-purple-border-dark hover:bg-purple-hover-bg dark:hover:bg-purple-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
+                      className="inline-flex items-center gap-2 px-3 py-2 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
                       title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
                     >
                       {sportConfig ? (
@@ -894,13 +893,15 @@ export default function EventsPage() {
       ======================================== */}
       <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
         {loading ? (
+          /* Grid skeleton - matches EventCard structure (rounded-xl card, rounded-2xl image area, name section) */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <div key={i} className="h-fit shadow-lg rounded-3xl overflow-hidden">
-                <div className="h-[12rem] md:h-[16rem] bg-gray-200 dark:bg-gray-700 animate-pulse" />
-                <div className="px-3 py-2 space-y-2">
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-2/3 animate-pulse" />
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-fit rounded-xl">
+                <div className="bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden">
+                  <div className="absolute inset-0 bg-card dark:bg-card-dark animate-pulse" />
+                </div>
+                <div className="pt-2 pb-2 space-y-1">
+                  <div className="h-5 bg-card/80 dark:bg-card-dark/80 rounded animate-pulse w-1/2" />
                 </div>
               </div>
             ))}

@@ -32,7 +32,6 @@ interface Event {
     };
   };
   relatedSports: string[];
-  category: string;
   viewsCount: number;
   interestedCount: number;
   attendedCount: number;
@@ -59,16 +58,6 @@ const SPORTS = [
   'Longboard',
 ];
 
-const CATEGORIES = [
-  'Competition',
-  'Workshop',
-  'Jam',
-  'Tournament',
-  'Meetup',
-  'Demo',
-  'Other',
-];
-
 export default function EventsPage() {
   const locale = useLocale();
   const router = useRouter();
@@ -90,7 +79,6 @@ export default function EventsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [sport, setSport] = useState('all');
-  const [category, setCategory] = useState('all');
   const [sortBy, setSortBy] = useState('startDate');
   const [sortOrder, setSortOrder] = useState('desc');
   
@@ -163,7 +151,7 @@ export default function EventsPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setPagination(prev => ({ ...prev, currentPage: 1 }));
-  }, [status, sport, category, sortBy, sortOrder]);
+  }, [status, sport, sortBy, sortOrder]);
 
   const fetchEvents = useCallback(async () => {
     if (isFetchingRef.current) {
@@ -180,7 +168,6 @@ export default function EventsPage() {
         ...(debouncedSearch && { search: debouncedSearch }),
         ...(status && status !== 'all' && { status }),
         ...(sport && sport !== 'all' && { sport }),
-        ...(category && category !== 'all' && { category }),
         sortBy,
         sortOrder,
       });
@@ -211,7 +198,7 @@ export default function EventsPage() {
       setLoading(false);
       isFetchingRef.current = false;
     }
-  }, [pagination.currentPage, pagination.limit, debouncedSearch, status, sport, category, sortBy, sortOrder, toast]);
+  }, [pagination.currentPage, pagination.limit, debouncedSearch, status, sport, sortBy, sortOrder, toast]);
 
   useEffect(() => {
     fetchEvents();
@@ -597,16 +584,6 @@ export default function EventsPage() {
               </div>
               <div className="">
                 <SelectWrapper
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  options={[
-                    { value: 'all', label: 'All Categories' },
-                    ...CATEGORIES.map(c => ({ value: c.toLowerCase(), label: c }))
-                  ]}
-                />
-              </div>
-              <div className="">
-                <SelectWrapper
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                   options={[
@@ -704,9 +681,6 @@ export default function EventsPage() {
               Sports
             </TableHead>
             <TableHead className="hidden md:table-cell">
-              Category
-            </TableHead>
-            <TableHead className="hidden md:table-cell">
               Views
             </TableHead>
             <TableHead className="hidden md:table-cell">
@@ -800,20 +774,15 @@ export default function EventsPage() {
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   <div className="flex flex-wrap gap-1">
-                    {event.relatedSports.slice(0, 2).map((sport) => (
-                      <span key={sport} className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded">
-                        {sport}
+                    {event.relatedSports.slice(0, 3).map((s) => (
+                      <span key={s} className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded">
+                        {s}
                       </span>
                     ))}
-                    {event.relatedSports.length > 2 && (
-                      <span className="text-xs text-text-secondary dark:text-text-secondary-dark">+{event.relatedSports.length - 2}</span>
+                    {event.relatedSports.length > 3 && (
+                      <span className="text-xs text-text-secondary dark:text-text-secondary-dark">+{event.relatedSports.length - 3}</span>
                     )}
                   </div>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
-                    {event.category}
-                  </span>
                 </TableCell>
                 <TableCell className="hidden md:table-cell whitespace-nowrap text-sm text-text-secondary dark:text-text-secondary-dark">
                   {event.viewsCount.toLocaleString()}
@@ -872,26 +841,18 @@ export default function EventsPage() {
                           </div>
                         </div>
 
-                        {/* Sports & Category */}
-                        <div className="space-y-2 pt-2 border-t border-border dark:border-border-dark">
-                          <div>
-                            <p className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">Sports</p>
-                            <div className="flex flex-wrap gap-1">
-                              {event.relatedSports.slice(0, 3).map((sport) => (
-                                <span key={sport} className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded">
-                                  {sport}
-                                </span>
-                              ))}
-                              {event.relatedSports.length > 3 && (
-                                <span className="text-xs text-text-secondary dark:text-text-secondary-dark">+{event.relatedSports.length - 3}</span>
-                              )}
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">Category</p>
-                            <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded">
-                              {event.category}
-                            </span>
+                        {/* Related Sports */}
+                        <div className="pt-2 border-t border-border dark:border-border-dark">
+                          <p className="text-xs text-text-secondary dark:text-text-secondary-dark mb-1">Related Sports</p>
+                          <div className="flex flex-wrap gap-1">
+                            {event.relatedSports.slice(0, 5).map((s) => (
+                              <span key={s} className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400 rounded">
+                                {s}
+                              </span>
+                            ))}
+                            {event.relatedSports.length > 5 && (
+                              <span className="text-xs text-text-secondary dark:text-text-secondary-dark">+{event.relatedSports.length - 5}</span>
+                            )}
                           </div>
                         </div>
 

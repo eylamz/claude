@@ -302,9 +302,13 @@ export default function EditEventPage() {
         ...formData,
         sections: sectionsForApi,
         media: mediaForApi,
+        relatedSports: Array.isArray(formData.relatedSports) ? formData.relatedSports : [],
         capacity: formData.capacity === '' ? undefined : formData.capacity,
         price: formData.price === '' ? undefined : formData.price,
       };
+
+      // DEBUG relatedSports (remove when done)
+      console.log('[Edit Event auto-save] Sending relatedSports:', submitData.relatedSports);
 
       const response = await fetch(`/api/admin/events/${id}`, {
         method: 'PUT',
@@ -410,10 +414,14 @@ export default function EditEventPage() {
         ...formData,
         sections: sectionsForApi,
         media: mediaForApi,
+        relatedSports: Array.isArray(formData.relatedSports) ? formData.relatedSports : [],
         capacity: formData.capacity === '' ? undefined : formData.capacity,
         price: formData.price === '' ? undefined : formData.price,
         status: formData.status || 'draft',
       };
+
+      // DEBUG relatedSports (remove when done)
+      console.log('[Edit Event] Sending relatedSports:', submitData.relatedSports);
 
       const response = await fetch(`/api/admin/events/${id}`, {
         method: 'PUT',
@@ -427,7 +435,6 @@ export default function EditEventPage() {
       }
 
       const data = await response.json();
-      console.log('Event saved successfully:', data);
       setLastSaved(new Date());
       const submitDataString = JSON.stringify(submitData);
       lastSavedDataRef.current = submitDataString;
