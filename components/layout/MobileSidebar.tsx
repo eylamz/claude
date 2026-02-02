@@ -12,6 +12,7 @@ import { useTheme } from '@/context/ThemeProvider';
 import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
 import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
+import { flipLanguage } from '@/lib/utils/transliterate';
 import { Separator } from '@/components/ui/separator';
 
 interface MobileSidebarProps {
@@ -208,35 +209,40 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
     }
   }, [isSearchOpen, isOpen]);
     
-  // Weighted search scoring function
-  const calculateSearchScore = (result: SearchResult, query: string): number => {
+  // Weighted search scoring: original query matches score higher than flipped (keyboard-layout) matches.
+  const calculateSearchScore = (
+    result: SearchResult,
+    query: string,
+    flippedQuery: string | null
+  ): number => {
     const q = query.toLowerCase().trim();
     if (!q) return 0;
 
-    let score = 0;
     const queryLower = q.toLowerCase();
+    const flippedLower = flippedQuery ? flippedQuery.toLowerCase().trim() : null;
 
-    // Field weights
+    // Field weights; flipped matches use a discount so original-query matches rank higher
     const WEIGHTS = {
-      name: 1.0,        // Highest priority - exact name matches
-      title: 1.0,       // Highest priority - exact title matches
-      category: 0.7,    // Type/category matches
-      area: 0.5,        // Area matches (north, center, south)
-      description: 0.5, // Description matches
-      tags: 0.5,        // Tags/related sports
+      name: 1.0,
+      title: 1.0,
+      category: 0.7,
+      area: 0.5,
+      description: 0.5,
+      tags: 0.5,
     };
+    const FLIPPED_DISCOUNT = 0.6; // flipped matches score lower than direct matches
 
-    // Check name/title (weight 1.0)
+    let score = 0;
     const displayName = (result.name || result.title || '').toLowerCase();
+
+    // Name/title: prefer original match, then flipped
     if (displayName.includes(queryLower)) {
-      if (displayName.startsWith(queryLower)) {
-        score += WEIGHTS.name * 2; // Bonus for startsWith
-      } else {
-        score += WEIGHTS.name;
-      }
+      score += displayName.startsWith(queryLower) ? WEIGHTS.name * 2 : WEIGHTS.name;
+    } else if (flippedLower && displayName.includes(flippedLower)) {
+      score += (displayName.startsWith(flippedLower) ? WEIGHTS.name * 2 : WEIGHTS.name) * FLIPPED_DISCOUNT;
     }
 
-    // Check category/type (weight 0.7)
+    // Category/type
     const categoryMap: Record<string, string> = {
       skateparks: 'skatepark',
       products: 'product',
@@ -245,11 +251,11 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
       trainers: 'trainer',
     };
     const categoryName = categoryMap[result.type] || '';
-    if (categoryName && queryLower.includes(categoryName)) {
+    if (categoryName && (queryLower.includes(categoryName) || (flippedLower?.includes(categoryName)))) {
       score += WEIGHTS.category;
     }
 
-    // Check area (weight 0.5) - for skateparks and trainers
+    // Area
     if (result.area) {
       const areaMap: Record<string, string> = {
         north: 'north',
@@ -257,24 +263,27 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
         south: 'south',
       };
       const areaName = areaMap[result.area] || '';
-      if (areaName && queryLower.includes(areaName)) {
+      if (areaName && (queryLower.includes(areaName) || (flippedLower?.includes(areaName)))) {
         score += WEIGHTS.area;
       }
     }
 
-    // Check description (weight 0.5)
+    // Description
     if (result.description) {
       const descLower = result.description.toLowerCase();
       if (descLower.includes(queryLower)) {
         score += WEIGHTS.description;
+      } else if (flippedLower && descLower.includes(flippedLower)) {
+        score += WEIGHTS.description * FLIPPED_DISCOUNT;
       }
     }
 
-    // Check related sports/tags (weight 0.5)
+    // Related sports/tags
     if (result.relatedSports && Array.isArray(result.relatedSports)) {
-      const hasMatch = result.relatedSports.some(sport => 
-        sport.toLowerCase().includes(queryLower)
-      );
+      const hasMatch = result.relatedSports.some((sport) => {
+        const s = sport.toLowerCase();
+        return s.includes(queryLower) || (flippedLower != null && s.includes(flippedLower));
+      });
       if (hasMatch) {
         score += WEIGHTS.tags;
       }
@@ -283,20 +292,28 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
     return score;
   };
 
-  // Highlight matches in text (handles case-insensitive matching)
+  // Highlight matches in text. Tries original query first, then flipped (keyboard-layout)
+  // so Hebrew text is highlighted when the user typed in English (e.g. "zfrui" -> "זכרון").
   const highlightMatch = (text: string, query: string): React.ReactNode => {
     if (!query.trim() || !text) return text;
 
     const queryLower = query.toLowerCase().trim();
+    const flippedQuery = flipLanguage(query);
+    const flippedLower = flippedQuery ? flippedQuery.toLowerCase().trim() : '';
     const textLower = text.toLowerCase();
-    const index = textLower.indexOf(queryLower);
 
+    // Prefer original query match, then flipped (so we highlight the span that corresponds to what user typed)
+    let index = textLower.indexOf(queryLower);
+    let matchLength = query.length;
+    if (index === -1 && flippedLower) {
+      index = textLower.indexOf(flippedLower);
+      matchLength = flippedLower.length;
+    }
     if (index === -1) return text;
 
-    // Preserve original case for display
     const before = text.slice(0, index);
-    const match = text.slice(index, index + query.length);
-    const after = text.slice(index + query.length);
+    const match = text.slice(index, index + matchLength);
+    const after = text.slice(index + matchLength);
 
     return (
       <>
@@ -327,8 +344,12 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
 
     searchDebounceRef.current = setTimeout(async () => {
       try {
+        const flippedQuery = flipLanguage(searchQuery);
         const params = new URLSearchParams();
         params.set('q', searchQuery);
+        if (flippedQuery && flippedQuery !== searchQuery) {
+          params.set('flippedQ', flippedQuery);
+        }
         params.set('locale', locale);
         const res = await fetch(`/api/search?${params.toString()}`);
         if (!res.ok) throw new Error('Search failed');
@@ -336,29 +357,33 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
         const data = await res.json();
         const rawResults = data.results || [];
         const q = searchQuery.toLowerCase().trim();
+        const flippedLower = flippedQuery ? flippedQuery.toLowerCase().trim() : null;
 
-        // Calculate scores and sort by weighted relevance
+        // Calculate scores and sort by weighted relevance (original query matches rank higher)
         type ScoredResult = SearchResult & { _score: number };
         const scoredResults: ScoredResult[] = rawResults.map((result: SearchResult) => ({
           ...result,
-          _score: calculateSearchScore(result, searchQuery),
+          _score: calculateSearchScore(result, searchQuery, flippedQuery),
         }));
 
-        // Sort: Higher score first, then by startsWith, then alphabetically
+        // Sort: Higher score first, then by startsWith (original then flipped), then alphabetically
         const improvedResults = scoredResults.sort((a: ScoredResult, b: ScoredResult) => {
-          // First sort by score (descending)
           if (b._score !== a._score) {
             return b._score - a._score;
           }
 
-          // If scores are equal, prioritize startsWith
           const aName = (a.name || a.title || '').toLowerCase();
           const bName = (b.name || b.title || '').toLowerCase();
-          
-          if (aName.startsWith(q) && !bName.startsWith(q)) return -1;
-          if (!aName.startsWith(q) && bName.startsWith(q)) return 1;
-          
-          // Finally, alphabetical
+          const aStartsQ = aName.startsWith(q);
+          const bStartsQ = bName.startsWith(q);
+          if (aStartsQ && !bStartsQ) return -1;
+          if (!aStartsQ && bStartsQ) return 1;
+          if (flippedLower) {
+            const aStartsF = aName.startsWith(flippedLower);
+            const bStartsF = bName.startsWith(flippedLower);
+            if (aStartsF && !bStartsF) return -1;
+            if (!aStartsF && bStartsF) return 1;
+          }
           return aName.localeCompare(bName);
         });
 

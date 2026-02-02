@@ -6,6 +6,18 @@ import Event from '@/lib/models/Event';
 import Guide from '@/lib/models/Guide';
 import Trainer from '@/lib/models/Trainer';
 import { getLocalizedText } from '@/lib/seo/utils';
+import { flipLanguage } from '@/lib/utils/transliterate';
+
+/** Build $or conditions for query and optional flippedQuery (keyboard-layout flip). */
+function searchOrConditions(query: string, flippedQuery: string | null): Array<{ $regex: string; $options: string }> {
+  const conditions: Array<{ $regex: string; $options: string }> = [
+    { $regex: query, $options: 'i' },
+  ];
+  if (flippedQuery && flippedQuery !== query) {
+    conditions.push({ $regex: flippedQuery, $options: 'i' });
+  }
+  return conditions;
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,6 +25,8 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const query = searchParams.get('q')?.trim() || '';
+    const flippedQParam = searchParams.get('flippedQ')?.trim() || '';
+    const flippedQuery = flippedQParam || (query ? flipLanguage(query) : null);
     const locale = searchParams.get('locale') || 'en';
     const category = searchParams.get('category');
     const types = searchParams.get('types')?.split(',').filter(Boolean) || [];
@@ -22,6 +36,8 @@ export async function GET(request: NextRequest) {
     if (!query) {
       return NextResponse.json({ results: [], total: 0 });
     }
+
+    const nameOrConditions = searchOrConditions(query, flippedQuery);
 
     const results: any[] = [];
     const categoriesToSearch = category 
@@ -35,8 +51,10 @@ export async function GET(request: NextRequest) {
       const skateparkQuery: any = { status: 'active' };
       if (query) {
         skateparkQuery.$or = [
-          { 'name.en': { $regex: query, $options: 'i' } },
-          { 'name.he': { $regex: query, $options: 'i' } },
+          ...nameOrConditions.flatMap((cond) => [
+            { 'name.en': cond },
+            { 'name.he': cond },
+          ]),
         ];
       }
       const skateparks = await Skatepark.find(skateparkQuery).limit(limit).lean();
@@ -58,11 +76,16 @@ export async function GET(request: NextRequest) {
     if (categoriesToSearch.includes('products')) {
       const productQuery: any = { status: 'active' };
       if (query) {
+        const descOr = searchOrConditions(query, flippedQuery);
         productQuery.$or = [
-          { 'name.en': { $regex: query, $options: 'i' } },
-          { 'name.he': { $regex: query, $options: 'i' } },
-          { 'description.en': { $regex: query, $options: 'i' } },
-          { 'description.he': { $regex: query, $options: 'i' } },
+          ...nameOrConditions.flatMap((cond) => [
+            { 'name.en': cond },
+            { 'name.he': cond },
+          ]),
+          ...descOr.flatMap((cond) => [
+            { 'description.en': cond },
+            { 'description.he': cond },
+          ]),
         ];
       }
       const products = await Product.find(productQuery).limit(limit).lean();
@@ -89,11 +112,16 @@ export async function GET(request: NextRequest) {
     if (categoriesToSearch.includes('events')) {
       const eventQuery: any = { status: 'published', isPublic: true };
       if (query) {
+        const descOr = searchOrConditions(query, flippedQuery);
         eventQuery.$or = [
-          { 'title.en': { $regex: query, $options: 'i' } },
-          { 'title.he': { $regex: query, $options: 'i' } },
-          { 'description.en': { $regex: query, $options: 'i' } },
-          { 'description.he': { $regex: query, $options: 'i' } },
+          ...nameOrConditions.flatMap((cond) => [
+            { 'title.en': cond },
+            { 'title.he': cond },
+          ]),
+          ...descOr.flatMap((cond) => [
+            { 'description.en': cond },
+            { 'description.he': cond },
+          ]),
         ];
       }
       const events = await Event.find(eventQuery).limit(limit).lean();
@@ -113,11 +141,16 @@ export async function GET(request: NextRequest) {
     if (categoriesToSearch.includes('guides')) {
       const guideQuery: any = { status: 'published' };
       if (query) {
+        const descOr = searchOrConditions(query, flippedQuery);
         guideQuery.$or = [
-          { 'title.en': { $regex: query, $options: 'i' } },
-          { 'title.he': { $regex: query, $options: 'i' } },
-          { 'description.en': { $regex: query, $options: 'i' } },
-          { 'description.he': { $regex: query, $options: 'i' } },
+          ...nameOrConditions.flatMap((cond) => [
+            { 'title.en': cond },
+            { 'title.he': cond },
+          ]),
+          ...descOr.flatMap((cond) => [
+            { 'description.en': cond },
+            { 'description.he': cond },
+          ]),
         ];
       }
       const guides = await Guide.find(guideQuery).limit(limit).lean();
@@ -141,8 +174,10 @@ export async function GET(request: NextRequest) {
       const trainerQuery: any = { status: 'active' };
       if (query) {
         trainerQuery.$or = [
-          { 'name.en': { $regex: query, $options: 'i' } },
-          { 'name.he': { $regex: query, $options: 'i' } },
+          ...nameOrConditions.flatMap((cond) => [
+            { 'name.en': cond },
+            { 'name.he': cond },
+          ]),
         ];
       }
       const trainers = await Trainer.find(trainerQuery).limit(limit).lean();
