@@ -1,26 +1,45 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Textarea, Skeleton } from '@/components/ui';
 import { Star, Edit2, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+type ReviewContentByLocale = { en?: string; he?: string };
+
 interface Review {
   _id: string;
   entityType: string;
   entityId: any;
   slug: string;
-  userId?: string; // Optional for anonymous reviews
-  userName: string;
+  userId?: string;
+  userName: string | ReviewContentByLocale;
   rating: number;
-  comment: string;
+  comment: string | ReviewContentByLocale;
   helpfulCount: number;
   reportsCount: number;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   updatedAt: string;
+}
+
+function resolveContent(value: string | ReviewContentByLocale | undefined | null, locale: 'en' | 'he'): string {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  return value[locale] ?? value.en ?? value.he ?? '';
+}
+
+/** True if the review has any content (userName or comment) for the given locale. Legacy string = en only. */
+function reviewHasContentForLocale(review: Review, locale: 'en' | 'he'): boolean {
+  const hasValue = (v: string | ReviewContentByLocale | undefined | null): boolean => {
+    if (v == null) return false;
+    if (typeof v === 'string') return locale === 'en' && v.trim().length > 0; // legacy = en only
+    const s = (v[locale] ?? '').trim();
+    return s.length > 0;
+  };
+  return hasValue(review.userName) || hasValue(review.comment);
 }
 
 export default function ReviewsPage() {
@@ -33,12 +52,16 @@ export default function ReviewsPage() {
   const [loadingEntityType, setLoadingEntityType] = useState<Record<string, boolean>>({});
   const [loadedEntityTypes, setLoadedEntityTypes] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState('');
-  
-  // Edit modal state
+  /** Which locale's content to display in the list (en / he) */
+  const [contentLocale, setContentLocale] = useState<'en' | 'he'>('en');
+
+  // Edit modal state (per-locale)
   const [editingReview, setEditingReview] = useState<Review | null>(null);
-  const [editComment, setEditComment] = useState('');
+  const [editUserNameEn, setEditUserNameEn] = useState('');
+  const [editUserNameHe, setEditUserNameHe] = useState('');
+  const [editCommentEn, setEditCommentEn] = useState('');
+  const [editCommentHe, setEditCommentHe] = useState('');
   const [editRating, setEditRating] = useState(5);
-  const [editUserName, setEditUserName] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -187,17 +210,21 @@ export default function ReviewsPage() {
 
   const openEditModal = (review: Review) => {
     setEditingReview(review);
-    setEditComment(review.comment || '');
+    setEditUserNameEn(resolveContent(review.userName, 'en'));
+    setEditUserNameHe(resolveContent(review.userName, 'he'));
+    setEditCommentEn(resolveContent(review.comment, 'en'));
+    setEditCommentHe(resolveContent(review.comment, 'he'));
     setEditRating(review.rating);
-    setEditUserName(review.userName || '');
     setError(null);
   };
 
   const closeEditModal = () => {
     setEditingReview(null);
-    setEditComment('');
+    setEditUserNameEn('');
+    setEditUserNameHe('');
+    setEditCommentEn('');
+    setEditCommentHe('');
     setEditRating(5);
-    setEditUserName('');
     setError(null);
   };
 
@@ -213,9 +240,11 @@ export default function ReviewsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: editingReview._id,
-          comment: editComment,
           rating: editRating,
-          userName: editUserName,
+          userNameEn: editUserNameEn,
+          userNameHe: editUserNameHe,
+          commentEn: editCommentEn,
+          commentHe: editCommentHe,
         }),
       });
 
@@ -226,6 +255,12 @@ export default function ReviewsPage() {
 
       closeEditModal();
       fetchReviews();
+      if (approvedReviews.length > 0 || Object.keys(loadedEntityTypes).some(k => k.includes('approved'))) {
+        fetchApprovedReviews();
+      }
+      if (rejectedReviews.length > 0 || Object.keys(loadedEntityTypes).some(k => k.includes('rejected'))) {
+        fetchRejectedReviews();
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to update review');
     } finally {
@@ -359,10 +394,12 @@ export default function ReviewsPage() {
     }
   };
 
-  // Render a single review item as an accordion
+  // Render a single review item as an accordion (displays content for contentLocale)
   const renderReviewItem = (review: Review) => {
     const isOpen = openReview === review._id;
-    const commentPreview = review.comment ? (review.comment.length > 100 ? review.comment.substring(0, 100) + '...' : review.comment) : '';
+    const displayUserName = resolveContent(review.userName, contentLocale);
+    const displayComment = resolveContent(review.comment, contentLocale);
+    const commentPreview = displayComment ? (displayComment.length > 100 ? displayComment.substring(0, 100) + '...' : displayComment) : '';
     
     return (
       <div
@@ -381,7 +418,7 @@ export default function ReviewsPage() {
               {renderStars(review.rating)}
             </div>
             <span className="font-medium text-gray-900 dark:text-white">
-              {review.userName}
+              {displayUserName || '—'}
             </span>
             <span className="text-sm text-gray dark:text-gray-dark">
               on{' '}
@@ -429,11 +466,11 @@ export default function ReviewsPage() {
         {/* Expanded Content */}
         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="px-4 pb-4 space-y-3">
-            {/* Full Comment */}
-            {review.comment && (
+            {/* Full Comment (for selected locale) */}
+            {displayComment && (
               <div className="pt-2">
                 <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                  {review.comment}
+                  {displayComment}
                 </p>
               </div>
             )}
@@ -554,8 +591,22 @@ export default function ReviewsPage() {
     );
   };
 
-  const groupedApproved = groupApprovedByEntityType(approvedReviews);
-  const groupedRejected = groupRejectedByEntityType(rejectedReviews);
+  // Filter reviews to only those that have content for the selected locale (en/he)
+  const filteredPendingReviews = useMemo(
+    () => pendingReviews.filter((r) => reviewHasContentForLocale(r, contentLocale)),
+    [pendingReviews, contentLocale]
+  );
+  const filteredApprovedReviews = useMemo(
+    () => approvedReviews.filter((r) => reviewHasContentForLocale(r, contentLocale)),
+    [approvedReviews, contentLocale]
+  );
+  const filteredRejectedReviews = useMemo(
+    () => rejectedReviews.filter((r) => reviewHasContentForLocale(r, contentLocale)),
+    [rejectedReviews, contentLocale]
+  );
+
+  const groupedApproved = groupApprovedByEntityType(filteredApprovedReviews);
+  const groupedRejected = groupRejectedByEntityType(filteredRejectedReviews);
   const skateparksByArea = groupSkateparksByAreaAndPark(groupedApproved.skatepark);
   const eventsByEntity = groupByEntity(groupedApproved.event);
   const guidesByEntity = groupByEntity(groupedApproved.guide);
@@ -588,10 +639,37 @@ export default function ReviewsPage() {
         </div>
       </div>
 
-      {/* Search Filter */}
+      {/* Locale tabs: show reviews by English or Hebrew content */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show reviews with content in:</span>
+            <div className="flex rounded-lg border border-border dark:border-border-dark p-0.5 bg-card dark:bg-card-dark">
+              <button
+                type="button"
+                onClick={() => setContentLocale('en')}
+                className={cn(
+                  'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                  contentLocale === 'en'
+                    ? 'bg-brand-main text-white dark:bg-brand-dark dark:text-white'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark'
+                )}
+              >
+                English (en)
+              </button>
+              <button
+                type="button"
+                onClick={() => setContentLocale('he')}
+                className={cn(
+                  'px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                  contentLocale === 'he'
+                    ? 'bg-brand-main text-white dark:bg-brand-dark dark:text-white'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark'
+                )}
+              >
+                Hebrew (he)
+              </button>
+            </div>
             <div className="flex-1 min-w-64">
               <Input
                 type="text"
@@ -615,14 +693,14 @@ export default function ReviewsPage() {
       <Card>
         <CardHeader>
           <CardTitle>
-            Pending Reviews {pendingReviews.length > 0 && `(${pendingReviews.length})`}
+            Pending Reviews {filteredPendingReviews.length > 0 && `(${filteredPendingReviews.length})`}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             {renderReviewSection(
-              pendingReviews,
-              'No pending reviews found.'
+              filteredPendingReviews,
+              contentLocale === 'en' ? 'No pending reviews with English content.' : 'No pending reviews with Hebrew content.'
             )}
           </div>
         </CardContent>
@@ -632,7 +710,7 @@ export default function ReviewsPage() {
       <Card>
         <CardHeader>
           <CardTitle>
-            Approved Reviews {approvedReviews.length > 0 && `(${approvedReviews.length})`}
+            Approved Reviews {filteredApprovedReviews.length > 0 && `(${filteredApprovedReviews.length})`}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -1073,7 +1151,7 @@ export default function ReviewsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>
-              Rejected Reviews {rejectedReviews.length > 0 && `(${rejectedReviews.length})`}
+              Rejected Reviews {filteredRejectedReviews.length > 0 && `(${filteredRejectedReviews.length})`}
             </CardTitle>
             {rejectedReviews.length === 0 && !loadingRejected && (
               <Button
@@ -1169,14 +1247,14 @@ export default function ReviewsPage() {
         </CardContent>
       </Card>
 
-      {/* Edit Modal */}
+      {/* Edit Modal – English and Hebrew sections */}
       {editingReview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <Card className="bg-sidebar dark:bg-sidebar-dark w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4">
             <CardHeader>
-              <CardTitle>Edit Review</CardTitle>
+              <CardTitle>Edit Review (en & he)</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {error && (
                 <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                   <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
@@ -1184,19 +1262,8 @@ export default function ReviewsPage() {
               )}
 
               <div>
-                <Input
-                  label="User Name"
-                  value={editUserName}
-                  onChange={(e) => setEditUserName(e.target.value)}
-                  placeholder="Reviewer name..."
-                  maxLength={30}
-                  required
-                />
-              </div>
-
-              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Rating
+                  Rating (shared)
                 </label>
                 <div className="flex items-center space-x-2">
                   {[1, 2, 3, 4, 5].map((rating) => (
@@ -1221,18 +1288,46 @@ export default function ReviewsPage() {
                 </div>
               </div>
 
-              <div>
-                <Textarea
-                  label="Comment"
-                  value={editComment}
-                  onChange={(e) => setEditComment(e.target.value)}
-                  rows={6}
-                  placeholder="Review comment..."
+              {/* English (en) section */}
+              <div className="space-y-3 rounded-lg border border-border dark:border-border-dark p-4">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">English (en)</h3>
+                <Input
+                  label="User Name (en)"
+                  value={editUserNameEn}
+                  onChange={(e) => setEditUserNameEn(e.target.value)}
+                  placeholder="Reviewer name (English)..."
                   maxLength={100}
                 />
-                <p className="mt-1 text-xs text-gray dark:text-gray-dark">
-                  {editComment.length}/100 characters
-                </p>
+                <Textarea
+                  label="Comment (en)"
+                  value={editCommentEn}
+                  onChange={(e) => setEditCommentEn(e.target.value)}
+                  rows={3}
+                  placeholder="Review comment (English)..."
+                  maxLength={2000}
+                />
+                <p className="text-xs text-gray dark:text-gray-dark">{editCommentEn.length}/2000</p>
+              </div>
+
+              {/* Hebrew (he) section */}
+              <div className="space-y-3 rounded-lg border border-border dark:border-border-dark p-4" dir="rtl">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Hebrew (he)</h3>
+                <Input
+                  label="User Name (he)"
+                  value={editUserNameHe}
+                  onChange={(e) => setEditUserNameHe(e.target.value)}
+                  placeholder="שם המבקר (עברית)..."
+                  maxLength={100}
+                />
+                <Textarea
+                  label="Comment (he)"
+                  value={editCommentHe}
+                  onChange={(e) => setEditCommentHe(e.target.value)}
+                  rows={3}
+                  placeholder="תוכן הביקורת (עברית)..."
+                  maxLength={2000}
+                />
+                <p className="text-xs text-gray dark:text-gray-dark">{editCommentHe.length}/2000</p>
               </div>
 
               <div className="flex items-center gap-2 pt-4">

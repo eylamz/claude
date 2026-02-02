@@ -1,10 +1,11 @@
 
 'use client';
 
-import { useEffect, useState, useRef, Suspense, Fragment } from 'react';
+import { useEffect, useState, useRef, useCallback, Suspense, Fragment } from 'react';
 import { usePathname, useParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSession } from 'next-auth/react';
+import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
@@ -714,6 +715,10 @@ export default function SkateparkPage() {
 
   const [addressCopied, setAddressCopied] = useState(false);
   const [showAddReview, setShowAddReview] = useState(false);
+  const [reviewModalClosing, setReviewModalClosing] = useState(false);
+  const reviewModalCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showThankYouPopup, setShowThankYouPopup] = useState(false);
+  const thankYouPopupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
@@ -722,6 +727,23 @@ export default function SkateparkPage() {
   useEffect(() => {
     fetchSkatepark();
   }, [slug]);
+
+  useEffect(() => {
+    return () => {
+      if (thankYouPopupTimeoutRef.current) clearTimeout(thankYouPopupTimeoutRef.current);
+      if (reviewModalCloseTimeoutRef.current) clearTimeout(reviewModalCloseTimeoutRef.current);
+    };
+  }, []);
+
+  const closeReviewModal = useCallback(() => {
+    if (reviewModalClosing) return;
+    setReviewModalClosing(true);
+    reviewModalCloseTimeoutRef.current = setTimeout(() => {
+      setShowAddReview(false);
+      setReviewModalClosing(false);
+      reviewModalCloseTimeoutRef.current = null;
+    }, 320);
+  }, [reviewModalClosing]);
 
   // Debug: Log environment variables (remove after debugging)
   useEffect(() => {
@@ -1132,7 +1154,10 @@ export default function SkateparkPage() {
 
   const fetchReviews = async () => {
     try {
-      const response = await fetch(`/api/skateparks/${slug}/reviews`);
+      // false = show only reviews that have content for current locale (he → only he, en → only en)
+      const filterByLocale = process.env.NEXT_PUBLIC_ENABLE_MULTILINGUAL_REVIEWS !== 'true';
+      const url = `/api/skateparks/${slug}/reviews?locale=${locale}${filterByLocale ? '&filterByLocale=1' : ''}`;
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setReviews(data.reviews || []);
@@ -1144,6 +1169,12 @@ export default function SkateparkPage() {
 
   const handleReviewSubmitted = async () => {
     setShowAddReview(false);
+    setShowThankYouPopup(true);
+    if (thankYouPopupTimeoutRef.current) clearTimeout(thankYouPopupTimeoutRef.current);
+    thankYouPopupTimeoutRef.current = setTimeout(() => {
+      setShowThankYouPopup(false);
+      thankYouPopupTimeoutRef.current = null;
+    }, 3500);
     // Don't fetch reviews - they need admin approval first
   };
 
@@ -1716,7 +1747,7 @@ export default function SkateparkPage() {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div
-                              className={`border border-transparent dark:border-gray-border-dark rounded-lg p-2 h-full cursor-pointer transition-all duration-300 ease-out ${
+                              className={`border border-transparent dark:border-gray-border-dark rounded-lg p-2 cursor-pointer transition-all duration-300 ease-out flex items-center justify-center ${locale === 'he' ? 'h-[80px]' : 'h-[88px]'} ${
                                 amenitiesActive
                                   ? isParkClosed
                                     ? 'bg-red-bg dark:bg-red-bg-dark !border-red-border dark:!border-red-border-dark'
@@ -1757,7 +1788,7 @@ export default function SkateparkPage() {
                           </TooltipContent>
                         </Tooltip>
                       ) : (
-                        <div className="border border-gray-border dark:border-gray-border-dark rounded-lg p-2 h-full bg-gray-bg dark:bg-gray-bg-dark dark:shadow-inner">
+                        <div className={`border border-gray-border dark:border-gray-border-dark rounded-lg p-2 bg-gray-bg dark:bg-gray-bg-dark dark:shadow-inner flex items-center justify-center ${locale === 'he' ? 'h-[80px]' : 'h-[88px]'}`}>
                           <div className="text-center">
                             <div className="mb-1.5">
                               <Icon
@@ -2055,8 +2086,11 @@ export default function SkateparkPage() {
             const iframeSrc = getGoogleMapsIframeSrc();
             
             return (
-              <section aria-labelledby="location-heading" className="w-full max-w-6xl mx-auto px-4 sm:px-0 md:px-4">
-                <h2 id="location-heading" className="sr-only">{parkName} {tCommon('location')}</h2>
+              <section aria-labelledby="location-heading" className="w-full max-w-6xl mx-auto px-4 md:px-4">
+                <h2 id="location-heading" className="text-base sm:text-xl font-semibold flex items-center gap-2 mb-4">
+                  <Icon name="mapBold" className="w-5 h-5" />
+                  {tCommon('map')}
+                </h2>
 
                 <div className={`h-32 sm:h-60  rounded-xl mb-8 overflow-hidden relative border-2 border-gray-200 dark:border-gray-700`}>
 
@@ -2598,26 +2632,23 @@ export default function SkateparkPage() {
         // Show modal if user is logged in (and user reviews enabled) OR if anonymous reviews are enabled
         return (allowUserReviews && session?.user) || allowAnonymousReviews;
       })() && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className={`fixed inset-0 z-50 overflow-y-auto ${reviewModalClosing ? 'animate-fadeOut' : ''}`}>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-custom"
-            onClick={() => setShowAddReview(false)}
+            className={`fixed inset-0 bg-black/50 dark:bg-black/40 backdrop-blur-[2px] ${reviewModalClosing ? 'animate-fadeOut' : ''}`}
+            onClick={closeReviewModal}
           />
 
           {/* Modal */}
-          <div className="fixed inset-0 flex items-center justify-center p-4">
+          <div className={`fixed inset-0 flex items-center justify-center p-4 ${reviewModalClosing ? 'animate-fadeOut' : 'animate-scaleFadeUp'}`}>
             <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10 rounded-2xl bord p-4 bg-sidebar dark:bg-sidebar-dark"
-            style={{
-              filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
-            }}
             >
               {/* Header */}
               <div className="sticky top-0  flex items-center justify-between z-10">
-                <h2 className="text-base font-bold text-gray-900 dark:text-white">{t('writeReview')}</h2>
+                <h2 className="text-base font-bold text-text dark:text-text-dark">{t('writeReview')}</h2>
                 <button
-                  onClick={() => setShowAddReview(false)}
-                  className="p-"
+                  onClick={closeReviewModal}
+                  className="p-2"
                   aria-label={t('closeModal')}
                 >
                   <Icon name="X" className="w-5 h-5 text-text dark:text-text-dark" />
@@ -2630,7 +2661,7 @@ export default function SkateparkPage() {
                 <ReviewForm
                   slug={slug}
                   onSubmitted={handleReviewSubmitted}
-                  onCancel={() => setShowAddReview(false)}
+                  onCancel={closeReviewModal}
                   inModal={true}
                 />
               </div>
@@ -2638,6 +2669,36 @@ export default function SkateparkPage() {
           </div>
         </div>
       )}
+
+      {/* Thank you for review popup */}
+      <AnimatePresence>
+        {showThankYouPopup && (
+          <motion.div
+            key="thank-you-popup"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none"
+            aria-live="polite"
+          >
+            <div
+              dir={locale === 'he' ? 'rtl' : 'ltr'}
+              className="pointer-events-auto rounded-xl px-6 py-4 shadow-lg bg-sidebar dark:bg-sidebar-dark border border-border dark:border-border-dark text-center max-w-sm"
+              style={{
+                filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))',
+              }}
+            >
+              <p className="text-base font-medium text-text dark:text-text-dark">
+                {t('thankYouForReview')}
+              </p>
+              <p className="mt-2 text-sm text-text-secondary dark:text-text-secondary-dark">
+                {t('reviewPendingApproval')}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </TooltipProvider>
   );
 }

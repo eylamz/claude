@@ -5,6 +5,48 @@ import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';
 import Review from '@/lib/db/models/Review';
 import Settings from '@/lib/models/Settings';
+import type { ReviewContentByLocale } from '@/lib/db/models/Review';
+
+const LOCALES = ['en', 'he'] as const;
+type Locale = (typeof LOCALES)[number];
+
+function isLocale(s: string): s is Locale {
+  return LOCALES.includes(s as Locale);
+}
+
+/** Locale-specific API error messages for review POST (used when returning JSON error to client). */
+const REVIEW_ERROR_MESSAGES: Record<Locale, Record<string, string>> = {
+  en: {
+    alreadySubmitted: 'You have already submitted a review for this park',
+  },
+  he: {
+    alreadySubmitted: 'כבר הגשת ביקורת על פארק זה',
+  },
+};
+
+function getReviewError(key: string, locale: Locale): string {
+  return REVIEW_ERROR_MESSAGES[locale]?.[key] ?? REVIEW_ERROR_MESSAGES.en[key] ?? key;
+}
+
+/** Resolve locale-keyed content to a single string for a given locale. Supports legacy plain strings. */
+function resolveContent(
+  value: string | ReviewContentByLocale | undefined | null,
+  locale: Locale
+): string {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  return value[locale] ?? value.en ?? value.he ?? '';
+}
+
+/** True if the review has any content (userName or comment) for the given locale. Legacy string = en only. */
+function hasContentForLocale(r: any, locale: Locale): boolean {
+  const hasValue = (v: string | ReviewContentByLocale | undefined | null): boolean => {
+    if (v == null) return false;
+    if (typeof v === 'string') return locale === 'en' && v.trim().length > 0;
+    return ((v[locale] ?? '').trim()).length > 0;
+  };
+  return hasValue(r.userName) || hasValue(r.comment);
+}
 
 // GET reviews for a skatepark
 export async function GET(
@@ -20,6 +62,9 @@ export async function GET(
     const limit = parseInt(searchParams.get('limit') || '10', 10);
     const ratingFilter = parseInt(searchParams.get('rating') || '0', 10); // 1-5 or 0 for all
     const sort = searchParams.get('sort') || 'newest'; // newest|oldest|highest|lowest
+    const localeParam = searchParams.get('locale') || 'en';
+    const locale: Locale = isLocale(localeParam) ? localeParam : 'en';
+    const filterByLocale = searchParams.get('filterByLocale') === 'true' || searchParams.get('filterByLocale') === '1';
 
     const park = await Skatepark.findOne({ slug: slug.toLowerCase(), status: 'active' }).lean();
     if (!park) return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -36,16 +81,43 @@ export async function GET(
       lowest: { rating: 1, createdAt: -1 },
     };
 
+    const sortOpt = sortMap[sort] || sortMap.newest;
     const skip = (page - 1) * limit;
 
-    const [reviews, total, aggregates] = await Promise.all([
-      Review.find(query).sort(sortMap[sort] || sortMap.newest).skip(skip).limit(limit).lean(),
-      Review.countDocuments(query),
-      Review.aggregate([
-        { $match: { slug: slug.toLowerCase(), entityType: 'skatepark', status: 'approved' } },
-        { $group: { _id: '$rating', count: { $sum: 1 } } },
-      ]),
-    ]);
+    let reviewsRaw: any[];
+    let total: number;
+    let aggregates: any[];
+
+    if (filterByLocale) {
+      // Fetch all approved reviews for this slug, filter by locale, then paginate in memory
+      const allRaw = await Review.find(query).sort(sortOpt).lean();
+      const filtered = (allRaw as any[]).filter((r) => hasContentForLocale(r, locale));
+      total = filtered.length;
+      reviewsRaw = filtered.slice(skip, skip + limit);
+      // Aggregate breakdown from filtered set
+      const breakdownByRating: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      filtered.forEach((r: any) => {
+        const rating = Number(r.rating);
+        if (rating >= 1 && rating <= 5) breakdownByRating[rating] = (breakdownByRating[rating] || 0) + 1;
+      });
+      aggregates = Object.entries(breakdownByRating).map(([k, count]) => ({ _id: Number(k), count }));
+    } else {
+      [reviewsRaw, total, aggregates] = await Promise.all([
+        Review.find(query).sort(sortOpt).skip(skip).limit(limit).lean(),
+        Review.countDocuments(query),
+        Review.aggregate([
+          { $match: { slug: slug.toLowerCase(), entityType: 'skatepark', status: 'approved' } },
+          { $group: { _id: '$rating', count: { $sum: 1 } } },
+        ]),
+      ]);
+    }
+
+    // Resolve locale-keyed userName and comment for each review (supports legacy string values)
+    const reviews = (reviewsRaw as any[]).map((r) => ({
+      ...r,
+      userName: resolveContent(r.userName, locale),
+      comment: resolveContent(r.comment, locale),
+    }));
 
     // Build breakdown 1..5
     const breakdown: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } as any;
@@ -112,39 +184,53 @@ export async function POST(
     await connectDB();
     const { slug } = await params;
     const body = await request.json();
-    const { rating, comment, userName } = body as { rating: number; comment: string; userName?: string };
+    const { rating, comment, userName, locale: bodyLocale } = body as {
+      rating: number;
+      comment: string;
+      userName?: string;
+      locale?: string;
+    };
 
     if (!rating || rating < 1 || rating > 5) {
       return NextResponse.json({ error: 'Rating must be 1-5' }, { status: 400 });
     }
     
-    // For anonymous reviews, userName is required
-    if (isAnonymous && (!userName || !userName.trim())) {
-      return NextResponse.json({ error: 'Name is required for anonymous reviews' }, { status: 400 });
+    // Name is required for all reviews
+    if (!userName || !userName.trim()) {
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
-    // Comment is optional, no minimum length requirement
+    const locale: Locale = isLocale(bodyLocale) ? bodyLocale : 'en';
+    const displayName = userName.trim();
 
     const park = await Skatepark.findOne({ slug: slug.toLowerCase(), status: 'active' });
     if (!park) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     // Prevent duplicate reviews
     if (isAnonymous) {
-      // For anonymous reviews, check by userName and slug (basic duplicate prevention)
-      // Note: This is a simple check - in production you might want IP-based or session-based tracking
-      const existing = await Review.findOne({ 
-        slug: slug.toLowerCase(), 
+      // Match anonymous reviews by slug and by name in any locale (or legacy string userName)
+      const existing = await Review.findOne({
+        slug: slug.toLowerCase(),
         userId: { $exists: false },
-        userName: userName?.trim(),
-        status: { $in: ['pending', 'approved'] }
+        status: { $in: ['pending', 'approved'] },
+        $or: [
+          { 'userName.en': displayName },
+          { 'userName.he': displayName },
+          { userName: displayName } as any, // legacy string
+        ],
       });
       if (existing) {
-        return NextResponse.json({ error: 'You have already submitted a review' }, { status: 400 });
+        return NextResponse.json(
+          { error: getReviewError('alreadySubmitted', locale) },
+          { status: 400 }
+        );
       }
     } else {
-      // For logged-in users, check by userId
       const existing = await Review.findOne({ slug: slug.toLowerCase(), userId: session.user.id });
       if (existing) {
-        return NextResponse.json({ error: 'You have already submitted a review' }, { status: 400 });
+        return NextResponse.json(
+          { error: getReviewError('alreadySubmitted', locale) },
+          { status: 400 }
+        );
       }
     }
 
@@ -153,21 +239,19 @@ export async function POST(
       entityId: park._id,
       slug: slug.toLowerCase(),
       rating,
-      status: 'pending', // Anonymous reviews always pending for admin approval
+      status: 'pending',
     };
 
-    // Set user info based on whether it's anonymous or logged-in
     if (isAnonymous) {
-      reviewData.userName = userName?.trim() || 'Anonymous';
-      // userId is not set for anonymous reviews
+      // userId not set for anonymous
+      reviewData.userName = { [locale]: displayName };
     } else {
       reviewData.userId = session.user.id;
-      reviewData.userName = session.user.name || session.user.email || 'User';
+      reviewData.userName = { [locale]: displayName };
     }
 
-    // Only include comment if it's not empty
     if (comment && comment.trim()) {
-      reviewData.comment = comment.trim();
+      reviewData.comment = { [locale]: comment.trim() };
     }
 
     await Review.create(reviewData);

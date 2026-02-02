@@ -43,6 +43,38 @@ interface ParkWeatherForecastProps {
   closingYear?: number | null;
 }
 
+// Module-level cache and in-flight deduplication so we only fetch once per slug
+// (avoids duplicate requests from React Strict Mode or re-mounts)
+const FORECAST_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const SKATEPARKS_WEATHER_STORAGE_KEY = 'skateparks_weather';
+const forecastCache = new Map<string, { data: WeatherForecast; timestamp: number }>();
+const inFlightRequests = new Map<string, Promise<WeatherForecast | null>>();
+
+type StoredWeatherEntry = { data: WeatherForecast; timestamp: number };
+type StoredWeatherCache = Record<string, StoredWeatherEntry>;
+
+function getStoredWeatherCache(): StoredWeatherCache {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(SKATEPARKS_WEATHER_STORAGE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as StoredWeatherCache;
+  } catch {
+    return {};
+  }
+}
+
+function setStoredWeatherForSlug(slug: string, entry: StoredWeatherEntry): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const cache = getStoredWeatherCache();
+    cache[slug] = entry;
+    localStorage.setItem(SKATEPARKS_WEATHER_STORAGE_KEY, JSON.stringify(cache));
+  } catch (e) {
+    console.warn('Failed to save weather to localStorage', e);
+  }
+}
+
 // Weather icon mapping based on conditions
 type WeatherIconName = 'wind' | 'snow' | 'cloudy' | 'partlyCloudy' | 'sunBold' | 'rainy' | 'smallRain' | 'thunderstorm';
 
@@ -218,27 +250,71 @@ export default function ParkWeatherForecast({ slug, closingYear }: ParkWeatherFo
       return;
     }
 
-    const fetchWeather = async () => {
-      try {
-        const response = await fetch(`/api/weather/forecast?slug=${slug}`);
-        if (!response.ok) {
-          if (response.status === 404) {
-            setError('Weather forecast not available');
-            return;
-          }
-          throw new Error('Failed to fetch weather');
-        }
-        const data = await response.json();
-        setWeather(data.forecast);
-      } catch (err: any) {
-        console.error('Error fetching weather:', err);
-        setError(err.message || 'Failed to load weather');
-      } finally {
-        setLoading(false);
-      }
-    };
+    const cacheKey = slug;
 
-    fetchWeather();
+    // Use in-memory cached result if still valid
+    const cached = forecastCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < FORECAST_CACHE_TTL_MS) {
+      setWeather(cached.data);
+      setLoading(false);
+      return;
+    }
+
+    // Use localStorage cache if valid (persists across reloads)
+    const stored = getStoredWeatherCache()[cacheKey];
+    if (stored && Date.now() - stored.timestamp < FORECAST_CACHE_TTL_MS) {
+      forecastCache.set(cacheKey, stored);
+      setWeather(stored.data);
+      setLoading(false);
+      return;
+    }
+
+    // Reuse in-flight request if one is already running for this slug
+    let promise = inFlightRequests.get(cacheKey);
+    if (!promise) {
+      promise = (async (): Promise<WeatherForecast | null> => {
+        try {
+          const response = await fetch(`/api/weather/forecast?slug=${slug}`);
+          if (!response.ok) {
+            if (response.status === 404) return null;
+            throw new Error('Failed to fetch weather');
+          }
+          const data = await response.json();
+          const forecast = data.forecast as WeatherForecast;
+          const entry = { data: forecast, timestamp: Date.now() };
+          forecastCache.set(cacheKey, entry);
+          setStoredWeatherForSlug(cacheKey, entry);
+          return forecast;
+        } catch (err) {
+          throw err;
+        } finally {
+          inFlightRequests.delete(cacheKey);
+        }
+      })();
+      inFlightRequests.set(cacheKey, promise);
+    }
+
+    let cancelled = false;
+    promise
+      .then((forecast) => {
+        if (!cancelled) {
+          if (forecast) setWeather(forecast);
+          else setError('Weather forecast not available');
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          console.error('Error fetching weather:', err);
+          setError(err instanceof Error ? err.message : 'Failed to load weather');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [slug, closingYear]);
 
   // Don't render conditions
@@ -346,7 +422,7 @@ export default function ParkWeatherForecast({ slug, closingYear }: ParkWeatherFo
     <Card className="mb-8 !p-0 shadow-none rounded-none">
       <CardHeader>
         <CardTitle className="flex justify-between items-end">
-          <div className="text-xl font-semibold flex items-center gap-2">
+          <div className="text-base sm:text-lg font-semibold flex items-center gap-2">
             <Icon name="sunBold" className="w-5 h-5" />
           {t('weatherForecast') || 'Weather Forecast'}
             </div>

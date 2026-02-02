@@ -72,6 +72,8 @@
   "showMoreImages": "Show {count} More",
   "showLessImages": "Show Less",
   "writeReview": "Write a Review",
+  "thankYouForReview": "Thank you for your review!",
+  "reviewPendingApproval": "Your review is pending and waiting for approval.",
   "loginToReview": "You must be logged in to write a review",
   "reviewForm": {
     "title": "Write a Review",

@@ -58,6 +58,8 @@ const Toast = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
 >(({ className, variant, ...props }, ref) => {
+  const locale = useLocale();
+  const isRtl = locale === "he";
   const borderColor = {
     default: "border-border dark:border-border-dark",
     success: "border-[#51a775]",
@@ -88,7 +90,7 @@ const Toast = React.forwardRef<
       )}
       {...props}
     >
-      <div className={cn("w-full h-full p-[10px] rtl:border-r-4 ltr:border-l-4", borderColor)}>
+      <div className={cn("w-full h-full p-[10px]", isRtl ? "border-r-4" : "border-l-4", borderColor)}>
         <div className="flex flex-col flex-1 gap-2 animate-slideUp">{props.children}</div>
       </div>
     </ToastPrimitives.Root>

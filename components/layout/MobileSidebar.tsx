@@ -17,6 +17,8 @@ import { Separator } from '@/components/ui/separator';
 interface MobileSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  /** When true, open the sidebar with the search panel expanded (e.g. when user taps search icon in MobileNav). */
+  openWithSearch?: boolean;
 }
 
 interface NavCard {
@@ -59,7 +61,7 @@ interface SearchResult {
   relatedSports?: string[];
 }
 
-export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
+export default function MobileSidebar({ isOpen, onClose, openWithSearch = false }: MobileSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
@@ -181,17 +183,31 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     }
   }, [isOpen]);
 
-  // Auto-focus search input when search opens
+  // When opened via "search" from MobileNav, open the search panel
   useEffect(() => {
-    if (isSearchOpen && searchInputRef.current) {
-      // Small delay to ensure the input is visible before focusing
+    if (isOpen && openWithSearch) {
+      setIsSearchOpen(true);
+    }
+  }, [isOpen, openWithSearch]);
+
+  // Auto-focus search input when search opens (including when opened from MobileNav search icon)
+  useEffect(() => {
+    if (isSearchOpen && isOpen) {
+      // 150ms is enough for the sidebar to start appearing
       const timer = setTimeout(() => {
-        searchInputRef.current?.focus();
-      }, 350); // Increased delay to match transition duration
+        if (searchInputRef.current) {
+          // Hand off the focus from the trigger input to the actual input
+          searchInputRef.current.focus();
+          
+          // Optional: on some versions of iOS, a second click helps
+          searchInputRef.current.click();
+        }
+      }, 150); 
+      
       return () => clearTimeout(timer);
     }
-  }, [isSearchOpen]);
-
+  }, [isSearchOpen, isOpen]);
+    
   // Weighted search scoring function
   const calculateSearchScore = (result: SearchResult, query: string): number => {
     const q = query.toLowerCase().trim();
@@ -608,7 +624,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         </div>
 
         {/* === SCROLLABLE CONTENT === */}
-        <div className="flex-1 overflow-y-auto px-2 py-6 bg-sidebar dark:bg-sidebar-dark transition-colors duration-200">
+        <div className="flex-1 overflow-y-auto me-4 py-6 bg-sidebar dark:bg-sidebar-dark transition-colors duration-200">
           {isSearching ? (
             // Search Results
             <div className="space-y-6 px-3">
@@ -735,13 +751,13 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 (card.href !== `/${locale}` && pathname.startsWith(card.href));
 
               return (
-                <div key={card.href} className="rounded overflow-hidden">
+                <div key={card.href} className={`overflow-hidden w-3/4 ${locale === 'he' ? 'rounded-l-full' : 'rounded-r-full'}`}>
                 <Link
                   href={card.href}
                   onClick={onClose}
                   className={`flex items-center gap-2 px-2 py-3 text-3xl ${
                     isActive
-                      ? 'ps-3 bg-brand-main/20 dark:bg-brand-main/5 text-brand-main dark:text-brand-main ltr:border-l-4 rtl:border-r-4 border-brand-main'
+                      ? 'ps-4 bg-brand-main/20 dark:bg-brand-main/5 text-brand-main dark:text-brand-main'
                       : 'ms-2 text-black/80 dark:text-white/90'
                   }`}
                 >

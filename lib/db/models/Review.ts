@@ -2,14 +2,19 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export type ReviewStatus = 'pending' | 'approved' | 'rejected';
 
+/** Locale-keyed content (en/he). Legacy docs may have plain strings. */
+export type ReviewContentByLocale = { en?: string; he?: string };
+
 export interface IReview extends Document {
   entityType: 'skatepark';
   entityId: mongoose.Types.ObjectId;
   slug: string; // for quick lookup by slug
   userId?: mongoose.Types.ObjectId; // Optional for anonymous reviews
-  userName: string;
+  /** User display name by locale. Legacy: may be a plain string (treated as en). */
+  userName: string | ReviewContentByLocale;
   rating: number;
-  comment: string;
+  /** Comment by locale. Legacy: may be a plain string (treated as en). */
+  comment: string | ReviewContentByLocale;
   helpfulCount: number;
   reportsCount: number;
   status: ReviewStatus;
@@ -49,10 +54,9 @@ const ReviewSchema: Schema<IReview> = new Schema<IReview>(
       index: true,
     },
     userName: {
-      type: String,
+      type: Schema.Types.Mixed,
       required: true,
-      trim: true,
-      maxlength: [100, 'Name cannot exceed 100 characters'],
+      // Stored as { en?: string, he?: string } by locale. Legacy docs may have plain string.
     },
     rating: {
       type: Number,
@@ -62,10 +66,9 @@ const ReviewSchema: Schema<IReview> = new Schema<IReview>(
       index: true,
     },
     comment: {
-      type: String,
+      type: Schema.Types.Mixed,
       required: false,
-      trim: true,
-      maxlength: [2000, 'Review cannot exceed 2000 characters'],
+      // Stored as { en?: string, he?: string } by locale. Legacy docs may have plain string.
     },
     helpfulCount: {
       type: Number,

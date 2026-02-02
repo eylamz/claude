@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { Star, X } from 'lucide-react';
 import { Button, Input, Textarea } from '@/components/ui';
-import { useSession } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ReviewForm({
@@ -18,8 +17,8 @@ export default function ReviewForm({
   onCancel?: () => void;
   inModal?: boolean;
 }) {
-  const { data: session } = useSession();
   const t = useTranslations('skateparks');
+  const locale = useLocale();
   const { toast } = useToast();
   const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number>(0);
@@ -29,14 +28,6 @@ export default function ReviewForm({
   const [error, setError] = useState<string | null>(null);
   const [ratingError, setRatingError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
-  
-  // Check if anonymous reviews are enabled
-  const userReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_USERREVIEWS;
-  const everyoneReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS;
-  const userReviewsEnabled = userReviewsEnv === 'true';
-  const everyoneReviewsEnabled = everyoneReviewsEnv === 'true';
-  const allowAnonymousReviews = !userReviewsEnabled && everyoneReviewsEnabled;
-  const isAnonymous = !session?.user && allowAnonymousReviews;
 
   const handleSubmit = async () => {
     // Prevent submission if already submitting
@@ -44,7 +35,7 @@ export default function ReviewForm({
     
     // Validate all fields first and collect all errors
     const hasRatingError = rating == null || rating === undefined || rating < 1;
-    const hasNameError = isAnonymous && (!userName || userName.trim().length === 0);
+    const hasNameError = !userName || userName.trim().length === 0;
     
     // Set all relevant errors
     if (hasRatingError) {
@@ -76,10 +67,7 @@ export default function ReviewForm({
     setRatingError(null);
     setNameError(null);
     try {
-      const body: any = { rating, comment };
-      if (isAnonymous) {
-        body.userName = userName.trim();
-      }
+      const body: any = { rating, comment, userName: userName.trim(), locale };
       
       const res = await fetch(`/api/skateparks/${slug}/reviews`, {
         method: 'POST',
@@ -123,31 +111,28 @@ export default function ReviewForm({
         </div>
       )}
 
-      {/* Name input for anonymous reviews */}
-      {isAnonymous && (
-        <div className="mb-3 ">
-          <Input
-            id="reviewer-name"
-            type="text"
-            label={t('reviewForm.yourName')}
-            value={userName}
-            onChange={(e) => {
-              setUserName(e.target.value);
-              if (e.target.value.trim().length > 0 && nameError) {
-                setNameError(null);
-              }
-            }}
-            placeholder={t('reviewForm.enterYourName')}
-            maxLength={30}
-            required
-            variant="default"
-            
-          />
-          {nameError && (
-            <p className="mt-1 text-sm text-red dark:text-red-dark">{nameError}</p>
-          )}
-        </div>
-      )}
+      {/* Name input - required for all reviews */}
+      <div className="mb-3 ">
+        <Input
+          id="reviewer-name"
+          type="text"
+          label={t('reviewForm.yourName')}
+          value={userName}
+          onChange={(e) => {
+            setUserName(e.target.value);
+            if (e.target.value.trim().length > 0 && nameError) {
+              setNameError(null);
+            }
+          }}
+          placeholder={t('reviewForm.enterYourName')}
+          maxLength={30}
+          required
+          variant="default"
+        />
+        {nameError && (
+          <p className="mt-1 text-sm text-red dark:text-red-dark">{nameError}</p>
+        )}
+      </div>
 
       {/* Rating - Required */}
       <div className="mb-3">

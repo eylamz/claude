@@ -123,11 +123,9 @@ const ImageContainer = ({
       ref={ref}
       className={cn(
         className,
-        isInViewport && 'sm:animate-fadeInUp'
+        isInViewport && 'md:animate-fadeInUp',
+        'md:[box-shadow:0_1px_1px_#66666612,0_2px_2px_#5e5e5e12,0_4px_4px_#7a5d4413,0_8px_8px_#5e5e5e12,0_16px_16px_#5e5e5e12]'
       )}
-      style={{
-        boxShadow: '0 1px 1px #66666612, 0 2px 2px #5e5e5e12, 0 4px 4px #7a5d4413, 0 8px 8px #5e5e5e12, 0 16px 16px #5e5e5e12'
-      }}
       onClick={onClick}
     >
       {children}
@@ -617,7 +615,7 @@ const ParkImageGallery = ({
 
           {/* Share + Show more/less + Last updated - hidden on mobile (share moved to page next to hours) */}
           {hasMoreImages && (
-            <div className="hidden sm:flex flex-col items-center gap-3 p-2 pb-0">
+            <div className="hidden md:flex flex-col items-center gap-3 p-2 pb-0">
               <div className="grid grid-cols-3 items-start gap-4 w-full">
                 {/* Share Button */}
                 <div 

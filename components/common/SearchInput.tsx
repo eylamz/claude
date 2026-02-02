@@ -1,3 +1,4 @@
+// nextjs-app/components/common/SearchInput.tsx
 'use client';
 
 import React, { forwardRef } from 'react';

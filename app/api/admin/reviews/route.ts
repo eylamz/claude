@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import Review from '@/lib/db/models/Review';
+import type { ReviewContentByLocale } from '@/lib/db/models/Review';
 import Skatepark from '@/lib/models/Skatepark';
 import Settings from '@/lib/models/Settings';
 
@@ -34,7 +35,11 @@ export async function GET(request: NextRequest) {
     if (search) {
       query.$or = [
         { comment: { $regex: search, $options: 'i' } },
+        { 'comment.en': { $regex: search, $options: 'i' } },
+        { 'comment.he': { $regex: search, $options: 'i' } },
         { userName: { $regex: search, $options: 'i' } },
+        { 'userName.en': { $regex: search, $options: 'i' } },
+        { 'userName.he': { $regex: search, $options: 'i' } },
         { slug: { $regex: search, $options: 'i' } },
       ];
     }
@@ -67,6 +72,7 @@ export async function GET(request: NextRequest) {
 
     const total = await Review.countDocuments(query);
 
+    // Return raw reviews (locale-keyed userName/comment) so admin can show and edit en/he separately
     return NextResponse.json({
       reviews,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
@@ -87,12 +93,16 @@ export async function PATCH(request: NextRequest) {
 
     await connectDB();
     const body = await request.json();
-    const { id, action, comment, rating, userName } = body as { 
+    const { id, action, comment, rating, userName, userNameEn, userNameHe, commentEn, commentHe } = body as { 
       id: string; 
       action?: 'approve' | 'reject';
       comment?: string;
       rating?: number;
       userName?: string;
+      userNameEn?: string;
+      userNameHe?: string;
+      commentEn?: string;
+      commentHe?: string;
     };
 
     const review = await Review.findById(id);
@@ -163,27 +173,48 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // Handle content updates (comment, rating, and/or userName)
-    if (comment !== undefined || rating !== undefined || userName !== undefined) {
-      if (comment !== undefined) {
-        review.comment = comment.trim();
-      }
+    // Handle content updates: per-locale (userNameEn/He, commentEn/He) or legacy (comment, userName)
+    const hasLocaleUpdates = userNameEn !== undefined || userNameHe !== undefined || commentEn !== undefined || commentHe !== undefined;
+    if (comment !== undefined || rating !== undefined || userName !== undefined || hasLocaleUpdates) {
       if (rating !== undefined) {
         if (rating < 1 || rating > 5) {
           return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 });
         }
         review.rating = rating;
       }
-      if (userName !== undefined) {
+      // Per-locale updates
+      if (userNameEn !== undefined || userNameHe !== undefined) {
+        const current = review.userName as any;
+        const prev = typeof current === 'string' ? { en: current } : { ...(current || {}) };
+        review.userName = {
+          en: userNameEn !== undefined ? userNameEn.trim() : prev.en,
+          he: userNameHe !== undefined ? userNameHe.trim() : prev.he,
+        } as ReviewContentByLocale;
+      }
+      if (commentEn !== undefined || commentHe !== undefined) {
+        const current = review.comment as any;
+        const prev = typeof current === 'string' ? { en: current } : { ...(current || {}) };
+        review.comment = {
+          en: commentEn !== undefined ? commentEn.trim() : prev.en,
+          he: commentHe !== undefined ? commentHe.trim() : prev.he,
+        } as ReviewContentByLocale;
+      }
+      // Legacy single-value updates (set both locales)
+      if (comment !== undefined && !hasLocaleUpdates) {
+        const trimmed = comment.trim();
+        review.comment = { en: trimmed, he: trimmed } as ReviewContentByLocale;
+      }
+      if (userName !== undefined && !hasLocaleUpdates) {
         if (!userName.trim()) {
           return NextResponse.json({ error: 'User name cannot be empty' }, { status: 400 });
         }
-        review.userName = userName.trim();
+        review.userName = { en: userName.trim(), he: userName.trim() } as ReviewContentByLocale;
       }
       await review.save();
     }
 
-    return NextResponse.json({ success: true, review });
+    const reviewPojo = review.toObject ? review.toObject() : (review as any);
+    return NextResponse.json({ success: true, review: reviewPojo });
   } catch (err) {
     console.error('Admin PATCH review error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

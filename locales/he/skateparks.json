@@ -72,6 +72,8 @@
   "showMoreImages": "הצג עוד {count}",
   "showLessImages": "הצג פחות",
   "writeReview": "כתוב ביקורת",
+  "thankYouForReview": "תודה על הביקורת!",
+  "reviewPendingApproval": "הביקורת שלך ממתינה לאישור.",
   "loginToReview": "עליך להתחבר כדי לכתוב ביקורת",
   "reviewForm": {
     "title": "כתיבת ביקורת",

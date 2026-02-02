@@ -7,6 +7,7 @@ import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { Menu } from 'lucide-react';
 import { Icon } from '@/components/icons/Icon';
+import { useTranslations } from 'next-intl';
 import { useCartItemCount } from '@/stores/cartStore';
 import MobileSidebar from './MobileSidebar';
 import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
@@ -16,11 +17,13 @@ export default function MobileNavMinimal() {
   const locale = useLocale();
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [openWithSearch, setOpenWithSearch] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevScrollYRef = useRef(0);
   const ecommerceEnabled = isEcommerceEnabled();
   const itemCount = useCartItemCount();
+  const tCommon = useTranslations('common');
 
   // Check if on skateparks page
   const isSkateparksPage = pathname.includes('/skateparks');
@@ -86,15 +89,40 @@ export default function MobileNavMinimal() {
       >
         <div className="flex items-center justify-between h-16 px-4">
           
-          {/* Left: Menu Button */}
-          <div className="flex items-center gap-1">
+          {/* Left: Search + Menu Buttons */}
+          <div className="flex items-center">
             <button
-              onClick={() => setIsMenuOpen(true)}
-              className="p-2.5 h-11 -ms-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-[transform,background-color,border-color,color] duration-200 active:scale-95"
+              onClick={() => {
+                setOpenWithSearch(false);
+                setIsMenuOpen(true);
+              }}
+              className="p-2.5 -ms-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-[transform,background-color,border-color,color] duration-200 active:scale-95"
               aria-label="Open menu"
             >
               <Menu className="w-6 h-6" strokeWidth={2} />
             </button>
+            <button
+              onClick={(e) => {
+                // 1. Synchronously focus a hidden input to "claim" the keyboard
+                const trigger = document.getElementById('safari-focus-trigger');
+                trigger?.focus();
+
+                // 2. Open the sidebar logic
+                setOpenWithSearch(true);
+                setIsMenuOpen(true);
+              }}
+              className="p-2.5 -mb-[0.4rem] text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-[transform,background-color,border-color,color] duration-200 active:scale-95"
+              aria-label={tCommon('search') || 'Open search'}
+            >
+              {/* Invisible input that Safari will allow to trigger the keyboard */}
+              <input 
+                id="safari-focus-trigger" 
+                className="absolute opacity-0 pointer-events-none w-0 h-0" 
+                readOnly
+              />
+            <Icon name="search" className="w-[1.2rem] h-[1.2rem]" />
+            </button>
+
           </div>
 
           {/* Center: Logo */}
@@ -127,7 +155,8 @@ export default function MobileNavMinimal() {
       {/* Mobile Sidebar - Main Menu */}
       <MobileSidebar 
         isOpen={isMenuOpen} 
-        onClose={() => setIsMenuOpen(false)} 
+        onClose={() => { setIsMenuOpen(false); setOpenWithSearch(false); }} 
+        openWithSearch={openWithSearch}
       />
     </>
   );
