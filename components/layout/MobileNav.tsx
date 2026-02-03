@@ -96,7 +96,7 @@ export default function MobileNavMinimal() {
                 setOpenWithSearch(false);
                 setIsMenuOpen(true);
               }}
-              className="p-2.5 -ms-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-[transform,background-color,border-color,color] duration-200 active:scale-95"
+              className="p-2.5 -ms-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-dark transition-colors duration-200"
               aria-label="Open menu"
             >
               <Menu className="w-6 h-6" strokeWidth={2} />
@@ -111,7 +111,7 @@ export default function MobileNavMinimal() {
                 setOpenWithSearch(true);
                 setIsMenuOpen(true);
               }}
-              className="p-2.5 -mb-[0.4rem] text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-[transform,background-color,border-color,color] duration-200 active:scale-95"
+              className="p-2.5 -mb-[0.4rem] text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-dark transition-colors duration-200 active:scale-95"
               aria-label={tCommon('search') || 'Open search'}
             >
               {/* Invisible input that Safari will allow to trigger the keyboard */}

@@ -13,7 +13,7 @@ import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
 import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
 import { flipLanguage } from '@/lib/utils/transliterate';
-import { searchFromCache, type SearchResultFromCache } from '@/lib/search-from-cache';
+import { searchFromCache, getAreaFromQuery, type SearchResultFromCache } from '@/lib/search-from-cache';
 import { Separator } from '@/components/ui/separator';
 
 interface MobileSidebarProps {
@@ -48,6 +48,8 @@ interface SearchResult {
   image?: string;
   images?: Array<{ url: string }>;
   area?: 'north' | 'center' | 'south';
+  /** When set to 'area', result matched by area only (north/south/center); show last. */
+  matchBy?: 'name' | 'area';
   price?: number;
   discountPrice?: number;
   variants?: any[];
@@ -70,6 +72,8 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
   const { data: session } = useSession();
   const tCommon = useTranslations('common');
   const tMobileNav = useTranslations('common.mobileNav');
+  const tSearch = useTranslations('search');
+  const tSkateparks = useTranslations('skateparks');
   const { theme, toggleTheme } = useTheme();
 
   // Search state
@@ -321,7 +325,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
     return list;
   }, [ecommerceEnabled, trainersEnabled]);
 
-  // Map SearchResultFromCache to SearchResult (same shape as API)
+  // Map SearchResultFromCache to SearchResult (same shape as API); preserve matchBy so area matches show last
   const mapCacheResultToSearchResult = (r: SearchResultFromCache): SearchResult => {
     if (r.type === 'skateparks') {
       return {
@@ -332,6 +336,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
         imageUrl: r.imageUrl ?? '',
         area: r.area ?? 'center',
         rating: r.rating,
+        matchBy: r.matchBy,
       };
     }
     if (r.type === 'events') {
@@ -437,11 +442,15 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
           }
         }
 
-        // Filter: keep only results where name or title includes searchQuery OR flippedQuery anywhere (.includes())
+        // When user types in Hebrew, display name may be in English (locale); cache/API already matched name.he — keep those results
+        const queryContainsHebrew = /\p{Script=Hebrew}/u.test(searchQuery.trim());
         const matchesQueryOrFlipped = (result: SearchResult): boolean => {
           const name = getResultDisplayName(result).toLowerCase();
+          if (result.matchBy === 'area') return true;
           if (!name) return false;
-          return name.includes(q) || (flippedLower != null && flippedLower !== '' && name.includes(flippedLower));
+          if (name.includes(q) || (flippedLower != null && flippedLower !== '' && name.includes(flippedLower))) return true;
+          if (queryContainsHebrew) return true; // matched on name.he in cache/API; display name is locale (e.g. en)
+          return false;
         };
         const filteredResults = rawResults.filter((r: SearchResult) => matchesQueryOrFlipped(r));
 
@@ -452,8 +461,11 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
           _score: calculateSearchScore(result, searchQuery, flippedQuery),
         }));
 
-        // Sort: Higher score first, then by startsWith (original then flipped), then by includes(flipped), then alphabetically
+        // Sort: area-matched results last (matchBy === 'area'), then higher score, then startsWith, then alphabetically
         const improvedResults = scoredResults.sort((a: ScoredResult, b: ScoredResult) => {
+          const aAreaLast = a.matchBy === 'area' ? 1 : 0;
+          const bAreaLast = b.matchBy === 'area' ? 1 : 0;
+          if (aAreaLast !== bAreaLast) return aAreaLast - bAreaLast;
           if (b._score !== a._score) {
             return b._score - a._score;
           }
@@ -540,6 +552,9 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
     guides: tMobileNav('guides') || 'Guides',
     trainers: tMobileNav('findCoaches') || 'Trainers',
   };
+
+  // When search query is an area term (north/south/center or צפון/דרום/מרכז), show "Skateparks in X area" header
+  const searchArea = useMemo(() => getAreaFromQuery(searchQuery), [searchQuery]);
 
   // Define category display order (skateparks before guides)
   // Only include products if ecommerce is enabled
@@ -770,7 +785,9 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                     return (
                       <div key={category} className="space-y-3">
                         <h3 className="text-sm font-bold text-text dark:text-text-dark uppercase tracking-wider transition-colors duration-200">
-                          {categoryLabels[category] || category}
+                          {category === 'skateparks' && searchArea
+                            ? tSearch('skateparksInArea', { area: tSkateparks(`search.area.${searchArea}`) })
+                            : (categoryLabels[category] || category)}
                         </h3>
                         <div className="space-y-1">
                           {displayResults.map((result) => {

@@ -25,6 +25,27 @@ export interface SearchResultFromCache {
   relatedSports?: string[];
   ratingCount?: number;
   readTime?: number;
+  /** 'name' = matched by name; 'area' = matched only by area (shown last) */
+  matchBy?: 'name' | 'area';
+}
+
+/** Area search terms: English and Hebrew (מרכז, דרום, צפון). */
+const AREA_TERMS: Record<'north' | 'center' | 'south', string[]> = {
+  north: ['north', 'צפון'],
+  south: ['south', 'דרום'],
+  center: ['center', 'מרכז'],
+};
+
+/** Resolve query to area when user types north/south/center or צפון/דרום/מרכז (incl. flipped layout). */
+export function getAreaFromQuery(query: string): 'north' | 'center' | 'south' | null {
+  const q = query.toLowerCase().trim();
+  const flipped = flipLanguage(query).toLowerCase().trim();
+  for (const [area, terms] of Object.entries(AREA_TERMS)) {
+    if (terms.some((t) => t.toLowerCase() === q || t.toLowerCase() === flipped)) {
+      return area as 'north' | 'center' | 'south';
+    }
+  }
+  return null;
 }
 
 const CACHE_CONFIG = {
@@ -112,26 +133,60 @@ function searchSkateparks(
   locale: string,
   limit: number
 ): SearchResultFromCache[] {
-  const results: SearchResultFromCache[] = [];
   const q = query.toLowerCase().trim();
+  const areaFromQuery = getAreaFromQuery(query);
+  const nameMatchedIds = new Set<string>();
+  const nameResults: SearchResultFromCache[] = [];
+  const areaResults: SearchResultFromCache[] = [];
+
+  // 1) Name matches first
   for (const park of items) {
     const nameEn = getLocalizedText(park.name, 'en');
     const nameHe = getLocalizedText(park.name, 'he');
     const nameLocale = getLocalizedText(park.name, locale);
     if (!q || matchesQueryOrFlipped(nameEn, query) || matchesQueryOrFlipped(nameHe, query)) {
-      results.push({
-        id: park._id?.toString() || park.id || park.slug,
+      const id = park._id?.toString() || park.id || park.slug;
+      nameMatchedIds.add(id);
+      nameResults.push({
+        id,
         type: 'skateparks',
         slug: park.slug,
         name: nameLocale || nameEn || nameHe,
         imageUrl: park.imageUrl || park.images?.[0]?.url || '',
         area: park.area,
         rating: park.rating,
+        matchBy: 'name',
       });
-      if (results.length >= limit) break;
+      if (nameResults.length >= limit) break;
     }
   }
-  return results;
+
+  // 2) Area matches last (only when query is an area term; exclude already name-matched)
+  if (areaFromQuery && nameResults.length < limit) {
+    const areaLimit = limit - nameResults.length;
+    for (const park of items) {
+      if (areaResults.length >= areaLimit) break;
+      const id = park._id?.toString() || park.id || park.slug;
+      if (nameMatchedIds.has(id)) continue;
+      if (park.area === areaFromQuery) {
+        const nameLocale = getLocalizedText(park.name, locale);
+        const nameEn = getLocalizedText(park.name, 'en');
+        const nameHe = getLocalizedText(park.name, 'he');
+        areaResults.push({
+          id,
+          type: 'skateparks',
+          slug: park.slug,
+          name: nameLocale || nameEn || nameHe,
+          imageUrl: park.imageUrl || park.images?.[0]?.url || '',
+          area: park.area,
+          rating: park.rating,
+          matchBy: 'area',
+        });
+      }
+    }
+  }
+
+  return [...nameResults, ...areaResults];
 }
 
 function searchEvents(

@@ -7,6 +7,7 @@
     "guides": "מדריכים",
     "trainers": "מאמנים"
   },
+  "skateparksInArea": "פארקים באזור {area}",
   "popup": {
     "placeholder": "חפש פארקים, מוצרים, אירועים...",
     "recentSearches": "חיפושים אחרונים",
