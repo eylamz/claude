@@ -1,3 +1,10 @@
+/**
+ * Search API: returns results from the database.
+ * Clients (MobileSidebar, search page, HeaderNav) use localStorage cache first for
+ * skateparks, events, and guides (skateparks_cache, events_cache, guides_cache)
+ * and only call this API for products/trainers (types=products,trainers).
+ * This route runs on the server and cannot access localStorage.
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';

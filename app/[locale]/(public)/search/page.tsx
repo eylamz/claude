@@ -22,6 +22,8 @@ import {
   Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
+import { searchFromCache, type SearchResultFromCache } from '@/lib/search-from-cache';
+import { isEcommerceEnabled, isTrainersEnabled } from '@/lib/utils/ecommerce';
 
 type CategoryTab = 'all' | 'products' | 'skateparks' | 'events' | 'guides' | 'trainers';
 
@@ -127,7 +129,7 @@ export default function SearchPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Update URL when state changes
+  // Update URL when tab/page/filters change (not when typing — don't sync URL with query)
   useEffect(() => {
     const params = new URLSearchParams();
     if (query) params.set('q', query);
@@ -138,9 +140,67 @@ export default function SearchPage() {
     if (eventDateRange.end) params.set('endDate', eventDateRange.end);
     params.set('locale', String(locale));
     router.replace(`/${locale}/search?${params.toString()}`);
-  }, [query, activeTab, page, filterTypes, eventDateRange, locale, router]);
+  }, [activeTab, page, filterTypes, eventDateRange, locale, router]);
 
-  // Fetch results
+  // Cache-backed categories (localStorage first; fill cache if missing)
+  const cacheCategories = useMemo((): ('skateparks' | 'events' | 'guides')[] => {
+    if (activeTab === 'all') return ['skateparks', 'events', 'guides'];
+    if (activeTab === 'skateparks' || activeTab === 'events' || activeTab === 'guides') return [activeTab];
+    return [];
+  }, [activeTab]);
+
+  // API-only categories (no localStorage cache; always fetch)
+  const apiCategories = useMemo((): ('products' | 'trainers')[] => {
+    if (activeTab === 'all') {
+      const list: ('products' | 'trainers')[] = [];
+      if (isEcommerceEnabled()) list.push('products');
+      if (isTrainersEnabled()) list.push('trainers');
+      return list;
+    }
+    if (activeTab === 'products' && isEcommerceEnabled()) return ['products'];
+    if (activeTab === 'trainers' && isTrainersEnabled()) return ['trainers'];
+    return [];
+  }, [activeTab]);
+
+  // Map SearchResultFromCache to SearchResult (same shape as API)
+  const mapCacheResultToSearchResult = (r: SearchResultFromCache): SearchResult => {
+    if (r.type === 'skateparks') {
+      return {
+        id: r.id,
+        type: 'skateparks',
+        slug: r.slug,
+        name: r.name ?? '',
+        imageUrl: r.imageUrl ?? '',
+        area: r.area ?? 'center',
+        rating: r.rating,
+      };
+    }
+    if (r.type === 'events') {
+      return {
+        id: r.id,
+        type: 'events',
+        slug: r.slug,
+        title: r.title ?? '',
+        image: r.image,
+        startDate: r.startDate ?? new Date().toISOString(),
+      };
+    }
+    return {
+      id: r.id,
+      type: 'guides',
+      slug: r.slug,
+      title: r.title ?? '',
+      description: r.description,
+      coverImage: r.coverImage,
+      relatedSports: r.relatedSports,
+      rating: r.rating,
+      ratingCount: r.ratingCount,
+      readTime: r.readTime,
+    };
+  };
+
+  // Fetch results: always search cache first (localStorage); only then call API for products/trainers.
+  // We never call /api/search for skateparks, events, or guides — those come from cache only.
   useEffect(() => {
     if (!query) {
       setResults([]);
@@ -151,30 +211,49 @@ export default function SearchPage() {
     const controller = new AbortController();
     const run = async () => {
       try {
-        const params = new URLSearchParams();
-        params.set('q', query);
-        if (activeTab !== 'all') params.set('category', activeTab);
-        if (filterTypes.length > 0) params.set('types', filterTypes.join(','));
-        if (eventDateRange.start) params.set('startDate', eventDateRange.start);
-        if (eventDateRange.end) params.set('endDate', eventDateRange.end);
-        params.set('minPrice', String(productPriceRange[0]));
-        params.set('maxPrice', String(productPriceRange[1]));
-        params.set('page', String(page));
-        params.set('locale', String(locale));
-        const res = await fetch(`/api/search?${params.toString()}`, { signal: controller.signal });
-        if (!res.ok) throw new Error('Search failed');
-        const data = await res.json();
-        setResults(data.results || []);
-        setTotal(data.total || 0);
+        const allResults: SearchResult[] = [];
+
+        // 1) Always run cache first: localStorage (skateparks_cache, events_cache, guides_cache)
+        if (cacheCategories.length > 0) {
+          const cacheResults = await searchFromCache(query, locale, cacheCategories);
+          allResults.push(...cacheResults.map(mapCacheResultToSearchResult));
+        }
+
+        // 2) Only then: fetch from API for products/trainers (no cache for these)
+        const cacheCount = allResults.length;
+        if (apiCategories.length > 0) {
+          const params = new URLSearchParams();
+          params.set('q', query);
+          params.set('types', apiCategories.join(','));
+          if (eventDateRange.start) params.set('startDate', eventDateRange.start);
+          if (eventDateRange.end) params.set('endDate', eventDateRange.end);
+          params.set('minPrice', String(productPriceRange[0]));
+          params.set('maxPrice', String(productPriceRange[1]));
+          params.set('page', String(page));
+          params.set('locale', String(locale));
+          const res = await fetch(`/api/search?${params.toString()}`, { signal: controller.signal });
+          if (!res.ok) throw new Error('Search failed');
+          const data = await res.json();
+          const apiResults = (data.results || []) as SearchResult[];
+          allResults.push(...apiResults);
+          const apiTotal = data.total ?? 0;
+          setTotal(cacheCount + apiTotal);
+        } else {
+          setTotal(allResults.length);
+        }
+
+        setResults(allResults);
       } catch (e) {
         if ((e as any).name !== 'AbortError') console.error(e);
+        setResults([]);
+        setTotal(0);
       } finally {
         setLoading(false);
       }
     };
     run();
     return () => controller.abort();
-  }, [query, activeTab, filterTypes, eventDateRange, productPriceRange, page, locale]);
+  }, [query, activeTab, cacheCategories, apiCategories, filterTypes, eventDateRange, productPriceRange, page, locale]);
 
   // Debounced input handler
   const handleQueryChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {

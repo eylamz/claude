@@ -13,7 +13,7 @@ export default getRequestConfig(async ({ locale }) => {
   }
 
   // Load all translation namespaces
-  const [common, shop, admin, auth, events, skateparks, guides, about, accessibility, contact] = await Promise.all([
+  const [common, shop, admin, auth, events, skateparks, guides, about, accessibility, contact, search] = await Promise.all([
     import(`./locales/${currentLocale}/common.json`).then((m) => m.default),
     import(`./locales/${currentLocale}/shop.json`).then((m) => m.default),
     import(`./locales/${currentLocale}/admin.json`).then((m) => m.default),
@@ -24,6 +24,7 @@ export default getRequestConfig(async ({ locale }) => {
     import(`./locales/${currentLocale}/about.json`).then((m) => m.default),
     import(`./locales/${currentLocale}/accessibility.json`).then((m) => m.default),
     import(`./locales/${currentLocale}/contact.json`).then((m) => m.default),
+    import(`./locales/${currentLocale}/search.json`).then((m) => m.default),
   ]);
 
   return {
@@ -39,6 +40,7 @@ export default getRequestConfig(async ({ locale }) => {
       about,
       accessibility,
       contact,
+      search,
     },
   };
 });

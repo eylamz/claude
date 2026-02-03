@@ -1,0 +1,250 @@
+/**
+ * Search from localStorage caches (skateparks_cache, events_cache, guides_cache).
+ * If a cache is missing, fetches full data from the same APIs the pages use,
+ * stores in localStorage, then filters by query and maps to search result shape.
+ * Uses flipLanguage so typing with wrong keyboard layout (e.g. "zfrui" for "זכרון") still matches.
+ */
+
+import { flipLanguage } from '@/lib/utils/transliterate';
+
+export type SearchResultType = 'skateparks' | 'events' | 'guides';
+
+export interface SearchResultFromCache {
+  id: string;
+  type: SearchResultType;
+  slug: string;
+  name?: string;
+  title?: string;
+  imageUrl?: string;
+  image?: string;
+  coverImage?: string;
+  area?: 'north' | 'center' | 'south';
+  rating?: number;
+  startDate?: string;
+  description?: string;
+  relatedSports?: string[];
+  ratingCount?: number;
+  readTime?: number;
+}
+
+const CACHE_CONFIG = {
+  skateparks: {
+    key: 'skateparks_cache',
+    versionKey: 'skateparks_version',
+    fetchUrl: '/api/skateparks',
+    parseResponse: (data: any) => data.skateparks || [],
+    getVersion: (data: any) => data.version ?? 1,
+  },
+  events: {
+    key: 'events_cache',
+    versionKey: 'events_version',
+    fetchUrl: '/api/events?full=true',
+    parseResponse: (data: any) => data.events || [],
+    getVersion: (data: any) => data.version ?? 1,
+  },
+  guides: {
+    key: 'guides_cache',
+    versionKey: 'guides_version',
+    fetchUrl: '/api/guides?limit=100',
+    parseResponse: (data: any) => data.guides || [],
+    getVersion: (data: any) => data.version ?? 1,
+  },
+} as const;
+
+function getLocalizedText(value: string | { en?: string; he?: string } | undefined, locale: string): string {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  const loc = locale === 'he' ? 'he' : 'en';
+  return value[loc] || value.en || value.he || '';
+}
+
+function matchesQuery(text: string, query: string): boolean {
+  if (!query.trim()) return true;
+  const q = query.toLowerCase().trim();
+  return text.toLowerCase().includes(q);
+}
+
+/** Match if text includes query OR flipped query (wrong keyboard layout, e.g. "zfrui" -> "זכרון"). */
+function matchesQueryOrFlipped(text: string, query: string): boolean {
+  if (!query.trim()) return true;
+  const q = query.toLowerCase().trim();
+  const flipped = flipLanguage(query);
+  const flippedLower = flipped ? flipped.toLowerCase().trim() : '';
+  const textLower = text.toLowerCase();
+  return textLower.includes(q) || (flippedLower !== '' && textLower.includes(flippedLower));
+}
+
+/** Ensure cache is populated; return parsed array or null if fetch failed. */
+async function getOrFillCache(
+  category: keyof typeof CACHE_CONFIG
+): Promise<any[] | null> {
+  const config = CACHE_CONFIG[category];
+  if (typeof window === 'undefined') return null;
+
+  const raw = localStorage.getItem(config.key);
+  if (raw) {
+    try {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr) && arr.length > 0) return arr;
+    } catch {
+      // invalid cache
+    }
+  }
+
+  try {
+    const res = await fetch(config.fetchUrl);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const items = config.parseResponse(data);
+    if (!Array.isArray(items)) return null;
+    const version = config.getVersion(data);
+    localStorage.setItem(config.key, JSON.stringify(items));
+    localStorage.setItem(config.versionKey, String(version));
+    return items;
+  } catch {
+    return null;
+  }
+}
+
+function searchSkateparks(
+  items: any[],
+  query: string,
+  locale: string,
+  limit: number
+): SearchResultFromCache[] {
+  const results: SearchResultFromCache[] = [];
+  const q = query.toLowerCase().trim();
+  for (const park of items) {
+    const nameEn = getLocalizedText(park.name, 'en');
+    const nameHe = getLocalizedText(park.name, 'he');
+    const nameLocale = getLocalizedText(park.name, locale);
+    if (!q || matchesQueryOrFlipped(nameEn, query) || matchesQueryOrFlipped(nameHe, query)) {
+      results.push({
+        id: park._id?.toString() || park.id || park.slug,
+        type: 'skateparks',
+        slug: park.slug,
+        name: nameLocale || nameEn || nameHe,
+        imageUrl: park.imageUrl || park.images?.[0]?.url || '',
+        area: park.area,
+        rating: park.rating,
+      });
+      if (results.length >= limit) break;
+    }
+  }
+  return results;
+}
+
+function searchEvents(
+  items: any[],
+  query: string,
+  locale: string,
+  limit: number
+): SearchResultFromCache[] {
+  const results: SearchResultFromCache[] = [];
+  for (const event of items) {
+    const title = getLocalizedText(
+      event.content?.en?.title != null
+        ? { en: event.content.en.title, he: event.content?.he?.title }
+        : event.title,
+      locale
+    );
+    const titleEn = getLocalizedText(
+      event.content?.en?.title != null
+        ? { en: event.content.en.title, he: event.content?.he?.title }
+        : event.title,
+      'en'
+    );
+    const titleHe = getLocalizedText(
+      event.content?.he?.title != null
+        ? { en: event.content?.en?.title, he: event.content.he.title }
+        : event.title,
+      'he'
+    );
+    const descEn = getLocalizedText(event.content?.en?.description ?? event.description, 'en');
+    const descHe = getLocalizedText(event.content?.he?.description ?? event.description, 'he');
+    const searchable = `${titleEn} ${titleHe} ${descEn} ${descHe}`;
+    if (!query.trim() || matchesQueryOrFlipped(searchable, query)) {
+      const startDate =
+        event.dateTime?.startDate ?? event.startDate;
+      const startStr =
+        typeof startDate === 'string' ? startDate : startDate?.toISO?.() ?? '';
+      results.push({
+        id: event._id?.toString() || event.id || event.slug,
+        type: 'events',
+        slug: event.slug,
+        title,
+        image:
+          typeof event.featuredImage === 'string'
+            ? event.featuredImage
+            : event.featuredImage?.url ?? event.images?.[0]?.url ?? '',
+        startDate: startStr,
+      });
+      if (results.length >= limit) break;
+    }
+  }
+  return results;
+}
+
+function searchGuides(
+  items: any[],
+  query: string,
+  locale: string,
+  limit: number
+): SearchResultFromCache[] {
+  const results: SearchResultFromCache[] = [];
+  for (const guide of items) {
+    const title = getLocalizedText(guide.title, locale);
+    const titleEn = getLocalizedText(guide.title, 'en');
+    const titleHe = getLocalizedText(guide.title, 'he');
+    const descEn = getLocalizedText(guide.description, 'en');
+    const descHe = getLocalizedText(guide.description, 'he');
+    const searchable = `${titleEn} ${titleHe} ${descEn} ${descHe}`;
+    if (!query.trim() || matchesQueryOrFlipped(searchable, query)) {
+      results.push({
+        id: guide.id ?? guide._id?.toString() ?? guide.slug,
+        type: 'guides',
+        slug: guide.slug,
+        title,
+        description: getLocalizedText(guide.description, locale),
+        coverImage: guide.coverImage ?? '',
+        relatedSports: guide.relatedSports,
+        rating: guide.rating,
+        ratingCount: guide.ratingCount,
+        readTime: guide.readTime,
+      });
+      if (results.length >= limit) break;
+    }
+  }
+  return results;
+}
+
+const SEARCH_LIMIT = 20;
+
+/**
+ * Search cached data (skateparks, events, guides). Uses localStorage first;
+ * if a cache is missing, fetches from the same API the list pages use and
+ * stores in localStorage, then filters by query.
+ */
+export async function searchFromCache(
+  query: string,
+  locale: string,
+  categories: SearchResultType[]
+): Promise<SearchResultFromCache[]> {
+  const all: SearchResultFromCache[] = [];
+  const limitPerCategory = Math.ceil(SEARCH_LIMIT / Math.max(1, categories.length));
+
+  for (const category of categories) {
+    const items = await getOrFillCache(category);
+    if (!items || items.length === 0) continue;
+
+    if (category === 'skateparks') {
+      all.push(...searchSkateparks(items, query, locale, limitPerCategory));
+    } else if (category === 'events') {
+      all.push(...searchEvents(items, query, locale, limitPerCategory));
+    } else if (category === 'guides') {
+      all.push(...searchGuides(items, query, locale, limitPerCategory));
+    }
+  }
+
+  return all.slice(0, SEARCH_LIMIT);
+}

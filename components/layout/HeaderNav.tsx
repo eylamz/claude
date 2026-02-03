@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
@@ -22,6 +22,11 @@ import {
   UserCircle,
   BookOpen,
   Settings as SettingsIcon,
+  Search as SearchIcon,
+  X,
+  Clock,
+  ShoppingBag,
+  Sparkles,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
@@ -40,8 +45,65 @@ import {
   useCartTotals,
   type CartItem 
 } from '@/stores/cartStore';
-import { Input } from '@/components/ui';
+import { Input, Card, CardContent, Skeleton } from '@/components/ui';
+import { ProductCard, SkateparkCard, TrainerCard, GuideCard } from '@/components/shop';
 import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled, isGrowthLabEnabled, isCommunityEnabled } from '@/lib/utils/ecommerce';
+import { cn } from '@/lib/utils/cn';
+import { searchFromCache, type SearchResultFromCache } from '@/lib/search-from-cache';
+
+// Search result types (match API / search page)
+type SearchResultType = 'products' | 'skateparks' | 'events' | 'guides' | 'trainers';
+interface SearchResultBase {
+  id: string;
+  type: SearchResultType;
+}
+interface ProductResult extends SearchResultBase {
+  type: 'products';
+  slug: string;
+  name: string | { en: string; he: string };
+  images?: Array<{ url: string }>;
+  price: number;
+  discountPrice?: number;
+  variants?: any[];
+  totalStock?: number;
+}
+interface SkateparkResult extends SearchResultBase {
+  type: 'skateparks';
+  slug: string;
+  name: string | { en: string; he: string };
+  imageUrl: string;
+  area: 'north' | 'center' | 'south';
+  rating?: number;
+}
+interface EventResult extends SearchResultBase {
+  type: 'events';
+  slug: string;
+  title: string;
+  image?: string;
+  startDate: string;
+}
+interface GuideResult extends SearchResultBase {
+  type: 'guides';
+  slug: string;
+  title: string;
+  description?: string;
+  coverImage?: string;
+  relatedSports?: string[];
+  rating?: number;
+  ratingCount?: number;
+  readTime?: number;
+}
+interface TrainerResult extends SearchResultBase {
+  type: 'trainers';
+  slug: string;
+  name: string;
+  profileImage?: string;
+  area: 'north' | 'center' | 'south';
+  relatedSports?: string[];
+  rating?: number;
+  totalReviews?: number;
+}
+type SearchResult = ProductResult | SkateparkResult | EventResult | GuideResult | TrainerResult;
 
 export default function HeaderNav() {
   const pathname = usePathname();
@@ -53,12 +115,17 @@ export default function HeaderNav() {
   const tEvents = useTranslations('events');
   const tAdmin = useTranslations('admin');
   const tMobileNav = useTranslations('common.mobileNav');
+  const tSearch = useTranslations('search');
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchFilterTab, setSearchFilterTab] = useState<SearchResultType | 'all'>('all');
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const ecommerceEnabled = isEcommerceEnabled();
   const trainersEnabled = isTrainersEnabled();
@@ -140,14 +207,239 @@ export default function HeaderNav() {
     localStorage.setItem('recentSearches', JSON.stringify(updated));
   }, [recentSearches]);
 
-  // Handle search
-  const handleSearch = useCallback((query: string) => {
+  // Set query from recent/quick action (results show in popup)
+  const handleSearchQuery = useCallback((query: string) => {
     if (!query.trim()) return;
     saveSearch(query);
-    setIsSearchOpen(false);
-    setSearchQuery('');
-    router.push(`/${locale}/search?q=${encodeURIComponent(query)}`);
-  }, [locale, router, saveSearch]);
+    setSearchQuery(query);
+  }, [saveSearch]);
+
+  // Filter tabs for popup (respect .env: products only if ecommerce, trainers only if trainers)
+  const searchFilterTabs = useMemo(() => {
+    const tabs: { key: SearchResultType | 'all'; label: string; icon: typeof MapPin }[] = [
+      { key: 'all', label: tSearch('tabs.all') || 'All', icon: Sparkles },
+      { key: 'skateparks', label: tSearch('tabs.skateparks') || 'Parks', icon: MapPin },
+      { key: 'events', label: tSearch('tabs.events') || 'Events', icon: Calendar },
+      { key: 'guides', label: tSearch('tabs.guides') || 'Guides', icon: BookOpen },
+    ];
+    if (ecommerceEnabled) {
+      tabs.splice(1, 0, { key: 'products', label: tSearch('tabs.products') || 'Products', icon: ShoppingBag });
+    }
+    if (trainersEnabled) {
+      tabs.push({ key: 'trainers', label: tSearch('tabs.trainers') || 'Trainers', icon: Users });
+    }
+    return tabs;
+  }, [ecommerceEnabled, trainersEnabled, tSearch]);
+
+  // Cache-backed categories: search localStorage first; if missing, fetch and cache then search
+  const cacheCategories = useMemo((): ('skateparks' | 'events' | 'guides')[] => {
+    if (searchFilterTab === 'all') return ['skateparks', 'events', 'guides'];
+    if (searchFilterTab === 'skateparks' || searchFilterTab === 'events' || searchFilterTab === 'guides') {
+      return [searchFilterTab];
+    }
+    return [];
+  }, [searchFilterTab]);
+
+  // API-only categories (no localStorage cache in app)
+  const apiCategories = useMemo((): ('products' | 'trainers')[] => {
+    if (searchFilterTab === 'all') {
+      const list: ('products' | 'trainers')[] = [];
+      if (ecommerceEnabled) list.push('products');
+      if (trainersEnabled) list.push('trainers');
+      return list;
+    }
+    if (searchFilterTab === 'products' && ecommerceEnabled) return ['products'];
+    if (searchFilterTab === 'trainers' && trainersEnabled) return ['trainers'];
+    return [];
+  }, [searchFilterTab, ecommerceEnabled, trainersEnabled]);
+
+  // Map SearchResultFromCache to SearchResult (same shape for skateparks/events/guides)
+  const mapCacheResultToSearchResult = useCallback((r: SearchResultFromCache): SearchResult => {
+    if (r.type === 'skateparks') {
+      return {
+        id: r.id,
+        type: 'skateparks',
+        slug: r.slug,
+        name: r.name ?? '',
+        imageUrl: r.imageUrl ?? '',
+        area: r.area ?? 'center',
+        rating: r.rating,
+      };
+    }
+    if (r.type === 'events') {
+      return {
+        id: r.id,
+        type: 'events',
+        slug: r.slug,
+        title: r.title ?? '',
+        image: r.image,
+        startDate: r.startDate ?? new Date().toISOString(),
+      };
+    }
+    return {
+      id: r.id,
+      type: 'guides',
+      slug: r.slug,
+      title: r.title ?? '',
+      description: r.description,
+      coverImage: r.coverImage,
+      relatedSports: r.relatedSports,
+      rating: r.rating,
+      ratingCount: r.ratingCount,
+      readTime: r.readTime,
+    };
+  }, []);
+
+  // Fetch search results: cache-first for skateparks/events/guides, then API for products/trainers
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    const controller = new AbortController();
+    searchDebounceRef.current = setTimeout(async () => {
+      try {
+        const results: SearchResult[] = [];
+
+        // 1) Search localStorage caches (skateparks_cache, events_cache, guides_cache); fill cache if missing
+        if (cacheCategories.length > 0) {
+          const cacheResults = await searchFromCache(searchQuery, locale, cacheCategories);
+          results.push(...cacheResults.map(mapCacheResultToSearchResult));
+        }
+
+        // 2) Fetch from API for products/trainers (no app cache for these)
+        if (apiCategories.length > 0) {
+          const params = new URLSearchParams();
+          params.set('q', searchQuery);
+          params.set('locale', locale);
+          params.set('types', apiCategories.join(','));
+          const res = await fetch(`/api/search?${params.toString()}`, { signal: controller.signal });
+          if (res.ok) {
+            const data = await res.json();
+            const apiResults = (data.results || []) as SearchResult[];
+            results.push(...apiResults);
+          }
+        }
+
+        if (!ecommerceEnabled) {
+          const filtered = results.filter((r) => r.type !== 'products');
+          setSearchResults(filtered);
+        } else {
+          setSearchResults(results);
+        }
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') console.error(e);
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      controller.abort();
+    };
+  }, [searchQuery, searchFilterTab, locale, ecommerceEnabled, cacheCategories, apiCategories, mapCacheResultToSearchResult]);
+
+  // Render a single search result card (matches search page)
+  const renderSearchCard = useCallback((item: SearchResult) => {
+    switch (item.type) {
+      case 'products': {
+        const p = item as ProductResult;
+        return (
+          <ProductCard
+            key={p.id}
+            product={{
+              id: p.id,
+              slug: p.slug,
+              name: p.name as { en: string; he: string },
+              price: p.price,
+              discountPrice: p.discountPrice,
+              images: p.images,
+              variants: p.variants,
+              totalStock: p.totalStock,
+            }}
+            view="grid"
+          />
+        );
+      }
+      case 'skateparks': {
+        const s = item as SkateparkResult;
+        const nameStr = typeof s.name === 'string' ? s.name : (s.name[locale as 'en' | 'he'] || s.name.en || s.name.he);
+        return (
+          <SkateparkCard
+            key={s.id}
+            slug={s.slug}
+            name={nameStr}
+            image={s.imageUrl}
+            area={s.area}
+          />
+        );
+      }
+      case 'guides': {
+        const g = item as GuideResult;
+        return (
+          <GuideCard
+            key={g.id}
+            slug={g.slug}
+            title={g.title}
+            description={g.description}
+            image={g.coverImage}
+            rating={g.rating}
+            ratingCount={g.ratingCount}
+            readTime={g.readTime}
+            sports={g.relatedSports}
+          />
+        );
+      }
+      case 'trainers': {
+        const tr = item as TrainerResult;
+        return (
+          <TrainerCard
+            key={tr.id}
+            slug={tr.slug}
+            name={tr.name}
+            image={tr.profileImage}
+            area={tr.area}
+            sports={tr.relatedSports}
+            rating={tr.rating}
+            reviewCount={tr.totalReviews}
+          />
+        );
+      }
+      case 'events': {
+        const ev = item as EventResult;
+        return (
+          <Card key={ev.id} className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center text-white">
+                  <Calendar className="w-8 h-8" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Link
+                    href={`/${locale}/events/${ev.slug}`}
+                    onClick={() => setIsSearchOpen(false)}
+                    className="font-semibold text-gray-900 dark:text-white hover:text-brand-main dark:hover:text-brand-main transition-colors line-clamp-2"
+                  >
+                    {ev.title}
+                  </Link>
+                  <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    <Clock className="w-4 h-4" />
+                    <span>{new Date(ev.startDate).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      }
+      default:
+        return null;
+    }
+  }, [locale]);
 
   // Handle logout - works like next-auth's internal signOut
   const handleLogout = async () => {
@@ -828,7 +1120,7 @@ export default function HeaderNav() {
         </div>
       </header>
 
-      {/* Search Modal */}
+      {/* Search Modal - gradient + results in popup (like search page) */}
       {isSearchOpen && (
         <div 
           className="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-start justify-center pt-20 md:pt-32 transition-colors duration-200"
@@ -836,125 +1128,194 @@ export default function HeaderNav() {
             if (e.target === e.currentTarget) {
               setIsSearchOpen(false);
               setSearchQuery('');
+              setSearchFilterTab('all');
             }
           }}
         >
-          <div className="w-full max-w-2xl mx-4 bg-white dark:bg-gray-900 rounded-lg shadow-xl transition-colors duration-200">
-            {/* Header */}
-            <div className="flex items-center gap-4 p-4 border-b border-gray-200 dark:border-gray-800 transition-colors duration-200">
-              <button
-                onClick={() => {
-                  setIsSearchOpen(false);
-                  setSearchQuery('');
-                }}
-                className="p-2 text-sidebar-text dark:text-sidebar-text-dark hover:text-black/80 dark:hover:text-white/80 transition-colors duration-200"
-                aria-label="Close search"
-              >
-                <Icon name="search" className="w-5 h-5" />
-              </button>
-              <div className="flex-1">
-                <Input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSearch(searchQuery);
-                    }
+          <div 
+            className="w-full max-w-2xl mx-4 rounded-2xl shadow-xl overflow-hidden transition-colors duration-200 flex flex-col max-h-[85vh] bg-white dark:bg-gray-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Gradient header + search bar (like search page hero) */}
+            <div className="relative bg-gradient-to-br from-purple-500/10 via-transparent to-brand-main/10 dark:from-purple-500/5 dark:to-brand-main/5 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]" />
+              <div className="relative flex items-center gap-3 p-4">
+                <button
+                  onClick={() => {
+                    setIsSearchOpen(false);
+                    setSearchQuery('');
+                    setSearchFilterTab('all');
                   }}
-                  placeholder="Search products, events, parks..."
-                  className="w-full"
-                  autoFocus
-                />
+                  className="flex-shrink-0 p-2 text-sidebar-text dark:text-sidebar-text-dark hover:text-black/80 dark:hover:text-white/80 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200"
+                  aria-label="Close search"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <div className="flex-1 relative">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    <SearchIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder={tSearch('popup.placeholder')}
+                    className="w-full pl-12 pr-12 py-3.5 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl focus:border-brand-main dark:focus:border-brand-main focus:ring-4 focus:ring-brand-main/20 dark:focus:ring-brand-main/30 outline-none transition-all shadow-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    autoFocus
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Recent Searches */}
-            {searchQuery.trim() === '' && recentSearches.length > 0 && (
-              <div className="p-4 border-b border-gray-200 dark:border-gray-800 transition-colors duration-200">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 transition-colors duration-200">
-                    Recent Searches
-                  </h3>
-                  <button
-                    onClick={() => {
-                      setRecentSearches([]);
-                      localStorage.removeItem('recentSearches');
-                    }}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline transition-colors duration-200"
-                  >
-                    Clear
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {recentSearches.map((search, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSearch(search)}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-                    >
-                      <span className="text-gray-900 dark:text-white transition-colors duration-200">{search}</span>
-                      <Icon name="search" className="w-4 h-4 text-gray-400 transition-colors duration-200" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Quick Actions */}
-            {searchQuery.trim() === '' && (
-              <div className="p-4">
-                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                  Quick Actions
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => handleSearch('skateboarding')}
-                    className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      Skateboarding
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => handleSearch('BMX')}
-                    className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      BMX
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => handleSearch('events')}
-                    className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      Events
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => handleSearch('skateparks')}
-                    className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      Skateparks
-                    </span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Search Results Placeholder */}
+            {/* Filter tabs (when user has typed) - respect env flags */}
             {searchQuery.trim() !== '' && (
-              <div className="p-4">
-                <button
-                  onClick={() => handleSearch(searchQuery)}
-                  className="w-full px-4 py-2 bg-blue-600 dark:bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium"
-                >
-                  Search for &quot;{searchQuery}&quot;
-                </button>
+              <div className="flex-shrink-0 px-4 pb-3 pt-1 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <div className="flex flex-wrap gap-2">
+                  {searchFilterTabs.map((tab) => {
+                    const isActive = searchFilterTab === tab.key;
+                    const IconComponent = tab.icon;
+                    return (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => setSearchFilterTab(tab.key)}
+                        className={cn(
+                          'inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all',
+                          isActive
+                            ? 'bg-brand-main dark:bg-brand-main text-white shadow-sm'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+                        )}
+                      >
+                        <IconComponent className="w-4 h-4" />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             )}
+
+            {/* Content: recent/quick when empty, results when query */}
+            <div className="flex-1 overflow-y-auto min-h-0">
+              {searchQuery.trim() === '' ? (
+                <>
+                  {/* Recent Searches */}
+                  {recentSearches.length > 0 && (
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                          {tSearch('popup.recentSearches')}
+                        </h3>
+                        <button
+                          onClick={() => {
+                            setRecentSearches([]);
+                            localStorage.removeItem('recentSearches');
+                          }}
+                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          {tSearch('popup.clear')}
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {recentSearches.map((search, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleSearchQuery(search)}
+                            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            <span className="text-gray-900 dark:text-white">{search}</span>
+                            <SearchIcon className="w-4 h-4 text-gray-400" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quick actions */}
+                  <div className="p-4">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                      {tSearch('popup.quickSearch')}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {['skateboarding', 'BMX', 'events', 'skateparks'].map((term) => (
+                        <button
+                          key={term}
+                          onClick={() => handleSearchQuery(term)}
+                          className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-transparent hover:border-brand-main/30 dark:hover:border-brand-main/30"
+                        >
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">{term}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Loading */}
+                  {searchLoading && (
+                    <div className="p-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {[...Array(6)].map((_, i) => (
+                        <Skeleton key={i} className="h-48 rounded-2xl" />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Results */}
+                  {!searchLoading && searchResults.length > 0 && (
+                    <div className="p-4 space-y-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {searchResults.length} {tSearch('popup.results')}
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {searchResults.slice(0, 12).map((item) => (
+                          <div key={item.id} onClickCapture={() => setIsSearchOpen(false)}>
+                            {renderSearchCard(item)}
+                          </div>
+                        ))}
+                      </div>
+                      <Link
+                        href={`/${locale}/search?q=${encodeURIComponent(searchQuery)}${searchFilterTab !== 'all' ? `&tab=${searchFilterTab}` : ''}`}
+                        onClick={() => setIsSearchOpen(false)}
+                        className="block w-full text-center py-3 text-sm font-medium text-brand-main dark:text-brand-main hover:underline"
+                      >
+                        {tSearch('popup.viewAllResults')}
+                      </Link>
+                    </div>
+                  )}
+
+                  {/* No results */}
+                  {!searchLoading && searchQuery.trim() !== '' && searchResults.length === 0 && (
+                    <div className="p-8 text-center">
+                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-500/10 to-brand-main/10 dark:from-purple-500/20 dark:to-brand-main/20 mb-4">
+                        <SearchIcon className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        {tSearch('popup.noResultsFound')}
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        {tSearch('popup.noResultsHint')}
+                      </p>
+                      <Link
+                        href={`/${locale}/search`}
+                        onClick={() => setIsSearchOpen(false)}
+                        className="text-sm font-medium text-brand-main dark:text-brand-main hover:underline"
+                      >
+                        {tSearch('popup.goToFullSearch')}
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
