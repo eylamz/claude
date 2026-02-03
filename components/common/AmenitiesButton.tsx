@@ -124,22 +124,33 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
       <PopoverContent className="w-fit min-w-[330px] p-2">
         <div className="space-y-2">
           <div className={`flex gap-4 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'} items-center justify-between h-[32px]`}>
-            <h4 className={`text-sm font-medium w-full ${selectedAmenities.length > 0 ? (locale === 'he' ? 'text-right' : 'text-left') : 'text-center'}`}>{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
-            {selectedAmenities.length > 0 && (
+            <h4 className={`text-sm font-medium w-full`}>{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
+            <div className={`flex gap-1.5 items-center ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
+              {selectedAmenities.length > 0 && (
+                <Button
+                  variant="red"
+                  size="sm"
+                  onClick={clearAll}
+                  className="opacity-0 animate-popFadeIn h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
+                  style={{ animationDelay: `300ms` }}
+                >
+                  {tCommon('clear') || 'Clear'}
+                  <Icon 
+                    name="trash" 
+                    className="h-3 w-3"
+                  />
+                </Button>
+              )}
               <Button
-                variant="red"
+                variant="gray"
                 size="sm"
-                onClick={clearAll}
-                className="opacity-0 animate-popFadeIn h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
-                style={{ animationDelay: `300ms` }}
-            >
-                {tCommon('clear') || 'Clear'}
-                <Icon 
-                  name="trash" 
-                  className="h-3 w-3"
-                />
+                onClick={() => setIsOpen(false)}
+                className="h-8 w-8 p-0 shrink-0"
+                aria-label={tCommon('close') || 'Close'}
+              >
+                <Icon name="X" className="h-4 w-4" />
               </Button>
-            )}
+            </div>
           </div>
           <Separator className="bg-popover-border dark:bg-popover-border-dark" />
           <table className="w-full">

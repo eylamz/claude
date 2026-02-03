@@ -4,6 +4,7 @@ import { FC, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Star, Clock, Eye } from 'lucide-react';
+import { highlightMatch } from '@/lib/search-highlight';
 
 interface GuideCardProps {
   slug: string;
@@ -16,6 +17,8 @@ interface GuideCardProps {
   readTime?: number; // in minutes
   sports?: string[];
   difficulty?: string;
+  /** When set, highlights matching substring in title (e.g. search query). */
+  highlightQuery?: string;
 }
 
 export const GuideCard: FC<GuideCardProps> = ({ 
@@ -83,7 +86,7 @@ export const GuideCard: FC<GuideCardProps> = ({
           )}
 
           <h3 className="text-lg font-semibold mb-2 line-clamp-2 text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-            {title}
+            {highlightQuery ? highlightMatch(title, highlightQuery) : title}
           </h3>
           {description && (
             <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-3 flex-1">

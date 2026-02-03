@@ -9,6 +9,9 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Icon } from '@/components/icons';
 import type { GuideData, FiltersData, ILocalizedField } from '@/lib/api/guides';
+import { flipLanguage } from '@/lib/utils/transliterate';
+import { queryMatchesCategory } from '@/lib/search-from-cache';
+import { highlightMatch } from '@/lib/search-highlight';
 
 interface Guide extends GuideData {}
 
@@ -212,13 +215,15 @@ const GuideCard = memo(({
   locale, 
   animationDelay = 0,
   getSportTranslation,
-  getDifficultyTranslation
+  getDifficultyTranslation,
+  highlightQuery,
 }: { 
   guide: Guide; 
   locale: string; 
   animationDelay?: number;
   getSportTranslation: (sport: string) => string;
   getDifficultyTranslation: (difficulty: string) => string;
+  highlightQuery?: string;
 }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [showNameSection, setShowNameSection] = useState(false);
@@ -324,7 +329,7 @@ const GuideCard = memo(({
           <h3 
             className={`text-lg font-medium opacity-0 ${showGuideName ? 'animate-fadeInDown animation-delay-[1s]' : ''}`}
           >
-            {guideTitle}
+            {highlightQuery ? highlightMatch(guideTitle, highlightQuery) : guideTitle}
           </h3>
          
         </div>
@@ -569,15 +574,26 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             if (versionMatches && Array.isArray(allCachedGuides)) {
               let filteredGuides = [...allCachedGuides];
 
-              // Apply filters
+              // Apply filters: flipLanguage (wrong keyboard), category trigger (show all); match title + description
               if (searchQuery) {
-                const searchLower = searchQuery.toLowerCase();
-                filteredGuides = filteredGuides.filter((guide: Guide) => {
-                  const title = getLocalizedText(guide.title, locale);
-                  const description = guide.description ? getLocalizedText(guide.description, locale) : '';
-                  return title.toLowerCase().includes(searchLower) || 
-                         description.toLowerCase().includes(searchLower);
-                });
+                if (queryMatchesCategory(searchQuery, 'guides')) {
+                  // Show all guides when user types e.g. "מדריכים", "guides", "nsrhfho"
+                } else {
+                  const searchLower = searchQuery.toLowerCase().trim();
+                  const flipped = flipLanguage(searchQuery);
+                  const flippedLower = flipped ? flipped.toLowerCase().trim() : '';
+                  filteredGuides = filteredGuides.filter((guide: Guide) => {
+                    const title = getLocalizedText(guide.title, locale);
+                    const description = guide.description ? getLocalizedText(guide.description, locale) : '';
+                    const titleLower = title.toLowerCase();
+                    const descLower = description.toLowerCase();
+                    return (
+                      titleLower.includes(searchLower) ||
+                      descLower.includes(searchLower) ||
+                      (flippedLower && (titleLower.includes(flippedLower) || descLower.includes(flippedLower)))
+                    );
+                  });
+                }
               }
 
               if (selectedSports.length > 0) {
@@ -978,6 +994,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                   animationDelay={index * 50}
                   getSportTranslation={getSportTranslation}
                   getDifficultyTranslation={getDifficultyTranslation}
+                  highlightQuery={searchQuery || undefined}
                 />
               ))}
             </div>

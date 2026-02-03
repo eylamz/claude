@@ -50,6 +50,7 @@ import { ProductCard, SkateparkCard, TrainerCard, GuideCard } from '@/components
 import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled, isGrowthLabEnabled, isCommunityEnabled } from '@/lib/utils/ecommerce';
 import { cn } from '@/lib/utils/cn';
 import { searchFromCache, type SearchResultFromCache } from '@/lib/search-from-cache';
+import { highlightMatch } from '@/lib/search-highlight';
 
 // Search result types (match API / search page)
 type SearchResultType = 'products' | 'skateparks' | 'events' | 'guides' | 'trainers';
@@ -362,6 +363,7 @@ export default function HeaderNav() {
               totalStock: p.totalStock,
             }}
             view="grid"
+            highlightQuery={searchQuery}
           />
         );
       }
@@ -375,6 +377,7 @@ export default function HeaderNav() {
             name={nameStr}
             image={s.imageUrl}
             area={s.area}
+            highlightQuery={searchQuery}
           />
         );
       }
@@ -391,6 +394,7 @@ export default function HeaderNav() {
             ratingCount={g.ratingCount}
             readTime={g.readTime}
             sports={g.relatedSports}
+            highlightQuery={searchQuery}
           />
         );
       }
@@ -406,6 +410,7 @@ export default function HeaderNav() {
             sports={tr.relatedSports}
             rating={tr.rating}
             reviewCount={tr.totalReviews}
+            highlightQuery={searchQuery}
           />
         );
       }
@@ -424,7 +429,7 @@ export default function HeaderNav() {
                     onClick={() => setIsSearchOpen(false)}
                     className="font-semibold text-gray-900 dark:text-white hover:text-brand-main dark:hover:text-brand-main transition-colors line-clamp-2"
                   >
-                    {ev.title}
+                    {highlightMatch(ev.title, searchQuery)}
                   </Link>
                   <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
                     <Clock className="w-4 h-4" />
@@ -439,7 +444,7 @@ export default function HeaderNav() {
       default:
         return null;
     }
-  }, [locale]);
+  }, [locale, searchQuery]);
 
   // Handle logout - works like next-auth's internal signOut
   const handleLogout = async () => {

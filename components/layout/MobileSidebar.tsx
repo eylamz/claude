@@ -13,7 +13,8 @@ import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
 import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
 import { flipLanguage } from '@/lib/utils/transliterate';
-import { searchFromCache, getAreaFromQuery, type SearchResultFromCache } from '@/lib/search-from-cache';
+import { searchFromCache, getAreaFromQuery, queryMatchesCategory, type SearchResultFromCache } from '@/lib/search-from-cache';
+import { highlightMatch } from '@/lib/search-highlight';
 import { Separator } from '@/components/ui/separator';
 
 interface MobileSidebarProps {
@@ -363,40 +364,6 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
     };
   };
 
-  // Highlight matches in text. Checks both original query and flipped (keyboard-layout)
-  // using .includes() so the flipped substring is highlighted even when in the middle (e.g. "xct" -> "סבא" in "כפר סבא").
-  const highlightMatch = (text: string, query: string): React.ReactNode => {
-    if (!query.trim() || !text) return text;
-
-    const queryLower = query.toLowerCase().trim();
-    const flipped = flipLanguage(query);
-    const flippedLower = flipped ? flipped.toLowerCase().trim() : '';
-    const textLower = text.toLowerCase();
-
-    // Find first occurrence of original query or flipped (anywhere in text, not only at start)
-    let index = textLower.indexOf(queryLower);
-    let matchLength = query.length;
-    if (index === -1 && flippedLower) {
-      index = textLower.indexOf(flippedLower);
-      matchLength = flippedLower.length;
-    }
-    if (index === -1) return text;
-
-    const before = text.slice(0, index);
-    const match = text.slice(index, index + matchLength);
-    const after = text.slice(index + matchLength);
-
-    return (
-      <>
-        {before}
-        <mark className="bg-transparent font-bold text-brand-main dark:text-brand-dark">
-          {match}
-        </mark>
-        {after}
-      </>
-    );
-  };
-
   // Fetch search results: cache first (localStorage), then API only for products/trainers
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -447,6 +414,10 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
         const matchesQueryOrFlipped = (result: SearchResult): boolean => {
           const name = getResultDisplayName(result).toLowerCase();
           if (result.matchBy === 'area') return true;
+          // Category trigger: e.g. "אירועים", "events", "thrugho" → show all events; same for skateparks/guides (≥3 chars)
+          if (result.type === 'events' && queryMatchesCategory(searchQuery, 'events')) return true;
+          if (result.type === 'skateparks' && queryMatchesCategory(searchQuery, 'skateparks')) return true;
+          if (result.type === 'guides' && queryMatchesCategory(searchQuery, 'guides')) return true;
           if (!name) return false;
           if (name.includes(q) || (flippedLower != null && flippedLower !== '' && name.includes(flippedLower))) return true;
           if (queryContainsHebrew) return true; // matched on name.he in cache/API; display name is locale (e.g. en)
@@ -858,7 +829,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                                 </div>
                                 {/* Name */}
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-sidebar-text dark:text-sidebar-text-dark line-clamp-1 group-hover:text-text dark:group-hover:text-text-dark transition-colors duration-200">
+                                  <p className="w-full max-w-[75%] text-sm font-medium text-sidebar-text dark:text-sidebar-text-dark line-clamp-2 group-hover:text-text dark:group-hover:text-text-dark transition-colors duration-200">
                                     {highlightMatch(name, searchQuery)}
                                   </p>
                                 </div>

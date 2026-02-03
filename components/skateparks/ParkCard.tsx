@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { Icon } from '@/components/icons';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { highlightMatch } from '@/lib/search-highlight';
 
 interface SkateparkImage {
   url: string;
@@ -289,12 +290,14 @@ interface ParkCardProps {
   animationDelay?: number;
   sortBy?: SortOption;
   userLocation?: UserLocation | null;
+  /** When set, highlights matching substring in park name (e.g. search query). */
+  highlightQuery?: string;
 }
 
 /**
  * Skatepark Card Component
  */
-export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLocation }: ParkCardProps) => {
+export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLocation, highlightQuery }: ParkCardProps) => {
   const [isClicked, setIsClicked] = useState(false);
   const [isInViewport, setIsInViewport] = useState(false);
   const [showBadgeContainer, setShowBadgeContainer] = useState<Record<string, boolean>>({});
@@ -513,7 +516,7 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
         <h3 className={`text-xl font-semibold truncate text-text dark:text-text-dark opacity-0 animate-fadeInDown`}
           style={{ animationDelay: `400ms` }}
         >
-          {name}
+          {highlightQuery ? highlightMatch(name, highlightQuery) : name}
         </h3>
         {/* Distance - Always shown below the name if available */}
         {distanceText && (

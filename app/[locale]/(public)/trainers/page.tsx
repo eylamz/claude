@@ -27,6 +27,8 @@ import { Card, CardContent } from '@/components/ui';
 import { Drawer } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { flipLanguage } from '@/lib/utils/transliterate';
+import { highlightMatch } from '@/lib/search-highlight';
 
 interface Trainer {
   _id: string;
@@ -80,12 +82,14 @@ const TrainerCard = memo(({
   animationDelay = 0,
   onContact,
   onShare,
+  highlightQuery,
 }: { 
   trainer: Trainer; 
   locale: string; 
   animationDelay?: number;
   onContact: (trainer: Trainer) => void;
   onShare: (trainer: Trainer) => void;
+  highlightQuery?: string;
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const name = typeof trainer.name === 'string' 
@@ -169,7 +173,7 @@ const TrainerCard = memo(({
       <div className="px-4 py-3 space-y-2">
         <Link href={`/${locale}/trainers/${trainer.slug}`}>
           <h3 className="text-lg font-semibold truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-            {name}
+            {highlightQuery ? highlightMatch(name, highlightQuery) : name}
           </h3>
         </Link>
         
@@ -426,14 +430,18 @@ export default function TrainersPage() {
   const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
 
-  // Fetch all trainers
+  // Fetch all trainers (pass flipped query for wrong-keyboard layout search)
   const fetchTrainers = useCallback(async () => {
     setLoading(true);
 
     try {
       const params = new URLSearchParams();
       if (areaFilter) params.set('area', areaFilter);
-      if (searchQuery) params.set('search', searchQuery);
+      if (searchQuery) {
+        params.set('search', searchQuery);
+        const flippedQ = flipLanguage(searchQuery);
+        if (flippedQ && flippedQ !== searchQuery) params.set('flippedQ', flippedQ);
+      }
       selectedSports.forEach((sport) => params.append('sports', sport));
       if (minRating) params.set('minRating', minRating);
 
@@ -648,6 +656,7 @@ export default function TrainersPage() {
                   animationDelay={index * 50}
                   onContact={handleContact}
                   onShare={handleShare}
+                  highlightQuery={searchQuery || undefined}
                 />
               ))}
             </div>

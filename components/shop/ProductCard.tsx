@@ -7,6 +7,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import { useLocaleInfo } from '@/hooks/use-translation';
 import { cn } from '@/lib/utils/cn';
 import { Icon } from '@/components/icons/Icon';
+import { highlightMatch } from '@/lib/search-highlight';
 
 /**
  * Product interface for the card
@@ -67,6 +68,8 @@ interface ProductCardProps {
   // Legacy props
   image?: string;
   hasDiscount?: boolean;
+  /** When set, highlights matching substring in product name (e.g. search query). */
+  highlightQuery?: string;
 }
 
 export const ProductCard: FC<ProductCardProps> = ({
@@ -322,7 +325,7 @@ export const ProductCard: FC<ProductCardProps> = ({
           <div>
             <Link href={`/shop/product/${product.slug}`}>
               <h3 className="text-lg font-semibold mb-2 line-clamp-2 text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                {productName}
+                {highlightQuery ? highlightMatch(productName, highlightQuery) : productName}
               </h3>
             </Link>
 
@@ -592,7 +595,7 @@ export const ProductCard: FC<ProductCardProps> = ({
             className="text-base font-semibold mb-2 line-clamp-2 text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
             title={productName}
           >
-            {productName}
+            {highlightQuery ? highlightMatch(productName, highlightQuery) : productName}
           </h3>
         </Link>
 

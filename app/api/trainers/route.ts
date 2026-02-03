@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const area = searchParams.get('area'); // 'north' | 'center' | 'south'
     const search = searchParams.get('search')?.trim();
+    const flippedQ = searchParams.get('flippedQ')?.trim(); // wrong-keyboard layout (e.g. Hebrew typed on English)
     const sports = searchParams.getAll('sports'); // array of sport names
     const minRating = searchParams.get('minRating') ? parseFloat(searchParams.get('minRating')!) : null;
 
@@ -30,12 +31,19 @@ export async function GET(request: NextRequest) {
       query.area = area;
     }
 
-    // Search filter (text search on name)
+    // Search filter (text search on name; match query or flipped query for wrong-keyboard layout)
     if (search && search.length > 0) {
-      query.$or = [
+      const orConditions: any[] = [
         { 'name.en': { $regex: search, $options: 'i' } },
         { 'name.he': { $regex: search, $options: 'i' } },
       ];
+      if (flippedQ && flippedQ !== search) {
+        orConditions.push(
+          { 'name.en': { $regex: flippedQ, $options: 'i' } },
+          { 'name.he': { $regex: flippedQ, $options: 'i' } }
+        );
+      }
+      query.$or = orConditions;
     }
 
     // Sports filter

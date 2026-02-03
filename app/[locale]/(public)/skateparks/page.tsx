@@ -12,6 +12,8 @@ import { ParkCard } from '@/components/skateparks/ParkCard';
 import { FilterBar } from '@/components/skateparks/FilterBar';
 import { Icon } from '@/components/icons';
 import { useTranslations } from 'next-intl';
+import { flipLanguage } from '@/lib/utils/transliterate';
+import { getAreaFromQuery, queryMatchesCategory } from '@/lib/search-from-cache';
 
 interface SkateparkImage {
   url: string;
@@ -511,9 +513,10 @@ export default function SkateparksPage() {
       .replace(/[\u0300-\u036f]/g, '');
   }, []);
 
-  // Client-side filtering function
-  const filterSkateparks = useCallback((parks: Skatepark[]): Skatepark[] => {
+  // Client-side filtering function. Returns { filtered, areaMatchedIds } so area-matched parks can be sorted last.
+  const filterSkateparks = useCallback((parks: Skatepark[]): { filtered: Skatepark[]; areaMatchedIds: Set<string> } => {
     let filtered = [...parks];
+    const areaMatchedIds = new Set<string>();
 
     // Area filter
     if (areaFilter) {
@@ -530,30 +533,53 @@ export default function SkateparksPage() {
       });
     }
 
-    // Search filter (text search in name only - both English and Hebrew)
+    // Search filter: flipLanguage (wrong keyboard), category trigger (show all), area search (show area last)
     if (searchQuery.trim()) {
-      const normalizedQuery = normalizeSearchText(searchQuery);
-      filtered = filtered.filter((park) => {
-        let nameEn = '';
-        let nameHe = '';
+      if (queryMatchesCategory(searchQuery, 'skateparks')) {
+        // Show all skateparks when user types e.g. "סקייטפארקים", "skateparks", "xehhyptreho"
+      } else {
+        const normalizedQuery = normalizeSearchText(searchQuery);
+        const flipped = flipLanguage(searchQuery);
+        const normalizedFlipped = flipped ? normalizeSearchText(flipped) : '';
+        const areaFromQuery = getAreaFromQuery(searchQuery);
 
-        if (typeof park.name === 'string') {
-          nameEn = park.name;
-          nameHe = park.name;
-        } else {
-          nameEn = park.name.en || '';
-          nameHe = park.name.he || '';
+        const nameStartsWith: Skatepark[] = [];
+        const nameIncludes: Skatepark[] = [];
+        const areaOnlyMatched: Skatepark[] = [];
+
+        for (const park of filtered) {
+          let nameEn = '';
+          let nameHe = '';
+          if (typeof park.name === 'string') {
+            nameEn = park.name;
+            nameHe = park.name;
+          } else {
+            nameEn = park.name.en || '';
+            nameHe = park.name.he || '';
+          }
+          const normalizedNameEn = normalizeSearchText(nameEn);
+          const normalizedNameHe = normalizeSearchText(nameHe);
+          const startsWithMatch =
+            normalizedNameEn.startsWith(normalizedQuery) ||
+            normalizedNameHe.startsWith(normalizedQuery) ||
+            (normalizedFlipped && (normalizedNameEn.startsWith(normalizedFlipped) || normalizedNameHe.startsWith(normalizedFlipped)));
+          const includesMatch =
+            normalizedNameEn.includes(normalizedQuery) ||
+            normalizedNameHe.includes(normalizedQuery) ||
+            (normalizedFlipped && (normalizedNameEn.includes(normalizedFlipped) || normalizedNameHe.includes(normalizedFlipped)));
+
+          if (startsWithMatch) {
+            nameStartsWith.push(park);
+          } else if (includesMatch) {
+            nameIncludes.push(park);
+          } else if (areaFromQuery && park.area === areaFromQuery) {
+            areaOnlyMatched.push(park);
+            areaMatchedIds.add(park._id);
+          }
         }
 
-        // Normalize both names before comparing
-        const normalizedNameEn = normalizeSearchText(nameEn);
-        const normalizedNameHe = normalizeSearchText(nameHe);
-
-        return (
-          normalizedNameEn.includes(normalizedQuery) ||
-          normalizedNameHe.includes(normalizedQuery)
-        );
-      });
+        filtered = [...nameStartsWith, ...nameIncludes, ...areaOnlyMatched];
+      }
     }
 
     // Amenities filter
@@ -570,7 +596,7 @@ export default function SkateparksPage() {
       filtered = filtered.filter((park) => park.is24Hours === true);
     }
 
-    return filtered;
+    return { filtered, areaMatchedIds };
   }, [areaFilter, skillLevelFilter, searchQuery, selectedAmenities, openNowOnly, locale, normalizeSearchText]);
 
   // Client-side sorting function
@@ -607,7 +633,8 @@ export default function SkateparksPage() {
 
   // Filter, calculate distances, and sort skateparks when filters or sort changes
   useEffect(() => {
-    let filtered = filterSkateparks(allSkateparks);
+    const { filtered: filteredList, areaMatchedIds } = filterSkateparks(allSkateparks);
+    let filtered = filteredList;
 
     // Calculate distances if userLocation is available
     if (userLocation) {
@@ -628,8 +655,12 @@ export default function SkateparksPage() {
       }));
     }
 
-    const sorted = sortSkateparks(filtered, sortBy);
-    setSkateparks(sorted);
+    // Sort: area-matched parks last; within each group apply selected sort
+    const nameMatched = filtered.filter((p) => !areaMatchedIds.has(p._id));
+    const areaMatched = filtered.filter((p) => areaMatchedIds.has(p._id));
+    const sortedName = sortSkateparks(nameMatched, sortBy);
+    const sortedArea = sortSkateparks(areaMatched, sortBy);
+    setSkateparks([...sortedName, ...sortedArea]);
   }, [allSkateparks, areaFilter, searchQuery, selectedAmenities, openNowOnly, sortBy, userLocation, filterSkateparks, sortSkateparks, calculateDistance]);
 
   // Fetch all skateparks once on mount
@@ -756,6 +787,7 @@ export default function SkateparksPage() {
                   animationDelay={index * 50}
                   sortBy={sortBy}
                   userLocation={userLocation}
+                  highlightQuery={searchQuery || undefined}
                 />
               ))}
             </section>

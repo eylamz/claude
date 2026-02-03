@@ -9,6 +9,9 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Icon } from '@/components/icons';
 import { fullEventToListEvent } from '@/lib/events/formatEvent';
+import { flipLanguage } from '@/lib/utils/transliterate';
+import { queryMatchesCategory } from '@/lib/search-from-cache';
+import { highlightMatch } from '@/lib/search-highlight';
 
 /** Cache stores full event objects; list page needs list shape. */
 function isFullFormatEvent(e: any): boolean {
@@ -212,12 +215,14 @@ const EventCard = memo(({
   event, 
   locale, 
   animationDelay = 0,
-  getSportTranslation
+  getSportTranslation,
+  highlightQuery,
 }: { 
   event: Event; 
   locale: string; 
   animationDelay?: number;
   getSportTranslation: (sport: string) => string;
+  highlightQuery?: string;
 }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [showNameSection, setShowNameSection] = useState(false);
@@ -343,7 +348,7 @@ const EventCard = memo(({
           <h3 
             className={`text-lg font-medium opacity-0 ${showEventName ? 'animate-fadeInDown animation-delay-[1s]' : ''}`}
           >
-            {event.title}
+            {highlightQuery ? highlightMatch(event.title, highlightQuery) : event.title}
           </h3>
          
         </div>
@@ -646,14 +651,24 @@ export default function EventsPage() {
       );
     }
 
-    // Search query
+    // Search query: flipLanguage (wrong keyboard), category trigger (show all); match title + location only (no description)
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(event =>
-        event.title.toLowerCase().includes(query) ||
-        event.description.toLowerCase().includes(query) ||
-        event.location.toLowerCase().includes(query)
-      );
+      if (queryMatchesCategory(searchQuery, 'events')) {
+        // Show all events when user types e.g. "אירועים", "events", "thrugho"
+      } else {
+        const query = searchQuery.toLowerCase().trim();
+        const flipped = flipLanguage(searchQuery);
+        const flippedLower = flipped ? flipped.toLowerCase().trim() : '';
+        filtered = filtered.filter(event => {
+          const titleLower = event.title.toLowerCase();
+          const locationLower = event.location?.toLowerCase() ?? '';
+          return (
+            titleLower.includes(query) ||
+            locationLower.includes(query) ||
+            (flippedLower && (titleLower.includes(flippedLower) || locationLower.includes(flippedLower)))
+          );
+        });
+      }
     }
 
     // Has spots available
@@ -916,6 +931,7 @@ export default function EventsPage() {
                   locale={locale} 
                   animationDelay={index * 50}
                   getSportTranslation={getSportTranslation}
+                  highlightQuery={searchQuery || undefined}
                 />
               ))}
             </div>

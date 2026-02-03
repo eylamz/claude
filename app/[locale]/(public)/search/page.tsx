@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { searchFromCache, type SearchResultFromCache } from '@/lib/search-from-cache';
+import { highlightMatch } from '@/lib/search-highlight';
 import { isEcommerceEnabled, isTrainersEnabled } from '@/lib/utils/ecommerce';
 
 type CategoryTab = 'all' | 'products' | 'skateparks' | 'events' | 'guides' | 'trainers';
@@ -358,6 +359,7 @@ export default function SearchPage() {
               totalStock: p.totalStock,
             }}
             view={viewMode}
+            highlightQuery={query}
           />
         );
       }
@@ -371,6 +373,7 @@ export default function SearchPage() {
             name={nameStr}
             image={s.imageUrl}
             area={s.area}
+            highlightQuery={query}
           />
         );
       }
@@ -386,6 +389,7 @@ export default function SearchPage() {
             rating={g.rating}
             ratingCount={g.ratingCount}
             readTime={g.readTime}
+            highlightQuery={query}
           />
         );
       }
@@ -401,6 +405,7 @@ export default function SearchPage() {
             sports={tr.relatedSports}
             rating={tr.rating}
             reviewCount={tr.totalReviews}
+            highlightQuery={query}
           />
         );
       }
@@ -418,7 +423,7 @@ export default function SearchPage() {
                     href={`/${locale}/events/${ev.slug}`} 
                     className="font-semibold text-gray-900 dark:text-white hover:text-brand-main dark:hover:text-brand-main transition-colors line-clamp-2"
                   >
-                    {ev.title}
+                    {highlightMatch(ev.title, query)}
                   </a>
                   <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
                     <Clock className="w-4 h-4" />

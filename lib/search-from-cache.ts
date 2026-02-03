@@ -36,6 +36,34 @@ const AREA_TERMS: Record<'north' | 'center' | 'south', string[]> = {
   center: ['center', 'מרכז'],
 };
 
+/** Category trigger terms: typing these (or ≥3 chars) shows all items in that category. Hebrew, English, wrong-keyboard. */
+const CATEGORY_TRIGGERS: Record<SearchResultType, string[]> = {
+  events: ['אירועים', 'events', 'thrugho', 'קמאד'],
+  skateparks: ['סקייטפארקים', 'skateparks', 'parks', 'דלשאקפשרלד', 'xehhyptreho'],
+  guides: ['מדריכים', 'guides', 'nsrhfho'],
+};
+
+const MIN_CATEGORY_CHARS = 3;
+
+/** True if query (or flipped) has ≥minChars and matches any trigger (trigger contains query, or query contains trigger’s first minChars). */
+export function queryMatchesCategory(
+  query: string,
+  category: SearchResultType,
+  minChars: number = MIN_CATEGORY_CHARS
+): boolean {
+  const q = query.trim().toLowerCase();
+  const flipped = flipLanguage(query).trim().toLowerCase();
+  const check = (str: string): boolean => {
+    if (str.length < minChars) return false;
+    const triggers = CATEGORY_TRIGGERS[category];
+    return triggers.some((t) => {
+      const tLower = t.toLowerCase();
+      return tLower.includes(str) || (tLower.length >= minChars && str.includes(tLower.slice(0, minChars)));
+    });
+  };
+  return check(q) || (flipped.length >= minChars && check(flipped));
+}
+
 /** Resolve query to area when user types north/south/center or צפון/דרום/מרכז (incl. flipped layout). */
 export function getAreaFromQuery(query: string): 'north' | 'center' | 'south' | null {
   const q = query.toLowerCase().trim();
@@ -133,6 +161,28 @@ function searchSkateparks(
   locale: string,
   limit: number
 ): SearchResultFromCache[] {
+  // When query is a category trigger (e.g. "סקייטפארקים", "skateparks", "xehhyptreho"), show all skateparks
+  if (queryMatchesCategory(query, 'skateparks')) {
+    const results: SearchResultFromCache[] = [];
+    for (const park of items) {
+      if (results.length >= limit) break;
+      const nameLocale = getLocalizedText(park.name, locale);
+      const nameEn = getLocalizedText(park.name, 'en');
+      const nameHe = getLocalizedText(park.name, 'he');
+      results.push({
+        id: park._id?.toString() || park.id || park.slug,
+        type: 'skateparks',
+        slug: park.slug,
+        name: nameLocale || nameEn || nameHe,
+        imageUrl: park.imageUrl || park.images?.[0]?.url || '',
+        area: park.area,
+        rating: park.rating,
+        matchBy: 'name',
+      });
+    }
+    return results;
+  }
+
   const q = query.toLowerCase().trim();
   const areaFromQuery = getAreaFromQuery(query);
   const nameMatchedIds = new Set<string>();
@@ -195,6 +245,34 @@ function searchEvents(
   locale: string,
   limit: number
 ): SearchResultFromCache[] {
+  // When query is a category trigger (e.g. "אירועים", "events", "thrugho"), show all events
+  if (queryMatchesCategory(query, 'events')) {
+    const results: SearchResultFromCache[] = [];
+    for (const event of items) {
+      if (results.length >= limit) break;
+      const title = getLocalizedText(
+        event.content?.en?.title != null
+          ? { en: event.content.en.title, he: event.content?.he?.title }
+          : event.title,
+        locale
+      );
+      const startDate = event.dateTime?.startDate ?? event.startDate;
+      const startStr = typeof startDate === 'string' ? startDate : startDate?.toISO?.() ?? '';
+      results.push({
+        id: event._id?.toString() || event.id || event.slug,
+        type: 'events',
+        slug: event.slug,
+        title,
+        image:
+          typeof event.featuredImage === 'string'
+            ? event.featuredImage
+            : event.featuredImage?.url ?? event.images?.[0]?.url ?? '',
+        startDate: startStr,
+      });
+    }
+    return results;
+  }
+
   const results: SearchResultFromCache[] = [];
   for (const event of items) {
     const title = getLocalizedText(
@@ -215,9 +293,7 @@ function searchEvents(
         : event.title,
       'he'
     );
-    const descEn = getLocalizedText(event.content?.en?.description ?? event.description, 'en');
-    const descHe = getLocalizedText(event.content?.he?.description ?? event.description, 'he');
-    const searchable = `${titleEn} ${titleHe} ${descEn} ${descHe}`;
+    const searchable = `${titleEn} ${titleHe}`;
     if (!query.trim() || matchesQueryOrFlipped(searchable, query)) {
       const startDate =
         event.dateTime?.startDate ?? event.startDate;
@@ -246,6 +322,27 @@ function searchGuides(
   locale: string,
   limit: number
 ): SearchResultFromCache[] {
+  // When query is a category trigger (e.g. "מדריכים", "guides", "nsrhfho"), show all guides
+  if (queryMatchesCategory(query, 'guides')) {
+    const results: SearchResultFromCache[] = [];
+    for (const guide of items) {
+      if (results.length >= limit) break;
+      results.push({
+        id: guide.id ?? guide._id?.toString() ?? guide.slug,
+        type: 'guides',
+        slug: guide.slug,
+        title: getLocalizedText(guide.title, locale),
+        description: getLocalizedText(guide.description, locale),
+        coverImage: guide.coverImage ?? '',
+        relatedSports: guide.relatedSports,
+        rating: guide.rating,
+        ratingCount: guide.ratingCount,
+        readTime: guide.readTime,
+      });
+    }
+    return results;
+  }
+
   const results: SearchResultFromCache[] = [];
   for (const guide of items) {
     const title = getLocalizedText(guide.title, locale);

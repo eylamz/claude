@@ -517,15 +517,15 @@ export function MapView({
         />
       </div>
 
-      {/* Map Controls Overlay - Top Right */}
-      <div className="absolute top-4 right-4 z-30 flex flex-col gap-2">
+      {/* Map Controls Overlay - Top Right
+      <div className="w-1/4 absolute top-[11px] right-[54px] sm:right-[80px] z-30 flex flex-col gap-2">
         {/* Parks Count Badge */}
-        <div className="px-4 py-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
-          <span className="text-sm font-semibold text-gray-900 dark:text-white">
+        {/* <div className="px-2 py-[6px] bg-white rounded-[2px] shadow-md">
+          <span className="text-lg  text-[#565656]">
             {skateparks.length} {tr('parks shown', 'פארקים מוצגים')}
           </span>
         </div>
-      </div>
+      </div> */} 
 
       {/* Selected Park Detail Panel - Bottom */}
       {selectedPark && (
@@ -535,6 +535,7 @@ export function MapView({
           onClose={() => onParkSelect(null)}
         />
       )}
+      
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import { FC } from 'react';
 import Link from 'next/link';
+import { highlightMatch } from '@/lib/search-highlight';
 
 interface SkateparkCardProps {
   slug: string;
@@ -7,6 +8,8 @@ interface SkateparkCardProps {
   image?: string;
   area: 'north' | 'center' | 'south';
   openingYear?: number;
+  /** When set, highlights matching substring in name (e.g. search query). */
+  highlightQuery?: string;
 }
 
 const areaLabels = {
@@ -40,7 +43,7 @@ export const SkateparkCard: FC<SkateparkCardProps> = ({ slug, name, image, area,
             {areaLabels[area]}
           </p>
           <h3 className="text-lg font-semibold mb-2 line-clamp-2 text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-            {name}
+            {highlightQuery ? highlightMatch(name, highlightQuery) : name}
           </h3>
           {openingYear && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
