@@ -32,10 +32,10 @@ export default function MobileNavMinimal() {
   const getBorderClass = () => {
     if (isSkateparksPage) {
       // On skateparks page: border-b when not scrolled, border-b-2 when scrolled
-      return scrollY > 0 ? 'border-b-2' : 'border-b';
+      return scrollY > 0 ? 'border-b' : 'border-b';
     } else {
       // On all other pages: always border-b-2
-      return 'border-b-2';
+      return 'border-b';
     }
   };
 
@@ -83,7 +83,7 @@ export default function MobileNavMinimal() {
           Green accent only on active/hover states
       ======================================== */}
       <header 
-        className={`[@media_(min-width:820px)]:hidden fixed top-0 left-0 right-0 z-[50] bg-header dark:bg-header-dark ${getBorderClass()} border-header-border dark:border-header-border-dark shadow-sm transition-[transform,background-color,border-color] duration-300 ${
+        className={`[@media_(min-width:820px)]:hidden fixed top-0 left-0 right-0 z-[50] bg-header dark:bg-header-dark ${getBorderClass()} border-border dark:border-border-dark shadow-sm transition-[transform,background-color,border-color] duration-300 ${
           isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >

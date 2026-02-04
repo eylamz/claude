@@ -18,7 +18,7 @@ const areaLabels = {
   south: 'South',
 };
 
-export const SkateparkCard: FC<SkateparkCardProps> = ({ slug, name, image, area, openingYear }) => {
+export const SkateparkCard: FC<SkateparkCardProps> = ({ slug, name, image, area, openingYear, highlightQuery }) => {
   return (
     <Link href={`/skateparks/${slug}`} className="group">
       <div className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white dark:bg-gray-800 dark:border-gray-700">

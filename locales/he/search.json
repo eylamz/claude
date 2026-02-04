@@ -1,4 +1,9 @@
 {
+  "filters": {
+    "types": "סוג תוכן",
+    "dateRange": "טווח תאריכים",
+    "priceRange": "טווח מחירים"
+  },
   "tabs": {
     "all": "הכל",
     "products": "מוצרים",

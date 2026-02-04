@@ -22,6 +22,30 @@ const getLocalizedText = (field: ILocalizedField | string | undefined, locale: s
   return field[locale as 'en' | 'he'] || field.en || '';
 };
 
+/** Parse "tag:name" or "תג:name" from search query. Returns tag name for filtering or null if not a tag search. */
+function parseTagSearch(query: string): { isTagSearch: true; tag: string } | { isTagSearch: false } {
+  if (!query || typeof query !== 'string') return { isTagSearch: false };
+  const trimmed = query.trim();
+  // Match "tag:" or "תג:" (with optional spaces), case-insensitive for "tag"
+  const match = trimmed.match(/^\s*(?:tag|תג)\s*:\s*(.+)$/i);
+  if (!match || !match[1]) return { isTagSearch: false };
+  const tag = match[1].trim();
+  return tag ? { isTagSearch: true, tag } : { isTagSearch: false };
+}
+
+/** Get all tag strings from a guide (handles array or { en, he } format). */
+function getGuideTags(guide: Guide): string[] {
+  const t = guide.tags;
+  if (!t) return [];
+  if (Array.isArray(t)) return t;
+  if (typeof t === 'object' && ('en' in t || 'he' in t)) {
+    const en = (t as { en?: string[]; he?: string[] }).en || [];
+    const he = (t as { en?: string[]; he?: string[] }).he || [];
+    return [...new Set([...en, ...he])];
+  }
+  return [];
+}
+
 interface GuidesPageProps {
   initialData?: {
     guides: Guide[];
@@ -574,9 +598,16 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             if (versionMatches && Array.isArray(allCachedGuides)) {
               let filteredGuides = [...allCachedGuides];
 
-              // Apply filters: flipLanguage (wrong keyboard), category trigger (show all); match title + description
+              // Apply filters: tag: / תג: search, category trigger, or title/description search
               if (searchQuery) {
-                if (queryMatchesCategory(searchQuery, 'guides')) {
+                const tagSearch = parseTagSearch(searchQuery);
+                if (tagSearch.isTagSearch) {
+                  const tagLower = tagSearch.tag.toLowerCase();
+                  filteredGuides = filteredGuides.filter((guide: Guide) => {
+                    const tags = getGuideTags(guide);
+                    return tags.some((t) => t.toLowerCase() === tagLower || t.toLowerCase().includes(tagLower));
+                  });
+                } else if (queryMatchesCategory(searchQuery, 'guides')) {
                   // Show all guides when user types e.g. "מדריכים", "guides", "nsrhfho"
                 } else {
                   const searchLower = searchQuery.toLowerCase().trim();
@@ -665,11 +696,13 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
       }
 
       // Fetch from API (no cache or cache invalid)
+      const tagSearchForApi = parseTagSearch(searchQuery);
+      const searchParam = tagSearchForApi.isTagSearch ? tagSearchForApi.tag : searchQuery;
       const params = new URLSearchParams();
       params.set('sports', selectedSports.join(','));
       params.set('difficulty', difficulty);
       params.set('minRating', minRating.toString());
-      params.set('search', searchQuery);
+      params.set('search', searchParam);
       params.set('sort', sortBy);
       params.set('page', page.toString());
       params.set('locale', locale);
@@ -885,13 +918,13 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
               <div className="flex flex-wrap items-center gap-2">
                 {/* Results Count Badge */}
                 {!loading && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-bg dark:bg-green-bg-dark rounded-full border border-green-border dark:border-green-border-dark animate-pop">
-                    <Icon name="bookBold" className="w-4 h-4 text-green" />
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-bg dark:bg-gray-bg-dark rounded-full border border-gray-border dark:border-gray-border-dark animate-pop">
+                    <Icon name="bookBold" className="w-4 h-4 text-gray dark:text-gray-dark" />
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       {guides.length}
                     </span>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {tr('of', 'מתוך')} {totalResults}
+                      {tr('of', 'מתוך')} {totalGuidesCount}
                     </span>
                   </div>
                 )}

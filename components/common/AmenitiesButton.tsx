@@ -124,7 +124,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
       <PopoverContent className="w-fit min-w-[330px] p-2">
         <div className="space-y-2">
           <div className={`flex gap-4 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'} items-center justify-between h-[32px]`}>
-            <h4 className={`text-sm font-medium w-full`}>{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
+            <h4 className={`text-sm font-medium`}>{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
             <div className={`flex gap-1.5 items-center ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
               {selectedAmenities.length > 0 && (
                 <Button

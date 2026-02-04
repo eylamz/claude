@@ -1,4 +1,9 @@
 {
+  "filters": {
+    "types": "Content Type",
+    "dateRange": "Date Range",
+    "priceRange": "Price Range"
+  },
   "tabs": {
     "all": "All",
     "products": "Products",

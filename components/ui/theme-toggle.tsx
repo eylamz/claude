@@ -93,15 +93,15 @@ export function ThemeToggle({ className = '', lng }: ThemeToggleProps) {
       aria-label={theme === 'dark' ? t('light_mode') : t('dark_mode')}
     >
       {theme === 'dark' ? (
-        <Icon name="sun"
+        <Icon name="sunBold"
           className={`h-4 w-4 ${shouldAnimate ? 'animate-pop' : ''}`}
         />
       ) : (
-        <Icon name="moon"
+        <Icon name="moonBold"
           className={`h-4 w-4 ${shouldAnimate ? 'animate-pop' : ''}`}
         />
       )}
-      <span className="hidden sm:inline transition-all duration-200 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">{theme === 'dark' ? t('light_mode') : t('dark_mode')}</span>
+      <span className="transition-all duration-200 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">{theme === 'dark' ? t('light_mode') : t('dark_mode')}</span>
     </button>
   )
 }

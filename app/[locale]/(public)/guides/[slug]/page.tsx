@@ -719,21 +719,76 @@ export default function GuidePage() {
     setMetaTag('twitter:image', ogImage);
   }, [guide, metaTitle, metaDescription, allKeywords, canonicalUrl, alternateEnUrl, alternateHeUrl, ogImage, locale, tagsForKeywords]);
 
-  // Loading state - Duolingo style skeleton
+  // Loading state - skeleton mirrors actual page structure
   if (loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950">
-        <div className="max-w-3xl mx-auto px-5 sm:px-6 py-12">
-          <Skeleton className="h-4 w-32 mb-2" />
-          <Skeleton className="h-12 w-full mb-4" />
-          <Skeleton className="h-6 w-3/4 mb-8" />
-          <Skeleton className="h-80 w-full rounded-2xl mb-8" />
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
+      <div className="min-h-screen bg-background dark:bg-background-dark">
+        <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          {/* Article header skeleton */}
+          <header className="my-10">
+            <Skeleton className="h-9 sm:h-10 md:h-12 w-full max-w-2xl mb-4 rounded-lg" />
+            <Skeleton className="h-5 w-full max-w-xl mb-2 rounded" />
+            <Skeleton className="h-5 w-4/5 max-w-lg mb-6 rounded" />
+            <div className="flex items-center gap-2 mb-8">
+              <Skeleton className="h-4 w-24 rounded" />
+              <Skeleton className="h-4 w-4 rounded-full" />
+              <Skeleton className="h-4 w-28 rounded" />
+            </div>
+          </header>
+
+          {/* Cover image skeleton - same aspect as real cover */}
+          <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-10">
+            <Skeleton className="absolute inset-0 rounded-2xl" />
           </div>
-        </div>
+
+          {/* Article content skeleton - paragraphs + heading + more paragraphs */}
+          <article className="mb-12 space-y-6">
+            <Skeleton className="h-4 w-full rounded" />
+            <Skeleton className="h-4 w-full rounded" />
+            <Skeleton className="h-4 w-5/6 rounded" />
+            <Skeleton className="h-7 w-48 mt-8 mb-4 rounded-lg" />
+            <Skeleton className="h-4 w-full rounded" />
+            <Skeleton className="h-4 w-full rounded" />
+            <Skeleton className="h-4 w-4/5 rounded" />
+            <Skeleton className="h-4 w-full rounded" />
+          </article>
+
+          {/* Tags section skeleton */}
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Skeleton className="h-4 w-4 rounded" />
+              <Skeleton className="h-4 w-12 rounded" />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Skeleton className="h-6 w-16 rounded-lg" />
+              <Skeleton className="h-6 w-20 rounded-lg" />
+              <Skeleton className="h-6 w-14 rounded-lg" />
+              <Skeleton className="h-6 w-18 rounded-lg" />
+            </div>
+          </div>
+
+          {/* Share section skeleton */}
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-12">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-4 w-28 rounded" />
+              <Skeleton className="h-9 w-20 rounded-full" />
+            </div>
+          </div>
+
+          {/* Related sports card skeleton */}
+          <div className="bg-card dark:bg-card-dark rounded-2xl p-6 mb-8">
+            <Skeleton className="h-4 w-28 mb-3 rounded" />
+            <div className="flex flex-wrap gap-2">
+              <Skeleton className="h-7 w-20 rounded-full" />
+              <Skeleton className="h-7 w-16 rounded-full" />
+            </div>
+          </div>
+
+          {/* Back to Guides button skeleton */}
+          <div className="text-center pt-8">
+            <Skeleton className="h-12 w-44 mx-auto rounded-full" />
+          </div>
+        </main>
       </div>
     );
   }
@@ -863,7 +918,7 @@ export default function GuidePage() {
                 {tagsToDisplay.map((tag) => (
                   <Link
                     key={tag}
-                    href={`/${locale}/guides?tag=${encodeURIComponent(tag)}`}
+                    href={`/${locale}/guides?search=${encodeURIComponent(locale === 'he' ? 'תג:' + tag : 'tag:' + tag)}`}
                     className="capitalize px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] transition-colors"
                   >
                     {tag}
@@ -881,7 +936,7 @@ export default function GuidePage() {
             </div>
           </div>
 
-          {/* Related Sports - Subtle display */}
+          {/* Related Sports - clickable, navigates to guides with sport filter */}
           {guide.relatedSports.length > 0 && (
             <div className="bg-card dark:bg-card-dark rounded-2xl p-6 mb-8">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
@@ -889,12 +944,13 @@ export default function GuidePage() {
               </h3>
               <div className="flex flex-wrap gap-2 capitalize">
                 {guide.relatedSports.map((sport) => (
-                  <span
+                  <Link
                     key={sport}
-                    className="px-3 py-1.5 rounded-full text-sm font-medium bg-brand-main/10 text-brand-main dark:bg-brand-main/20 dark:text-brand-dark"
+                    href={`/${locale}/guides?sports=${encodeURIComponent(sport)}`}
+                    className="px-3 py-1.5 rounded-full text-sm font-medium bg-brand-main/10 text-brand-main dark:bg-brand-main/20 dark:text-brand-dark hover:bg-brand-main/20 dark:hover:bg-brand-main/30 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-main focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                   >
                     {sport}
-                  </span>
+                  </Link>
                 ))}
               </div>
             </div>

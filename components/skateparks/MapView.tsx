@@ -115,12 +115,15 @@ function GoogleMapView({
   onMarkerClick,
   locale,
   hasAmenitiesFilter,
+  fullscreenContainerRef,
 }: {
   skateparks: Skatepark[];
   userLocation: UserLocation | null;
   onMarkerClick: (park: Skatepark | null) => void;
   locale: string;
   hasAmenitiesFilter?: boolean;
+  /** Ref to the wrapper that contains both map and MapParkCard; fullscreen will target this so the card stays visible */
+  fullscreenContainerRef?: React.RefObject<HTMLElement | null>;
 }) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
@@ -274,7 +277,7 @@ function GoogleMapView({
           zoom: userLocation ? 12 : 10,
           mapTypeControl: true,
           streetViewControl: false,
-          fullscreenControl: true,
+          fullscreenControl: false, // Use custom control so fullscreen targets wrapper (map + card)
           language: locale === 'he' ? 'he' : 'en',
           region: locale === 'he' ? 'IL' : undefined,
           // Only apply dark theme styles if theme is dark
@@ -283,6 +286,39 @@ function GoogleMapView({
 
         const map = new google.maps.Map(mapRef.current, mapOptions);
         mapInstanceRef.current = map;
+
+        // Custom fullscreen control: fullscreen the wrapper (map + MapParkCard) so the card stays visible
+        const containerRef = fullscreenContainerRef;
+        const controlDiv = document.createElement('div');
+        const controlBtn = document.createElement('button');
+        controlBtn.type = 'button';
+        controlBtn.title = 'Toggle fullscreen';
+        controlBtn.setAttribute('aria-label', 'Toggle fullscreen');
+        controlBtn.style.cssText =
+          'background-color:#fff;border:0;border-radius:2px;box-shadow:0 1px 4px rgba(0,0,0,.3);cursor:pointer;margin:10px;padding:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;';
+        controlBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#666666" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>`;
+        controlBtn.addEventListener('click', () => {
+          const container = containerRef?.current;
+          if (!container) return;
+          const requestFullscreen =
+            container.requestFullscreen ||
+            (container as any).webkitRequestFullscreen ||
+            (container as any).mozRequestFullScreen ||
+            (container as any).msRequestFullscreen;
+          const exitFullscreen =
+            document.exitFullscreen ||
+            (document as any).webkitExitFullscreen ||
+            (document as any).mozCancelFullScreen ||
+            (document as any).msExitFullscreen;
+          const isFullscreen = !!(document.fullscreenElement ?? (document as any).webkitFullscreenElement);
+          if (isFullscreen) {
+            exitFullscreen?.call(document);
+          } else if (requestFullscreen) {
+            requestFullscreen.call(container);
+          }
+        });
+        controlDiv.appendChild(controlBtn);
+        map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(controlDiv);
 
         // Track if a marker was clicked
         let markerClicked = false;
@@ -405,7 +441,7 @@ function GoogleMapView({
         themeCleanupRef.current = null;
       }
     };
-  }, [skateparks, userLocation, onMarkerClick, locale]);
+  }, [skateparks, userLocation, onMarkerClick, locale, fullscreenContainerRef]);
 
   // Auto-zoom to fit all visible markers when amenities filtering is active
   useEffect(() => {
@@ -501,20 +537,34 @@ export function MapView({
   mapContainerRef,
   tr,
 }: MapViewProps) {
+  const fullscreenWrapperRef = useRef<HTMLDivElement>(null);
+
   return (
     <section 
       aria-label={tr('Skatepark map', 'מפת פארקים')}
       className="relative h-[calc(100vh-280px)] min-h-[600px]" 
       ref={mapContainerRef}
     >
-      <div className="h-full rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 shadow-xl">
-        <GoogleMapView
-          skateparks={skateparks}
-          userLocation={userLocation}
-          onMarkerClick={onParkSelect}
-          locale={locale}
-          hasAmenitiesFilter={hasAmenitiesFilter}
-        />
+      {/* Shared parent: relative + h-full so MapParkCard anchors to map container; fullscreened by custom control so card stays visible */}
+      <div ref={fullscreenWrapperRef} className="relative h-full">
+        <div className="h-full rounded-2xl overflow-hidden border-2 border-gray-200 dark:border-gray-700 shadow-xl">
+          <GoogleMapView
+            skateparks={skateparks}
+            userLocation={userLocation}
+            onMarkerClick={onParkSelect}
+            locale={locale}
+            hasAmenitiesFilter={hasAmenitiesFilter}
+            fullscreenContainerRef={fullscreenWrapperRef}
+          />
+        </div>
+        {/* Selected Park Detail Panel - inside map container so it stays visible in fullscreen */}
+        {selectedPark && (
+          <MapParkCard
+            park={selectedPark}
+            locale={locale}
+            onClose={() => onParkSelect(null)}
+          />
+        )}
       </div>
 
       {/* Map Controls Overlay - Top Right
@@ -525,17 +575,7 @@ export function MapView({
             {skateparks.length} {tr('parks shown', 'פארקים מוצגים')}
           </span>
         </div>
-      </div> */} 
-
-      {/* Selected Park Detail Panel - Bottom */}
-      {selectedPark && (
-        <MapParkCard
-          park={selectedPark}
-          locale={locale}
-          onClose={() => onParkSelect(null)}
-        />
-      )}
-      
+      </div> */}
     </section>
   );
 }

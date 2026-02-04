@@ -32,6 +32,7 @@ export const GuideCard: FC<GuideCardProps> = ({
   readTime,
   sports,
   difficulty,
+  highlightQuery,
 }) => {
   const [imageError, setImageError] = useState(false);
 

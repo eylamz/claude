@@ -252,7 +252,7 @@ const ParkAmenities = memo(({
               <Tooltip key={key}>
                 <TooltipTrigger asChild>
                   <div className="flex items-center cursor-help">
-                    <Icon name={iconName as any} className="w-4 h-4 text-text dark:text-text-dark" />
+                    <Icon name={iconName as any} className="w-4 h-4 text-[#555]" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" className="text-xs">
@@ -342,12 +342,12 @@ export const MapParkCard = memo(({ park, locale, onClose: _onClose }: MapParkCar
   return (
     <div
       ref={cardRef}
-      className={`absolute px-2 bottom-0 left-0 w-[60vw] md:w-[calc(100%-2rem)] max-w-[20rem] z-40 bg-card dark:bg-card-dark rounded-tr-2xl rounded-bl-2xl ${isExpanded ? 'pb-2' : ''}`}
+      className={`absolute px-2 bottom-0 left-0 w-[60vw] md:w-[calc(100%-2rem)] max-w-[20rem] z-[20] shadow-2xl bg-white rounded-tr-2xl rounded-bl-2xl ${isExpanded ? 'pb-2' : ''}`}
     >
       <div className={`w-full h-fit relative group select-none transform-gpu flex flex-col items-center justify-between gap-2 px-2 ${isExpanded ? 'pb-2' : ''}`}>
         {/* Park Name - At the top - Always visible */}
         <div className={`w-full h-fit flex pt-2 items-center justify-between gap-2 ${locale === 'he' ? '[direction:ltr]' : ''}`}>
-          <h3 className={`flex-1 ${!isExpanded ? 'text-sm' : (name.includes('-') ? (name.split('-').some(part => part.trim().length > 10) ? 'text-md' : 'text-xl') : (name.length > 10 ? 'text-md md:text-base' : 'text-xl'))} ${isExpanded ? 'md:text-lg' : ''} font-semibold ${name.includes('-') && isExpanded ? '' : 'truncate'} text-text dark:text-text-dark ${locale === 'he' && isExpanded ? 'translate-x-[2rem] z-10' : ''}`}>
+          <h3 className={`flex-1 ${!isExpanded ? 'text-md' : (name.includes('-') ? (name.split('-').some(part => part.trim().length > 10) ? 'text-md' : 'text-xl') : (name.length > 10 ? 'text-md md:text-base' : 'text-xl'))} ${isExpanded ? 'md:text-lg' : ''} font-semibold ${name.includes('-') && isExpanded ? '' : 'truncate'} text-[#2a2a2a] ${locale === 'he' && isExpanded ? 'translate-x-[2rem] z-10' : ''}`}>
             {name.includes('-') && isExpanded ? (
               name.split('-').map((part, index) => (
                 <span key={index}>
@@ -365,26 +365,26 @@ export const MapParkCard = memo(({ park, locale, onClose: _onClose }: MapParkCar
                 e.stopPropagation();
                 setIsExpanded(!isExpanded);
               }}
-              className={`flex-shrink-0 py-3 px-3 min-w-[2.5rem] min-h-[2.5rem]  h-full -m-3 rounded-t-2xl transition-all duration-300 ${name.includes('-') && isExpanded && locale === 'he' ? 'translate-y-[-100%] translate-x-[4px] bg-card dark:bg-card-dark' : !name.includes('-') && isExpanded && locale === 'he' ? 'translate-y-[-70%] translate-x-[4px] bg-card dark:bg-card-dark' : ''}`}
+              className={`flex-shrink-0 py-3 px-3 min-w-[2.5rem] min-h-[2.5rem]  h-full -m-3 rounded-t-2xl transition-all duration-300 ${name.includes('-') && isExpanded && locale === 'he' ? 'translate-y-[-100%] translate-x-[4px] bg-card' : !name.includes('-') && isExpanded && locale === 'he' ? 'translate-y-[-70%] translate-x-[4px] bg-card' : ''}`}
               aria-label={isExpanded ? tr('Collapse', 'כווץ') : tr('Expand', 'הרחב')}
             >
-              <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${!isExpanded ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-5 h-5 transition-transform duration-200 text-[#555] ${!isExpanded ? 'rotate-180' : ''}`} />
             </button>
         </div>
 
         {/* Expandable Content */}
         <div 
-          className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${
+          className={`w-full overflow-visible transition-all duration-300 ease-in-out ${
             isExpanded ? 'max-h-[2000px]' : 'max-h-0'
           }`}
         >
           <Link 
             href={`/${locale}/skateparks/${park.slug}`}
-            className={`w-full block -mx-2 px-2 focus:outline-none focus:ring-2 focus:ring-brand-main focus:ring-offset-2 dark:focus:ring-offset-gray-900 rounded-3xl transition-opacity duration-300 ${
+            className={`w-full block -mx-2 px-2 transition-opacity duration-300 overflow-visible ${
               isExpanded ? 'opacity-100 delay-100 pointer-events-auto' : 'opacity-0 delay-0 pointer-events-none'
             }`}
           >
-            <Separator className={`mb-3 transition-all duration-300 ${isExpanded ? 'opacity-100 translate-y-0 delay-150' : 'opacity-0 -translate-y-2 delay-0'}`} />
+            <Separator className={`mb-3 transition-all duration-300 dark:bg-border ${isExpanded ? 'opacity-100 translate-y-0 delay-150' : 'opacity-0 -translate-y-2 delay-0'}`} />
             {/* Amenities - Below park name */}
             {park.amenities && Object.values(park.amenities).some(Boolean) && (
               <div className={`w-full mb-3 transition-all duration-300 animate-fadeInDown ${isExpanded ? 'opacity-100 translate-y-0 delay-200' : 'opacity-0 -translate-y-2 delay-0'}`}>
@@ -454,7 +454,7 @@ export const MapParkCard = memo(({ park, locale, onClose: _onClose }: MapParkCar
             )}
 
             {/* Image - At the bottom */}
-            <div className={`relative w-full bg-black/25 h-[8rem] rounded-2xl overflow-visible transition-all duration-300 animate-fadeInDown delay-300 ${isExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 delay-0'}`}>
+            <div className={`relative w-full bg-black/25 h-[8rem] rounded-2xl overflow-visible transition-all duration-300 animate-fadeInDown delay-300 shadow-xl border border-border ${isExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 delay-0'}`}>
               <SkateparkThumbnail
                 photoUrl={photoUrl}
                 parkName={name}
