@@ -223,7 +223,7 @@ export function FilterBar({
                 <TooltipTrigger asChild>
                   <div className="relative">
                     <Button
-                      variant={viewMode === 'map' ? "red" : "gray"}
+                      variant={viewMode === 'map' ? "pink" : "gray"}
                       size="sm"
                       onClick={() => {
                         const newViewMode = viewMode === 'grid' ? 'map' : 'grid';
@@ -257,7 +257,7 @@ export function FilterBar({
                   </div>
                 </TooltipTrigger>
                 <TooltipContent 
-                  variant={viewMode === 'grid' ? 'gray' : 'red'}
+                  variant={viewMode === 'grid' ? 'gray' : 'pink'}
                   side="bottom" 
                   className="text-center"
                 >

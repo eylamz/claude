@@ -407,6 +407,25 @@ const config: Config = {
               },
             },
 
+            pink: {
+              DEFAULT: colors.pink.light,
+              dark: colors.pink.dark,
+              bg: {
+                DEFAULT: colors.pink.bg.light,
+                dark: colors.pink.bg.dark,
+              },
+              border: {
+                DEFAULT: colors.pink.border.light,
+                dark: colors.pink.border.dark,
+              },
+              hover: {
+                bg: {
+                  DEFAULT: colors.pink.hover.bg.light,
+                  dark: colors.pink.hover.bg.dark,
+                },
+              },
+            },
+
             orange: {
               DEFAULT: colors.orange.light,
               dark: colors.orange.dark,

@@ -5,12 +5,17 @@ import { useParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Calendar, User, Tag, ExternalLink, Share2, ChevronLeft } from 'lucide-react';
+import { Calendar, User, Tag, ExternalLink, ChevronLeft } from 'lucide-react';
 import { Icon } from '@/components/icons';
-import { Skeleton } from '@/components/ui';
+import { Button, Skeleton } from '@/components/ui';
 import Breadcrumb from '@/components/common/Breadcrumb';
 import { generateArticleStructuredData } from '@/lib/seo/utils';
 import type { GuideData } from '@/lib/api/guides';
+import {
+  parseGuidesVersion,
+  isGuidesCacheFresh,
+  getGuidesFetchedAtReadable,
+} from '@/lib/search-from-cache';
 
 interface ILocalizedField {
   en: string;
@@ -393,46 +398,25 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
 }
 
 /**
- * Share Button Component
- */
-function ShareButton({ title, url }: { title: string; url: string }) {
-  const [copied, setCopied] = useState(false);
-  
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({ title, url });
-      } catch (err) {
-        // User cancelled or error
-      }
-    } else {
-      // Fallback: copy to clipboard
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-  
-  return (
-    <button
-      onClick={handleShare}
-      className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium transition-colors"
-      aria-label="Share this guide"
-    >
-      <Share2 className="w-4 h-4" />
-      <span>{copied ? 'Copied!' : 'Share'}</span>
-    </button>
-  );
-}
-
-/**
  * Main Guide Page Component - Duolingo Style
  */
 export default function GuidePage() {
   const params = useParams();
   const locale = useLocale();
   const tCommon = useTranslations('common');
+  const tGuides = useTranslations('guides');
   const slug = params.slug as string;
+
+  // Same sport translation as guides list (guides.sports.*)
+  const getSportTranslation = (sport: string): string => {
+    if (!sport) return sport;
+    const sportKey = sport.toLowerCase();
+    const translated = tGuides(`sports.${sportKey}` as any);
+    if (translated && translated !== `sports.${sportKey}` && !translated.startsWith('sports.')) {
+      return translated;
+    }
+    return sport.charAt(0).toUpperCase() + sport.slice(1);
+  };
 
   const [guide, setGuide] = useState<Guide | null>(null);
   const [loading, setLoading] = useState(true);
@@ -440,52 +424,54 @@ export default function GuidePage() {
   const [cacheInitialized, setCacheInitialized] = useState(false);
   const [currentVersion, setCurrentVersion] = useState<number | null>(null);
 
-  // Check version and cache on mount (similar to guides-page-client)
+  // Check version and cache on mount (refetch only after 1 hour from last fetch)
   useEffect(() => {
     const checkVersionAndCache = async () => {
       const cacheKey = 'guides_cache';
       const versionKey = 'guides_version';
       const cachedData = localStorage.getItem(cacheKey);
-      const cachedVersion = localStorage.getItem(versionKey);
+      const cachedVersionRaw = localStorage.getItem(versionKey);
+      const { version: storedVersionNum, fetchedAt } = parseGuidesVersion(cachedVersionRaw);
 
-      // If no cache or version, fetch and cache all guides
-      if (!cachedData || !cachedVersion) {
+      if (!cachedData || !cachedVersionRaw) {
         try {
           const response = await fetch('/api/guides?limit=100');
           if (response.ok) {
             const data = await response.json();
             const currentVersion = data.version || 1;
             const allGuides = data.guides || [];
-            
-            // Store in cache
             localStorage.setItem(cacheKey, JSON.stringify(allGuides));
-            localStorage.setItem(versionKey, currentVersion.toString());
+            localStorage.setItem(
+              versionKey,
+              JSON.stringify({ version: currentVersion, fetchedAt: getGuidesFetchedAtReadable() })
+            );
             setCurrentVersion(currentVersion);
           }
         } catch (error) {
           console.error('Error fetching guides for cache:', error);
         }
+      } else if (isGuidesCacheFresh(fetchedAt)) {
+        setCurrentVersion(storedVersionNum ?? parseInt(cachedVersionRaw, 10));
       } else {
-        // Cache exists, check version in background
         try {
           const versionResponse = await fetch('/api/guides?versionOnly=true');
           if (versionResponse.ok) {
             const versionData = await versionResponse.json();
             const fetchedVersion = versionData.version || 1;
             setCurrentVersion(fetchedVersion);
-            const storedVersion = parseInt(cachedVersion);
+            const storedVersion = storedVersionNum ?? parseInt(cachedVersionRaw, 10);
 
-            // If versions don't match, update cache
             if (storedVersion !== fetchedVersion) {
               const response = await fetch('/api/guides?limit=100');
               if (response.ok) {
                 const data = await response.json();
                 const newVersion = data.version || 1;
                 const allGuides = data.guides || [];
-                
-                // Update cache
                 localStorage.setItem(cacheKey, JSON.stringify(allGuides));
-                localStorage.setItem(versionKey, newVersion.toString());
+                localStorage.setItem(
+                  versionKey,
+                  JSON.stringify({ version: newVersion, fetchedAt: getGuidesFetchedAtReadable() })
+                );
                 setCurrentVersion(newVersion);
               }
             }
@@ -494,7 +480,7 @@ export default function GuidePage() {
           console.warn('Failed to check guides version', error);
         }
       }
-      
+
       setCacheInitialized(true);
     };
 
@@ -767,14 +753,6 @@ export default function GuidePage() {
             </div>
           </div>
 
-          {/* Share section skeleton */}
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-12">
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-4 w-28 rounded" />
-              <Skeleton className="h-9 w-20 rounded-full" />
-            </div>
-          </div>
-
           {/* Related sports card skeleton */}
           <div className="bg-card dark:bg-card-dark rounded-2xl p-6 mb-8">
             <Skeleton className="h-4 w-28 mb-3 rounded" />
@@ -876,15 +854,37 @@ export default function GuidePage() {
               {guideDescription}
             </p>
 
-            {/* Date and Author - Second appearance (below description) */}
-            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-8">
-              {publishedDate && <span className="text-nowrap">{publishedDate}</span>}
-              {publishedDate && guide.authorName && <span>•</span>}
-              {guide.authorName && (
-                <p className="text-nowrap">
-                  {guide.authorName}
-                </p>
-              )}
+            {/* Date, Author, and Share - same layout as events (meta row with share on right) */}
+            <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-gray-500 dark:text-gray-400 mb-8">
+              <div className="flex items-center gap-2">
+                {publishedDate && <span className="text-nowrap">{publishedDate}</span>}
+                {publishedDate && guide.authorName && <span>•</span>}
+                {guide.authorName && (
+                  <p className="text-nowrap">
+                    {guide.authorName}
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="green"
+                onClick={() => {
+                  if (typeof navigator !== 'undefined' && navigator.share) {
+                    navigator.share({
+                      title: guideTitle,
+                      text: `${guideTitle} - ${locale === 'he' ? 'מדריך' : 'Guide'}`,
+                      url: typeof window !== 'undefined' ? window.location.href : canonicalUrl,
+                    }).catch((error) => {
+                      console.error('Error sharing:', error);
+                    });
+                  } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                    navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : canonicalUrl);
+                  }
+                }}
+                className="!h-8 px-2 py-1 rounded-lg font-medium flex-shrink-0"
+                aria-label={locale === 'he' ? 'שתף מדריך' : 'Share guide'}
+              >
+                <Icon name="shareBold" className="-mt-[1px] w-4 h-4" />
+              </Button>
             </div>
           </header>
 
@@ -919,7 +919,7 @@ export default function GuidePage() {
                   <Link
                     key={tag}
                     href={`/${locale}/guides?search=${encodeURIComponent(locale === 'he' ? 'תג:' + tag : 'tag:' + tag)}`}
-                    className="capitalize px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-[#e7defc] dark:bg-[#472881] text-[#915bf5] dark:text-[#c5b6fd] border-[#b99ef867] dark:border-[#5f4cc54d] transition-colors"
+                    className="capitalize px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark border border-purple-border dark:border-purple-border-dark hover:bg-purple-hover-bg dark:hover:bg-purple-hover-bg-dark transition-colors duration-200"
                   >
                     {tag}
                   </Link>
@@ -928,28 +928,20 @@ export default function GuidePage() {
             </div>
           )}
 
-          {/* Share Section */}
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8 mb-12">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Share Article</span>
-              <ShareButton title={guideTitle} url={canonicalUrl} />
-            </div>
-          </div>
-
           {/* Related Sports - clickable, navigates to guides with sport filter */}
           {guide.relatedSports.length > 0 && (
-            <div className="bg-card dark:bg-card-dark rounded-2xl p-6 mb-8">
+            <div className="mb-8">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                Related Sports
+                {tGuides('relatedSports')}
               </h3>
               <div className="flex flex-wrap gap-2 capitalize">
                 {guide.relatedSports.map((sport) => (
                   <Link
                     key={sport}
                     href={`/${locale}/guides?sports=${encodeURIComponent(sport)}`}
-                    className="px-3 py-1.5 rounded-full text-sm font-medium bg-brand-main/10 text-brand-main dark:bg-brand-main/20 dark:text-brand-dark hover:bg-brand-main/20 dark:hover:bg-brand-main/30 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-main focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                    className="capitalize px-2 py-1 rounded-lg text-sm font-semibold bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark transition-colors border border-blue-border dark:border-blue-border-dark focus:outline-none focus:ring-2 focus:ring-blue focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                   >
-                    {sport}
+                    {getSportTranslation(sport)}
                   </Link>
                 ))}
               </div>
@@ -958,13 +950,14 @@ export default function GuidePage() {
 
           {/* Back to Guides - Bottom CTA */}
           <div className="text-center pt-8">
-            <Link
-              href={`/${locale}/guides`}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-main hover:bg-brand-main/90 text-white font-semibold transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              {locale === 'he' ? 'חזרה למדריכים' : 'Back to Guides'}
-            </Link>
+            <Button variant="primary" className={`gap-2 px-6 font-semibold`} asChild>
+              <Link href={`/${locale}/guides`}
+              className={`flex ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                {locale === 'he' ? 'חזרה למדריכים' : 'Back to Guides'}
+              </Link>
+            </Button>
           </div>
         </main>
       </div>

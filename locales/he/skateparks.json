@@ -63,6 +63,8 @@
   "notes": "הערות",
   "video": "וידאו",
   "location": "מיקום",
+  "geolocationNotSupported": "הדפדפן שלך לא תומך במיקום גיאוגרפי",
+  "locationAccessDenied": "גישה למיקום נדחתה. ניתן להמשיך לצפות בפארקים.",
   "reviewsCount": "ביקורות",
   "reviewsLoading": "טוען ביקורות...",
   "noReviewsYet": "עדיין אין ביקורות. היה הראשון לכתוב ביקורת על הסקייטפארק הזה!",

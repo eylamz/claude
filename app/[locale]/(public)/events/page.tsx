@@ -10,7 +10,12 @@ import { SearchInput } from '@/components/common/SearchInput';
 import { Icon } from '@/components/icons';
 import { fullEventToListEvent } from '@/lib/events/formatEvent';
 import { flipLanguage } from '@/lib/utils/transliterate';
-import { queryMatchesCategory } from '@/lib/search-from-cache';
+import {
+  queryMatchesCategory,
+  parseEventsVersion,
+  isEventsCacheFresh,
+  getEventsFetchedAtReadable,
+} from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 
 /** Cache stores full event objects; list page needs list shape. */
@@ -20,6 +25,23 @@ function isFullFormatEvent(e: any): boolean {
 
 function cacheToListEvents(cache: any[], locale: 'en' | 'he') {
   return cache.map((e) => (isFullFormatEvent(e) ? fullEventToListEvent(e, locale) : e));
+}
+
+/** Parse "tag:name" or "תג:name" from search query. */
+function parseTagSearch(query: string): { isTagSearch: true; tag: string } | { isTagSearch: false } {
+  if (!query || typeof query !== 'string') return { isTagSearch: false };
+  const trimmed = query.trim();
+  const match = trimmed.match(/^\s*(?:tag|תג)\s*:\s*(.*)$/i);
+  if (!match) return { isTagSearch: false };
+  const tag = (match[1] ?? '').trim();
+  return { isTagSearch: true, tag };
+}
+
+/** Get all tag strings from an event. */
+function getEventTags(event: Event): string[] {
+  const t = event.tags;
+  if (!t || !Array.isArray(t)) return [];
+  return t;
 }
 
 interface Event {
@@ -40,6 +62,7 @@ interface Event {
   isFree: boolean;
   price?: number;
   sports: string[];
+  tags?: string[];
   isHappeningNow: boolean;
   isPast: boolean;
 }
@@ -387,11 +410,17 @@ export default function EventsPage() {
   const [cacheInitialized, setCacheInitialized] = useState(false);
   const [currentVersion, setCurrentVersion] = useState<number | null>(null);
   
-  // Filters
+  // Filters — support ?tag= for tag search (same as guides); ?search= for free text
+  const tagFromUrl = searchParams.get('tag');
+  const searchFromUrl = searchParams.get('search');
   const [selectedSports, setSelectedSports] = useState<string[]>(
     searchParams.get('sports')?.split(',').filter(Boolean) || []
   );
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [searchQuery, setSearchQuery] = useState(
+    tagFromUrl != null && tagFromUrl !== ''
+      ? (locale === 'he' ? 'תג: ' : 'tag: ') + tagFromUrl
+      : (searchFromUrl || '')
+  );
   const [hasSpotsAvailable, setHasSpotsAvailable] = useState(searchParams.get('hasSpots') === 'true');
   
   // Pagination
@@ -429,16 +458,17 @@ export default function EventsPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check version and cache on mount
+  // Check version and cache on mount (refetch only after 1 hour from last fetch)
   useEffect(() => {
     const checkVersionAndCache = async () => {
       const cacheKey = 'events_cache';
       const versionKey = 'events_version';
       const cachedData = localStorage.getItem(cacheKey);
-      const cachedVersion = localStorage.getItem(versionKey);
+      const cachedVersionRaw = localStorage.getItem(versionKey);
+      const { version: storedVersionNum, fetchedAt } = parseEventsVersion(cachedVersionRaw);
 
       // If no cache or version, fetch and cache all events (full format for slug page)
-      if (!cachedData || !cachedVersion) {
+      if (!cachedData || !cachedVersionRaw) {
         console.log('No cache found, fetching events for initial cache (full format)');
         try {
           const response = await fetch(`/api/events?full=true`);
@@ -448,7 +478,10 @@ export default function EventsPage() {
             const allEvents = data.events || [];
             console.log('Initial cache fetch:', allEvents.length, 'events');
             localStorage.setItem(cacheKey, JSON.stringify(allEvents));
-            localStorage.setItem(versionKey, currentVersion.toString());
+            localStorage.setItem(
+              versionKey,
+              JSON.stringify({ version: currentVersion, fetchedAt: getEventsFetchedAtReadable() })
+            );
             setCurrentVersion(currentVersion);
           }
         } catch (error) {
@@ -460,9 +493,13 @@ export default function EventsPage() {
           const parsedCache = JSON.parse(cachedData);
           if (!Array.isArray(parsedCache) || parsedCache.length === 0) {
             console.log('Cache exists but is empty, will fetch fresh data');
-            // Clear empty cache
             localStorage.removeItem(cacheKey);
             localStorage.removeItem(versionKey);
+          } else if (isEventsCacheFresh(fetchedAt)) {
+            // Fetched less than 1 hour ago, skip version check and refetch
+            setCurrentVersion(storedVersionNum ?? parseInt(cachedVersionRaw, 10));
+            setCacheInitialized(true);
+            return;
           } else {
             // Avoid duplicate version check when effect runs twice (e.g. React Strict Mode)
             if (versionCheckInFlightRef.current) {
@@ -470,17 +507,15 @@ export default function EventsPage() {
               return;
             }
             versionCheckInFlightRef.current = true;
-            console.log('Cache exists with', parsedCache.length, 'events, checking version');
-            // Cache exists with data, check version once
+            console.log('Cache exists with', parsedCache.length, 'events, checking version (cache older than 1h)');
             try {
               const versionResponse = await fetch('/api/events?versionOnly=true');
               if (versionResponse.ok) {
                 const versionData = await versionResponse.json();
                 const fetchedVersion = versionData.version || 1;
                 setCurrentVersion(fetchedVersion);
-                const storedVersion = parseInt(cachedVersion);
+                const storedVersion = storedVersionNum ?? parseInt(cachedVersionRaw, 10);
 
-                // If versions don't match, update cache (full format)
                 if (storedVersion !== fetchedVersion) {
                   console.log('Version mismatch, updating cache');
                   const response = await fetch(`/api/events?full=true`);
@@ -489,19 +524,20 @@ export default function EventsPage() {
                     const newVersion = data.version || 1;
                     const allEvents = data.events || [];
                     localStorage.setItem(cacheKey, JSON.stringify(allEvents));
-                    localStorage.setItem(versionKey, newVersion.toString());
+                    localStorage.setItem(
+                      versionKey,
+                      JSON.stringify({ version: newVersion, fetchedAt: getEventsFetchedAtReadable() })
+                    );
                     setCurrentVersion(newVersion);
                   }
                 } else {
-                  // Versions match, set current version from cache
                   setCurrentVersion(storedVersion);
                 }
               }
             } catch (error) {
               console.warn('Failed to check events version', error);
-              // If version check fails, still set currentVersion from cache
-              if (cachedVersion) {
-                setCurrentVersion(parseInt(cachedVersion));
+              if (cachedVersionRaw) {
+                setCurrentVersion(storedVersionNum ?? parseInt(cachedVersionRaw, 10));
               }
             } finally {
               versionCheckInFlightRef.current = false;
@@ -513,7 +549,7 @@ export default function EventsPage() {
           localStorage.removeItem(versionKey);
         }
       }
-      
+
       setCacheInitialized(true);
     };
 
@@ -565,37 +601,31 @@ export default function EventsPage() {
       const cacheKey = 'events_cache';
       const versionKey = 'events_version';
       const cachedData = localStorage.getItem(cacheKey);
-      const cachedVersion = localStorage.getItem(versionKey);
+      const cachedVersionRaw = localStorage.getItem(versionKey);
+      const { version: storedVersionNum, fetchedAt } = parseEventsVersion(cachedVersionRaw);
 
-      // Try to use cache first if available and valid
-      if (cachedData && cachedVersion) {
+      if (cachedData && cachedVersionRaw) {
         try {
           const allCachedEvents = JSON.parse(cachedData);
-          const storedVersion = parseInt(cachedVersion);
-          
-          // Check if cache has valid data
+          const storedVersion = storedVersionNum ?? parseInt(cachedVersionRaw, 10);
+
           if (Array.isArray(allCachedEvents) && allCachedEvents.length > 0) {
-            // Use the version from state if available (from initial check)
             let versionMatches = true;
             if (currentVersion !== null) {
               versionMatches = storedVersion === currentVersion;
             }
-
-            // If version matches (or not checked yet), use cached events (map full→list if needed).
-            if (versionMatches) {
+            if (versionMatches && (isEventsCacheFresh(fetchedAt) || currentVersion !== null)) {
               console.log('Using cached events:', allCachedEvents.length);
               setEvents(cacheToListEvents(allCachedEvents, locale as 'en' | 'he'));
               setLoading(false);
               return;
-            } else {
-              console.log('Version mismatch, will fetch fresh data');
             }
+            if (!versionMatches) console.log('Version mismatch, will fetch fresh data');
           } else {
             console.log('Cache exists but is empty, fetching fresh data');
           }
         } catch (e) {
           console.warn('Failed to parse cached events data', e);
-          // Clear invalid cache
           localStorage.removeItem(cacheKey);
           localStorage.removeItem(versionKey);
         }
@@ -603,7 +633,6 @@ export default function EventsPage() {
         console.log('No cache found, fetching fresh data');
       }
 
-      // No valid cache or version mismatch, fetch full events for cache + list
       console.log('Fetching fresh events from API (full format)');
       const response = await fetch(`/api/events?full=true`);
       if (response.ok) {
@@ -613,7 +642,10 @@ export default function EventsPage() {
         console.log('Fetched events from API:', allEvents.length);
         setEvents(cacheToListEvents(allEvents, locale as 'en' | 'he'));
         localStorage.setItem(cacheKey, JSON.stringify(allEvents));
-        localStorage.setItem(versionKey, fetchedVersion.toString());
+        localStorage.setItem(
+          versionKey,
+          JSON.stringify({ version: fetchedVersion, fetchedAt: getEventsFetchedAtReadable() })
+        );
         setCurrentVersion(fetchedVersion);
       } else {
         console.error('Failed to fetch events:', response.status, response.statusText);
@@ -651,9 +683,16 @@ export default function EventsPage() {
       );
     }
 
-    // Search query: flipLanguage (wrong keyboard), category trigger (show all); match title + location only (no description)
+    // Search query: tag: / תג: filter by tag; category trigger (show all); else match title + location
     if (searchQuery) {
-      if (queryMatchesCategory(searchQuery, 'events')) {
+      const tagSearch = parseTagSearch(searchQuery);
+      if (tagSearch.isTagSearch) {
+        const tagLower = tagSearch.tag.toLowerCase();
+        filtered = filtered.filter(event => {
+          const tags = getEventTags(event);
+          return tags.some((t) => t.toLowerCase() === tagLower || t.toLowerCase().includes(tagLower));
+        });
+      } else if (queryMatchesCategory(searchQuery, 'events')) {
         // Show all events when user types e.g. "אירועים", "events", "thrugho"
       } else {
         const query = searchQuery.toLowerCase().trim();
@@ -773,6 +812,7 @@ export default function EventsPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onClear={() => setSearchQuery('')}
+                  showTagButton
                   className="w-full"
                 />
               </div>
@@ -838,11 +878,15 @@ export default function EventsPage() {
                   </div>
                 )}
 
-                {/* Search Query Badge */}
+                {/* Search Query Badge - purple when tag search, orange otherwise */}
                 {searchQuery.trim() && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-bg dark:bg-orange-bg-dark rounded-full border border-orange-border dark:border-orange-border-dark hover:bg-orange-hover-bg dark:hover:bg-orange-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors duration-200 cursor-pointer animate-pop ${
+                      parseTagSearch(searchQuery).isTagSearch
+                        ? 'bg-purple-bg dark:bg-purple-bg-dark border-purple-border dark:border-purple-border-dark hover:bg-purple-hover-bg dark:hover:bg-purple-hover-bg-dark'
+                        : 'bg-orange-bg dark:bg-orange-bg-dark border-orange-border dark:border-orange-border-dark hover:bg-orange-hover-bg dark:hover:bg-orange-hover-bg-dark'
+                    }`}
                   >
                     <span className="text-sm text-gray-700 dark:text-gray-300">
                       "{searchQuery}"

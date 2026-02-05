@@ -172,6 +172,16 @@ export function fullEventToListEvent(full: any, locale: 'en' | 'he') {
   const endTime =
     full.dateTime?.endTime || formatTime(endDate);
 
+  const tagsHe = full.content?.he?.tags ?? [];
+  const tagsEn = full.content?.en?.tags ?? [];
+  const tags = Array.isArray(tagsHe) && Array.isArray(tagsEn)
+    ? [...new Set([...tagsHe, ...tagsEn])]
+    : Array.isArray(tagsHe)
+      ? tagsHe
+      : Array.isArray(tagsEn)
+        ? tagsEn
+        : [];
+
   return {
     id: full._id,
     slug: full.slug,
@@ -190,6 +200,7 @@ export function fullEventToListEvent(full: any, locale: 'en' | 'he') {
     isFree: full.isFree !== undefined ? full.isFree : true,
     price: full.price,
     sports: full.relatedSports ?? [],
+    tags,
     isHappeningNow,
     isPast,
   };

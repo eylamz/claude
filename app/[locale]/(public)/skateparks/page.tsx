@@ -13,7 +13,13 @@ import { FilterBar } from '@/components/skateparks/FilterBar';
 import { Icon } from '@/components/icons';
 import { useTranslations } from 'next-intl';
 import { flipLanguage } from '@/lib/utils/transliterate';
-import { getAreaFromQuery, queryMatchesCategory } from '@/lib/search-from-cache';
+import {
+  getAreaFromQuery,
+  queryMatchesCategory,
+  parseSkateparksVersion,
+  isSkateparksCacheFresh,
+  getSkateparksFetchedAtReadable,
+} from '@/lib/search-from-cache';
 
 interface SkateparkImage {
   url: string;
@@ -220,7 +226,7 @@ export default function SkateparksPage() {
     }
 
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
+      alert(t('geolocationNotSupported'));
       return;
     }
 
@@ -240,10 +246,10 @@ export default function SkateparksPage() {
         }
       },
       () => {
-        alert('Location access denied. You can still browse skateparks.');
+        alert(t('locationAccessDenied'));
       }
     );
-  }, [getCityFromCoordinates, userLocation, sortBy]);
+  }, [getCityFromCoordinates, userLocation, sortBy, t]);
 
   // Helper function to merge inactive parks with active parks
   const mergeInactiveParks = useCallback((activeParks: any[]): any[] => {
@@ -298,7 +304,8 @@ export default function SkateparksPage() {
     const cacheKey = 'skateparks_cache';
     const versionKey = 'skateparks_version';
     const cachedData = localStorage.getItem(cacheKey);
-    const cachedVersion = localStorage.getItem(versionKey);
+    const cachedVersionRaw = localStorage.getItem(versionKey);
+    const { version: storedVersionNum, fetchedAt } = parseSkateparksVersion(cachedVersionRaw);
 
     // If cache exists, use it immediately without fetching
     if (cachedData) {
@@ -326,9 +333,14 @@ export default function SkateparksPage() {
         setAllSkateparks(allParks);
         setLoading(false);
 
-        // Check version asynchronously after using cache
+        // If cache was fetched less than 1 hour ago, skip version check and refetch
+        if (isSkateparksCacheFresh(fetchedAt)) {
+          return;
+        }
+
+        // Check version asynchronously after using cache (only if cache is older than 1 hour)
         // If version doesn't match, refetch and update both cache and version
-        if (cachedVersion) {
+        if (cachedVersionRaw) {
           // If version exists in cache, only fetch version (lightweight request)
           (async () => {
             try {
@@ -336,7 +348,7 @@ export default function SkateparksPage() {
               if (versionResponse.ok) {
                 const versionData = await versionResponse.json();
                 const currentVersion = Number(versionData.version) || 1;
-                const storedVersion = Number(cachedVersion) || 1;
+                const storedVersion = storedVersionNum ?? Number(cachedVersionRaw) ?? 1;
 
                 // Ensure both are valid numbers before comparison
                 if (isNaN(currentVersion) || isNaN(storedVersion)) {
@@ -370,9 +382,12 @@ export default function SkateparksPage() {
                       };
                     });
 
-                    // Update both cache and version in localStorage (store normalized format)
+                    // Update both cache and version (with fetch time) in localStorage
                     localStorage.setItem(cacheKey, JSON.stringify(normalizedSkateparks));
-                    localStorage.setItem(versionKey, newVersion.toString());
+                    localStorage.setItem(
+                      versionKey,
+                      JSON.stringify({ version: newVersion, fetchedAt: getSkateparksFetchedAtReadable() })
+                    );
 
                     // Merge with inactive parks and update state
                     const allParks = mergeInactiveParks(normalizedSkateparks);
@@ -416,9 +431,12 @@ export default function SkateparksPage() {
                   };
                 });
 
-                // Update both cache and version in localStorage (store normalized format)
+                // Update both cache and version (with fetch time) in localStorage
                 localStorage.setItem(cacheKey, JSON.stringify(normalizedSkateparks));
-                localStorage.setItem(versionKey, currentVersion.toString());
+                localStorage.setItem(
+                  versionKey,
+                  JSON.stringify({ version: currentVersion, fetchedAt: getSkateparksFetchedAtReadable() })
+                );
 
                 // Merge with inactive parks and update state
                 const allParks = mergeInactiveParks(normalizedSkateparks);
@@ -473,9 +491,12 @@ export default function SkateparksPage() {
       const allParks = mergeInactiveParks(normalizedSkateparks);
       setAllSkateparks(allParks);
 
-      // Store both cache and version in localStorage (store normalized format)
+      // Store both cache and version (with fetch time) in localStorage
       localStorage.setItem(cacheKey, JSON.stringify(normalizedSkateparks));
-      localStorage.setItem(versionKey, currentVersion.toString());
+      localStorage.setItem(
+        versionKey,
+        JSON.stringify({ version: currentVersion, fetchedAt: getSkateparksFetchedAtReadable() })
+      );
     } catch (error) {
       console.error('Error fetching skateparks:', error);
     } finally {

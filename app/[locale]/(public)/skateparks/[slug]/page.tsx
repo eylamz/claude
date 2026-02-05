@@ -1642,10 +1642,10 @@ export default function SkateparkPage() {
           <h1 className="sm:hidden mb-1 text-xl font-semibold text-text dark:text-text-dark">
             {parkName}
           </h1>
-                                          {/* Mobile-only share button at top start, next to operating hours */}
+                                          {/* Mobile-only share button at top start, next to operating hours - same style as events */}
                                 <div className="sm:hidden shrink-0">
                   <Button
-                    variant="outline"
+                    variant="green"
                     onClick={() => {
                       if (typeof navigator !== 'undefined' && navigator.share) {
                         navigator.share({
@@ -1659,10 +1659,10 @@ export default function SkateparkPage() {
                           navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : '');
                         }
                     }}
-                    className="px-2 py-1 rounded-lg font-medium"
-                    aria-label="Share"
+                    className="!h-8 px-2 py-1 rounded-lg font-medium flex-shrink-0"
+                    aria-label={locale === 'he' ? 'שתף סקייטפארק' : 'Share skatepark'}
                   >
-                    <Icon name="shareBold" className="-mt-[2px] w-4 h-4 " />
+                    <Icon name="shareBold" className="-mt-[1px] w-4 h-4" />
                   </Button>
                 </div>
                 </div>

@@ -11,6 +11,11 @@ import { Skeleton, Button } from '@/components/ui';
 import ParkImageGallery from '@/components/skateparks/ParkImageGallery';
 import { getMetaTitleWithFallback, DEFAULT_META_TITLE } from '@/lib/seo/utils';
 import { Separator } from '@/components/ui';
+import {
+  parseEventsVersion,
+  isEventsCacheFresh,
+  getEventsFetchedAtReadable,
+} from '@/lib/search-from-cache';
 
 interface IEvent {
   _id: string;
@@ -142,7 +147,10 @@ export default function EventPage() {
         const { events: allEvents = [], version } = await fullRes.json();
         if (Array.isArray(allEvents) && allEvents.length > 0) {
           localStorage.setItem(cacheKey, JSON.stringify(allEvents));
-          localStorage.setItem(versionKey, String(version ?? 1));
+          localStorage.setItem(
+            versionKey,
+            JSON.stringify({ version: version ?? 1, fetchedAt: getEventsFetchedAtReadable() })
+          );
           eventFromCache = getEventFromCache();
           if (eventFromCache) {
             setEvent(eventFromCache);
@@ -177,15 +185,16 @@ export default function EventPage() {
     }
   };
 
-  // Check version and cache on mount (full event data for slug page use)
+  // Check version and cache on mount (refetch only after 1 hour from last fetch)
   useEffect(() => {
     const checkVersionAndCache = async () => {
       const cacheKey = 'events_cache';
       const versionKey = 'events_version';
       const cachedData = localStorage.getItem(cacheKey);
-      const cachedVersion = localStorage.getItem(versionKey);
+      const cachedVersionRaw = localStorage.getItem(versionKey);
+      const { version: storedVersionNum, fetchedAt } = parseEventsVersion(cachedVersionRaw);
 
-      if (!cachedData || !cachedVersion) {
+      if (!cachedData || !cachedVersionRaw) {
         try {
           const response = await fetch(`/api/events?full=true`);
           if (response.ok) {
@@ -193,12 +202,17 @@ export default function EventPage() {
             const currentVersion = data.version || 1;
             const allEvents = data.events || [];
             localStorage.setItem(cacheKey, JSON.stringify(allEvents));
-            localStorage.setItem(versionKey, currentVersion.toString());
+            localStorage.setItem(
+              versionKey,
+              JSON.stringify({ version: currentVersion, fetchedAt: getEventsFetchedAtReadable() })
+            );
             setCurrentVersion(currentVersion);
           }
         } catch (error) {
           console.error('Error fetching events for cache:', error);
         }
+      } else if (isEventsCacheFresh(fetchedAt)) {
+        setCurrentVersion(storedVersionNum ?? parseInt(cachedVersionRaw, 10));
       } else {
         try {
           const versionResponse = await fetch('/api/events?versionOnly=true');
@@ -206,7 +220,7 @@ export default function EventPage() {
             const versionData = await versionResponse.json();
             const fetchedVersion = versionData.version || 1;
             setCurrentVersion(fetchedVersion);
-            const storedVersion = parseInt(cachedVersion);
+            const storedVersion = storedVersionNum ?? parseInt(cachedVersionRaw, 10);
             if (storedVersion !== fetchedVersion) {
               const response = await fetch(`/api/events?full=true`);
               if (response.ok) {
@@ -214,7 +228,10 @@ export default function EventPage() {
                 const newVersion = data.version || 1;
                 const allEvents = data.events || [];
                 localStorage.setItem(cacheKey, JSON.stringify(allEvents));
-                localStorage.setItem(versionKey, newVersion.toString());
+                localStorage.setItem(
+                  versionKey,
+                  JSON.stringify({ version: newVersion, fetchedAt: getEventsFetchedAtReadable() })
+                );
                 setCurrentVersion(newVersion);
               }
             }

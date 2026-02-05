@@ -227,12 +227,14 @@
       },
       "functional": {
         "title": "Functional Cookies",
-        "description": "These cookies enable enhanced functionality and personalization, such as remembering your language preference.",
+        "required": "Required",
+        "description": "These cookies and local storage enable essential functionality and personalization, such as remembering your language and theme. We also use local storage to cache data to improve loading and search.",
         "toggle": "Toggle functional cookies",
         "examples": {
           "language": "Language preferences",
           "theme": "Theme and display settings",
-          "preferences": "User preferences and settings"
+          "preferences": "User preferences and settings",
+          "contentCache": "Local storage to cache data to improve loading and search"
         }
       }
     }

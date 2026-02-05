@@ -76,6 +76,128 @@ export function getAreaFromQuery(query: string): 'north' | 'center' | 'south' | 
   return null;
 }
 
+/** Max age for skateparks/events/guides cache before refetch (1 hour). */
+export const SKATEPARKS_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
+export const EVENTS_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
+export const GUIDES_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
+
+/** Parse skateparks_version from localStorage: may be legacy number string or { version, fetchedAt }. fetchedAt can be number (ms) or human-readable ISO date string. */
+export function parseSkateparksVersion(
+  value: string | null
+): { version?: number; fetchedAt?: number } {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value);
+    if (typeof parsed === 'object' && parsed !== null) {
+      let fetchedAtMs: number | undefined;
+      if (typeof parsed.fetchedAt === 'number' && !isNaN(parsed.fetchedAt)) {
+        fetchedAtMs = parsed.fetchedAt;
+      } else if (typeof parsed.fetchedAt === 'string') {
+        const ms = new Date(parsed.fetchedAt).getTime();
+        if (!isNaN(ms)) fetchedAtMs = ms;
+      }
+      return {
+        version: typeof parsed.version === 'number' ? parsed.version : Number(parsed.version) || undefined,
+        fetchedAt: fetchedAtMs,
+      };
+    }
+  } catch {
+    // legacy: plain version number
+  }
+  const v = Number(value);
+  if (!isNaN(v)) return { version: v };
+  return {};
+}
+
+/** Human-readable timestamp for skateparks_version (e.g. "2025-02-04T14:30:00.000Z"). */
+export function getSkateparksFetchedAtReadable(): string {
+  return new Date().toISOString();
+}
+
+/** True if skateparks cache was fetched less than 1 hour ago. */
+export function isSkateparksCacheFresh(fetchedAt: number | undefined): boolean {
+  if (fetchedAt == null) return false;
+  return Date.now() - fetchedAt < SKATEPARKS_CACHE_MAX_AGE_MS;
+}
+
+/** Parse events_version from localStorage: may be legacy number string or { version, fetchedAt }. fetchedAt can be number (ms) or human-readable ISO date string. */
+export function parseEventsVersion(
+  value: string | null
+): { version?: number; fetchedAt?: number } {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value);
+    if (typeof parsed === 'object' && parsed !== null) {
+      let fetchedAtMs: number | undefined;
+      if (typeof parsed.fetchedAt === 'number' && !isNaN(parsed.fetchedAt)) {
+        fetchedAtMs = parsed.fetchedAt;
+      } else if (typeof parsed.fetchedAt === 'string') {
+        const ms = new Date(parsed.fetchedAt).getTime();
+        if (!isNaN(ms)) fetchedAtMs = ms;
+      }
+      return {
+        version: typeof parsed.version === 'number' ? parsed.version : Number(parsed.version) || undefined,
+        fetchedAt: fetchedAtMs,
+      };
+    }
+  } catch {
+    // legacy: plain version number
+  }
+  const v = Number(value);
+  if (!isNaN(v)) return { version: v };
+  return {};
+}
+
+/** Human-readable timestamp for events_version (e.g. "2025-02-04T14:30:00.000Z"). */
+export function getEventsFetchedAtReadable(): string {
+  return new Date().toISOString();
+}
+
+/** True if events cache was fetched less than 1 hour ago. */
+export function isEventsCacheFresh(fetchedAt: number | undefined): boolean {
+  if (fetchedAt == null) return false;
+  return Date.now() - fetchedAt < EVENTS_CACHE_MAX_AGE_MS;
+}
+
+/** Parse guides_version from localStorage: may be legacy number string or { version, fetchedAt }. fetchedAt can be number (ms) or human-readable ISO date string. */
+export function parseGuidesVersion(
+  value: string | null
+): { version?: number; fetchedAt?: number } {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value);
+    if (typeof parsed === 'object' && parsed !== null) {
+      let fetchedAtMs: number | undefined;
+      if (typeof parsed.fetchedAt === 'number' && !isNaN(parsed.fetchedAt)) {
+        fetchedAtMs = parsed.fetchedAt;
+      } else if (typeof parsed.fetchedAt === 'string') {
+        const ms = new Date(parsed.fetchedAt).getTime();
+        if (!isNaN(ms)) fetchedAtMs = ms;
+      }
+      return {
+        version: typeof parsed.version === 'number' ? parsed.version : Number(parsed.version) || undefined,
+        fetchedAt: fetchedAtMs,
+      };
+    }
+  } catch {
+    // legacy: plain version number
+  }
+  const v = Number(value);
+  if (!isNaN(v)) return { version: v };
+  return {};
+}
+
+/** Human-readable timestamp for guides_version (e.g. "2025-02-04T14:30:00.000Z"). */
+export function getGuidesFetchedAtReadable(): string {
+  return new Date().toISOString();
+}
+
+/** True if guides cache was fetched less than 1 hour ago. */
+export function isGuidesCacheFresh(fetchedAt: number | undefined): boolean {
+  if (fetchedAt == null) return false;
+  return Date.now() - fetchedAt < GUIDES_CACHE_MAX_AGE_MS;
+}
+
 const CACHE_CONFIG = {
   skateparks: {
     key: 'skateparks_cache',
@@ -134,7 +256,24 @@ async function getOrFillCache(
   if (raw) {
     try {
       const arr = JSON.parse(raw);
-      if (Array.isArray(arr) && arr.length > 0) return arr;
+      if (Array.isArray(arr) && arr.length > 0) {
+        // For skateparks/events: skip refetch if cache was fetched less than 1 hour ago
+        if (category === 'skateparks') {
+          const versionRaw = localStorage.getItem(config.versionKey);
+          const { fetchedAt } = parseSkateparksVersion(versionRaw);
+          if (isSkateparksCacheFresh(fetchedAt)) return arr;
+        } else if (category === 'events') {
+          const versionRaw = localStorage.getItem(config.versionKey);
+          const { fetchedAt } = parseEventsVersion(versionRaw);
+          if (isEventsCacheFresh(fetchedAt)) return arr;
+        } else if (category === 'guides') {
+          const versionRaw = localStorage.getItem(config.versionKey);
+          const { fetchedAt } = parseGuidesVersion(versionRaw);
+          if (isGuidesCacheFresh(fetchedAt)) return arr;
+        } else {
+          return arr;
+        }
+      }
     } catch {
       // invalid cache
     }
@@ -148,7 +287,24 @@ async function getOrFillCache(
     if (!Array.isArray(items)) return null;
     const version = config.getVersion(data);
     localStorage.setItem(config.key, JSON.stringify(items));
-    localStorage.setItem(config.versionKey, String(version));
+    if (category === 'skateparks') {
+      localStorage.setItem(
+        config.versionKey,
+        JSON.stringify({ version, fetchedAt: getSkateparksFetchedAtReadable() })
+      );
+    } else if (category === 'events') {
+      localStorage.setItem(
+        config.versionKey,
+        JSON.stringify({ version, fetchedAt: getEventsFetchedAtReadable() })
+      );
+    } else if (category === 'guides') {
+      localStorage.setItem(
+        config.versionKey,
+        JSON.stringify({ version, fetchedAt: getGuidesFetchedAtReadable() })
+      );
+    } else {
+      localStorage.setItem(config.versionKey, String(version));
+    }
     return items;
   } catch {
     return null;

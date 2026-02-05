@@ -25,7 +25,7 @@ export default function CookieConsentBanner() {
   const [preferences, setPreferences] = useState({
     essential: true,
     analytics: false,
-    functional: false,
+    functional: true,
   });
 
   useEffect(() => {
@@ -258,7 +258,9 @@ export default function CookieConsentBanner() {
                       <h4 className="font-semibold text-text dark:text-text-dark">
                         {t('cookieConsent.categories.functional.title')}
                       </h4>
-                    
+                      <span className="text-xs bg-green-bg dark:bg-green-bg-dark border border-green-border dark:border-green-border-dark text-green dark:text-green-dark px-2 py-1 rounded">
+                        {t('cookieConsent.categories.functional.required')}
+                      </span>
                     </div>
                     <p className="text-sm text-gray dark:text-gray-dark mb-2">
                       {t('cookieConsent.categories.functional.description')}
@@ -267,17 +269,18 @@ export default function CookieConsentBanner() {
                       <li>{t('cookieConsent.categories.functional.examples.language')}</li>
                       <li>{t('cookieConsent.categories.functional.examples.theme')}</li>
                       <li>{t('cookieConsent.categories.functional.examples.preferences')}</li>
+                      <li>{t('cookieConsent.categories.functional.examples.contentCache')}</li>
                     </ul>
                   </div>
                   <div className="flex items-center">
-                  <Switch
-                    checked={preferences.functional}
-                    onCheckedChange={() => toggleCategory('functional')}
-                    variant="brand"
-                    size="sm"
-                  />
+                    <Switch
+                      checked={preferences.functional}
+                      onCheckedChange={() => toggleCategory('functional')}
+                      variant="brand"
+                      size="sm"
+                      disabled={true}
+                    />
                   </div>
-                 
                 </div>
               </div>
             </div>

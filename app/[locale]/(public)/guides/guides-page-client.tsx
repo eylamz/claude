@@ -10,7 +10,12 @@ import { SearchInput } from '@/components/common/SearchInput';
 import { Icon } from '@/components/icons';
 import type { GuideData, FiltersData, ILocalizedField } from '@/lib/api/guides';
 import { flipLanguage } from '@/lib/utils/transliterate';
-import { queryMatchesCategory } from '@/lib/search-from-cache';
+import {
+  queryMatchesCategory,
+  parseGuidesVersion,
+  isGuidesCacheFresh,
+  getGuidesFetchedAtReadable,
+} from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 
 interface Guide extends GuideData {}
@@ -22,15 +27,15 @@ const getLocalizedText = (field: ILocalizedField | string | undefined, locale: s
   return field[locale as 'en' | 'he'] || field.en || '';
 };
 
-/** Parse "tag:name" or "תג:name" from search query. Returns tag name for filtering or null if not a tag search. */
+/** Parse "tag:name" or "תג:name" from search query. isTagSearch is true when query starts with tag: or תג:. */
 function parseTagSearch(query: string): { isTagSearch: true; tag: string } | { isTagSearch: false } {
   if (!query || typeof query !== 'string') return { isTagSearch: false };
   const trimmed = query.trim();
-  // Match "tag:" or "תג:" (with optional spaces), case-insensitive for "tag"
-  const match = trimmed.match(/^\s*(?:tag|תג)\s*:\s*(.+)$/i);
-  if (!match || !match[1]) return { isTagSearch: false };
-  const tag = match[1].trim();
-  return tag ? { isTagSearch: true, tag } : { isTagSearch: false };
+  // Match "tag:" or "תג:" at start (with optional content after), case-insensitive for "tag"
+  const match = trimmed.match(/^\s*(?:tag|תג)\s*:\s*(.*)$/i);
+  if (!match) return { isTagSearch: false };
+  const tag = (match[1] ?? '').trim();
+  return { isTagSearch: true, tag };
 }
 
 /** Get all tag strings from a guide (handles array or { en, he } format). */
@@ -450,51 +455,53 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check version and cache on mount
+  // Check version and cache on mount (refetch only after 1 hour from last fetch)
   useEffect(() => {
     const checkVersionAndCache = async () => {
       const cacheKey = 'guides_cache';
       const versionKey = 'guides_version';
       const cachedData = localStorage.getItem(cacheKey);
-      const cachedVersion = localStorage.getItem(versionKey);
+      const cachedVersionRaw = localStorage.getItem(versionKey);
+      const { version: storedVersionNum, fetchedAt } = parseGuidesVersion(cachedVersionRaw);
 
-      // If no cache or version, fetch and cache all guides
-      if (!cachedData || !cachedVersion) {
+      if (!cachedData || !cachedVersionRaw) {
         try {
           const response = await fetch('/api/guides?limit=100');
           if (response.ok) {
             const data = await response.json();
             const currentVersion = data.version || 1;
             const allGuides = data.guides || [];
-            
-            // Store in cache
             localStorage.setItem(cacheKey, JSON.stringify(allGuides));
-            localStorage.setItem(versionKey, currentVersion.toString());
+            localStorage.setItem(
+              versionKey,
+              JSON.stringify({ version: currentVersion, fetchedAt: getGuidesFetchedAtReadable() })
+            );
           }
         } catch (error) {
           console.error('Error fetching guides for cache:', error);
         }
+      } else if (isGuidesCacheFresh(fetchedAt)) {
+        setCurrentVersion(storedVersionNum ?? parseInt(cachedVersionRaw, 10));
       } else {
-        // Cache exists, check version in background
         try {
           const versionResponse = await fetch('/api/guides?versionOnly=true');
           if (versionResponse.ok) {
             const versionData = await versionResponse.json();
             const fetchedVersion = versionData.version || 1;
             setCurrentVersion(fetchedVersion);
-            const storedVersion = parseInt(cachedVersion);
+            const storedVersion = storedVersionNum ?? parseInt(cachedVersionRaw, 10);
 
-            // If versions don't match, update cache
             if (storedVersion !== fetchedVersion) {
               const response = await fetch('/api/guides?limit=100');
               if (response.ok) {
                 const data = await response.json();
                 const newVersion = data.version || 1;
                 const allGuides = data.guides || [];
-                
-                // Update cache
                 localStorage.setItem(cacheKey, JSON.stringify(allGuides));
-                localStorage.setItem(versionKey, newVersion.toString());
+                localStorage.setItem(
+                  versionKey,
+                  JSON.stringify({ version: newVersion, fetchedAt: getGuidesFetchedAtReadable() })
+                );
                 setCurrentVersion(newVersion);
               }
             }
@@ -503,7 +510,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
           console.warn('Failed to check guides version', error);
         }
       }
-      
+
       setCacheInitialized(true);
     };
 
@@ -518,13 +525,13 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
     const isInitialLoad = page === 1 && selectedSports.length === 0 && !difficulty && minRating === 0 && !searchQuery && sortBy === 'newest';
     
     if (isInitialLoad && initialData) {
-      // Check if cache exists and is valid
       const cacheKey = 'guides_cache';
       const versionKey = 'guides_version';
       const cachedData = localStorage.getItem(cacheKey);
-      const cachedVersion = localStorage.getItem(versionKey);
-      
-      if (cachedData && cachedVersion) {
+      const cachedVersionRaw = localStorage.getItem(versionKey);
+      const { fetchedAt } = parseGuidesVersion(cachedVersionRaw);
+
+      if (cachedData && cachedVersionRaw && isGuidesCacheFresh(fetchedAt)) {
         // Use cached data for initial render
         try {
           const allCachedGuides = JSON.parse(cachedData);
@@ -570,21 +577,18 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
       const cacheKey = 'guides_cache';
       const versionKey = 'guides_version';
       const cachedData = localStorage.getItem(cacheKey);
-      const cachedVersion = localStorage.getItem(versionKey);
+      const cachedVersionRaw = localStorage.getItem(versionKey);
+      const { version: storedVersionNum, fetchedAt } = parseGuidesVersion(cachedVersionRaw);
 
-      // Try to use cache first if available
-      if (cachedData && cachedVersion) {
+      if (cachedData && cachedVersionRaw) {
         try {
           const allCachedGuides = JSON.parse(cachedData);
-          const storedVersion = parseInt(cachedVersion);
-          
-          // Use the version from state if available (from initial check), otherwise trust cache
-          // Only check version if we haven't checked it yet (currentVersion is null)
+          const storedVersion = storedVersionNum ?? parseInt(cachedVersionRaw, 10);
+
           let versionMatches = true;
           if (currentVersion !== null) {
             versionMatches = storedVersion === currentVersion;
-          } else {
-            // Fallback: if version wasn't checked yet, check it now (shouldn't happen normally)
+          } else if (!isGuidesCacheFresh(fetchedAt)) {
             const versionResponse = await fetch('/api/guides?versionOnly=true');
             if (versionResponse.ok) {
               const versionData = await versionResponse.json();
@@ -602,10 +606,19 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
               if (searchQuery) {
                 const tagSearch = parseTagSearch(searchQuery);
                 if (tagSearch.isTagSearch) {
-                  const tagLower = tagSearch.tag.toLowerCase();
+                  const tagLower = tagSearch.tag.toLowerCase().trim();
+                  const flippedTag = flipLanguage(tagSearch.tag);
+                  const flippedLower = flippedTag ? flippedTag.toLowerCase().trim() : '';
                   filteredGuides = filteredGuides.filter((guide: Guide) => {
                     const tags = getGuideTags(guide);
-                    return tags.some((t) => t.toLowerCase() === tagLower || t.toLowerCase().includes(tagLower));
+                    return tags.some((t) => {
+                      const tLower = t.toLowerCase();
+                      return (
+                        tLower === tagLower ||
+                        tLower.includes(tagLower) ||
+                        (flippedLower && (tLower === flippedLower || tLower.includes(flippedLower)))
+                      );
+                    });
                   });
                 } else if (queryMatchesCategory(searchQuery, 'guides')) {
                   // Show all guides when user types e.g. "מדריכים", "guides", "nsrhfho"
@@ -728,7 +741,10 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             const allGuides = allGuidesData.guides || [];
             
             localStorage.setItem(cacheKey, JSON.stringify(allGuides));
-            localStorage.setItem(versionKey, fetchedVersion.toString());
+            localStorage.setItem(
+              versionKey,
+              JSON.stringify({ version: fetchedVersion, fetchedAt: getGuidesFetchedAtReadable() })
+            );
             setCurrentVersion(fetchedVersion);
             setTotalGuidesCount(allGuides.length); // Set unfiltered total
           }
@@ -834,6 +850,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onClear={() => setSearchQuery('')}
+                  showTagButton
                   className="w-full"
                 />
               </div>
@@ -929,11 +946,15 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                   </div>
                 )}
 
-                {/* Search Query Badge */}
+                {/* Search Query Badge - purple when tag search, orange otherwise */}
                 {searchQuery.trim() && (
                   <button
                     onClick={() => setSearchQuery('')}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-bg dark:bg-orange-bg-dark rounded-full border border-orange-border dark:border-orange-border-dark hover:bg-orange-hover-bg dark:hover:bg-orange-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors duration-200 cursor-pointer animate-pop ${
+                      parseTagSearch(searchQuery).isTagSearch
+                        ? 'bg-purple-bg dark:bg-purple-bg-dark border-purple-border dark:border-purple-border-dark hover:bg-purple-hover-bg dark:hover:bg-purple-hover-bg-dark'
+                        : 'bg-orange-bg dark:bg-orange-bg-dark border-orange-border dark:border-orange-border-dark hover:bg-orange-hover-bg dark:hover:bg-orange-hover-bg-dark'
+                    }`}
                   >
                     <span className="text-sm text-gray-700 dark:text-gray-300">
                       "{searchQuery}"

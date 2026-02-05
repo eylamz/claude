@@ -72,14 +72,17 @@ export async function fetchGuidesData(params: {
     status: 'published',
   };
 
-  // Search filter
+  // Search filter (title, description, and tags in both en and he)
   if (search) {
+    const searchRegex = new RegExp(search, 'i');
     filter.$or = [
       { 'title.en': { $regex: search, $options: 'i' } },
       { 'title.he': { $regex: search, $options: 'i' } },
       { 'description.en': { $regex: search, $options: 'i' } },
       { 'description.he': { $regex: search, $options: 'i' } },
-      { tags: { $in: [new RegExp(search, 'i')] } },
+      { 'tags.en': searchRegex },
+      { 'tags.he': searchRegex },
+      { tags: { $in: [searchRegex] } }, // legacy flat-array tags
     ];
   }
 

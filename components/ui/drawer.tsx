@@ -1,6 +1,7 @@
 'use client';
 
 import { FC, ReactNode, useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '@/components/icons/Icon';
 
 interface DrawerProps {
@@ -82,18 +83,18 @@ export const Drawer: FC<DrawerProps> = ({ isOpen, onClose, children, title }) =>
 
   if (!isOpen) return null;
 
-  return (
+  const drawerContent = (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - above MobileNav (z-50) and MobileSidebar (z-61) */}
       <div
-        className="md:hidden fixed inset-0 z-[60] bg-black/50 dark:bg-black/70"
+        className="md:hidden fixed inset-0 z-[80] bg-black/50 dark:bg-black/70"
         onClick={onClose}
       />
       
-      {/* Drawer */}
+      {/* Drawer - above MobileNav (z-50) and MobileSidebar (z-61) */}
       <div
         ref={drawerRef}
-        className="md:hidden fixed inset-y-0 left-0 w-[80%] z-[70] overflow-y-auto backdrop-blur-md bg-background dark:bg-background-dark"
+        className="md:hidden fixed inset-y-0 left-0 w-[80%] z-[90] overflow-y-auto backdrop-blur-md bg-background dark:bg-background-dark"
         style={{
           transform: swipeDistance > 0 ? `translateX(${swipeDistance}px)` : 'translateX(0)',
           transition: swipeDistance === 0 ? 'transform 0.3s ease-out' : 'none',
@@ -119,5 +120,10 @@ export const Drawer: FC<DrawerProps> = ({ isOpen, onClose, children, title }) =>
       </div>
     </>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(drawerContent, document.body);
+  }
+  return null;
 };
 

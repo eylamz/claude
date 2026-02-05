@@ -35,7 +35,7 @@ export function Footer() {
 
   return (
     <footer className="bg-header dark:bg-header-dark border-t border-border dark:border-border-dark transition-colors duration-300">
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-6xl mx-auto px-4 lg:px-2 py-12">
         <div className="flex flex-col md:flex-row justify-between items-start gap-10">
           
           {/* Brand Section */}

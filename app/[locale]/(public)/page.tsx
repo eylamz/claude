@@ -9,6 +9,7 @@ import { HeroCarousel, FixedBanner, SkeletonSection, ProductSection, ParkSection
 import { Button } from '@/components/ui';
 import { Locale } from '@/i18n';
 import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
+import { parseSkateparksVersion, isSkateparksCacheFresh } from '@/lib/search-from-cache';
 
 interface HeroCarouselImage {
   desktopImageUrl?: string;
@@ -82,18 +83,21 @@ export default function HomePage() {
       const cacheKey = 'skateparks_cache';
       const versionKey = 'skateparks_version';
       const cachedData = localStorage.getItem(cacheKey);
-      const cachedVersion = localStorage.getItem(versionKey);
-      
+      const cachedVersionRaw = localStorage.getItem(versionKey);
+      const { fetchedAt } = parseSkateparksVersion(cachedVersionRaw);
+
       let allSkateparks: any[] = [];
       let shouldFetchSkateparks = true;
 
-      // If cache exists, use it immediately without fetching
+      // If cache exists and was fetched less than 1 hour ago, use it without fetching
       if (cachedData) {
         try {
           const parsedData = JSON.parse(cachedData);
           allSkateparks = parsedData || [];
-          shouldFetchSkateparks = false; // Don't fetch if we have cache
-          // No version checking or fetching when cache exists
+          if (isSkateparksCacheFresh(fetchedAt)) {
+            shouldFetchSkateparks = false; // Don't fetch if cache is fresh
+          }
+          // If cache exists but older than 1 hour, we still fetch to refresh
         } catch (e) {
           // If cache is corrupted, continue to fetch fresh data
           console.warn('Failed to parse cached skateparks data', e);
@@ -126,9 +130,12 @@ export default function HomePage() {
         const currentVersion = skateparksData.version || 1;
         allSkateparks = skateparksData.skateparks || [];
         
-        // Store in cache
+        // Store in cache with fetch time so we don't refetch for at least 1 hour
         localStorage.setItem(cacheKey, JSON.stringify(allSkateparks));
-        localStorage.setItem(versionKey, currentVersion.toString());
+        localStorage.setItem(
+          versionKey,
+          JSON.stringify({ version: currentVersion, fetchedAt: getSkateparksFetchedAtReadable() })
+        );
       }
       
       // Filter and sort parks from the last 3 years (same logic as skateparks page)

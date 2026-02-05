@@ -39,7 +39,7 @@ const buttonVariants = cva(
         green: "border-green-border dark:border-green-border-dark bg-green-bg dark:bg-green-bg-dark text-green dark:text-green-dark hover:bg-green-hover-bg dark:hover:bg-green-hover-bg-dark",
         gray: "border-gray-border dark:border-gray-border-dark bg-gray-bg dark:bg-gray-bg-dark text-gray dark:text-gray-dark hover:bg-gray-hover-bg dark:hover:bg-gray-hover-bg-dark",
         blue: "border-blue-border dark:border-blue-border-dark bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark",
-
+        pink: "border-pink-border dark:border-pink-border-dark bg-pink-bg dark:bg-pink-bg-dark text-pink dark:text-pink-dark hover:bg-pink-hover-bg dark:hover:bg-pink-hover-bg-dark",
 
       },
       size: {

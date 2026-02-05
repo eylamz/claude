@@ -156,7 +156,7 @@ export default function CookiePolicyPage() {
           </p>
           <p className="">2.3 עוגיות פונקציונליות</p>
           <p className="">
-            עוגיות אלה מאפשרות לאתר לזכור את ההעדפות שלך ולספק תכונות משופרות:
+            עוגיות ואחסון מקומי אלה מאפשרים לאתר לזכור את ההעדפות שלך ולספק תכונות משופרות:
           </p>
           <ul className="my-6 space-y-3 list-none pl-0">
             <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
@@ -166,6 +166,10 @@ export default function CookiePolicyPage() {
             <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
               <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
               <span>העדפות ערכת נושא - זכירת מצב כהה/בהיר</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>אחסון מקומי לשמירת מטמון של נתוני סקייטפארקים, אירועים ומדריכים לשיפור הטעינה והחיפוש</span>
             </li>
             <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
               <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
@@ -362,7 +366,7 @@ export default function CookiePolicyPage() {
           </p>
           <p className="">2.3 Functional Cookies</p>
           <p className="">
-            These cookies allow the website to remember your preferences and provide enhanced features:
+            These cookies and local storage allow the website to remember your preferences and provide enhanced features:
           </p>
           <ul className="my-6 space-y-3 list-none pl-0">
             <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
@@ -372,6 +376,10 @@ export default function CookiePolicyPage() {
             <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
               <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
               <span>Theme preferences - remembering dark/light mode</span>
+            </li>
+            <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
+              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+              <span>Local storage to cache skatepark, event and guide data to improve loading and search</span>
             </li>
             <li className="text-lg text-text dark:text-text-dark leading-relaxed flex gap-3">
               <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>

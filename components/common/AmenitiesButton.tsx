@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/client';
 import { Icon } from '@/components/icons';
@@ -12,6 +12,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Drawer } from "@/components/ui/drawer";
 
 const amenityOptions = [
   { key: 'parking', label: 'amenities.parking' },
@@ -52,10 +53,23 @@ interface AmenitiesButtonProps {
   locale: string;
 }
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = () => setIsMobile(mq.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isMobile;
+}
+
 const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, style, locale }: AmenitiesButtonProps) => {
   const { t: tSkateparks } = useTranslation(locale, 'skateparks');
   const { t: tCommon } = useTranslation(locale, 'common');
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const isActive = selectedAmenities.length > 0;
 
@@ -79,8 +93,9 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
       className={`relative active:scale-95 transition-all duration-200 ${className || ''}`}
       aria-label={tSkateparks('amenities.filterBy') || 'Filter by amenities'}
       aria-expanded={isOpen}
-      aria-controls="amenities-popover"
+      aria-controls={isMobile ? 'amenities-drawer' : 'amenities-popover'}
       style={style}
+      onClick={isMobile ? () => setIsOpen(true) : undefined}
     >
       <Icon 
         name={isActive ? "filterBold" : "filter"} 
@@ -97,32 +112,10 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
     </Button>
   );
 
-  return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      {!isOpen ? (
-        <TooltipProvider delayDuration={50}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <PopoverTrigger asChild>
-                {buttonElement}
-              </PopoverTrigger>
-            </TooltipTrigger>
-            <TooltipContent 
-              side="bottom" 
-              className="text-center"
-              variant={isActive ? "blue" : "gray"}
-            >
-              {!isActive ? tSkateparks('amenities.filterBy') || 'Filter by amenities' : tSkateparks('amenities.filterByDisable') || 'Disable amenities filtering'}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      ) : (
-        <PopoverTrigger asChild>
-          {buttonElement}
-        </PopoverTrigger>
-      )}
-      <PopoverContent className="w-fit min-w-[330px] p-2">
-        <div className="space-y-2">
+  const amenitiesContent = (
+    <div className="space-y-2">
+      {!isMobile && (
+        <>
           <div className={`flex gap-4 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'} items-center justify-between h-[32px]`}>
             <h4 className={`text-sm font-medium`}>{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
             <div className={`flex gap-1.5 items-center ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -153,59 +146,170 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
             </div>
           </div>
           <Separator className="bg-popover-border dark:bg-popover-border-dark" />
-          <table className="w-full">
-            <tbody>
-              {Array.from({ length: Math.ceil(amenityOptions.length / 2) }).map((_, rowIndex) => {
-                const leftAmenity = amenityOptions[rowIndex * 2];
-                const rightAmenity = amenityOptions[rowIndex * 2 + 1];
-                return (
-                  <tr key={rowIndex}>
-                    <td className="p-1 border-r border-popover-border dark:border-popover-border-dark">
-                      {leftAmenity && (() => {
-                        const iconName = AMENITY_ICON_MAP[leftAmenity.key] || 'filter';
-                        const isSelected = selectedAmenities.includes(leftAmenity.key);
-                        return (
-                          <Button
-                            variant={isSelected ? "info" : "none"}
-                            size="sm"
-                            className={`flex gap-2 font-medium w-full justify-start text-nowrap ${isSelected ? '' : 'text-gray dark:text-gray-dark'} ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
-                            onClick={() => toggleAmenity(leftAmenity.key)}
-                          >
-                            <Icon 
-                              name={iconName as any}
-                              className={`w-4 h-4 transition-all duration-200 ${isSelected ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'}`}
-                            />
-                            {tSkateparks(leftAmenity.label)}
-                          </Button>
-                        );
-                      })()}
-                    </td>
-                    <td className="p-1">
-                      {rightAmenity && (() => {
-                        const iconName = AMENITY_ICON_MAP[rightAmenity.key] || 'filter';
-                        const isSelected = selectedAmenities.includes(rightAmenity.key);
-                        return (
-                          <Button
-                            variant={isSelected ? "info" : "none"}
-                            size="sm"
-                            className={`flex gap-2 w-full justify-start text-nowrap ${isSelected ? '' : 'text-text dark:text-text-dark/90'} ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
-                            onClick={() => toggleAmenity(rightAmenity.key)}
-                          >
-                            <Icon 
-                              name={iconName as any}
-                              className={`w-4 h-4 transition-all duration-200 ${isSelected ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'}`}
-                            />
-                            {tSkateparks(rightAmenity.label)}
-                          </Button>
-                        );
-                      })()}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        </>
+      )}
+      {isMobile && selectedAmenities.length > 0 && (
+        <>
+          <div className={`flex ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'} justify-end`}>
+            <Button
+              variant="red"
+              size="sm"
+              onClick={clearAll}
+              className="h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
+            >
+              {tCommon('clear') || 'Clear'}
+              <Icon 
+                name="trash" 
+                className="h-3 w-3"
+              />
+            </Button>
+          </div>
+          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+        </>
+      )}
+      {isMobile ? (
+        <div className={`flex flex-col gap-1 ${locale === 'he' ? 'items-end' : 'items-start'}`}>
+          {amenityOptions.map((amenity) => (
+            <Button
+              key={amenity.key}
+              variant={selectedAmenities.includes(amenity.key) ? "blue" : "none"}
+              size="sm"
+              className={`flex gap-2 font-medium w-full justify-start min-w-0 ${
+                selectedAmenities.includes(amenity.key) ? '' : 'text-gray dark:text-gray-dark'
+              } ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+              onClick={() => toggleAmenity(amenity.key)}
+            >
+              <Icon 
+                name={AMENITY_ICON_MAP[amenity.key] as any || 'filter'}
+                className={`w-4 h-4 shrink-0 transition-all duration-200 ${
+                  selectedAmenities.includes(amenity.key) ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'
+                }`}
+              />
+              {tSkateparks(amenity.label)}
+            </Button>
+          ))}
         </div>
+      ) : (
+        <table className="w-full border-collapse">
+          <tbody>
+            {Array.from({ length: Math.ceil(amenityOptions.length / 2) }).map((_, rowIndex) => {
+              const leftAmenity = amenityOptions[rowIndex * 2];
+              const rightAmenity = amenityOptions[rowIndex * 2 + 1];
+              return (
+                <tr key={rowIndex}>
+                  <td 
+                    className="w-1/2 px-1 py-0.5 border-r border-popover-border dark:border-popover-border-dark"
+                    style={{ textAlign: locale === 'he' ? 'right' : 'left' }}
+                  >
+                    <div className={`inline-flex ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
+                      {leftAmenity && (
+                        <Button
+                          variant={selectedAmenities.includes(leftAmenity.key) ? "blue" : "none"}
+                          size="sm"
+                          className={`flex gap-2 font-medium w-fit text-nowrap ${
+                            selectedAmenities.includes(leftAmenity.key) ? '' : 'text-gray dark:text-gray-dark'
+                          } ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                          onClick={() => toggleAmenity(leftAmenity.key)}
+                        >
+                          <Icon 
+                            name={AMENITY_ICON_MAP[leftAmenity.key] as any || 'filter'}
+                            className={`w-4 h-4 transition-all duration-200 ${
+                              selectedAmenities.includes(leftAmenity.key) ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'
+                            }`}
+                          />
+                          {tSkateparks(leftAmenity.label)}
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                  <td 
+                    className="w-1/2 px-1 py-0.5"
+                    style={{ textAlign: locale === 'he' ? 'right' : 'left' }}
+                  >
+                    <div className={`inline-flex ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
+                      {rightAmenity && (
+                        <Button
+                          variant={selectedAmenities.includes(rightAmenity.key) ? "blue" : "none"}
+                          size="sm"
+                          className={`flex gap-2 w-fit text-nowrap ${
+                            selectedAmenities.includes(rightAmenity.key) ? '' : 'text-text dark:text-text-dark/90'
+                          } ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                          onClick={() => toggleAmenity(rightAmenity.key)}
+                        >
+                          <Icon 
+                            name={AMENITY_ICON_MAP[rightAmenity.key] as any || 'filter'}
+                            className={`w-4 h-4 transition-all duration-200 ${
+                              selectedAmenities.includes(rightAmenity.key) ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'
+                            }`}
+                          />
+                          {tSkateparks(rightAmenity.label)}
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <TooltipProvider delayDuration={50}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {buttonElement}
+            </TooltipTrigger>
+            <TooltipContent 
+              side="bottom" 
+              className="text-center"
+              variant={isActive ? "blue" : "gray"}
+            >
+              {!isActive ? tSkateparks('amenities.filterBy') || 'Filter by amenities' : tSkateparks('amenities.filterByDisable') || 'Disable amenities filtering'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <Drawer
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          title={tSkateparks('amenities.filterBy') || 'Filter by amenities'}
+        >
+          {amenitiesContent}
+        </Drawer>
+      </>
+    );
+  }
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      {!isOpen ? (
+        <TooltipProvider delayDuration={50}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <PopoverTrigger asChild>
+                {buttonElement}
+              </PopoverTrigger>
+            </TooltipTrigger>
+            <TooltipContent 
+              side="bottom" 
+              className="text-center"
+              variant={isActive ? "blue" : "gray"}
+            >
+              {!isActive ? tSkateparks('amenities.filterBy') || 'Filter by amenities' : tSkateparks('amenities.filterByDisable') || 'Disable amenities filtering'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <PopoverTrigger asChild>
+          {buttonElement}
+        </PopoverTrigger>
+      )}
+      <PopoverContent className="w-fit p-2">
+        {amenitiesContent}
       </PopoverContent>
     </Popover>
   );

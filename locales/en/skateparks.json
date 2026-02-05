@@ -63,6 +63,8 @@
   "notes": "Notes",
   "video": "Video",
   "location": "Location",
+  "geolocationNotSupported": "Geolocation is not supported by your browser",
+  "locationAccessDenied": "Location access denied. You can still browse skateparks.",
   "reviewsCount": "Reviews",
   "reviewsLoading": "Reviews are being loaded...",
   "noReviewsYet": "No reviews yet. Be the first to review this skatepark!",

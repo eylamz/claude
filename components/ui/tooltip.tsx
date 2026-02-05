@@ -109,7 +109,7 @@ const tooltipVariants = cva(
         orange: "border-orange-border dark:border-orange-border-dark bg-orange-bg dark:bg-orange-bg-dark text-orange dark:text-orange-dark",
         yellow: "bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 text-yellow dark:text-yellow-dark",
         teal: "bg-teal-50 dark:bg-teal-900/30 border border-teal-200 dark:border-teal-800 text-teal dark:text-teal-dark",
-        pink: "bg-pink-50 dark:bg-pink-900/30 border border-pink-200 dark:border-pink-800 text-pink dark:text-pink-dark",
+        pink: "bg-pink-bg dark:bg-pink-bg-dark border border-pink-border dark:border-pink-border-dark text-pink dark:text-pink-dark",
       },
     },
     defaultVariants: {
@@ -133,7 +133,7 @@ const tooltipArrowVariants = cva(
         orange: "text-orange-border dark:text-orange-border-dark",
         yellow: "text-yellow-50 dark:text-yellow-900/30",
         teal: "text-teal-50 dark:text-teal-900/30",
-        pink: "text-pink-50 dark:text-pink-900/30",
+        pink: "text-pink-border dark:text-pink-border-dark",
       },
     },
     defaultVariants: {

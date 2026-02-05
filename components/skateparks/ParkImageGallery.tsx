@@ -617,14 +617,14 @@ const ParkImageGallery = ({
           {hasMoreImages && (
             <div className="hidden md:flex flex-col items-center gap-3 p-2 pb-0">
               <div className="grid grid-cols-3 items-start gap-4 w-full">
-                {/* Share Button */}
+                {/* Share Button - same style as events/guides */}
                 <div 
                   className={`flex ${locale === 'he' ? 'justify-end' : 'justify-start'}`}
                   style={{ order: locale === 'he' ? 3 : 1 }}
                 >
                   {parkName && (
                     <Button
-                      variant="outline"
+                      variant="green"
                       onClick={() => {
                         if (typeof navigator !== 'undefined' && navigator.share) {
                           navigator.share({
@@ -638,10 +638,10 @@ const ParkImageGallery = ({
                           navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : '');
                         }
                       }}
-                      className={`px-2 py-1 rounded-lg font-medium transition-all duration-700  }`}
-                      aria-label="Share"
+                      className="!h-8 px-2 py-1 rounded-lg font-medium flex-shrink-0"
+                      aria-label={locale === 'he' ? 'שתף סקייטפארק' : 'Share skatepark'}
                     >
-                      <Icon name="shareBold" className="-mt-[2px] w-4 h-4" />
+                      <Icon name="shareBold" className="-mt-[1px] w-4 h-4" />
                     </Button>
                   )}
                 </div>

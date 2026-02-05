@@ -45,6 +45,7 @@ const toastVariants = cva(
         green: "border-green-border dark:border-green-border-dark bg-green-bg dark:bg-green-bg-dark text-green dark:text-green-dark",
         gray: "border-gray-border dark:border-gray-border-dark bg-gray-bg dark:bg-gray-bg-dark text-gray dark:text-gray-dark",
         blue: "border-blue-border dark:border-blue-border-dark bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark",
+        pink: "border-pink-border dark:border-pink-border-dark bg-pink-bg dark:bg-pink-bg-dark text-pink dark:text-pink-dark",
       },
     },
     defaultVariants: {
@@ -74,6 +75,7 @@ const Toast = React.forwardRef<
     green: "border-green-border",
     gray: "border-gray-border",
     blue: "border-blue-border",
+    pink: "border-pink-border",
   }[variant || "default"];
 
   return (

@@ -301,7 +301,7 @@ export const colors = {
     hover: {
       bg: {
         light: '#d0e4fb',
-        dark: 'hsl(199,61%,13%)',
+        dark: 'hsl(199,61%,14%)',
       },
     },
   },
@@ -311,7 +311,7 @@ export const colors = {
     dark: '#afafaf',
     bg: {
       light: '#efefef',
-      dark: '#262626',
+      dark: 'hsl(0deg 0% 14.9%)',
     },
     border: {
       light: '#e6e6e6',
@@ -320,7 +320,7 @@ export const colors = {
     hover: {
       bg: {
         light: '#e8e8e8',
-        dark: '#2c2c2c',
+        dark: 'hsl(0deg 0% 13.9%)',
       },
     },
   },
@@ -330,7 +330,7 @@ export const colors = {
     dark: 'hsl(123, 44%, 50%)',
     bg: {
       light: 'hsl(123, 83%, 91%)',
-      dark: '#0f2f10',
+      dark: 'hsl(123, 52%, 12%)',
     },
     border: {
       light: '#baf0bb',
@@ -339,7 +339,26 @@ export const colors = {
     hover: {
       bg: {
         light: '#dcf4dd',
-        dark: '#123a14',
+        dark: 'hsl(123, 52%, 11%)',
+      },
+    },
+  },
+
+  pink: {
+    light: 'hsl(314, 52%, 56%)',
+    dark: 'hsl(314, 70%, 60%)',
+    bg: {
+      light: 'hsl(314, 65%, 93%)',
+      dark: 'hsl(314, 27%, 15%)',
+    },
+    border: {
+      light: 'hsl(314, 81%, 92%)',
+      dark: 'hsl(314, 46%, 25%)',
+    },
+    hover: {
+      bg: {
+        light: 'hsl(314, 81%, 93%)',
+        dark: 'hsl(314, 27%, 14%)',
       },
     },
   },
@@ -358,7 +377,7 @@ export const colors = {
     hover: {
       bg: {
         light: '#ffead1',
-        dark: 'hsl(32, 89%,10%)',
+        dark: 'hsl(32, 89%,11%)',
       },
     },
   },
@@ -396,7 +415,7 @@ export const colors = {
     hover: {
       bg: {
         light: '#ddd0fb',
-        dark: 'hsl(261, 54%, 18%)',
+        dark: 'hsl(261, 54%, 19%)',
       },
     },
   },

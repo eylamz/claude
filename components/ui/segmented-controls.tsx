@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 import { useLocaleInfo } from '@/hooks/use-translation';
 
-export type SegmentedControlVariant = 'green' | 'blue' | 'red' | 'gray' | 'orange' | 'purple';
+export type SegmentedControlVariant = 'green' | 'blue' | 'red' | 'gray' | 'orange' | 'purple' | 'pink';
 
 export interface SegmentedControlOption {
   value: string;
@@ -89,6 +89,10 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
       purple: {
         bg: { light: '#e7defc', dark: 'hsl(261, 54%, 20%)' },
         border: { light: 'hsl(259, 84%, 87%)', dark: '#6e40c4' }
+      },
+      pink: {
+        bg: { light: '#fde6f2', dark: 'hsl(314, 27%, 15%)' },
+        border: { light: 'hsl(314, 96%, 89%)', dark: 'hsl(314, 46%, 25%)' }
       }
     };
     
@@ -203,6 +207,7 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
                   red: 'text-red dark:text-red-dark',
                   orange: 'text-orange dark:text-orange-dark',
                   purple: 'text-purple dark:text-purple-dark',
+                  pink: 'text-pink dark:text-pink-dark',
                 };
                 return variantColorMap[variant] || 'text-gray dark:text-gray-dark';
               }
