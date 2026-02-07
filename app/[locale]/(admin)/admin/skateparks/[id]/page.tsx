@@ -1457,19 +1457,16 @@ export default function SkateparkDetailPage() {
                 {getKeywordsArray(skatepark.seoMetadata?.keywords?.en).length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {getKeywordsArray(skatepark.seoMetadata?.keywords?.en).map((keyword, index) => (
-                      <span
+                      <button
                         key={index}
-                        className="inline-flex items-center gap-1.5 uppercase px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark border-purple-border dark:border-purple-border-dark transition-colors"
+                        type="button"
+                        onClick={() => removeKeyword('en', index)}
+                        aria-label={`Remove ${keyword}`}
+                        className="inline-flex items-center gap-1.5 uppercase px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark border-purple-border dark:border-purple-border-dark transition-colors hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-purple-500"
                       >
                         {keyword}
-                        <button
-                          type="button"
-                          onClick={() => removeKeyword('en', index)}
-                          aria-label={`Remove ${keyword}`}
-                        >
-                          ×
-                        </button>
-                      </span>
+                        <span aria-hidden>×</span>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -1510,20 +1507,16 @@ export default function SkateparkDetailPage() {
                 {getKeywordsArray(skatepark.seoMetadata?.keywords?.he).length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {getKeywordsArray(skatepark.seoMetadata?.keywords?.he).map((keyword, index) => (
-                      <span
+                      <button
                         key={index}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark text-sm"
+                        type="button"
+                        onClick={() => removeKeyword('he', index)}
+                        aria-label={`Remove ${keyword}`}
+                        className="inline-flex items-center gap-1.5 uppercase px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         {keyword}
-                        <button
-                          type="button"
-                          onClick={() => removeKeyword('he', index)}
-                          className="hover:text-blue-600 dark:hover:text-blue-300 focus:outline-none"
-                          aria-label={`Remove ${keyword}`}
-                        >
-                          ×
-                        </button>
-                      </span>
+                        <span aria-hidden>×</span>
+                      </button>
                     ))}
                   </div>
                 )}

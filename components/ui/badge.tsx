@@ -18,7 +18,7 @@ export function Badge({ children, variant = 'default', className = '' }: BadgePr
     brandOutline: 'border text-[#16641a] dark:text-[#85ef8a] bg-[#defce0] dark:bg-[#1452174d] border-[#85ef8a] dark:border-[#1452174d]',
     destructive: 'bg-red-600 text-white',
     info: 'text-info dark:text-info-dark',
-    primary: 'bg-brand-main dark:bg-brand-dark text-white',
+    primary: 'bg-brand-main dark:bg-brand-dark text-white dark:text-text',
     ghost: 'bg-transparent text-text dark:text-text-dark text-brand-main dark:text-brand-dark',
     blue: 'bg-blue-border dark:bg-blue-border-dark text-blue dark:text-blue-dark',
     green: 'bg-green-bg dark:bg-green-bg-dark text-green dark:text-green-dark',

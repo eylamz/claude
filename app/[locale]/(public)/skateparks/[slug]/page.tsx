@@ -711,6 +711,7 @@ export default function SkateparkPage() {
   const [skatepark, setSkatepark] = useState<Skatepark | null>(null);
   const [nearbyParks, setNearbyParks] = useState<NearbyPark[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [userHasReviewed, setUserHasReviewed] = useState<boolean | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   const [addressCopied, setAddressCopied] = useState(false);
@@ -1157,10 +1158,13 @@ export default function SkateparkPage() {
       // false = show only reviews that have content for current locale (he → only he, en → only en)
       const filterByLocale = process.env.NEXT_PUBLIC_ENABLE_MULTILINGUAL_REVIEWS !== 'true';
       const url = `/api/skateparks/${slug}/reviews?locale=${locale}${filterByLocale ? '&filterByLocale=1' : ''}`;
-      const response = await fetch(url);
+      const response = await fetch(url, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setReviews(data.reviews || []);
+        if (typeof data.userHasReviewed === 'boolean') {
+          setUserHasReviewed(data.userHasReviewed);
+        }
       }
     } catch (error) {
       // Error fetching reviews
@@ -2249,6 +2253,7 @@ export default function SkateparkPage() {
                   // Handle both string 'true' and boolean true, case-insensitive
                   const userReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_USERREVIEWS;
                   const everyoneReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS;
+                  const enableMultipleReviews = process.env.NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS === 'true';
                   const userReviewsEnabled = userReviewsEnv === 'true' || userReviewsEnv === true;
                   const everyoneReviewsEnabled = everyoneReviewsEnv === 'true' || everyoneReviewsEnv === true;
                   
@@ -2273,6 +2278,14 @@ export default function SkateparkPage() {
                   // If user reviews enabled, require login
                   if (allowUserReviews) {
                     if (session?.user) {
+                      // When multiple reviews disabled and user already reviewed, show message instead of button
+                      if (!enableMultipleReviews && userHasReviewed) {
+                        return (
+                          <span className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                            {t('youAlreadyReviewed')}
+                          </span>
+                        );
+                      }
                       return (
                         <Button 
                           variant={skatepark.closingYear && skatepark.closingYear <= new Date().getFullYear() ? 'error' : 'primary'}
@@ -2663,6 +2676,7 @@ export default function SkateparkPage() {
                   onSubmitted={handleReviewSubmitted}
                   onCancel={closeReviewModal}
                   inModal={true}
+                  user={session?.user ?? undefined}
                 />
               </div>
             </div>

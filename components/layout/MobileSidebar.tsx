@@ -142,7 +142,8 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
   // 2. Secondary Links (Mini Cards)
   const miniCards: MiniCard[] = [
     { href: `/${locale}/contact`, icon: 'messages', label: tCommon('contact') },
-    { href: `/${locale}/terms`, icon: 'termsBold', label: tMobileNav('termsAndConditions') },
+    { href: `/${locale}/terms`, icon: 'termsBold', label: tCommon('footer.termsOfService') },
+    { href: `/${locale}/privacy`, icon: 'lockBold', label: tCommon('footer.privacyPolicy') },
     { href: `/${locale}/accessibility`, icon: 'accessibilityBold', label: tMobileNav('accessibility') },
 ];
 

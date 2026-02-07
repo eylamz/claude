@@ -1,15 +1,47 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, Textarea, Select, Checkbox } from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, Textarea, Select, Checkbox, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge } from '@/components/ui';
 import { NumberInput } from '@/components/ui/number-input';
 import type { IHeroCarouselImage, IMultilingualText } from '@/lib/models/Settings';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { Icon } from '@/components/icons/Icon';
 
 // Helper function for multilingual text
 const getMultilingualText = (text: string | IMultilingualText | undefined, lang: 'en' | 'he'): string => {
   if (!text) return '';
   if (typeof text === 'string') return text;
   return text[lang] || '';
+};
+
+// Environment flag keys and human-readable descriptions (from .env.local)
+const ENV_FLAGS: { key: string; description: string }[] = [
+  { key: 'NEXT_PUBLIC_ENABLE_LOGIN', description: 'Turns user login on or off' },
+  { key: 'NEXT_PUBLIC_ENABLE_REGISTER', description: 'Allow user registration' },
+  { key: 'NEXT_PUBLIC_ENABLE_COMMUNITY', description: 'Community page' },
+  { key: 'NEXT_PUBLIC_ENABLE_GROWTH_LAB', description: 'Growth Lab Pages' },
+  { key: 'NEXT_PUBLIC_ENABLE_ECOMMERCE', description: 'Shop Pages' },
+  { key: 'NEXT_PUBLIC_ENABLE_TRAINERS', description: 'Trainers page' },
+  { key: 'NEXT_PUBLIC_ENABLE_MULTILINGUAL_REVIEWS', description: 'Reviews in multiple languages (false = same as skatepark locale)' },
+  { key: 'NEXT_PUBLIC_ENABLE_USERREVIEWS', description: 'Only logged-in users can add reviews' },
+  { key: 'NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS', description: 'Everyone can add reviews' },
+  { key: 'NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS', description: 'Allow multiple reviews from same user' },
+  { key: 'NEXT_PUBLIC_ENABLE_WEATHER_FORECAST', description: 'Weather forecast' },
+];
+
+// Static process.env reads so Next.js inlines values at build time
+const ENV_FLAG_VALUES: Record<string, boolean> = {
+  NEXT_PUBLIC_ENABLE_LOGIN: process.env.NEXT_PUBLIC_ENABLE_LOGIN === 'true',
+  NEXT_PUBLIC_ENABLE_REGISTER: process.env.NEXT_PUBLIC_ENABLE_REGISTER === 'true',
+  NEXT_PUBLIC_ENABLE_COMMUNITY: process.env.NEXT_PUBLIC_ENABLE_COMMUNITY === 'true',
+  NEXT_PUBLIC_ENABLE_GROWTH_LAB: process.env.NEXT_PUBLIC_ENABLE_GROWTH_LAB === 'true',
+  NEXT_PUBLIC_ENABLE_ECOMMERCE: process.env.NEXT_PUBLIC_ENABLE_ECOMMERCE === 'true',
+  NEXT_PUBLIC_ENABLE_TRAINERS: process.env.NEXT_PUBLIC_ENABLE_TRAINERS === 'true',
+  NEXT_PUBLIC_ENABLE_MULTILINGUAL_REVIEWS: process.env.NEXT_PUBLIC_ENABLE_MULTILINGUAL_REVIEWS === 'true',
+  NEXT_PUBLIC_ENABLE_USERREVIEWS: process.env.NEXT_PUBLIC_ENABLE_USERREVIEWS === 'true',
+  NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS: process.env.NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS === 'true',
+  NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS: process.env.NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS === 'true',
+  NEXT_PUBLIC_ENABLE_WEATHER_FORECAST: process.env.NEXT_PUBLIC_ENABLE_WEATHER_FORECAST === 'true',
 };
 
 export default function SettingsPage() {
@@ -58,6 +90,12 @@ export default function SettingsPage() {
   const [newImageCtaTextHe, setNewImageCtaTextHe] = useState('');
   const [newImageTextOverlayEn, setNewImageTextOverlayEn] = useState('');
   const [newImageTextOverlayHe, setNewImageTextOverlayHe] = useState('');
+
+  // Add new carousel form visibility
+  const [showAddCarouselForm, setShowAddCarouselForm] = useState(false);
+
+  // Accordion: which carousel item is expanded
+  const [openCarouselIndex, setOpenCarouselIndex] = useState<number | null>(null);
 
   // Editing state
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -226,6 +264,7 @@ export default function SettingsPage() {
 
   const startEditing = (index: number) => {
     const img = heroCarouselImages[index];
+    setOpenCarouselIndex(index); // expand accordion when editing
     setEditingIndex(index);
     setEditDesktopImageUrl(img.desktopImageUrl || '');
     setEditTabletImageUrl(img.tabletImageUrl || '');
@@ -305,26 +344,26 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-[400px] bg-background dark:bg-background-dark">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading settings...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-main dark:border-brand-dark mx-auto"></div>
+          <p className="mt-4 text-text-secondary dark:text-text-secondary-dark">Loading settings...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="pt-16 space-y-6 w-full max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Manage your site settings and preferences
           </p>
         </div>
-        <Button onClick={handleSave} disabled={saving} variant="primary">
+        <Button onClick={handleSave} disabled={saving} variant="brand">
           {saving ? (
             <span className="flex items-center space-x-2">
               <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -341,10 +380,10 @@ export default function SettingsPage() {
 
       {/* Success/Error Notification */}
       {notification && (
-        <div className={`p-4 rounded-lg ${
+        <div className={`p-4 rounded-lg border ${
           notification.type === 'success' 
-            ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800' 
-            : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800'
+            ? 'bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800' 
+            : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800'
         }`}>
           <div className="flex items-center">
             {notification.type === 'success' ? (
@@ -362,324 +401,297 @@ export default function SettingsPage() {
       )}
 
       {/* Homepage Settings */}
-      <Card>
+      <Card className="bg-card dark:bg-card-dark">
         <CardHeader>
-          <CardTitle>Homepage Settings</CardTitle>
+          <CardTitle className="text-text dark:text-text-dark">Homepage Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Hero Carousel */}
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Hero Carousel</h3>
+            <h3 className="text-lg font-semibold text-text dark:text-text-dark mb-4">Hero Carousel</h3>
             
-            {/* Add New Image */}
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4 bg-gray-50 dark:bg-gray-800/50">
-              <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Add New Carousel Image</h4>
-              <div className="space-y-3">
-                <Input
-                  label="Desktop Image URL (optional - used as fallback)"
-                  type="text"
-                  placeholder="https://example.com/desktop-image.jpg"
-                  value={newDesktopImageUrl}
-                  onChange={(e) => setNewDesktopImageUrl(e.target.value)}
-                />
-                <Input
-                  label="Tablet Image URL (optional)"
-                  type="text"
-                  placeholder="https://example.com/tablet-image.jpg"
-                  value={newTabletImageUrl}
-                  onChange={(e) => setNewTabletImageUrl(e.target.value)}
-                />
-                <Input
-                  label="Mobile Image URL (optional)"
-                  type="text"
-                  placeholder="https://example.com/mobile-image.jpg"
-                  value={newMobileImageUrl}
-                  onChange={(e) => setNewMobileImageUrl(e.target.value)}
-                />
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Title (optional)</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      label="English"
-                      type="text"
-                      placeholder="Title (EN)"
-                      value={newImageTitleEn}
-                      onChange={(e) => setNewImageTitleEn(e.target.value)}
-                    />
-                    <Input
-                      label="Hebrew"
-                      type="text"
-                      placeholder="כותרת (HE)"
-                      value={newImageTitleHe}
-                      onChange={(e) => setNewImageTitleHe(e.target.value)}
-                    />
-                  </div>
+            {/* Add New Image - shown only when user clicks Add new image */}
+            {!showAddCarouselForm ? (
+              <Button variant="gray" size="sm" onClick={() => setShowAddCarouselForm(true)} className="mb-4">
+                Add new image
+              </Button>
+            ) : (
+              <div className="border border-border dark:border-border-dark rounded-lg p-4 mb-4 bg-white/50 dark:bg-black/10">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium text-text dark:text-text-dark">Add New Carousel Image</h4>
+                  <Button variant="red" size="sm" onClick={() => setShowAddCarouselForm(false)}>
+                    Close
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Subtitle (optional)</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      label="English"
-                      type="text"
-                      placeholder="Subtitle (EN)"
-                      value={newImageSubtitleEn}
-                      onChange={(e) => setNewImageSubtitleEn(e.target.value)}
-                    />
-                    <Input
-                      label="Hebrew"
-                      type="text"
-                      placeholder="תת-כותרת (HE)"
-                      value={newImageSubtitleHe}
-                      onChange={(e) => setNewImageSubtitleHe(e.target.value)}
-                    />
+                <div className="space-y-3">
+                  <Input
+                    label="Desktop Image URL (optional - used as fallback)"
+                    type="text"
+                    placeholder="https://example.com/desktop-image.jpg"
+                    value={newDesktopImageUrl}
+                    onChange={(e) => setNewDesktopImageUrl(e.target.value)}
+                  />
+                  <Input
+                    label="Tablet Image URL (optional)"
+                    type="text"
+                    placeholder="https://example.com/tablet-image.jpg"
+                    value={newTabletImageUrl}
+                    onChange={(e) => setNewTabletImageUrl(e.target.value)}
+                  />
+                  <Input
+                    label="Mobile Image URL (optional)"
+                    type="text"
+                    placeholder="https://example.com/mobile-image.jpg"
+                    value={newMobileImageUrl}
+                    onChange={(e) => setNewMobileImageUrl(e.target.value)}
+                  />
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Title (optional)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        label="English"
+                        type="text"
+                        placeholder="Title (EN)"
+                        value={newImageTitleEn}
+                        onChange={(e) => setNewImageTitleEn(e.target.value)}
+                      />
+                      <Input
+                        label="Hebrew"
+                        type="text"
+                        placeholder="כותרת (HE)"
+                        value={newImageTitleHe}
+                        onChange={(e) => setNewImageTitleHe(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">CTA Button Text (optional)</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      label="English"
-                      type="text"
-                      placeholder="Click Here (EN)"
-                      value={newImageCtaTextEn}
-                      onChange={(e) => setNewImageCtaTextEn(e.target.value)}
-                    />
-                    <Input
-                      label="Hebrew"
-                      type="text"
-                      placeholder="לחץ כאן (HE)"
-                      value={newImageCtaTextHe}
-                      onChange={(e) => setNewImageCtaTextHe(e.target.value)}
-                    />
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Subtitle (optional)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        label="English"
+                        type="text"
+                        placeholder="Subtitle (EN)"
+                        value={newImageSubtitleEn}
+                        onChange={(e) => setNewImageSubtitleEn(e.target.value)}
+                      />
+                      <Input
+                        label="Hebrew"
+                        type="text"
+                        placeholder="תת-כותרת (HE)"
+                        value={newImageSubtitleHe}
+                        onChange={(e) => setNewImageSubtitleHe(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Text Overlay (optional)</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      label="English"
-                      type="text"
-                      placeholder="Overlay Text (EN)"
-                      value={newImageTextOverlayEn}
-                      onChange={(e) => setNewImageTextOverlayEn(e.target.value)}
-                    />
-                    <Input
-                      label="Hebrew"
-                      type="text"
-                      placeholder="טקסט כיסוי (HE)"
-                      value={newImageTextOverlayHe}
-                      onChange={(e) => setNewImageTextOverlayHe(e.target.value)}
-                    />
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">CTA Button Text (optional)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        label="English"
+                        type="text"
+                        placeholder="Click Here (EN)"
+                        value={newImageCtaTextEn}
+                        onChange={(e) => setNewImageCtaTextEn(e.target.value)}
+                      />
+                      <Input
+                        label="Hebrew"
+                        type="text"
+                        placeholder="לחץ כאן (HE)"
+                        value={newImageCtaTextHe}
+                        onChange={(e) => setNewImageCtaTextHe(e.target.value)}
+                      />
+                    </div>
                   </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Text Overlay (optional)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        label="English"
+                        type="text"
+                        placeholder="Overlay Text (EN)"
+                        value={newImageTextOverlayEn}
+                        onChange={(e) => setNewImageTextOverlayEn(e.target.value)}
+                      />
+                      <Input
+                        label="Hebrew"
+                        type="text"
+                        placeholder="טקסט כיסוי (HE)"
+                        value={newImageTextOverlayHe}
+                        onChange={(e) => setNewImageTextOverlayHe(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <Input
+                    label="Link (optional)"
+                    type="text"
+                    placeholder="https://example.com/page"
+                    value={newImageLink}
+                    onChange={(e) => setNewImageLink(e.target.value)}
+                  />
+                  <Button variant="secondary" size="sm" onClick={addCarouselImage} className="w-full">
+                    Add Image
+                  </Button>
                 </div>
-                <Input
-                  label="Link (optional)"
-                  type="text"
-                  placeholder="https://example.com/page"
-                  value={newImageLink}
-                  onChange={(e) => setNewImageLink(e.target.value)}
-                />
-                <Button variant="secondary" size="sm" onClick={addCarouselImage} className="w-full">
-                  Add Image
-                </Button>
               </div>
-            </div>
+            )}
 
-            {/* Carousel Images List */}
+            {/* Carousel Images List - accordion style */}
             {heroCarouselImages.length > 0 && (
-              <div className="space-y-4">
+              <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
                 {heroCarouselImages.map((img, index) => {
                   const previewImage = img.desktopImageUrl || img.tabletImageUrl || img.mobileImageUrl;
                   const isEditing = editingIndex === index;
-                  
-                  if (isEditing) {
-                    return (
-                      <div key={index} className="border border-blue-300 dark:border-blue-600 rounded-lg p-4 bg-blue-50 dark:bg-blue-900/20">
-                        <h5 className="font-medium text-gray-900 dark:text-gray-100 mb-3">Editing Carousel Image #{index + 1}</h5>
-                        <div className="space-y-3">
-                          <Input
-                            label="Desktop Image URL"
-                            type="text"
-                            value={editDesktopImageUrl}
-                            onChange={(e) => setEditDesktopImageUrl(e.target.value)}
-                          />
-                          <Input
-                            label="Tablet Image URL"
-                            type="text"
-                            value={editTabletImageUrl}
-                            onChange={(e) => setEditTabletImageUrl(e.target.value)}
-                          />
-                          <Input
-                            label="Mobile Image URL"
-                            type="text"
-                            value={editMobileImageUrl}
-                            onChange={(e) => setEditMobileImageUrl(e.target.value)}
-                          />
-                          <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <Input
-                                label="English"
-                                type="text"
-                                value={editImageTitleEn}
-                                onChange={(e) => setEditImageTitleEn(e.target.value)}
-                              />
-                              <Input
-                                label="Hebrew"
-                                type="text"
-                                value={editImageTitleHe}
-                                onChange={(e) => setEditImageTitleHe(e.target.value)}
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Subtitle</label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <Input
-                                label="English"
-                                type="text"
-                                value={editImageSubtitleEn}
-                                onChange={(e) => setEditImageSubtitleEn(e.target.value)}
-                              />
-                              <Input
-                                label="Hebrew"
-                                type="text"
-                                value={editImageSubtitleHe}
-                                onChange={(e) => setEditImageSubtitleHe(e.target.value)}
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">CTA Button Text</label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <Input
-                                label="English"
-                                type="text"
-                                value={editImageCtaTextEn}
-                                onChange={(e) => setEditImageCtaTextEn(e.target.value)}
-                              />
-                              <Input
-                                label="Hebrew"
-                                type="text"
-                                value={editImageCtaTextHe}
-                                onChange={(e) => setEditImageCtaTextHe(e.target.value)}
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Text Overlay</label>
-                            <div className="grid grid-cols-2 gap-2">
-                              <Input
-                                label="English"
-                                type="text"
-                                value={editImageTextOverlayEn}
-                                onChange={(e) => setEditImageTextOverlayEn(e.target.value)}
-                              />
-                              <Input
-                                label="Hebrew"
-                                type="text"
-                                value={editImageTextOverlayHe}
-                                onChange={(e) => setEditImageTextOverlayHe(e.target.value)}
-                              />
-                            </div>
-                          </div>
-                          <Input
-                            label="Link"
-                            type="text"
-                            value={editImageLink}
-                            onChange={(e) => setEditImageLink(e.target.value)}
-                          />
-                          <div className="flex space-x-2">
-                            <Button variant="primary" size="sm" onClick={saveEdit} className="flex-1">
-                              Save Changes
-                            </Button>
-                            <Button variant="secondary" size="sm" onClick={cancelEdit} className="flex-1">
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-                  
+                  const isOpen = openCarouselIndex === index;
+                  const summaryTitle = getMultilingualText(img.title, 'en') || getMultilingualText(img.title, 'he') || `Carousel Image #${index + 1}`;
+
                   return (
-                    <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800">
-                      <div className="flex items-start space-x-4">
-                        <div className="shrink-0">
-                          {previewImage && (
-                            <img src={previewImage} alt={`Carousel ${index + 1}`} className="w-24 h-24 object-cover rounded" />
+                    <div
+                      key={index}
+                      className="border-b border-border dark:border-border-dark last:border-b-0 bg-card dark:bg-card-dark"
+                    >
+                      {/* Accordion header */}
+                      <button
+                        type="button"
+                        onClick={() => setOpenCarouselIndex(isOpen ? null : index)}
+                        className="w-full flex justify-between items-center px-4 py-3 text-left hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark transition-colors"
+                      >
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          {previewImage ? (
+                            <img src={previewImage} alt="" className="w-14 h-14 object-cover rounded shrink-0" />
+                          ) : (
+                            <div className="w-14 h-14 rounded bg-muted dark:bg-muted-dark shrink-0 flex items-center justify-center text-xs text-text-secondary dark:text-text-secondary-dark">
+                              No image
+                            </div>
                           )}
+                          <span className="font-medium text-text dark:text-text-dark truncate">
+                            {summaryTitle}
+                          </span>
+                          <span className="text-xs text-text-secondary dark:text-text-secondary-dark shrink-0">
+                            Order {index + 1}
+                          </span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          {img.desktopImageUrl && <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">Desktop: {img.desktopImageUrl}</p>}
-                          {img.tabletImageUrl && <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">Tablet: {img.tabletImageUrl}</p>}
-                          {img.mobileImageUrl && <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">Mobile: {img.mobileImageUrl}</p>}
-                          {img.link && <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">Link: {img.link}</p>}
-                          {typeof img.title === 'object' && img.title && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              <p>Title EN: {img.title.en || '(empty)'}</p>
-                              <p>Title HE: {img.title.he || '(empty)'}</p>
+                        <svg
+                          className={`w-4 h-4 text-text-secondary dark:text-text-secondary-dark transition-transform duration-300 flex-shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>                      </button>
+
+                      {/* Accordion body */}
+                      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[1200px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                        <div className="px-4 pb-4">
+                          {isEditing ? (
+                            <div className="pt-2 space-y-3">
+                              <h5 className="font-medium text-text dark:text-text-dark">Editing Carousel Image #{index + 1}</h5>
+                              <Input
+                                label="Desktop Image URL"
+                                type="text"
+                                value={editDesktopImageUrl}
+                                onChange={(e) => setEditDesktopImageUrl(e.target.value)}
+                              />
+                              <Input
+                                label="Tablet Image URL"
+                                type="text"
+                                value={editTabletImageUrl}
+                                onChange={(e) => setEditTabletImageUrl(e.target.value)}
+                              />
+                              <Input
+                                label="Mobile Image URL"
+                                type="text"
+                                value={editMobileImageUrl}
+                                onChange={(e) => setEditMobileImageUrl(e.target.value)}
+                              />
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <Input label="English" type="text" value={editImageTitleEn} onChange={(e) => setEditImageTitleEn(e.target.value)} />
+                                  <Input label="Hebrew" type="text" value={editImageTitleHe} onChange={(e) => setEditImageTitleHe(e.target.value)} />
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Subtitle</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <Input label="English" type="text" value={editImageSubtitleEn} onChange={(e) => setEditImageSubtitleEn(e.target.value)} />
+                                  <Input label="Hebrew" type="text" value={editImageSubtitleHe} onChange={(e) => setEditImageSubtitleHe(e.target.value)} />
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">CTA Button Text</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <Input label="English" type="text" value={editImageCtaTextEn} onChange={(e) => setEditImageCtaTextEn(e.target.value)} />
+                                  <Input label="Hebrew" type="text" value={editImageCtaTextHe} onChange={(e) => setEditImageCtaTextHe(e.target.value)} />
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Text Overlay</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <Input label="English" type="text" value={editImageTextOverlayEn} onChange={(e) => setEditImageTextOverlayEn(e.target.value)} />
+                                  <Input label="Hebrew" type="text" value={editImageTextOverlayHe} onChange={(e) => setEditImageTextOverlayHe(e.target.value)} />
+                                </div>
+                              </div>
+                              <Input label="Link" type="text" value={editImageLink} onChange={(e) => setEditImageLink(e.target.value)} />
+                              <div className="flex gap-2">
+                                <Button variant="green" size="sm" onClick={saveEdit} className="flex-1">Save Changes</Button>
+                                <Button variant="red" size="sm" onClick={cancelEdit} className="flex-1">Cancel</Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="pt-2">
+                              <div className="flex items-start space-x-4 flex-wrap">
+                                <div className="shrink-0">
+                                  {previewImage && (
+                                    <img src={previewImage} alt={`Carousel ${index + 1}`} className="w-24 h-24 object-cover rounded" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  {img.desktopImageUrl && <p className="text-xs text-text-secondary dark:text-text-secondary-dark truncate">Desktop: {img.desktopImageUrl}</p>}
+                                  {img.tabletImageUrl && <p className="text-xs text-text-secondary dark:text-text-secondary-dark truncate">Tablet: {img.tabletImageUrl}</p>}
+                                  {img.mobileImageUrl && <p className="text-xs text-text-secondary dark:text-text-secondary-dark truncate">Mobile: {img.mobileImageUrl}</p>}
+                                  {img.link && <p className="text-xs text-text-secondary dark:text-text-secondary-dark truncate">Link: {img.link}</p>}
+                                  {typeof img.title === 'object' && img.title && (
+                                    <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                                      <p>Title EN: {img.title.en || '(empty)'}</p>
+                                      <p>Title HE: {img.title.he || '(empty)'}</p>
+                                    </div>
+                                  )}
+                                  {typeof img.subtitle === 'object' && img.subtitle && (
+                                    <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                                      <p>Subtitle EN: {img.subtitle.en || '(empty)'}</p>
+                                      <p>Subtitle HE: {img.subtitle.he || '(empty)'}</p>
+                                    </div>
+                                  )}
+                                  {typeof img.ctaText === 'object' && img.ctaText && (
+                                    <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                                      <p>CTA EN: {img.ctaText.en || '(empty)'}</p>
+                                      <p>CTA HE: {img.ctaText.he || '(empty)'}</p>
+                                    </div>
+                                  )}
+                                  {typeof img.textOverlay === 'object' && img.textOverlay && (
+                                    <div className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                                      <p>Overlay EN: {img.textOverlay.en || '(empty)'}</p>
+                                      <p>Overlay HE: {img.textOverlay.he || '(empty)'}</p>
+                                    </div>
+                                  )}
+                                  <p className="text-xs text-text-secondary dark:text-text-secondary-dark">Order: {img.order + 1}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button variant="blue" size="sm" onClick={() => startEditing(index)}>
+                                    <Icon name="editBold" className="w-5 h-5" />
+                                  </Button>
+                                  <Button variant="gray" size="sm" onClick={() => moveCarouselImage(index, 'up')} disabled={index === 0}>
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                                  </Button>                                  <Button variant="gray" size="sm" onClick={() => moveCarouselImage(index, 'down')} disabled={index === heroCarouselImages.length - 1}>
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                  </Button>
+                                  <Button variant="red" size="sm" onClick={() => removeCarouselImage(index)}>
+                                    <Icon name="trashBold" className="w-5 h-5" />
+                                  </Button>
+                                </div>
+                              </div>
                             </div>
                           )}
-                          {typeof img.subtitle === 'object' && img.subtitle && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              <p>Subtitle EN: {img.subtitle.en || '(empty)'}</p>
-                              <p>Subtitle HE: {img.subtitle.he || '(empty)'}</p>
-                            </div>
-                          )}
-                          {typeof img.ctaText === 'object' && img.ctaText && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              <p>CTA EN: {img.ctaText.en || '(empty)'}</p>
-                              <p>CTA HE: {img.ctaText.he || '(empty)'}</p>
-                            </div>
-                          )}
-                          {typeof img.textOverlay === 'object' && img.textOverlay && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              <p>Overlay EN: {img.textOverlay.en || '(empty)'}</p>
-                              <p>Overlay HE: {img.textOverlay.he || '(empty)'}</p>
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Order: {img.order + 1}</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => startEditing(index)}
-                            className="p-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-                            title="Edit"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => moveCarouselImage(index, 'up')}
-                            disabled={index === 0}
-                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Move up"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => moveCarouselImage(index, 'down')}
-                            disabled={index === heroCarouselImages.length - 1}
-                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Move down"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => removeCarouselImage(index)}
-                            className="p-2 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
-                            title="Remove"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -744,9 +756,9 @@ export default function SettingsPage() {
       </Card>
 
       {/* Shop Settings */}
-      <Card>
+      <Card className="bg-card dark:bg-card-dark">
         <CardHeader>
-          <CardTitle>Shop Settings</CardTitle>
+          <CardTitle className="text-text dark:text-text-dark">Shop Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -790,9 +802,9 @@ export default function SettingsPage() {
       </Card>
 
       {/* Email Settings */}
-      <Card>
+      <Card className="bg-card dark:bg-card-dark">
         <CardHeader>
-          <CardTitle>Email Settings</CardTitle>
+          <CardTitle className="text-text dark:text-text-dark">Email Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -820,9 +832,9 @@ export default function SettingsPage() {
       </Card>
 
       {/* SEO Settings */}
-      <Card>
+      <Card className="bg-card dark:bg-card-dark">
         <CardHeader>
-          <CardTitle>SEO Settings</CardTitle>
+          <CardTitle className="text-text dark:text-text-dark">SEO Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Input
@@ -857,9 +869,9 @@ export default function SettingsPage() {
       </Card>
 
       {/* Maintenance Mode */}
-      <Card>
+      <Card className="bg-card dark:bg-card-dark">
         <CardHeader>
-          <CardTitle>Maintenance Mode</CardTitle>
+          <CardTitle className="text-text dark:text-text-dark">Maintenance Mode</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Checkbox
@@ -878,23 +890,56 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Environment Flags (.env) */}
+      <Card className="bg-card dark:bg-card-dark">
+        <CardHeader>
+          <CardTitle className="text-text dark:text-text-dark">Environment Flags (.env)</CardTitle>
+          <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">
+            Current environment flags from .env.local (NEXT_PUBLIC_*). 
+            <br />
+            Change values in .env.local and restart the server.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Variable</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-center">Value</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ENV_FLAGS.map(({ key, description }) => {
+                const value = ENV_FLAG_VALUES[key] ?? false;
+                return (
+                  <TableRow key={key}>
+                    <TableCell className="font-mono text-xs text-text dark:text-text-dark">{key}</TableCell>
+                    <TableCell className="text-text-secondary dark:text-text-secondary-dark">{description}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant={value ? 'primary' : 'gray'}>
+                        {value ? 'on' : 'off'}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
       {/* Bottom Save Button */}
-      <div className="sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 -mx-6">
-        <div className="flex items-center justify-end space-x-3">
-          <Button onClick={handleSave} disabled={saving} variant="primary" size="lg">
+      <div className="px-6 py-4 border-t border-border dark:border-border-dark flex items-center justify-end">
+        <Button onClick={handleSave} disabled={saving} variant="primary" size="lg">
             {saving ? (
-              <span className="flex items-center space-x-2">
-                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Saving...</span>
-              </span>
+            <span className="flex items-center justify-center gap-2 min-w-[7.3rem]">
+            <LoadingSpinner size={16} variant="brand" />
+            </span>
             ) : (
               'Save All Changes'
             )}
-          </Button>
-        </div>
+        </Button>
       </div>
     </div>
   );

@@ -11,11 +11,14 @@ export default function ReviewForm({
   onSubmitted,
   onCancel,
   inModal = false,
+  user,
 }: {
   slug: string;
   onSubmitted?: () => void;
   onCancel?: () => void;
   inModal?: boolean;
+  /** When set (authenticated user), name field is hidden and review uses this user's name */
+  user?: { name?: string | null; email?: string | null } | null;
 }) {
   const t = useTranslations('skateparks');
   const locale = useLocale();
@@ -29,20 +32,22 @@ export default function ReviewForm({
   const [ratingError, setRatingError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
 
+  const isAuthenticated = !!user;
+
   const handleSubmit = async () => {
     // Prevent submission if already submitting
     if (submitting) return;
     
-    // Validate all fields first and collect all errors
+    // Validate: rating always required; name required only for unauthenticated
     const hasRatingError = rating == null || rating === undefined || rating < 1;
-    const hasNameError = !userName || userName.trim().length === 0;
+    const hasNameError = !isAuthenticated && (!userName || userName.trim().length === 0);
     
     // Set all relevant errors
     if (hasRatingError) {
       setRatingError(t('reviewForm.ratingRequiredError'));
     }
     if (hasNameError) {
-      setNameError(t('reviewForm.nameRequiredError'));
+      setNameError(t('reviewForm.fullNameRequiredError'));
     }
     
     // If any validation failed, show toast and return
@@ -52,7 +57,7 @@ export default function ReviewForm({
         errorMessages.push(t('reviewForm.ratingRequiredError'));
       }
       if (hasNameError) {
-        errorMessages.push(t('reviewForm.nameRequiredError'));
+        errorMessages.push(t('reviewForm.fullNameRequiredError'));
       }
       
       toast({
@@ -67,12 +72,16 @@ export default function ReviewForm({
     setRatingError(null);
     setNameError(null);
     try {
-      const body: any = { rating, comment, userName: userName.trim(), locale };
+      const body: any = { rating, comment, locale };
+      if (!isAuthenticated) {
+        body.userName = userName.trim();
+      }
       
       const res = await fetch(`/api/skateparks/${slug}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        credentials: 'include',
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -111,28 +120,30 @@ export default function ReviewForm({
         </div>
       )}
 
-      {/* Name input - required for all reviews */}
-      <div className="mb-3 ">
-        <Input
-          id="reviewer-name"
-          type="text"
-          label={t('reviewForm.yourName')}
-          value={userName}
-          onChange={(e) => {
-            setUserName(e.target.value);
-            if (e.target.value.trim().length > 0 && nameError) {
-              setNameError(null);
-            }
-          }}
-          placeholder={t('reviewForm.enterYourName')}
-          maxLength={30}
-          required
-          variant="default"
-        />
-        {nameError && (
-          <p className="mt-1 text-sm text-red dark:text-red-dark">{nameError}</p>
-        )}
-      </div>
+      {/* Full name input - only for unauthenticated users; authenticated use session name */}
+      {!isAuthenticated && (
+        <div className="mb-3 ">
+          <Input
+            id="reviewer-name"
+            type="text"
+            label={t('reviewForm.yourFullName')}
+            value={userName}
+            onChange={(e) => {
+              setUserName(e.target.value);
+              if (e.target.value.trim().length > 0 && nameError) {
+                setNameError(null);
+              }
+            }}
+            placeholder={t('reviewForm.enterYourFullName')}
+            maxLength={80}
+            required
+            variant="default"
+          />
+          {nameError && (
+            <p className="mt-1 text-sm text-red dark:text-red-dark">{nameError}</p>
+          )}
+        </div>
+      )}
 
       {/* Rating - Required */}
       <div className="mb-3">

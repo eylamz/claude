@@ -56,6 +56,7 @@ export async function GET(
   try {
     await connectDB();
     const { slug } = await params;
+    const session = await getServerSession(authOptions);
 
     const searchParams = request.nextUrl.searchParams;
     const page = parseInt(searchParams.get('page') || '1', 10);
@@ -130,8 +131,20 @@ export async function GET(
         )
       : 0;
 
+    // When multiple reviews are disabled, tell the client if the current user has already reviewed (for UX)
+    let userHasReviewed: boolean | undefined;
+    if (session?.user?.id && process.env.NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS !== 'true') {
+      const existing = await Review.exists({
+        slug: slug.toLowerCase(),
+        userId: session.user.id,
+        status: { $in: ['pending', 'approved'] },
+      });
+      userHasReviewed = !!existing;
+    }
+
     return NextResponse.json({
       reviews,
+      ...(userHasReviewed !== undefined && { userHasReviewed }),
       pagination: {
         page,
         limit,
@@ -195,42 +208,50 @@ export async function POST(
       return NextResponse.json({ error: 'Rating must be 1-5' }, { status: 400 });
     }
     
-    // Name is required for all reviews
-    if (!userName || !userName.trim()) {
-      return NextResponse.json({ error: 'Name is required' }, { status: 400 });
-    }
     const locale: Locale = isLocale(bodyLocale) ? bodyLocale : 'en';
-    const displayName = userName.trim();
+    // Authenticated: use session name; anonymous: require name from body
+    let displayName: string;
+    if (isAnonymous) {
+      if (!userName || !userName.trim()) {
+        return NextResponse.json({ error: 'Full name is required' }, { status: 400 });
+      }
+      displayName = userName.trim();
+    } else {
+      displayName = (session?.user?.name ?? session?.user?.email ?? 'User').trim() || 'User';
+    }
 
     const park = await Skatepark.findOne({ slug: slug.toLowerCase(), status: 'active' });
     if (!park) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    // Prevent duplicate reviews
-    if (isAnonymous) {
-      // Match anonymous reviews by slug and by name in any locale (or legacy string userName)
-      const existing = await Review.findOne({
-        slug: slug.toLowerCase(),
-        userId: { $exists: false },
-        status: { $in: ['pending', 'approved'] },
-        $or: [
-          { 'userName.en': displayName },
-          { 'userName.he': displayName },
-          { userName: displayName } as any, // legacy string
-        ],
-      });
-      if (existing) {
-        return NextResponse.json(
-          { error: getReviewError('alreadySubmitted', locale) },
-          { status: 400 }
-        );
-      }
-    } else {
-      const existing = await Review.findOne({ slug: slug.toLowerCase(), userId: session.user.id });
-      if (existing) {
-        return NextResponse.json(
-          { error: getReviewError('alreadySubmitted', locale) },
-          { status: 400 }
-        );
+    // Prevent duplicate reviews only when multiple reviews per user are disabled
+    const allowMultipleReviews = process.env.NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS === 'true';
+    if (!allowMultipleReviews) {
+      if (isAnonymous) {
+        // Match anonymous reviews by slug and by name in any locale (or legacy string userName)
+        const existing = await Review.findOne({
+          slug: slug.toLowerCase(),
+          userId: { $exists: false },
+          status: { $in: ['pending', 'approved'] },
+          $or: [
+            { 'userName.en': displayName },
+            { 'userName.he': displayName },
+            { userName: displayName } as any, // legacy string
+          ],
+        });
+        if (existing) {
+          return NextResponse.json(
+            { error: getReviewError('alreadySubmitted', locale) },
+            { status: 400 }
+          );
+        }
+      } else {
+        const existing = await Review.findOne({ slug: slug.toLowerCase(), userId: session.user.id });
+        if (existing) {
+          return NextResponse.json(
+            { error: getReviewError('alreadySubmitted', locale) },
+            { status: 400 }
+          );
+        }
       }
     }
 

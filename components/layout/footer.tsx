@@ -29,7 +29,8 @@ export function Footer() {
 
   const secondaryLinks = [
     { href: `/${locale}/contact`, label: t('contact') },
-    { href: `/${locale}/terms`, label: tMobileNav('termsAndConditions') },
+    { href: `/${locale}/terms`, label: t('footer.termsOfService') },
+    { href: `/${locale}/privacy`, label: t('footer.privacyPolicy') },
     { href: `/${locale}/accessibility`, label: tMobileNav('accessibility') },
   ];
 
