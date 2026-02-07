@@ -81,8 +81,12 @@ export async function generateSkateparkMetadata(params: { slug: string; locale: 
 
     const name = getLocalizedText(skatepark.name, locale);
     const address = getLocalizedText(skatepark.address, locale);
-    
-    // Handle notes - can be string array or object with en/he
+    const seo = (skatepark as any).seoMetadata;
+
+    // Meta description: prefer seoMetadata.description, then notes, then fallback
+    const seoDescription = seo?.description && (seo.description.en || seo.description.he)
+      ? getLocalizedText(seo.description, locale).trim()
+      : '';
     let notesText = '';
     if (skatepark.notes) {
       if (typeof skatepark.notes === 'string') {
@@ -96,36 +100,32 @@ export async function generateSkateparkMetadata(params: { slug: string; locale: 
         }
       }
     }
-    
-    // Localized fallback description
     const fallbackDescription = locale === 'he'
       ? `בקר ב${name} - ${address}. בדוק שעות פעילות, שירותים וביקורות ב-ENBOSS.`
       : `Visit ${name} - ${address}. Check hours, amenities, and reviews on ENBOSS.`;
-    
-    const description = notesText && notesText.trim()
-      ? notesText.substring(0, 160)
-      : fallbackDescription;
-    
-    // Get first image (sorted by orderNumber or isFeatured)
+    const description = seoDescription
+      ? seoDescription.substring(0, 160)
+      : (notesText && notesText.trim()
+          ? notesText.substring(0, 160)
+          : fallbackDescription);
+
+    // OG image: use seoMetadata.ogImage when set; when empty, use first skatepark image, then default
     let image = '/og-skatepark-default.jpg';
-    if (skatepark.images && Array.isArray(skatepark.images) && skatepark.images.length > 0) {
-      const featuredImg = skatepark.images.find((img: any) => img.isFeatured);
-      if (featuredImg) {
-        image = featuredImg.url;
-      } else {
-        const sortedImages = [...skatepark.images].sort((a: any, b: any) => 
-          (a.orderNumber || 0) - (b.orderNumber || 0)
-        );
-        image = sortedImages[0]?.url || '/og-skatepark-default.jpg';
-      }
+    if (seo?.ogImage && seo.ogImage.trim()) {
+      image = seo.ogImage;
+    } else if (skatepark.images && Array.isArray(skatepark.images) && skatepark.images.length > 0) {
+      image = skatepark.images[0]?.url || '/og-skatepark-default.jpg';
     }
-    
-    // Localized title format
-    // English: "Netanya Skatepark | ENBOSS"
-    // Hebrew: "סקייטפארק נתניה | אנבוס"
-    const title = locale === 'he' 
+
+    // Localized title format (Skatepark has no metaTitle; use name + brand)
+    const title = locale === 'he'
       ? `סקייטפארק ${name} | אנבוס`
       : `${name} Skatepark | ENBOSS`;
+
+    // Keywords from seoMetadata.keywords (localized)
+    const keywords = seo?.keywords && (seo.keywords.en || seo.keywords.he)
+      ? getLocalizedText(seo.keywords, locale).trim()
+      : undefined;
 
     return genMeta({
       title,
@@ -134,6 +134,7 @@ export async function generateSkateparkMetadata(params: { slug: string; locale: 
       url: `/${locale}/skateparks/${slug}`,
       locale,
       alternateLocales: locale === 'en' ? ['he'] : ['en'],
+      keywords,
     });
   } catch (error) {
     console.error('Error generating skatepark metadata:', error);

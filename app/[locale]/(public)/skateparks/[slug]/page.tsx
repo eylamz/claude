@@ -27,7 +27,7 @@ import {
   formatTimeRange,
   type OperatingHours as OperatingHoursType,
 } from '@/lib/utils/hoursFormatter';
-import { generateLocalBusinessStructuredData, generateBreadcrumbStructuredData } from '@/lib/seo/utils';
+import { generateLocalBusinessStructuredData, generateBreadcrumbStructuredData, getSkateparkMetaFromData } from '@/lib/seo/utils';
 import { PLACEHOLDER_SKATEPARK_IMAGE } from '@/lib/constants/placeholders';
 
 interface SkateparkImage {
@@ -794,6 +794,41 @@ export default function SkateparkPage() {
     }, 2000);
     return () => clearTimeout(timer);
   }, [skatepark]);
+
+  // Sync document head (title, meta) when skatepark loads so SEO meta tags are set
+  // even when server metadata wasn't applied (e.g. client-side nav without cache)
+  useEffect(() => {
+    if (!skatepark || !slug || typeof locale !== 'string') return;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+    const meta = getSkateparkMetaFromData(skatepark as any, locale, slug);
+    const imageUrl = meta.image.startsWith('http') ? meta.image : `${siteUrl}${meta.image}`;
+    const canonicalUrl = meta.url.startsWith('http') ? meta.url : `${siteUrl}${meta.url}`;
+
+    document.title = meta.title;
+
+    const setMeta = (selector: string, attr: 'name' | 'property', key: string, content: string) => {
+      let el = document.querySelector(`${selector}[${attr}="${key}"]`) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.content = content;
+    };
+
+    setMeta('meta', 'name', 'description', meta.description);
+    setMeta('meta', 'property', 'og:title', meta.title);
+    setMeta('meta', 'property', 'og:description', meta.description);
+    setMeta('meta', 'property', 'og:image', imageUrl);
+    setMeta('meta', 'property', 'og:url', canonicalUrl);
+    setMeta('meta', 'name', 'twitter:card', 'summary_large_image');
+    setMeta('meta', 'name', 'twitter:title', meta.title);
+    setMeta('meta', 'name', 'twitter:description', meta.description);
+    setMeta('meta', 'name', 'twitter:image', imageUrl);
+    if (meta.keywords) {
+      setMeta('meta', 'name', 'keywords', meta.keywords);
+    }
+  }, [skatepark, slug, locale]);
 
   // Validate image URL and return a safe fallback if invalid
   const getValidImageUrl = (url: string | undefined | null): string => {

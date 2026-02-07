@@ -41,10 +41,12 @@ export interface SEOConfig {
   publishedTime?: string;
   modifiedTime?: string;
   author?: string;
+  /** SEO keywords - string (comma-separated) or array. Rendered as meta name="keywords" and in openGraph. */
+  keywords?: string | string[];
 }
 
 export function generateMetadata(config: SEOConfig): Metadata {
-  const { title, description, image, url, type = 'website', locale = 'en', alternateLocales = [], publishedTime, modifiedTime, author } = config;
+  const { title, description, image, url, type = 'website', locale = 'en', alternateLocales = [], publishedTime, modifiedTime, author, keywords } = config;
   
   const titleText = getLocalizedText(title, locale);
   const descText = getLocalizedText(description, locale);
@@ -70,6 +72,9 @@ export function generateMetadata(config: SEOConfig): Metadata {
   const metadata: Metadata = {
     title: titleText,
     description: descText,
+    ...(keywords !== undefined && keywords !== '' && {
+      keywords: Array.isArray(keywords) ? keywords : (typeof keywords === 'string' ? keywords.split(',').map(k => k.trim()).filter(Boolean) : [keywords]),
+    }),
     alternates: {
       canonical: canonicalUrl,
       languages: {
@@ -112,6 +117,77 @@ export function generateMetadata(config: SEOConfig): Metadata {
   }
 
   return metadata;
+}
+
+/** Skatepark-like object (from API or cache) for client-side meta derivation */
+export type SkateparkMetaSource = {
+  name: LocalizedField;
+  address?: LocalizedField;
+  notes?: string | { en?: string | string[]; he?: string | string[] };
+  images?: Array<{ url: string; isFeatured?: boolean; orderNumber?: number }>;
+  seoMetadata?: {
+    description?: LocalizedField;
+    ogImage?: string;
+    keywords?: LocalizedField;
+  };
+};
+
+/**
+ * Derive meta title, description, image, keywords from skatepark data (client-safe).
+ * Use when skatepark is loaded on the client so we can sync document head even if
+ * server metadata wasn't applied (e.g. client-side nav without cache).
+ */
+export function getSkateparkMetaFromData(
+  skatepark: SkateparkMetaSource,
+  locale: string,
+  slug: string
+): { title: string; description: string; image: string; keywords?: string; url: string } {
+  const name = getLocalizedText(skatepark.name, locale);
+  const address = getLocalizedText(skatepark.address ?? { en: '', he: '' }, locale);
+  const seo = skatepark.seoMetadata;
+
+  const seoDescription = seo?.description && (seo.description.en || seo.description.he)
+    ? getLocalizedText(seo.description, locale).trim()
+    : '';
+  let notesText = '';
+  if (skatepark.notes) {
+    if (typeof skatepark.notes === 'string') {
+      notesText = skatepark.notes;
+    } else if (typeof skatepark.notes === 'object') {
+      const localeNotes = (skatepark.notes as any)[locale] ?? (skatepark.notes as any).en ?? (skatepark.notes as any).he;
+      if (Array.isArray(localeNotes)) {
+        notesText = localeNotes.join(' ');
+      } else if (typeof localeNotes === 'string') {
+        notesText = localeNotes;
+      }
+    }
+  }
+  const fallbackDescription = locale === 'he'
+    ? `בקר ב${name} - ${address}. בדוק שעות פעילות, שירותים וביקורות ב-ENBOSS.`
+    : `Visit ${name} - ${address}. Check hours, amenities, and reviews on ENBOSS.`;
+  const description = seoDescription
+    ? seoDescription.substring(0, 160)
+    : (notesText && notesText.trim()
+        ? notesText.substring(0, 160)
+        : fallbackDescription);
+
+  let image = '/og-skatepark-default.jpg';
+  if (seo?.ogImage && seo.ogImage.trim()) {
+    image = seo.ogImage;
+  } else if (skatepark.images && skatepark.images.length > 0) {
+    image = skatepark.images[0]?.url ?? '/og-skatepark-default.jpg';
+  }
+
+  const title = locale === 'he'
+    ? `סקייטפארק ${name} | אנבוס`
+    : `${name} Skatepark | ENBOSS`;
+
+  const keywords = seo?.keywords && (seo.keywords.en || seo.keywords.he)
+    ? getLocalizedText(seo.keywords, locale).trim()
+    : undefined;
+
+  const url = `/${locale}/skateparks/${slug}`;
+  return { title, description, image, keywords, url };
 }
 
 export function generateProductStructuredData(product: {
