@@ -501,15 +501,22 @@ export default function EventsPage() {
             className='flex items-center gap-1'
             onClick={async () => {
               setIsRefreshing(true);
-              await fetchEvents();
-              setIsRefreshing(false);
-              toast({
-                title: 'Success',
-                description: 'Data has been refreshed successfully!',
-                variant: 'success',
-              });
+              try {
+                if (typeof localStorage !== 'undefined') {
+                  localStorage.removeItem('events_cache');
+                  localStorage.removeItem('events_version');
+                }
+                await fetchEvents();
+                toast({
+                  title: 'Success',
+                  description: 'Cache cleared and data refreshed successfully!',
+                  variant: 'success',
+                });
+              } finally {
+                setIsRefreshing(false);
+              }
             }}
-            title="Refresh"
+            title="Refresh (clears events_cache and events_version, then refetches)"
             disabled={isRefreshing}
           >
             Refresh
@@ -759,6 +766,13 @@ export default function EventsPage() {
                       {event.title.en}
                     </button>
                     <div className="text-xs text-text-secondary dark:text-text-secondary-dark">{event.title.he}</div>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/${locale}/admin/events/${event.id}/signup-form`)}
+                      className="text-xs text-brand-main dark:text-brand-dark hover:underline mt-0.5"
+                    >
+                      Signup form
+                    </button>
                     {event.isFeatured && (
                       <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
                         Featured
@@ -900,6 +914,18 @@ export default function EventsPage() {
                               type="button"
                               variant="secondary"
                               size="sm"
+                              className="flex-1"
+                              onClick={() => {
+                                setViewPopoverOpen(null);
+                                router.push(`/${locale}/admin/events/${event.id}/signup-form`);
+                              }}
+                            >
+                              Signup form
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
                               onClick={() => {
                                 setViewPopoverOpen(null);
                                 router.push(`/${locale}/events/${event.slug}`);
@@ -940,6 +966,9 @@ export default function EventsPage() {
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/events/${event.id}/edit`)}>
                         Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/events/${event.id}/signup-form`)}>
+                        Signup form
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleToggleFeature(event.id)}>
                         {event.isFeatured ? 'Unfeature' : 'Feature'}

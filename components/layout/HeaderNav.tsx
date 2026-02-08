@@ -19,6 +19,7 @@ import {
   MapPin,
   Star,
   Calendar,
+  ClipboardList,
   UserCircle,
   BookOpen,
   Settings as SettingsIcon,
@@ -1044,6 +1045,11 @@ export default function HeaderNav() {
                                     href: `/${locale}/admin/events`,
                                     labelKey: 'events',
                                     icon: Calendar,
+                                  },
+                                  {
+                                    href: `/${locale}/admin/event-signups`,
+                                    labelKey: 'eventSignups',
+                                    icon: ClipboardList,
                                   },
                                   {
                                     href: `/${locale}/admin/trainers`,

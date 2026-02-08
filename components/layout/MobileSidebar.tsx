@@ -92,11 +92,11 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
   const trainersEnabled = isTrainersEnabled();
   const loginEnabled = isLoginEnabled();
 
-  // 1. Navigation Configuration (Grid Cards)
+  // 1. Navigation Configuration (Grid Cards) - icons: Home, trees, guideBold, calendarBold, targetBold
   const navCards: NavCard[] = [
     {
       href: `/${locale}`,
-      icon: 'home',
+      icon: 'global',
       label: tMobileNav('home'),
       description: tMobileNav('homeDesc'),
     },
@@ -108,19 +108,19 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
     },
     {
       href: `/${locale}/guides`,
-      icon: 'books',
+      icon: 'book',
       label: tMobileNav('guides'),
       description: tMobileNav('guidesDesc'),
     },
     {
       href: `/${locale}/events`,
-      icon: 'calendarBold',
+      icon: 'calendar',
       label: tMobileNav('events'),
       description: tMobileNav('eventsDesc'),
     },
     ...(ecommerceEnabled ? [{
       href: `/${locale}/shop`,
-      icon: 'shopBold' as IconName,
+      icon: 'shop' as IconName,
       label: tMobileNav('shop'),
       description: tMobileNav('shopDesc'),
     }] : []),
@@ -583,8 +583,8 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
         {/* === HEADER === */}
         <div className="flex-none border-b border-border dark:border-border-dark bg-header dark:bg-header-dark transition-colors duration-200">
           {/* Header */}
-          <div className="flex flex-row-reverse items-start justify-between pb-2 mx-2 pt-2 flex-shrink-0">
-            <div className="flex flex-wrap items-center gap-1 top-0">
+          <div className="flex flex-row-reverse items-start justify-between pb-2 mx-2 pt-2 pe-2 flex-shrink-0">
+            <div className="flex max-w-[260px] items-center top-0">
               <button
                 onClick={() => {
                   if (isSearchOpen) {
@@ -600,7 +600,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                      searchInputRef.current?.focus();
                   }
                 }}
-                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
+                className={`p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200 w-full ${locale === 'he' ? 'max-w-[58px]' : 'max-w-[65px]'}`}
                 aria-label={isSearchOpen ? "Close Search" : "Open Search"}
               >
                 <Icon name={isSearchOpen ? "searchClose" : "search"} className="w-4 h-4" />
@@ -611,7 +611,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
               {loginEnabled && !session && (
                 <Link
                   href={`/${locale}/login`}
-                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
+                  className={`p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200 w-full ${locale === 'he' ? 'max-w-[58px]' : 'max-w-[65px]'}`}
                   onClick={onClose}
                 >
                   <Icon name="account" className="w-4 h-4" />
@@ -623,7 +623,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
               {loginEnabled && session && !isAdmin && (
                 <Link
                   href={`/${locale}/account`}
-                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
+                  className={`p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200 w-full ${locale === 'he' ? 'max-w-[58px]' : 'max-w-[65px]'}`}
                   onClick={onClose}
                 >
                   <Icon name="account" className="w-4 h-4" />
@@ -634,7 +634,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
           {loginEnabled && session && isAdmin && (
                 <Link
                   href={`/${locale}/account`}
-                  className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
+                  className={`p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200 w-full ${locale === 'he' ? 'max-w-[58px]' : 'max-w-[65px]'}`}
                   onClick={onClose}
                 >
                   <Icon name="admin" className="w-5 h-5" />
@@ -645,7 +645,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
               {/* Theme Toggle Button */}
               <button
                 onClick={handleThemeToggle}
-                className="p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
+                className={`p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200 w-full ${locale === 'he' ? 'max-w-[58px]' : 'max-w-[65px]'}`}
                 aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
               >
                 {theme === 'dark' ? (
@@ -659,7 +659,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
               {/* Language Switcher Button */}
               <button
                 onClick={handleLanguageToggle}
-                className=" p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200"
+                className={`p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200 w-full ${locale === 'he' ? 'max-w-[58px]' : 'max-w-[65px]'}`}
                 aria-label={tCommon('toggle_language') || 'Toggle language'}
               >
                 {locale === 'en' ? (
@@ -677,7 +677,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                     handleLogout();
                     onClose();
                   }}
-                  className="flex flex-col items-center justify-between gap-3 px-3 py-2 text-xs text-error/70 dark:text-error-dark/70 hover:text-error dark:hover:text-error-dark hover:bg-red-bg/50 dark:hover:bg-red-bg-dark/50 rounded-lg transition-colors duration-200"
+                  className={`flex flex-col items-center justify-between gap-3 px-3 py-2 text-xs text-error/70 dark:text-error-dark/70 hover:text-error dark:hover:text-error-dark hover:bg-red-bg/50 dark:hover:bg-red-bg-dark/50 rounded-lg transition-colors duration-200 w-full ${locale === 'he' ? 'max-w-[58px]' : 'max-w-[65px]'}`}
                 >
                   <Icon name="logout" className="w-4 h-4" />
                   <span>{tCommon('logout') || 'Logout'}</span>
@@ -860,12 +860,16 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                 <Link
                   href={card.href}
                   onClick={onClose}
-                  className={`flex items-center gap-2 px-2 py-3 text-3xl ${
+                  className={`flex items-center gap-5 px-2 py-3 text-3xl ${
                     isActive
                       ? 'ps-4 bg-brand-main/20 dark:bg-brand-main/5 text-brand-main dark:text-brand-main'
                       : 'ms-2 text-black/80 dark:text-white/90'
                   }`}
                 >
+                  <Icon
+                    name={card.icon}
+                    className={`flex-shrink-0 w-4 h-4 ${isActive ? 'text-brand-main dark:text-brand-main' : 'text-black/80 dark:text-white/90'}`}
+                  />
                   <span className="font-medium">{card.label}</span>
                 </Link>
                 </div>
@@ -931,7 +935,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                     href: `/${locale}/admin/orders`,
                     labelKey: 'orders',
                     icon: (
-                      <Icon name="taskBold" className="w-4 h-4" />
+                      <Icon name="shopBold" className="w-4 h-4" />
                     ),
                   },
                   {
@@ -967,6 +971,13 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                     labelKey: 'events',
                     icon: (
                       <Icon name="calendarBold" className="w-4 h-4" />
+                    ),
+                  },
+                  {
+                    href: `/${locale}/admin/event-signups`,
+                    labelKey: 'eventSignups',
+                    icon: (
+                      <Icon name="taskBold" className="w-4 h-4" />
                     ),
                   },
                   {

@@ -108,6 +108,9 @@ export function formatEventForDetail(
     isFree: event.isFree !== undefined ? event.isFree : true,
     registrationRequired: event.registrationRequired || false,
     registrationUrl: event.registrationUrl,
+    registrationClosesAt: event.registrationClosesAt || undefined,
+    signupForm: event.signupForm || undefined,
+    eventRules: event.eventRules || undefined,
 
     capacity: event.capacity,
     price: event.price,

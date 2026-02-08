@@ -302,6 +302,14 @@ export async function POST(
       );
     }
     
+    // Check if registration has closed (deadline passed)
+    if (event.registrationClosesAt && new Date(event.registrationClosesAt) < new Date()) {
+      return NextResponse.json(
+        { error: 'Registration closed', message: 'The registration deadline has passed' },
+        { status: 400 }
+      );
+    }
+    
     // Check if event is past
     if (event.isPast()) {
       return NextResponse.json(
@@ -317,6 +325,27 @@ export async function POST(
         { error: 'Validation failed', message: 'Please check your form data', errors: validation.errors },
         { status: 400 }
       );
+    }
+
+    // Require event rules acceptance when signup form has showEventRulesCheckbox
+    if (event.signupForm?.showEventRulesCheckbox) {
+      const eventRulesAccepted = formData.find((f: any) => f.name === 'eventRulesAccepted');
+      if (!eventRulesAccepted || eventRulesAccepted.value !== true) {
+        return NextResponse.json(
+          { error: 'Event rules required', message: 'You must accept the event rules to register' },
+          { status: 400 }
+        );
+      }
+    }
+    // Require privacy policy acceptance when signup form has showPrivacyCheckbox
+    if (event.signupForm?.showPrivacyCheckbox) {
+      const privacyAccepted = formData.find((f: any) => f.name === 'privacyAccepted');
+      if (!privacyAccepted || privacyAccepted.value !== true) {
+        return NextResponse.json(
+          { error: 'Privacy policy required', message: 'You must agree to the privacy policy to register' },
+          { status: 400 }
+        );
+      }
     }
     
     // Extract email from form data
@@ -367,7 +396,7 @@ export async function POST(
     
     // Update event attendance counter
     await Event.findByIdAndUpdate(event._id, {
-      $inc: { attendedCount: 1 },
+      $inc: { attendingCount: 1 },
     });
     
     // Send confirmation email

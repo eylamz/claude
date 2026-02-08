@@ -308,6 +308,7 @@ export async function POST(request: Request) {
       isFree: body.isFree !== undefined ? body.isFree : true,
       registrationRequired: body.registrationRequired || false,
       registrationUrl: body.registrationUrl || '',
+      registrationClosesAt: body.registrationClosesAt && String(body.registrationClosesAt).trim() ? new Date(body.registrationClosesAt) : undefined,
       metaTitle: body.metaTitle ? { en: body.metaTitle.en ?? '', he: body.metaTitle.he ?? '' } : undefined,
       metaDescription: body.metaDescription ? { en: body.metaDescription.en ?? '', he: body.metaDescription.he ?? '' } : undefined,
       metaKeywords: body.metaKeywords ? { en: body.metaKeywords.en ?? '', he: body.metaKeywords.he ?? '' } : undefined,

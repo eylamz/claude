@@ -91,6 +91,7 @@ interface IEvent {
   isFree: boolean;
   registrationRequired: boolean;
   registrationUrl?: string;
+  registrationClosesAt?: string;
 
   // SEO (from model / events_cache)
   metaTitle?: { en: string; he: string };
@@ -393,10 +394,11 @@ export default function EventPage() {
     );
   }
 
-  // Check if event has passed
+  // Check if event has passed and if registration has closed (by date/time)
   const now = new Date();
   const eventStartDate = event.dateTime?.startDate ? new Date(event.dateTime.startDate) : new Date();
   const isEventPassed = eventStartDate < now;
+  const isRegistrationClosed = event.registrationClosesAt ? new Date(event.registrationClosesAt) < now : false;
 
   const getLocalizedTitle = () => {
     if (!event.content) return '';
@@ -627,7 +629,7 @@ export default function EventPage() {
                   <Icon name="task" className="w-4 h-4 text-brand-main" />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
                     {event.registrationRequired ? 
-                      (isEventPassed ? 
+                      (isEventPassed || isRegistrationClosed ? 
                         (locale === 'he' ? 'הרשמה סגורה' : 'Registration Closed') : 
                         (locale === 'he' ? 'נדרשת הרשמה מראש' : 'Registration Required')
                       ) : 
@@ -638,16 +640,25 @@ export default function EventPage() {
               </div>
 
               {/* Registration Button */}
-              {event.registrationRequired && event.registrationUrl && !isEventPassed && (
+              {event.registrationRequired && !isEventPassed && !isRegistrationClosed && (
                 <div className="pt-2">
-                  <a 
-                    href={event.registrationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block bg-brand-main hover:bg-brand-main/90 text-white font-semibold py-2.5 px-6 rounded-full text-center transition-colors"
-                  >
-                    {locale === 'he' ? 'הירשם עכשיו' : 'Register Now'}
-                  </a>
+                  {event.registrationUrl ? (
+                    <a 
+                      href={event.registrationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block bg-brand-main hover:bg-brand-main/90 text-white font-semibold py-2.5 px-6 rounded-full text-center transition-colors"
+                    >
+                      {locale === 'he' ? 'הירשם עכשיו' : 'Register Now'}
+                    </a>
+                  ) : (
+                    <Link 
+                      href={`/${locale}/events/${event.slug}/signup`}
+                      className="inline-block bg-brand-main hover:bg-brand-main/90 text-white font-semibold py-2.5 px-6 rounded-full text-center transition-colors"
+                    >
+                      {locale === 'he' ? 'הירשם עכשיו' : 'Register Now'}
+                    </Link>
+                  )}
                 </div>
               )}
 

@@ -137,6 +137,8 @@ export async function GET(
             he: Array.isArray(event.content.he?.sections) ? event.content.he.sections : [],
           }
         : { en: [], he: [] },
+      signupForm: event.signupForm || null,
+      eventRules: event.eventRules || { en: '', he: '' },
       createdAt: event.createdAt,
       updatedAt: event.updatedAt,
     };
@@ -202,6 +204,11 @@ export async function PUT(
     if (body.isFree !== undefined) event.isFree = body.isFree;
     if (body.registrationRequired !== undefined) event.registrationRequired = body.registrationRequired;
     if (body.registrationUrl !== undefined) event.registrationUrl = body.registrationUrl || '';
+    if (body.registrationClosesAt !== undefined) {
+      event.registrationClosesAt = body.registrationClosesAt && String(body.registrationClosesAt).trim()
+        ? new Date(body.registrationClosesAt)
+        : undefined;
+    }
     if (body.location !== undefined) event.location = body.location;
     if (body.metaTitle !== undefined) event.metaTitle = { en: body.metaTitle.en ?? '', he: body.metaTitle.he ?? '' };
     if (body.metaDescription !== undefined) event.metaDescription = { en: body.metaDescription.en ?? '', he: body.metaDescription.he ?? '' };
@@ -404,6 +411,7 @@ export async function PUT(
       price: undefined,
       currency: 'ILS',
       registrationUrl: event.registrationUrl || '',
+      registrationClosesAt: event.registrationClosesAt ? event.registrationClosesAt.toISOString().slice(0, 16) : '',
       viewsCount: event.viewCount ?? event.viewsCount ?? 0,
       interestedCount: event.interestedCount ?? 0,
       status: event.status,

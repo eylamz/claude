@@ -94,6 +94,46 @@ export interface IEventDateTime {
 export const EVENT_RELATED_SPORTS = ['roller', 'skate', 'scoot', 'bmx', 'longboard'] as const;
 export type EventRelatedSport = (typeof EVENT_RELATED_SPORTS)[number];
 
+/** Event signup form field option (for select/checkbox); linkUrl makes the option label a link e.g. privacy policy */
+export interface IEventSignupFormFieldOption {
+  value: string;
+  label: { en: string; he: string };
+  linkUrl?: string;
+}
+
+/** Event signup form field definition (admin-configured, used on public signup page) */
+export interface IEventSignupFormField {
+  id: string;
+  name: string;
+  type: 'text' | 'email' | 'phone' | 'number' | 'select' | 'textarea' | 'checkbox';
+  label: { en: string; he: string };
+  required?: boolean;
+  placeholder?: { en: string; he: string };
+  options?: IEventSignupFormFieldOption[];
+  order?: number;
+  /** For number fields: min/max value; for text: min/max length */
+  validation?: { min?: number; max?: number };
+}
+
+/** Event signup form config (stored on Event, controls public registration form) */
+export interface IEventSignupForm {
+  title: { en: string; he: string };
+  description?: { en: string; he: string };
+  fields: IEventSignupFormField[];
+  /** When true, show a required "I accept the Event Rules" checkbox (link opens rules modal). Hides the standalone "View event rules" button. */
+  showEventRulesCheckbox?: boolean;
+  /** When true, show a required "I agree to the Privacy Policy" checkbox. */
+  showPrivacyCheckbox?: boolean;
+  /** URL for privacy policy link when showPrivacyCheckbox is true. If empty, uses /[locale]/privacy. */
+  privacyPolicyUrl?: string;
+}
+
+/** Event rules (e.g. participation rules) – shown on signup page in a modal */
+export interface IEventRules {
+  en: string;
+  he: string;
+}
+
 // Main Event interface
 export interface IEvent extends Document {
   slug: string;
@@ -143,7 +183,13 @@ export interface IEvent extends Document {
   isFree: boolean;
   registrationRequired: boolean;
   registrationUrl?: string;
-  
+  /** After this date/time, registration is closed even if the event has not started yet. */
+  registrationClosesAt?: Date;
+  /** Admin-configured signup form (fields, labels). When set, public signup page uses this instead of defaults. */
+  signupForm?: IEventSignupForm;
+  /** Event rules (participation rules) – editable in signup-form admin, shown in modal on public signup page. */
+  eventRules?: IEventRules;
+
   // Timestamps (from mongoose timestamps)
   createdAt: Date;
   updatedAt: Date;
@@ -324,12 +370,35 @@ const EventSchema = new Schema<IEvent>(
     isOnline: { type: Boolean, default: false },
     isFree: { type: Boolean, default: true },
     registrationRequired: { type: Boolean, default: false },
-    registrationUrl: { type: String }
+    registrationUrl: { type: String },
+    registrationClosesAt: { type: Date },
+    signupForm: {
+      title: { en: { type: String }, he: { type: String } },
+      description: { en: { type: String }, he: { type: String } },
+      showEventRulesCheckbox: { type: Boolean },
+      showPrivacyCheckbox: { type: Boolean },
+      privacyPolicyUrl: { type: String },
+      fields: [{
+        id: { type: String },
+        name: { type: String },
+        type: { type: String, enum: ['text', 'email', 'phone', 'number', 'select', 'textarea', 'checkbox'] },
+        label: { en: { type: String }, he: { type: String } },
+        required: { type: Boolean },
+        placeholder: { en: { type: String }, he: { type: String } },
+        options: [{ value: { type: String }, label: { en: { type: String }, he: { type: String } }, linkUrl: { type: String } }],
+        order: { type: Number },
+        validation: { min: { type: Number }, max: { type: Number } },
+      }],
+    },
+    eventRules: {
+      en: { type: String },
+      he: { type: String },
+    },
   },
   {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toObject: { virtuals: true },
   }
 );
 

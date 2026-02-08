@@ -50,6 +50,7 @@ interface EventFormData {
   price: number | '';
   currency: string;
   registrationUrl: string;
+  registrationClosesAt: string;
   status: 'draft' | 'published' | 'cancelled' | 'completed';
   isFeatured: boolean;
   isPublic: boolean;
@@ -127,6 +128,7 @@ export default function EditEventPage() {
     price: '',
     currency: 'ILS',
     registrationUrl: '',
+    registrationClosesAt: '',
     status: 'draft',
     isFeatured: false,
     isPublic: true,
@@ -206,6 +208,7 @@ export default function EditEventPage() {
           price: event.price || '',
           currency: event.currency || 'ILS',
           registrationUrl: event.registrationUrl || '',
+          registrationClosesAt: event.registrationClosesAt || '',
           status: event.status || 'draft',
           isFeatured: event.isFeatured || false,
           isPublic: event.isPublic !== undefined ? event.isPublic : true,
@@ -1166,6 +1169,21 @@ export default function EditEventPage() {
                 onChange={(e) => handleInputChange('registrationUrl', e.target.value)}
                 placeholder="https://..."
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Leave empty to use the site&apos;s signup form (public page will link to /events/[slug]/signup).
+              </p>
+            </div>
+
+            <div>
+              <Input
+                type="datetime-local"
+                label="Registration closes at (Optional)"
+                value={formData.registrationClosesAt}
+                onChange={(e) => handleInputChange('registrationClosesAt', e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                After this date and time, registration is closed even if the event has not started yet. Leave empty for no limit.
+              </p>
             </div>
 
             <div className="pt-2">
@@ -1176,6 +1194,9 @@ export default function EditEventPage() {
                 onChange={(checked) => handleInputChange('registrationRequired', checked)}
                 label="Registration Required"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                When checked, the public event page shows a &quot;Register Now&quot; button linking to the signup form (or the URL above if set).
+              </p>
             </div>
           </CardContent>
         </Card>
