@@ -13,7 +13,7 @@ import { formatEventForDetail } from '@/lib/events/formatEvent';
  */
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
@@ -33,7 +33,7 @@ export async function GET(
       );
     }
 
-    const currentParticipants = await EventSignup.countByEventId(event._id);
+    const currentParticipants = await EventSignup.countByEventId(String(event._id));
 
     // Increment views count (async, don't wait)
     Event.findByIdAndUpdate(event._id, { $inc: { viewCount: 1 } }).exec().catch(console.error);

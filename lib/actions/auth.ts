@@ -103,8 +103,8 @@ export async function registerUser(
     // Convert MongoDB _id to string and ensure all values are plain
     const plainUser = {
       ...userWithoutPassword,
-      _id: user._id.toString(),
-      id: user._id.toString(),
+      _id: String(user._id),
+      id: String(user._id),
       createdAt: user.createdAt?.toISOString(),
       updatedAt: user.updatedAt?.toISOString(),
     };

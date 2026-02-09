@@ -20,19 +20,19 @@ export async function GET(request: NextRequest) {
     // Fetch all featured data in parallel (skateparks are fetched separately from /api/skateparks)
     const [products, trainers, guides] = await Promise.all([
       // Featured products
-      Product.findFeatured()
+      Product.find({ isFeatured: true, status: 'active' })
         .limit(homepageSettings?.featuredProductsCount || 8)
         .select('slug name images price discountPrice discountStartDate discountEndDate category')
         .lean(),
       
       // Featured trainers
-      Trainer.findFeatured()
+      Trainer.find({ isFeatured: true, status: 'active' })
         .limit(homepageSettings?.featuredTrainersCount || 3)
         .select('slug name profileImage area relatedSports')
         .lean(),
       
       // Featured guides
-      Guide.findFeatured()
+      Guide.find({ isFeatured: true, status: 'published' })
         .limit(homepageSettings?.featuredGuidesCount || 3)
         .select('slug title description coverImage relatedSports viewsCount')
         .lean(),

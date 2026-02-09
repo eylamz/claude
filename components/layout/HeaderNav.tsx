@@ -11,7 +11,6 @@ import {
   Minus,
   Plus,
   Loader2,
-  ChevronRight,
   LayoutDashboard,
   Package,
   ShoppingCart,
@@ -34,7 +33,6 @@ import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/context/ThemeProvider';
 import { hasConsent } from '@/lib/utils/cookie-consent';
@@ -47,7 +45,7 @@ import {
   useCartTotals,
   type CartItem 
 } from '@/stores/cartStore';
-import { Input, Card, CardContent, Skeleton } from '@/components/ui';
+import { Card, CardContent, Skeleton } from '@/components/ui';
 import { ProductCard, SkateparkCard, TrainerCard, GuideCard } from '@/components/shop';
 import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled, isGrowthLabEnabled, isCommunityEnabled } from '@/lib/utils/ecommerce';
 import { cn } from '@/lib/utils/cn';
@@ -143,7 +141,7 @@ export default function HeaderNav() {
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
+  const [_scrollY, setScrollY] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevScrollYRef = useRef(0);
 

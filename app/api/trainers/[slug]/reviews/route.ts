@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import Trainer from '@/lib/models/Trainer';
@@ -132,7 +133,7 @@ export async function POST(
     // Add review (will be pending)
     trainer.reviews = trainer.reviews || [];
     trainer.reviews.push({
-      userId: session.user.id,
+      userId: new mongoose.Types.ObjectId(session.user.id),
       userName: session.user.name || session.user.email || 'User',
       rating,
       comment: comment?.trim() || '',

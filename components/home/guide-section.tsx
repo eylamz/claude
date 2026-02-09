@@ -20,7 +20,7 @@ interface GuideSectionProps {
   t: (key: string) => string;
 }
 
-export const GuideSection = ({ guides, t }: GuideSectionProps) => {
+export const GuideSection = ({ guides, t: _t }: GuideSectionProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showStartButton, setShowStartButton] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);

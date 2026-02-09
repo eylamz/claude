@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 
 interface OptimizedImageProps {
   src: string; // Cloudinary public_id, e.g., folder/image

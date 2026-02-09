@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import EventSignup from '@/lib/models/EventSignup';
-import Event from '@/lib/models/Event';
 import mongoose from 'mongoose';
 
 /**

@@ -11,7 +11,7 @@ import mongoose from 'mongoose';
  * Get a single event signup (admin only)
  */
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

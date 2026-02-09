@@ -114,7 +114,6 @@ export function formatEventForDetail(
 
     capacity: event.capacity,
     price: event.price,
-    relatedSports: event.relatedSports || [],
 
     metaTitle: event.metaTitle,
     metaDescription: event.metaDescription,

@@ -7,13 +7,28 @@ import User, { IUser } from '../models/User';
 import Product from '../models/Product';
 import Event, { IEvent } from '../models/Event';
 import EventSignup from '../models/EventSignup';
-import Skatepark, { ISkatepark } from '../models/Skatepark';
+import Skatepark, { ISkatepark, IOperatingHours, IDaySchedule } from '../models/Skatepark';
 import Trainer from '../models/Trainer';
 import Guide from '../models/Guide';
 import Order from './models/Order';
 import Review from './models/Review';
 
 type WithId<T> = T & { _id: mongoose.Types.ObjectId };
+
+const closedDay: IDaySchedule = { isOpen: false };
+const defaultOperatingHours: IOperatingHours = {
+  sunday: closedDay,
+  monday: closedDay,
+  tuesday: closedDay,
+  wednesday: closedDay,
+  thursday: closedDay,
+  friday: closedDay,
+  saturday: closedDay,
+  holidays: closedDay,
+};
+function mergeHours(partial: Partial<IOperatingHours>): IOperatingHours {
+  return { ...defaultOperatingHours, ...partial };
+}
 
 // Load environment variables from .env.local (fallback to .env) if MONGODB_URI is missing
 (() => {
@@ -171,10 +186,10 @@ export async function seedDatabase() {
           address: { en: 'Charles Clore Park, Tel Aviv', he: 'Charles Clore Park, Tel Aviv (Hebrew)' },
           area: 'center',
           location: { type: 'Point', coordinates: [34.7618, 32.0853] },
-          images: [{ url: img('Tel Aviv Skatepark','000000','FFFFFF'), alt: { en: 'Tel Aviv Skatepark', he: 'Tel Aviv Skatepark (Hebrew)' }, order: 0, publicId: 'placeholder:park-tlv' }],
-          operatingHours: { sunday: { open: '06:00', close: '23:00' }, friday: { open: '06:00', close: '18:00' }, saturday: { open: '08:00', close: '23:00' } },
+          images: [{ url: img('Tel Aviv Skatepark','000000','FFFFFF'), isFeatured: false, orderNumber: 0 }],
+          operatingHours: mergeHours({ sunday: { openingTime: '06:00', closingTime: '23:00', isOpen: true }, friday: { openingTime: '06:00', closingTime: '18:00', isOpen: true }, saturday: { openingTime: '08:00', closingTime: '23:00', isOpen: true } }),
           amenities: { entryFee: false, parking: true, shade: true, bathroom: true, helmetRequired: false, guard: false, seating: true, bombShelter: false, scootersAllowed: true, bikesAllowed: true, noWax: false, nearbyRestaurants: true },
-          openingYear: 2018, is24Hours: false, isFeatured: true, status: 'active', notes: { en: 'Central location by the sea.', he: 'מיקום מרכזי ליד הים (Hebrew)' },
+          openingYear: 2018, lightingHours: { is24Hours: false, endTime: '23:00' }, isFeatured: true, status: 'active', notes: { en: ['Central location by the sea.'], he: ['מיקום מרכזי ליד הים (Hebrew)'] },
         },
         {
           slug: slugify('Jerusalem Skatepark'),
@@ -182,10 +197,10 @@ export async function seedDatabase() {
           address: { en: 'Teddy Stadium, Jerusalem', he: 'Teddy Stadium, Jerusalem (Hebrew)' },
           area: 'center',
           location: { type: 'Point', coordinates: [35.1900, 31.7510] },
-          images: [{ url: img('Jerusalem Skatepark','000000','FFFFFF'), alt: { en: 'Jerusalem Skatepark', he: 'Jerusalem Skatepark (Hebrew)' }, order: 0, publicId: 'placeholder:park-jlm' }],
-          operatingHours: {},
+          images: [{ url: img('Jerusalem Skatepark','000000','FFFFFF'), isFeatured: false, orderNumber: 0 }],
+          operatingHours: defaultOperatingHours,
           amenities: { entryFee: false, parking: true, shade: false, bathroom: true, helmetRequired: false, guard: false, seating: false, bombShelter: false, scootersAllowed: true, bikesAllowed: true, noWax: false, nearbyRestaurants: true },
-          openingYear: 2017, is24Hours: true, isFeatured: false, status: 'active', notes: { en: 'Open 24/7 lighting.', he: 'פתוח 24/7 עם תאורה (Hebrew)' },
+          openingYear: 2017, lightingHours: { is24Hours: true, endTime: '23:59' }, isFeatured: false, status: 'active', notes: { en: ['Open 24/7 lighting.'], he: ['פתוח 24/7 עם תאורה (Hebrew)'] },
         },
         {
           slug: slugify('Haifa X-Park'),
@@ -193,10 +208,10 @@ export async function seedDatabase() {
           address: { en: 'Hecht Park, Haifa', he: 'Hecht Park, Haifa (Hebrew)' },
           area: 'north',
           location: { type: 'Point', coordinates: [34.9554, 32.8140] },
-          images: [{ url: img('Haifa X-Park','000000','FFFFFF'), alt: { en: 'Haifa X-Park', he: 'Haifa X-Park (Hebrew)' }, order: 0, publicId: 'placeholder:park-haifa' }],
-          operatingHours: { sunday: { open: '08:00', close: '22:00' } },
+          images: [{ url: img('Haifa X-Park','000000','FFFFFF'), isFeatured: false, orderNumber: 0 }],
+          operatingHours: mergeHours({ sunday: { openingTime: '08:00', closingTime: '22:00', isOpen: true } }),
           amenities: { entryFee: false, parking: true, shade: false, bathroom: false, helmetRequired: true, guard: true, seating: false, bombShelter: false, scootersAllowed: true, bikesAllowed: true, noWax: false, nearbyRestaurants: false },
-          openingYear: 2016, is24Hours: false, isFeatured: false, status: 'active', notes: { en: 'Helmet required.', he: 'חובה קסדה (Hebrew)' },
+          openingYear: 2016, lightingHours: { is24Hours: false, endTime: '22:00' }, isFeatured: false, status: 'active', notes: { en: ['Helmet required.'], he: ['חובה קסדה (Hebrew)'] },
         },
         {
           slug: slugify('Eilat Desert Bowl'),
@@ -204,10 +219,10 @@ export async function seedDatabase() {
           address: { en: 'Sport Center, Eilat', he: 'Sport Center, Eilat (Hebrew)' },
           area: 'south',
           location: { type: 'Point', coordinates: [34.9498, 29.5577] },
-          images: [{ url: img('Eilat Desert Bowl','000000','FFFFFF'), alt: { en: 'Eilat Desert Bowl', he: 'Eilat Desert Bowl (Hebrew)' }, order: 0, publicId: 'placeholder:park-eilat' }],
-          operatingHours: { sunday: { open: '06:00', close: '22:00' } },
+          images: [{ url: img('Eilat Desert Bowl','000000','FFFFFF'), isFeatured: false, orderNumber: 0 }],
+          operatingHours: mergeHours({ sunday: { openingTime: '06:00', closingTime: '22:00', isOpen: true } }),
           amenities: { entryFee: false, parking: false, shade: true, bathroom: false, helmetRequired: false, guard: false, seating: true, bombShelter: false, scootersAllowed: true, bikesAllowed: true, noWax: false, nearbyRestaurants: true },
-          openingYear: 2019, is24Hours: false, isFeatured: false, status: 'active', notes: { en: 'Desert vibes.', he: 'אווירת מדבר (Hebrew)' },
+          openingYear: 2019, lightingHours: { is24Hours: false, endTime: '22:00' }, isFeatured: false, status: 'active', notes: { en: ['Desert vibes.'], he: ['אווירת מדבר (Hebrew)'] },
         },
         {
           slug: slugify('Netanya Coastal Park'),
@@ -215,10 +230,10 @@ export async function seedDatabase() {
           address: { en: 'Netanya seafront', he: 'Netanya seafront (Hebrew)' },
           area: 'north',
           location: { type: 'Point', coordinates: [34.8599, 32.3215] },
-          images: [{ url: img('Netanya Coastal Park','000000','FFFFFF'), alt: { en: 'Netanya Coastal Park', he: 'Netanya Coastal Park (Hebrew)' }, order: 0, publicId: 'placeholder:park-netanya' }],
-          operatingHours: { sunday: { open: '07:00', close: '22:00' } },
+          images: [{ url: img('Netanya Coastal Park','000000','FFFFFF'), isFeatured: false, orderNumber: 0 }],
+          operatingHours: mergeHours({ sunday: { openingTime: '07:00', closingTime: '22:00', isOpen: true } }),
           amenities: { entryFee: false, parking: true, shade: false, bathroom: true, helmetRequired: false, guard: false, seating: false, bombShelter: true, scootersAllowed: true, bikesAllowed: true, noWax: false, nearbyRestaurants: true },
-          openingYear: 2021, is24Hours: false, isFeatured: true, status: 'active', notes: { en: 'Coastal winds.', he: 'רוחות חוף (Hebrew)' },
+          openingYear: 2021, lightingHours: { is24Hours: false, endTime: '22:00' }, isFeatured: true, status: 'active', notes: { en: ['Coastal winds.'], he: ['רוחות חוף (Hebrew)'] },
         },
         {
           slug: slugify('Beer Sheva Urban Park'),
@@ -226,10 +241,10 @@ export async function seedDatabase() {
           address: { en: 'Beer Sheva', he: 'Beer Sheva (Hebrew)' },
           area: 'south',
           location: { type: 'Point', coordinates: [34.7925, 31.2520] },
-          images: [{ url: img('Beer Sheva Urban Park','000000','FFFFFF'), alt: { en: 'Beer Sheva Urban Park', he: 'Beer Sheva Urban Park (Hebrew)' }, order: 0, publicId: 'placeholder:park-beersheva' }],
-          operatingHours: { sunday: { open: '08:00', close: '23:00' } },
+          images: [{ url: img('Beer Sheva Urban Park','000000','FFFFFF'), isFeatured: false, orderNumber: 0 }],
+          operatingHours: mergeHours({ sunday: { openingTime: '08:00', closingTime: '23:00', isOpen: true } }),
           amenities: { entryFee: false, parking: false, shade: false, bathroom: false, helmetRequired: false, guard: false, seating: true, bombShelter: false, scootersAllowed: true, bikesAllowed: true, noWax: true, nearbyRestaurants: false },
-          openingYear: 2020, is24Hours: false, isFeatured: false, status: 'active', notes: { en: 'No wax policy.', he: 'אסור ווקס (Hebrew)' },
+          openingYear: 2020, lightingHours: { is24Hours: false, endTime: '23:00' }, isFeatured: false, status: 'active', notes: { en: ['No wax policy.'], he: ['אסור ווקס (Hebrew)'] },
         },
       ];
       const createdParks = await Skatepark.insertMany(parks, { session });
@@ -238,7 +253,7 @@ export async function seedDatabase() {
       const parkBySlug = (slug: string) => createdParks.find((p) => p.slug === slugify(slug))!;
 
       console.log('📅 Seeding events...');
-      const eventsData: Array<Partial<IEvent>> = [];
+      const eventsData: Array<Partial<IEvent> & Record<string, unknown>> = [];
       // ENBOSS Summer Jam 2024 - 3 months from now, Tel Aviv
       eventsData.push({
         slug: slugify('ENBOSS Summer Jam 2024'),
@@ -249,11 +264,10 @@ export async function seedDatabase() {
         location: {
           name: { en: 'Tel Aviv Skatepark', he: 'Tel Aviv Skatepark (Hebrew)' },
           address: parkBySlug('Tel Aviv Skatepark').address,
-          coordinates: { latitude: parkBySlug('Tel Aviv Skatepark').location.coordinates[1], longitude: parkBySlug('Tel Aviv Skatepark').location.coordinates[0] },
-          venueUrl: undefined,
+          coordinates: { lat: parkBySlug('Tel Aviv Skatepark').location.coordinates[1], lng: parkBySlug('Tel Aviv Skatepark').location.coordinates[0] },
         },
         images: [{ url: img('Summer Jam','00AAFF','FFFFFF'), alt: { en: 'Summer Jam', he: 'Summer Jam (Hebrew)' }, order: 0, publicId: 'placeholder:event-summerjam' }],
-        featuredImage: img('Summer Jam','00AAFF','FFFFFF'),
+        featuredImage: { url: img('Summer Jam','00AAFF','FFFFFF'), altText: { en: 'Summer Jam', he: 'Summer Jam (Hebrew)' } },
         relatedSports: ['skateboarding','BMX'],
         category: 'jam',
         organizer: { name: 'ENBOSS', email: 'events@enboss.co' },
@@ -266,9 +280,9 @@ export async function seedDatabase() {
         description: { en: 'Intro to pushing, turning, and stopping safely.', he: 'הקדמה לדחיפה, פניות ועצירה (Hebrew)' },
         shortDescription: { en: 'Perfect for first-timers.', he: 'מושלם למתחילים (Hebrew)' },
         startDate: nowPlus(14, 0), endDate: nowPlus(14, 2), timezone: 'Asia/Jerusalem', isAllDay: false,
-        location: { name: { en: 'Tel Aviv Skatepark', he: 'Tel Aviv Skatepark (Hebrew)' }, address: parkBySlug('Tel Aviv Skatepark').address, coordinates: { latitude: parkBySlug('Tel Aviv Skatepark').location.coordinates[1], longitude: parkBySlug('Tel Aviv Skatepark').location.coordinates[0] } },
+        location: { name: { en: 'Tel Aviv Skatepark', he: 'Tel Aviv Skatepark (Hebrew)' }, address: parkBySlug('Tel Aviv Skatepark').address, coordinates: { lat: parkBySlug('Tel Aviv Skatepark').location.coordinates[1], lng: parkBySlug('Tel Aviv Skatepark').location.coordinates[0] } },
         images: [{ url: img('Beginner Workshop','00AAFF','FFFFFF'), alt: { en: 'Beginner Workshop', he: 'Beginner Workshop (Hebrew)' }, order: 0, publicId: 'placeholder:event-beginner' }],
-        featuredImage: img('Beginner Workshop','00AAFF','FFFFFF'),
+        featuredImage: { url: img('Beginner Workshop','00AAFF','FFFFFF'), altText: { en: 'Beginner Workshop', he: 'Beginner Workshop (Hebrew)' } },
         relatedSports: ['skateboarding'], category: 'workshop', organizer: { name: 'ENBOSS', email: 'events@enboss.co' }, capacity: 20, isFree: true, registrationRequired: true, status: 'published',
       });
       // Night Session - tomorrow 20:00 at Jerusalem
@@ -280,9 +294,9 @@ export async function seedDatabase() {
         description: { en: 'Chill night sesh under the lights.', he: 'סשן לילה רגוע תחת האורות (Hebrew)' },
         shortDescription: { en: 'All levels welcome.', he: 'לכל הרמות (Hebrew)' },
         startDate: tomorrow, endDate: tomorrowEnd, timezone: 'Asia/Jerusalem', isAllDay: false,
-        location: { name: { en: 'Jerusalem Skatepark', he: 'Jerusalem Skatepark (Hebrew)' }, address: parkBySlug('Jerusalem Skatepark').address, coordinates: { latitude: parkBySlug('Jerusalem Skatepark').location.coordinates[1], longitude: parkBySlug('Jerusalem Skatepark').location.coordinates[0] } },
+        location: { name: { en: 'Jerusalem Skatepark', he: 'Jerusalem Skatepark (Hebrew)' }, address: parkBySlug('Jerusalem Skatepark').address, coordinates: { lat: parkBySlug('Jerusalem Skatepark').location.coordinates[1], lng: parkBySlug('Jerusalem Skatepark').location.coordinates[0] } },
         images: [{ url: img('Night Session','222222','FFFFFF'), alt: { en: 'Night Session', he: 'Night Session (Hebrew)' }, order: 0, publicId: 'placeholder:event-night' }],
-        featuredImage: img('Night Session','222222','FFFFFF'),
+        featuredImage: { url: img('Night Session','222222','FFFFFF'), altText: { en: 'Night Session', he: 'Night Session (Hebrew)' } },
         relatedSports: ['skateboarding','rollerblading','BMX'], category: 'session', organizer: { name: 'ENBOSS', email: 'events@enboss.co' }, isFree: true, registrationRequired: false, status: 'published',
       });
       // ENBOSS Team Demo - 1 month from now
@@ -292,9 +306,9 @@ export async function seedDatabase() {
         description: { en: 'Watch the ENBOSS team throw down at the park.', he: 'צפו בצוות ENBOSS נותן הופעה (Hebrew)' },
         shortDescription: { en: 'Don’t miss it.', he: 'אל תפספסו (Hebrew)' },
         startDate: nowPlus(30, 0), endDate: nowPlus(30, 2), timezone: 'Asia/Jerusalem', isAllDay: false,
-        location: { name: { en: 'Netanya Coastal Park', he: 'Netanya Coastal Park (Hebrew)' }, address: parkBySlug('Netanya Coastal Park').address, coordinates: { latitude: parkBySlug('Netanya Coastal Park').location.coordinates[1], longitude: parkBySlug('Netanya Coastal Park').location.coordinates[0] } },
+        location: { name: { en: 'Netanya Coastal Park', he: 'Netanya Coastal Park (Hebrew)' }, address: parkBySlug('Netanya Coastal Park').address, coordinates: { lat: parkBySlug('Netanya Coastal Park').location.coordinates[1], lng: parkBySlug('Netanya Coastal Park').location.coordinates[0] } },
         images: [{ url: img('Team Demo','AA00FF','FFFFFF'), alt: { en: 'Team Demo', he: 'Team Demo (Hebrew)' }, order: 0, publicId: 'placeholder:event-demo' }],
-        featuredImage: img('Team Demo','AA00FF','FFFFFF'),
+        featuredImage: { url: img('Team Demo','AA00FF','FFFFFF'), altText: { en: 'Team Demo', he: 'Team Demo (Hebrew)' } },
         relatedSports: ['skateboarding','rollerblading'], category: 'demo', organizer: { name: 'ENBOSS', email: 'events@enboss.co' }, isFree: true, registrationRequired: false, isFeatured: true, status: 'published',
       });
 

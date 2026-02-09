@@ -74,13 +74,13 @@ export async function seedGuides() {
       let author = await User.findOne({ email: 'editor@enboss.co' }).session(session);
       if (!author) {
         // Create a default editor user if it doesn't exist
-        author = await User.create([{
+        const created = await User.create([{
           email: 'editor@enboss.co',
           password: 'Editor123!',
           fullName: 'Editor User',
           role: 'editor',
         }], { session });
-        author = Array.isArray(author) ? author[0] : author;
+        author = (Array.isArray(created) ? created[0] : created) as NonNullable<typeof author>;
         console.log('👤 Created default editor user for guides');
       }
 
@@ -237,8 +237,8 @@ export async function seedGuides() {
         ratingCount: 15,
         status: 'published',
         isFeatured: true,
-        authorId: author._id,
-        authorName: author.fullName,
+        authorId: author!._id as mongoose.Types.ObjectId,
+        authorName: author!.fullName,
         publishedAt: new Date(),
         metaTitle: {
           en: 'How to Ollie - Complete Beginner Skateboarding Guide',
@@ -433,8 +433,8 @@ export async function seedGuides() {
         ratingCount: 8,
         status: 'published',
         isFeatured: false,
-        authorId: author._id,
-        authorName: author.fullName,
+        authorId: author!._id as mongoose.Types.ObjectId,
+        authorName: author!.fullName,
         publishedAt: new Date(),
         metaTitle: {
           en: 'Skateboard Maintenance Guide - Keep Your Board in Top Shape',

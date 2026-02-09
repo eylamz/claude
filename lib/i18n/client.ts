@@ -8,7 +8,7 @@ import { useTranslations } from 'next-intl';
  * @param namespace - The translation namespace
  * @returns Object with translation function
  */
-export function useTranslation(lng: string, namespace: string) {
+export function useTranslation(_lng: string, namespace: string) {
   const t = useTranslations(namespace);
   
   return { t };

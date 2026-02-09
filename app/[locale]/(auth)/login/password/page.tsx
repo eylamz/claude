@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect, useRef } from 'react';
+import { Suspense, useState, useTransition, useEffect, useRef } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
@@ -21,7 +21,7 @@ interface LoginErrors {
   general?: string;
 }
 
-export default function LoginPasswordPage() {
+function LoginPasswordContent() {
   const locale = useLocale();
   const t = useTranslation('auth');
   const { toast } = useToast();
@@ -501,3 +501,19 @@ export default function LoginPasswordPage() {
   );
 }
 
+export default function LoginPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
+          <div className="text-center">
+            <LoadingSpinner className="mb-4" />
+            <p className="text-text dark:text-text-dark">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <LoginPasswordContent />
+    </Suspense>
+  );
+}

@@ -1,7 +1,7 @@
 // nextjs-app/app/[locale]/(public)/search/page.tsx
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { ProductCard, SkateparkCard, TrainerCard, GuideCard } from '@/components/shop';
@@ -86,7 +86,7 @@ interface TrainerResult extends SearchResultBase {
 
 type SearchResult = ProductResult | SkateparkResult | EventResult | GuideResult | TrainerResult;
 
-export default function SearchPage() {
+function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
@@ -849,5 +849,22 @@ export default function SearchPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="animate-pulse flex flex-col items-center gap-4">
+            <div className="h-10 w-64 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="h-64 w-full max-w-4xl bg-gray-200 dark:bg-gray-700 rounded" />
+          </div>
+        </div>
+      }
+    >
+      <SearchPageContent />
+    </Suspense>
   );
 }

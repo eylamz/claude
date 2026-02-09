@@ -26,7 +26,7 @@ const formatPrice = (price: number): string => {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
-export const ProductSection = ({ products, t }: ProductSectionProps) => {
+export const ProductSection = ({ products, t: _t }: ProductSectionProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showStartButton, setShowStartButton] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);

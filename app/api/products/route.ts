@@ -16,9 +16,6 @@ export async function GET(request: NextRequest) {
     const minPrice = searchParams.get('minPrice');
     const maxPrice = searchParams.get('maxPrice');
     const inStockOnly = searchParams.get('inStockOnly') === 'true';
-    const sizes = searchParams.get('sizes')?.split(',').filter(Boolean);
-    const colors = searchParams.get('colors')?.split(',').filter(Boolean);
-    
     // Build query
     const query: any = { status: 'active' };
     

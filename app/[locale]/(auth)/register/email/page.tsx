@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useTransition } from 'react';
+import { Suspense, useState, useEffect, useTransition } from 'react';
 import { useLocale } from 'next-intl';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ interface RegisterEmailErrors {
   general?: string;
 }
 
-export default function RegisterEmailPage() {
+function RegisterEmailPageContent() {
   const locale = useLocale();
   const t = useTranslation('auth');
   const commonT = useTranslations('common');
@@ -201,3 +201,19 @@ export default function RegisterEmailPage() {
   );
 }
 
+export default function RegisterEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
+          <div className="text-center">
+            <LoadingSpinner className="mb-4" />
+            <p className="text-text dark:text-text-dark">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <RegisterEmailPageContent />
+    </Suspense>
+  );
+}

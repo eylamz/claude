@@ -9,7 +9,7 @@ import { getIsraelWeatherSummary } from '@/lib/services/weather';
  * Returns general Israel weather summary for the list page
  */
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   // Check if weather forecast is enabled
   const weatherEnabled = process.env.NEXT_PUBLIC_ENABLE_WEATHER_FORECAST === 'true';
   if (!weatherEnabled) {

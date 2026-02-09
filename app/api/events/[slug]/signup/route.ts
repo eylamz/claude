@@ -103,7 +103,7 @@ async function validateCaptcha(token: string | null): Promise<boolean> {
 /**
  * Validate form data against event schema
  */
-function validateFormData(formData: any[], event: any): { valid: boolean; errors: string[] } {
+function validateFormData(formData: any[], _event: any): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   
   if (!Array.isArray(formData) || formData.length === 0) {
@@ -112,13 +112,13 @@ function validateFormData(formData: any[], event: any): { valid: boolean; errors
   }
   
   // Check for required fields (email is always required)
-  const hasEmail = formData.some((field) => field.type === 'email' && field.value);
+  const hasEmail = formData.some((field: { type?: string; value?: unknown }) => field.type === 'email' && field.value);
   if (!hasEmail) {
     errors.push('Email address is required');
   }
   
   // Validate email format if present
-  const emailField = formData.find((field) => field.type === 'email');
+  const emailField = formData.find((field: { type?: string; value?: unknown }) => field.type === 'email');
   if (emailField?.value && typeof emailField.value === 'string') {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailField.value)) {
@@ -127,7 +127,7 @@ function validateFormData(formData: any[], event: any): { valid: boolean; errors
   }
   
   // Validate phone format if present
-  const phoneField = formData.find((field) => field.type === 'phone');
+  const phoneField = formData.find((field: { type?: string; value?: unknown }) => field.type === 'phone');
   if (phoneField?.value && typeof phoneField.value === 'string') {
     const phoneRegex = /^[\d\s\+\-\(\)]+$/;
     if (!phoneRegex.test(phoneField.value)) {
@@ -349,7 +349,7 @@ export async function POST(
     }
     
     // Extract email from form data
-    const emailField = formData.find((field) => field.type === 'email');
+    const emailField = formData.find((field: { type?: string; value?: unknown }) => field.type === 'email');
     const email = emailField?.value as string;
     
     // Get authenticated user if available
@@ -357,7 +357,7 @@ export async function POST(
     const userId = session?.user?.id;
     
     // Check for duplicate registration
-    const existingSignup = await EventSignup.findDuplicate(event._id, email, ipAddress);
+    const existingSignup = await EventSignup.findDuplicate(String(event._id), email, ipAddress);
     if (existingSignup) {
       return NextResponse.json(
         {
@@ -369,10 +369,11 @@ export async function POST(
       );
     }
     
-    // Check capacity
-    if (event.capacity) {
-      const currentCount = await EventSignup.countByEventId(event._id);
-      if (currentCount >= event.capacity) {
+    // Check capacity (if defined on event)
+    const capacity = (event as { capacity?: number }).capacity;
+    if (capacity != null) {
+      const currentCount = await EventSignup.countByEventId(String(event._id));
+      if (currentCount >= capacity) {
         return NextResponse.json(
           { error: 'Event full', message: 'This event has reached its capacity' },
           { status: 400 }
@@ -382,7 +383,7 @@ export async function POST(
     
     // Create signup
     const signup = new EventSignup({
-      eventId: event._id,
+      eventId: String(event._id),
       eventSlug: event.slug,
       formData,
       userId: userId || undefined,
@@ -403,7 +404,8 @@ export async function POST(
     if (email) {
       try {
         const emailHtml = generateConfirmationEmail(event, signup.confirmationNumber, formData);
-        const emailSubject = `Event Registration Confirmation: ${event.title?.en || 'Event'}`;
+        const eventTitle = (event as { content?: { en?: { title?: string }; he?: { title?: string } } }).content?.en?.title || (event as { content?: { en?: { title?: string }; he?: { title?: string } } }).content?.he?.title || 'Event';
+    const emailSubject = `Event Registration Confirmation: ${eventTitle}`;
         await sendEmail(email, emailSubject, emailHtml);
       } catch (emailError) {
         console.error('Failed to send confirmation email:', emailError);

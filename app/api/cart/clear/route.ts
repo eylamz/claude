@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // import { getSession } from '@/lib/auth';
 // import { redis } from '@/lib/redis';
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(_request: NextRequest) {
   try {
     // Get user session
     // const session = await getSession(request);

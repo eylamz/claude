@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
+import mongoose from 'mongoose';
 import connectDB from '@/lib/db/mongodb';
 import Form from '@/lib/models/Form';
 import FormSubmission from '@/lib/models/FormSubmission';
@@ -46,7 +47,7 @@ export async function GET(
     const fingerprint = generateFingerprint(ip, userAgent);
 
     // Check for existing submission
-    const existingSubmission = await FormSubmission.findByFingerprint(form._id, fingerprint);
+    const existingSubmission = await FormSubmission.findByFingerprint(new mongoose.Types.ObjectId(String(form._id)), fingerprint);
 
     return NextResponse.json({
       submitted: !!existingSubmission,

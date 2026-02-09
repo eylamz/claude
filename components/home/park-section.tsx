@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useLocale, useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Icon } from '@/components/icons';
 import { ArrowRight } from './arrow-right';
@@ -21,7 +21,7 @@ interface ParkSectionProps {
   t: (key: string) => string;
 }
 
-export const ParkSection = ({ parks, t }: ParkSectionProps) => {
+export const ParkSection = ({ parks, t: _t }: ParkSectionProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showStartButton, setShowStartButton] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);

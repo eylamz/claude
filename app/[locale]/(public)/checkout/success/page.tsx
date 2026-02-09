@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -117,7 +117,7 @@ function ConfettiAnimation() {
   );
 }
 
-export default function CheckoutSuccessPage() {
+function CheckoutSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { clearCart, items: cartItems } = useCartStore();
@@ -233,26 +233,6 @@ export default function CheckoutSuccessPage() {
       }
     } catch (error) {
       console.error('Failed to fetch order details:', error);
-    }
-  };
-
-  // Save order to user account
-  const _handleSaveOrder = async () => {
-    if (!orderData) return;
-
-    try {
-      // TODO: Call API to save order to user account
-      const response = await fetch('/api/orders/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData),
-      });
-
-      if (response.ok) {
-        alert('Order saved to your account!');
-      }
-    } catch (error) {
-      console.error('Failed to save order:', error);
     }
   };
 
@@ -600,3 +580,16 @@ export default function CheckoutSuccessPage() {
   );
 }
 
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-600 dark:text-gray-400" />
+        </div>
+      }
+    >
+      <CheckoutSuccessContent />
+    </Suspense>
+  );
+}

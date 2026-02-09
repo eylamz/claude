@@ -204,7 +204,7 @@ export async function POST(request: Request) {
           }
         : undefined,
       authorId: session.user.id,
-      authorName: user.name || user.email,
+      authorName: (user as { name?: string; email?: string }).name || (user as { email?: string }).email,
       submissionsCount: 0,
     };
 

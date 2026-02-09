@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const locale = searchParams.get('locale') || 'en';
     
     // Fetch featured trainers
-    const trainers = await Trainer.findFeatured()
+    const trainers = await Trainer.find({ isFeatured: true, status: 'active' })
       .limit(limit)
       .select('slug name profileImage area relatedSports')
       .lean();

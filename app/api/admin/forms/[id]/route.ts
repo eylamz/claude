@@ -7,7 +7,7 @@ import Form from '@/lib/models/Form';
 import mongoose from 'mongoose';
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -40,7 +40,7 @@ export async function GET(
 
     // Format form data
     const formattedForm = {
-      id: form._id.toString(),
+      id: String(form._id),
       slug: form.slug,
       title: {
         en: form.title?.en || '',
@@ -196,7 +196,7 @@ export async function PUT(
 
     // Format response
     const formattedForm = {
-      id: form._id.toString(),
+      id: String(form._id),
       slug: form.slug,
       title: form.title,
       description: form.description,
@@ -251,7 +251,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

@@ -362,9 +362,9 @@ TrainerSchema.index({
  * Instance method: Get average rating
  */
 TrainerSchema.methods.getAverageRating = function (): number {
-  const approvedReviews = this.reviews.filter(r => r.isApproved);
+  const approvedReviews = this.reviews.filter((r: IReview) => r.isApproved);
   if (approvedReviews.length === 0) return 0;
-  const sum = approvedReviews.reduce((acc, review) => acc + review.rating, 0);
+  const sum = approvedReviews.reduce((acc: number, review: IReview) => acc + review.rating, 0);
   return sum / approvedReviews.length;
 };
 
@@ -372,7 +372,7 @@ TrainerSchema.methods.getAverageRating = function (): number {
  * Instance method: Get approved reviews count
  */
 TrainerSchema.methods.getApprovedReviewsCount = function (): number {
-  return this.reviews.filter(r => r.isApproved).length;
+  return this.reviews.filter((r: IReview) => r.isApproved).length;
 };
 
 /**
@@ -436,7 +436,7 @@ TrainerSchema.statics.searchTrainers = function (query: string) {
  */
 TrainerSchema.pre('save', function (next) {
   if (this.isModified('reviews')) {
-    const approvedReviews = this.reviews.filter(r => r.isApproved);
+    const approvedReviews = this.reviews.filter((r: IReview) => r.isApproved);
     this.approvedReviews = approvedReviews.length;
     this.totalReviews = this.reviews.length;
     

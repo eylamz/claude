@@ -5,8 +5,6 @@ import path from 'path';
 import { connectDB, disconnectDB } from './mongodb';
 import User, { IUser } from '../models/User';
 
-type WithId<T> = T & { _id: mongoose.Types.ObjectId };
-
 // Load environment variables from .env.local (fallback to .env) if MONGODB_URI is missing
 (() => {
   if (!process.env.MONGODB_URI) {

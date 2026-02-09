@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const locale = searchParams.get('locale') || 'en';
     
     // Fetch featured skateparks, sorted by opening year (newest first)
-    const skateparks = await Skatepark.findFeatured()
+    const skateparks = await Skatepark.find({ isFeatured: true, status: 'active' })
       .limit(limit)
       .sort({ openingYear: -1 })
       .select('slug name images area openingYear')

@@ -1,7 +1,7 @@
 // nextjs-app/app/[locale]/(public)/shop/page.tsx
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { ProductCard } from '@/components/shop';
@@ -37,7 +37,7 @@ interface CategoriesData {
   sports: string[];
 }
 
-export default function ShopPage() {
+function ShopPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
@@ -627,3 +627,23 @@ export default function ShopPage() {
   );
 }
 
+export default function ShopPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="animate-pulse flex flex-col items-center gap-4 w-full max-w-6xl">
+            <div className="h-10 w-64 bg-gray-200 dark:bg-gray-700 rounded" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 rounded" />
+              ))}
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <ShopPageContent />
+    </Suspense>
+  );
+}

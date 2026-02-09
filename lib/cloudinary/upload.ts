@@ -46,7 +46,7 @@ export async function uploadImage(
     if (Buffer.isBuffer(file)) {
       uploadParams.format = 'jpg';
       const result = await new Promise<UploadResult>((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
+        (cloudinary.uploader.upload_stream as (options: any, callback: (error: any, result: any) => void) => { end: (buffer: Buffer) => void })(
           {
             ...uploadParams,
             resource_type: 'auto',
@@ -77,7 +77,7 @@ export async function uploadImage(
       uploadParams.format = file.mimetype.split('/')[1];
       
       const result = await new Promise<UploadResult>((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
+        (cloudinary.uploader.upload_stream as (options: any, callback: (error: any, result: any) => void) => { end: (buffer: Buffer) => void })(
           {
             ...uploadParams,
             resource_type: 'auto',
@@ -125,7 +125,7 @@ export async function uploadMultiple(
  */
 export async function deleteImage(publicId: string): Promise<void> {
   try {
-    await cloudinary.uploader.destroy(publicId, {
+    await (cloudinary.uploader.destroy as (publicId: string, options?: { resource_type?: string }) => Promise<any>)(publicId, {
       resource_type: 'image',
     });
   } catch (error) {
@@ -139,7 +139,7 @@ export async function deleteImage(publicId: string): Promise<void> {
  */
 export async function deleteMultiple(publicIds: string[]): Promise<void> {
   try {
-    await cloudinary.uploader.destroy(publicIds.join(','), {
+    await (cloudinary.uploader.destroy as (publicId: string, options?: { resource_type?: string }) => Promise<any>)(publicIds.join(','), {
       resource_type: 'image',
     });
   } catch (error) {
@@ -161,7 +161,7 @@ export function getOptimizedUrl(
       ? TRANSFORMATION_PRESETS.auto 
       : transformation;
 
-    return cloudinary.url(publicId, {
+    return (cloudinary.url as (publicId: string, options?: Record<string, unknown>) => string)(publicId, {
       secure: true,
       ...trans,
     });
@@ -205,7 +205,7 @@ export function getMobileUrl(publicId: string): string {
 export function getResponsiveSrcSet(publicId: string): string {
   const sizes = [400, 800, 1200, 1920];
   const urls = sizes.map(width => {
-    return `${cloudinary.url(publicId, {
+    return `${(cloudinary.url as (publicId: string, options?: Record<string, unknown>) => string)(publicId, {
       secure: true,
       width,
       crop: 'scale',
@@ -223,7 +223,7 @@ export function getResponsiveSrcSet(publicId: string): string {
  */
 export async function getImageInfo(publicId: string): Promise<any> {
   try {
-    const result = await cloudinary.api.resource(publicId, {
+    const result = await (cloudinary.api as { resource: (publicId: string, options?: { resource_type?: string }) => Promise<any> }).resource(publicId, {
       resource_type: 'image',
     });
     return result;

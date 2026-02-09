@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
         { $sort: { avgMs: -1 } },
         { $project: { path: '$_id', avgTimeOnPageMs: { $round: ['$avgMs', 0] }, _id: 0 } },
       ]),
-      AnalyticsEvent.aggregate<{ _id: string; totalMs: number }>([
+      AnalyticsEvent.aggregate<{ avgSessionDurationMs: number; totalSessions: number }>([
         { $match: matchPageView },
         { $group: { _id: '$sessionId', totalMs: { $sum: { $ifNull: ['$timeOnPageMs', 0] } } } },
         { $group: { _id: null, avgSessionMs: { $avg: '$totalMs' }, count: { $sum: 1 } } },

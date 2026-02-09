@@ -6,10 +6,14 @@ import User from '@/lib/models/User';
 import Event from '@/lib/models/Event';
 import EventSignup from '@/lib/models/EventSignup';
 import Settings from '@/lib/models/Settings';
+import type { IEvent } from '@/lib/models/Event';
 import mongoose from 'mongoose';
 
+/** Lean event document that may include legacy flat fields */
+type EventLean = IEvent & Record<string, unknown>;
+
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -34,26 +38,29 @@ export async function GET(
 
     await connectDB();
 
-    const event = await Event.findById(id).lean();
+    const event = await Event.findById(id).lean() as EventLean | null;
 
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
+    const eventId = typeof event._id === 'string' ? new mongoose.Types.ObjectId(event._id) : event._id as mongoose.Types.ObjectId;
+
     // Get current participant count
-    const currentParticipants = await EventSignup.countByEventId(event._id);
+    const currentParticipants = await EventSignup.countByEventId(eventId);
 
     // Support both new schema (content, dateTime) and legacy flat fields
     const hasNewSchema = event.content && event.dateTime;
-    const titleEn = hasNewSchema ? event.content.en?.title : (event.title?.en ?? '');
-    const titleHe = hasNewSchema ? event.content.he?.title : (event.title?.he ?? '');
-    const descEn = hasNewSchema ? event.content.en?.description : (event.description?.en ?? '');
-    const descHe = hasNewSchema ? event.content.he?.description : (event.description?.he ?? '');
-    const startDate = hasNewSchema ? event.dateTime?.startDate : event.startDate;
-    const endDate = hasNewSchema ? event.dateTime?.endDate : event.endDate;
+    const ev = event as EventLean & { title?: { en?: string; he?: string }; description?: { en?: string; he?: string }; startDate?: Date; endDate?: Date; timezone?: string; tags?: string[]; shortDescription?: string; isAllDay?: boolean; images?: unknown[]; videoUrl?: string; organizer?: unknown; capacity?: number; price?: number; currency?: string; viewsCount?: number; isPublic?: boolean; notes?: string };
+    const titleEn = hasNewSchema ? event.content.en?.title : (ev.title?.en ?? '');
+    const titleHe = hasNewSchema ? event.content.he?.title : (ev.title?.he ?? '');
+    const descEn = hasNewSchema ? event.content.en?.description : (ev.description?.en ?? '');
+    const descHe = hasNewSchema ? event.content.he?.description : (ev.description?.he ?? '');
+    const startDate = hasNewSchema ? event.dateTime?.startDate : ev.startDate;
+    const endDate = hasNewSchema ? event.dateTime?.endDate : ev.endDate;
     const tzEn = hasNewSchema ? event.dateTime?.timezone?.en : null;
     const tzHe = hasNewSchema ? event.dateTime?.timezone?.he : null;
-    const timezoneStr = tzEn || tzHe || event.timezone || 'Asia/Jerusalem';
+    const timezoneStr = tzEn || tzHe || ev.timezone || 'Asia/Jerusalem';
     const featuredImageObj = typeof event.featuredImage === 'object' && event.featuredImage?.url
       ? {
           url: event.featuredImage.url,
@@ -70,24 +77,24 @@ export async function GET(
         };
     const tags = hasNewSchema
       ? (event.content.en?.tags && event.content.he?.tags ? event.content.en.tags : event.content.en?.tags || event.content.he?.tags || [])
-      : (event.tags || []);
+      : (ev.tags || []);
 
     // Format event data for admin form (flat shape)
     const formattedEvent = {
-      id: event._id.toString(),
+      id: String(event._id),
       slug: event.slug,
       title: { en: titleEn || '', he: titleHe || '' },
       description: { en: descEn || '', he: descHe || '' },
-      shortDescription: event.shortDescription || '',
+      shortDescription: ev.shortDescription || '',
       startDate: startDate ?? null,
       endDate: endDate ?? null,
       timezone: timezoneStr,
-      isAllDay: event.isAllDay || false,
+      isAllDay: ev.isAllDay || false,
       location: event.location || {
         name: { en: '', he: '' },
         address: { en: '', he: '' },
       },
-      images: event.images || [],
+      images: ev.images || [],
       media: Array.isArray(event.media)
         ? event.media.map((m: any) => ({
             id: m.id || '',
@@ -106,31 +113,31 @@ export async function GET(
           }))
         : [],
       featuredImage: featuredImageObj,
-      videoUrl: event.videoUrl || '',
+      videoUrl: ev.videoUrl || '',
       relatedSports: event.relatedSports || [],
       type: event.type || '',
-      organizer: event.organizer || {
+      organizer: ev.organizer || {
         name: '',
         email: '',
         phone: '',
       },
-      capacity: event.capacity,
+      capacity: ev.capacity,
       isFree: event.isFree !== undefined ? event.isFree : true,
-      price: event.price,
-      currency: event.currency || 'ILS',
+      price: ev.price,
+      currency: ev.currency || 'ILS',
       registrationUrl: event.registrationUrl || '',
-      viewsCount: event.viewCount ?? event.viewsCount ?? 0,
+      viewsCount: event.viewCount ?? ev.viewsCount ?? 0,
       interestedCount: event.interestedCount ?? 0,
       attendedCount: currentParticipants,
       status: event.status || 'draft',
       isFeatured: event.isFeatured || false,
-      isPublic: event.isPublic !== undefined ? event.isPublic : true,
+      isPublic: ev.isPublic !== undefined ? ev.isPublic : true,
       registrationRequired: event.registrationRequired || false,
       metaTitle: event.metaTitle ?? { en: '', he: '' },
       metaDescription: event.metaDescription ?? { en: '', he: '' },
       metaKeywords: event.metaKeywords ?? { en: '', he: '' },
       tags: Array.isArray(tags) ? tags : [],
-      notes: event.notes || '',
+      notes: ev.notes || '',
       sections: hasNewSchema
         ? {
             en: Array.isArray(event.content.en?.sections) ? event.content.en.sections : [],
@@ -293,7 +300,7 @@ export async function PUT(
 
     // media array (each item: id, url, type, cloudinaryId, altText { en, he }, caption { en, he }, usedInSections)
     if (body.media !== undefined && Array.isArray(body.media)) {
-      event.media = body.media.map((m: any, idx: number) => {
+      event.media = body.media.map((m: any, _idx: number) => {
         const en = m.altText?.en != null ? String(m.altText.en) : '';
         const he = m.altText?.he != null ? String(m.altText.he) : '';
         return {
@@ -331,11 +338,11 @@ export async function PUT(
     }
     // Normalize media.altText so every item has en/he strings (required by schema).
     if (Array.isArray(event.media)) {
-      event.media = event.media.map((m: any, idx: number) => {
+      event.media = event.media.map((m: any, _idx: number) => {
         const altEn = (m.altText?.en != null && m.altText?.en !== undefined ? String(m.altText.en) : '') as string;
         const altHe = (m.altText?.he != null && m.altText?.he !== undefined ? String(m.altText.he) : '') as string;
         return {
-          id: m.id || `media-${Date.now()}-${idx}`,
+          id: m.id || `media-${Date.now()}-${_idx}`,
           url: m.url || '',
           type: m.type === 'video' ? 'video' : 'image',
           cloudinaryId: m.cloudinaryId || undefined,
@@ -379,7 +386,7 @@ export async function PUT(
     const tags = event.content?.en?.tags ?? event.content?.he?.tags ?? [];
 
     const formattedEvent = {
-      id: event._id.toString(),
+      id: String(event._id),
       slug: event.slug,
       title: { en: titleEn || '', he: titleHe || '' },
       description: { en: descEn || '', he: descHe || '' },
@@ -412,7 +419,7 @@ export async function PUT(
       currency: 'ILS',
       registrationUrl: event.registrationUrl || '',
       registrationClosesAt: event.registrationClosesAt ? event.registrationClosesAt.toISOString().slice(0, 16) : '',
-      viewsCount: event.viewCount ?? event.viewsCount ?? 0,
+      viewsCount: event.viewCount ?? (event as unknown as EventLean & { viewsCount?: number }).viewsCount ?? 0,
       interestedCount: event.interestedCount ?? 0,
       status: event.status,
       isFeatured: event.isFeatured,
@@ -470,7 +477,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

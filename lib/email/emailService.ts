@@ -17,13 +17,11 @@ import {
   getContactFormNotificationHTML,
 } from './templates/admin-notifications';
 import {
-  sendEmailJS,
   sendContactFormEmailJS,
   sendOrderConfirmationEmailJS,
   sendWelcomeEmailJS,
   sendPasswordResetEmailJS,
   sendAdminNotificationEmailJS,
-  EMAILJS_TEMPLATES,
 } from './emailjs-service';
 
 type EmailProvider = 'nodemailer' | 'emailjs' | 'test';
@@ -398,7 +396,6 @@ class EmailService {
         await sendPasswordResetEmailJS({
           toEmail: email,
           resetUrl,
-          expiryHours,
         });
       } catch (error) {
         console.error('Failed to send password reset via EmailJS:', error);

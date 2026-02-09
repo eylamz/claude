@@ -16,7 +16,7 @@ interface ConnectionState {
 /**
  * MongoDB connection state
  */
-let isConnected = false;
+let __isConnected = false;
 let connectionPromise: Promise<typeof mongoose> | null = null;
 let retryAttempts = 0;
 let eventListenersSetup = false;
@@ -119,7 +119,7 @@ async function connectWithRetry(
     const connection = await mongoose.connect(uri, options);
     
     console.log('✅ MongoDB connected successfully');
-    isConnected = true;
+    __isConnected = true;
     retryAttempts = 0;
     
     return connection;
@@ -148,7 +148,7 @@ async function connectWithRetry(
       return connectWithRetry(uri, options);
     } else {
       console.error('❌ MongoDB connection failed after max retry attempts:', error);
-      isConnected = false;
+      __isConnected = false;
       throw error;
     }
   }
@@ -177,7 +177,7 @@ export async function connectDB(): Promise<typeof mongoose> {
   if (mongoose.connection.readyState === 2) {
     // Wait a bit and check again
     await new Promise(resolve => setTimeout(resolve, 100));
-    if (mongoose.connection.readyState === 1) {
+    if ((mongoose.connection.readyState as number) === 1) {
       if (!eventListenersSetup) {
         setupEventListeners();
       }
@@ -206,7 +206,7 @@ export async function connectDB(): Promise<typeof mongoose> {
   } catch (error) {
     console.error('❌ Failed to establish MongoDB connection:', error);
     connectionPromise = null;
-    isConnected = false;
+    __isConnected = false;
     throw error;
   }
 }
@@ -219,7 +219,7 @@ export async function disconnectDB(): Promise<void> {
     if (mongoose.connection.readyState !== 0) {
       await mongoose.disconnect();
       console.log('✅ MongoDB disconnected successfully');
-      isConnected = false;
+      __isConnected = false;
       connectionPromise = null;
       eventListenersSetup = false; // Reset flag on disconnect
     } else {
@@ -244,7 +244,7 @@ export function getConnectionStatus(): ConnectionState {
   };
 
   return {
-    isConnected: state === 1,
+    isConnected: __isConnected && state === 1,
     readyState: state,
     readyStateText: states[state] || 'unknown',
     host: mongoose.connection.host,
@@ -315,13 +315,13 @@ function setupEventListeners(): void {
 
   mongoose.connection.on('disconnected', () => {
     console.log('📴 MongoDB disconnected');
-    isConnected = false;
+    __isConnected = false;
     connectionPromise = null;
   });
 
   mongoose.connection.on('reconnected', () => {
     console.log('🔄 MongoDB reconnected');
-    isConnected = true;
+    __isConnected = true;
   });
 
   // Handle application termination (only set up once)
@@ -404,7 +404,7 @@ export async function forceReconnect(): Promise<void> {
   try {
     await disconnectDB();
     connectionPromise = null;
-    isConnected = false;
+    __isConnected = false;
     await connectDB();
     console.log('✅ Force reconnected to MongoDB');
   } catch (error) {

@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Button } from '@/components/ui';
-
 interface ImageData {
   url: string;
   publicId: string;
@@ -207,7 +205,7 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
     setUploading(true);
     
     try {
-      const uploadPromises = fileArray.map(async (file, index) => {
+      const uploadPromises = fileArray.map(async (file, _index) => {
         // Preserve original filename (without extension, Cloudinary adds it)
         const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
         // Use folder/filename format for public_id to preserve filename

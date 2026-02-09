@@ -12,8 +12,8 @@ export const DEFAULT_META_TITLE = 'ENBOSS - No Rider Left Behind';
 export function getLocalizedText(field: LocalizedField, locale: string): string {
   if (typeof field === 'string') return field;
   const otherLocale = locale === 'he' ? 'en' : 'he';
-  const primary = (field[locale] ?? '').trim();
-  const fallback = (field[otherLocale] ?? '').trim();
+  const primary = (field[locale as 'en' | 'he'] ?? '').trim();
+  const fallback = (field[otherLocale as 'en' | 'he'] ?? '').trim();
   return primary || fallback || '';
 }
 
@@ -97,7 +97,7 @@ export function generateMetadata(config: SEOConfig): Metadata {
         }
       ],
       locale: locale === 'he' ? 'he_IL' : 'en_US',
-      type: type === 'article' ? 'article' : type === 'product' ? 'product' : 'website',
+      type: type === 'article' ? 'article' : 'website',
     },
     twitter: {
       card: 'summary_large_image',
@@ -110,6 +110,7 @@ export function generateMetadata(config: SEOConfig): Metadata {
   if (type === 'article' && publishedTime) {
     metadata.openGraph = {
       ...metadata.openGraph,
+      type: 'article',
       publishedTime,
       modifiedTime,
       authors: author ? [author] : undefined,
@@ -146,8 +147,9 @@ export function getSkateparkMetaFromData(
   const address = getLocalizedText(skatepark.address ?? { en: '', he: '' }, locale);
   const seo = skatepark.seoMetadata;
 
-  const seoDescription = seo?.description && (seo.description.en || seo.description.he)
-    ? getLocalizedText(seo.description, locale).trim()
+  const descField = seo?.description;
+  const seoDescription = descField && typeof descField === 'object' && (descField.en || descField.he)
+    ? getLocalizedText(descField, locale).trim()
     : '';
   let notesText = '';
   if (skatepark.notes) {
@@ -182,8 +184,9 @@ export function getSkateparkMetaFromData(
     ? `סקייטפארק ${name} | אנבוס`
     : `${name} Skatepark | ENBOSS`;
 
-  const keywords = seo?.keywords && (seo.keywords.en || seo.keywords.he)
-    ? getLocalizedText(seo.keywords, locale).trim()
+  const keywordsField = seo?.keywords;
+  const keywords = keywordsField && typeof keywordsField === 'object' && (keywordsField.en || keywordsField.he)
+    ? getLocalizedText(keywordsField, locale).trim()
     : undefined;
 
   const url = `/${locale}/skateparks/${slug}`;
@@ -321,8 +324,7 @@ export function generateEventStructuredData(event: {
   locale: string;
   siteUrl: string;
 }) {
-  const { title, description, startDate, endDate, location, image, price, currency = 'ILS', slug, locale, siteUrl } = event;
-  const url = `${siteUrl}/${locale}/events/${slug}`;
+  const { title, description, startDate, endDate, location, image, price, currency = 'ILS', slug: _slug, locale, siteUrl } = event;
 
   return {
     '@context': 'https://schema.org',
@@ -372,8 +374,7 @@ export function generateArticleStructuredData(guide: {
   locale: string;
   siteUrl: string;
 }) {
-  const { title, description, coverImage, authorName, publishedAt, modifiedAt, rating, ratingCount, slug, locale, siteUrl } = guide;
-  const url = `${siteUrl}/${locale}/guides/${slug}`;
+  const { title, description, coverImage, authorName, publishedAt, modifiedAt, rating, ratingCount, slug: _slug, locale, siteUrl } = guide;
 
   return {
     '@context': 'https://schema.org',

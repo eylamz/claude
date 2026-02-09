@@ -17,7 +17,7 @@ const ENDPOINT = '/api/admin/skateparks/[id]';
  * Get a single skatepark by ID
  */
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -84,15 +84,15 @@ export async function GET(
         publicId: img.publicId || '',
       })),
       operatingHours: skatepark.operatingHours || {},
-      lightingHours: skatepark.is24Hours || skatepark.lightingUntil ? {
-        is24Hours: skatepark.is24Hours || false,
-        endTime: skatepark.lightingUntil || '',
+      lightingHours: skatepark.lightingHours?.is24Hours || (skatepark as { lightingUntil?: string }).lightingUntil ? {
+        is24Hours: skatepark.lightingHours?.is24Hours ?? false,
+        endTime: skatepark.lightingHours?.endTime || (skatepark as { lightingUntil?: string }).lightingUntil || '',
       } : undefined,
       amenities: skatepark.amenities || {},
-      openingYear: skatepark.openingYear ?? null,
-      openingMonth: skatepark.openingMonth ?? null,
-      closingYear: skatepark.closingYear ?? null,
-      closingMonth: skatepark.closingMonth ?? null,
+      openingYear: skatepark.openingYear ?? undefined,
+      openingMonth: skatepark.openingMonth ?? undefined,
+      closingYear: skatepark.closingYear ?? undefined,
+      closingMonth: skatepark.closingMonth ?? undefined,
       notes: skatepark.notes || { en: '', he: '' },
       isFeatured: skatepark.isFeatured || false,
       skillLevel: skatepark.skillLevel ?? (skatepark as any).beginners !== undefined
@@ -315,11 +315,11 @@ export async function PUT(
     // Handle openingYear/openingMonth - allow null values (null means "not specified")
     if (openingYear !== undefined) {
       if (openingYear === null || openingYear === '' || openingYear === 0) {
-        skatepark.openingYear = null;
+        skatepark.openingYear = undefined;
         skatepark.markModified('openingYear');
         // Only clear month if year is being cleared
         if (openingMonth === undefined) {
-          skatepark.openingMonth = null;
+          skatepark.openingMonth = undefined;
           skatepark.markModified('openingMonth');
         }
       } else {
@@ -336,7 +336,7 @@ export async function PUT(
     }
     if (openingMonth !== undefined) {
       if (openingMonth === null || openingMonth === '' || openingMonth === 0) {
-        skatepark.openingMonth = null; // Store null instead of undefined
+        skatepark.openingMonth = undefined;
         skatepark.markModified('openingMonth');
       } else {
         const month = typeof openingMonth === 'number' ? openingMonth : parseInt(openingMonth);
@@ -351,11 +351,11 @@ export async function PUT(
     // Handle closingYear/closingMonth - allow null values (null means "not specified")
     if (closingYear !== undefined) {
       if (closingYear === null || closingYear === '' || closingYear === 0) {
-        skatepark.closingYear = null;
+        skatepark.closingYear = undefined;
         skatepark.markModified('closingYear');
         // Only clear month if year is being cleared
         if (closingMonth === undefined) {
-          skatepark.closingMonth = null;
+          skatepark.closingMonth = undefined;
           skatepark.markModified('closingMonth');
         }
       } else {
@@ -371,7 +371,7 @@ export async function PUT(
     }
     if (closingMonth !== undefined) {
       if (closingMonth === null || closingMonth === '' || closingMonth === 0) {
-        skatepark.closingMonth = null; // Store null instead of undefined
+        skatepark.closingMonth = undefined;
         skatepark.markModified('closingMonth');
       } else {
         const month = typeof closingMonth === 'number' ? closingMonth : parseInt(closingMonth);
@@ -387,7 +387,10 @@ export async function PUT(
       skatepark.notes = notes;
       skatepark.markModified('notes');
     }
-    if (is24Hours !== undefined) skatepark.is24Hours = is24Hours;
+    if (is24Hours !== undefined) {
+      skatepark.lightingHours = { ...(skatepark.lightingHours || {}), is24Hours, endTime: skatepark.lightingHours?.endTime || '23:59' };
+      skatepark.markModified('lightingHours');
+    }
     if (isFeatured !== undefined) skatepark.isFeatured = isFeatured;
     if (skillLevel !== undefined) {
       skatepark.skillLevel = {
@@ -453,14 +456,14 @@ export async function PUT(
     // Add month fields to update if they're being changed
     if (openingMonth !== undefined) {
       const monthValue = openingMonth === null || openingMonth === '' || openingMonth === 0 
-        ? null 
+        ? undefined 
         : (typeof openingMonth === 'number' ? openingMonth : parseInt(openingMonth));
       updateData.openingMonth = monthValue;
       skatepark.openingMonth = monthValue;
     }
     if (closingMonth !== undefined) {
       const monthValue = closingMonth === null || closingMonth === '' || closingMonth === 0 
-        ? null 
+        ? undefined 
         : (typeof closingMonth === 'number' ? closingMonth : parseInt(closingMonth));
       updateData.closingMonth = monthValue;
       skatepark.closingMonth = monthValue;
@@ -485,7 +488,7 @@ export async function PUT(
     const db = mongoose.connection.db;
     if (db) {
       const collection = db.collection('skateparks');
-      const rawDoc = await collection.findOne({ _id: new mongoose.Types.ObjectId(savedSkatepark._id) });
+      const rawDoc = await collection.findOne({ _id: new mongoose.Types.ObjectId(String(savedSkatepark._id)) });
       console.log('Raw MongoDB doc - openingMonth:', rawDoc?.openingMonth, 'closingMonth:', rawDoc?.closingMonth);
       console.log('Raw MongoDB doc keys:', Object.keys(rawDoc || {}));
     }
@@ -550,7 +553,7 @@ export async function PUT(
  * Delete a skatepark by ID
  */
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

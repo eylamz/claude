@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const locale = searchParams.get('locale') || 'en';
     
     // Fetch featured products
-    const products = await Product.findFeatured()
+    const products = await Product.find({ isFeatured: true, status: 'active' })
       .limit(limit)
       .select('slug name images price discountPrice discountStartDate discountEndDate category')
       .lean();

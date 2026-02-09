@@ -1,11 +1,6 @@
 'use client';
 
-import { useLocale } from 'next-intl';
-
 export const ArrowRight = ({ className = '' }: { className?: string }) => {
-  const locale = useLocale();
-  const isRtl = locale === 'he';
-
   // Simple arrow using SVG
   return (
     <svg

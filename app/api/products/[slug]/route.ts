@@ -53,7 +53,7 @@ export async function GET(
 
     // Transform data for client
     const transformedProduct = {
-      id: product._id.toString(),
+      id: String(product._id),
       slug: product.slug,
       name: product.name[locale as 'en' | 'he'] || product.name.en,
       description: product.description[locale as 'en' | 'he'] || product.description.en,

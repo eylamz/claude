@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
+import mongoose from 'mongoose';
 import connectDB from '@/lib/db/mongodb';
 import Form from '@/lib/models/Form';
 import FormSubmission from '@/lib/models/FormSubmission';
@@ -58,7 +59,7 @@ export async function POST(
     const fingerprint = generateFingerprint(ip, userAgent);
 
     // Check for duplicate submission
-    const existingSubmission = await FormSubmission.findByFingerprint(form._id, fingerprint);
+    const existingSubmission = await FormSubmission.findByFingerprint(new mongoose.Types.ObjectId(String(form._id)), fingerprint);
     if (existingSubmission) {
       return NextResponse.json(
         { error: 'You have already submitted this form', submitted: true },
@@ -123,7 +124,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      submissionId: submission._id.toString(),
+      submissionId: String(submission._id),
     });
   } catch (error: any) {
     console.error('Submit form error:', error);

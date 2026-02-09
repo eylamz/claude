@@ -15,23 +15,6 @@ interface ResetErrors {
   general?: string;
 }
 
-interface PasswordStrength {
-  score: number;
-  checks: {
-    length: boolean;
-  };
-}
-
-function getPasswordStrength(password: string): PasswordStrength {
-  const checks = {
-    length: password.length >= 12,
-  };
-
-  const score = checks.length ? 1 : 0;
-  return { score, checks };
-}
-
-
 export default function ResetConfirmPage() {
   const params = useParams();
   const router = useRouter();
@@ -50,7 +33,6 @@ export default function ResetConfirmPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const _passwordStrength = getPasswordStrength(formData.password);
   const token = params.token as string;
 
   // Validate token on mount
@@ -142,7 +124,7 @@ export default function ResetConfirmPage() {
       });
 
       // Redirect to account page
-      router.push(`/${params.locale}/account`);
+      router.push(`/${locale}/account`);
     } catch (error) {
       console.error('Reset confirmation error:', error);
       setErrors({ general: t('reset.confirm.errors.somethingWentWrong') });

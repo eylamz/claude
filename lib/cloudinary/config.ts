@@ -65,8 +65,8 @@ export function configureCloudinary(): void {
     cloud_name: config.cloudName,
     api_key: config.apiKey,
     api_secret: config.apiSecret,
-    secure: config.secure,
-  });
+    ...(config.secure !== undefined && { secure: config.secure }),
+  } as Record<string, unknown>);
 }
 
 /**

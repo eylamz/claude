@@ -16,7 +16,7 @@ const ENDPOINT = '/api/skateparks/[slug]';
  */
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
@@ -126,9 +126,9 @@ export async function GET(
     let isOpen = false;
     if (skatepark.lightingHours?.is24Hours) {
       isOpen = true;
-    } else if (dayHours && !dayHours.closed && dayHours.open && dayHours.close) {
+    } else if (dayHours && dayHours.isOpen && dayHours.openingTime && dayHours.closingTime) {
       const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-      isOpen = currentTime >= dayHours.open && currentTime <= dayHours.close;
+      isOpen = currentTime >= dayHours.openingTime && currentTime <= dayHours.closingTime;
     }
 
     // Format response with all fields including mediaLinks, isFeatured, status, etc.

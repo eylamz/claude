@@ -1,12 +1,12 @@
 'use client';
 
+import { Suspense, ReactNode } from 'react';
 import { SessionProvider } from './session-provider';
 import { ThemeProvider } from '@/context/ThemeProvider';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/toaster';
 import InternalAnalytics from '@/components/analytics/InternalAnalytics';
 import GoogleAnalytics from '@/components/analytics/GoogleAnalytics';
-import { ReactNode } from 'react';
 
 const ENABLE_ANALYTICS = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true';
 
@@ -29,7 +29,9 @@ export function AppProviders({ children }: AppProvidersProps) {
           {ENABLE_ANALYTICS && (
             <>
               <InternalAnalytics />
-              <GoogleAnalytics />
+              <Suspense fallback={null}>
+                <GoogleAnalytics />
+              </Suspense>
             </>
           )}
         </TooltipProvider>

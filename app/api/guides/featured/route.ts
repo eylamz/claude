@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const locale = searchParams.get('locale') || 'en';
     
     // Fetch featured guides
-    const guides = await Guide.findFeatured()
+    const guides = await Guide.find({ isFeatured: true, status: 'published' })
       .limit(limit)
       .select('slug title description coverImage relatedSports viewsCount')
       .lean();

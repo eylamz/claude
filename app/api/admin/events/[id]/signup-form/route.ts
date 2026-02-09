@@ -53,7 +53,7 @@ export async function PATCH(
       await event.save();
       return NextResponse.json({
         event: {
-          id: event._id.toString(),
+          id: String(event._id),
           signupForm: null,
           eventRules: event.eventRules ?? undefined,
         },
@@ -119,7 +119,7 @@ export async function PATCH(
 
     return NextResponse.json({
       event: {
-        id: event._id.toString(),
+        id: String(event._id),
         signupForm: event.signupForm,
         eventRules: event.eventRules ?? undefined,
       },

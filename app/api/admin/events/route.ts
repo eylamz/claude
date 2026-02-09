@@ -28,7 +28,6 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
-    const category = searchParams.get('category') || '';
     const sport = searchParams.get('sport') || '';
     const dateFrom = searchParams.get('dateFrom') || '';
     const dateTo = searchParams.get('dateTo') || '';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { Suspense, useState, useTransition, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
@@ -34,7 +34,7 @@ function getPasswordStrength(password: string): PasswordStrength {
   return { score, checks };
 }
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const locale = useLocale();
   const t = useTranslation('auth');
   const commonT = useTranslations('common');
@@ -342,3 +342,19 @@ export default function RegisterPage() {
   );
 }
 
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
+          <div className="text-center">
+            <LoadingSpinner className="mb-4" />
+            <p className="text-text dark:text-text-dark">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <RegisterPageContent />
+    </Suspense>
+  );
+}

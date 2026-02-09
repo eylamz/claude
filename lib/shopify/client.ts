@@ -469,7 +469,7 @@ class ShopifyClient {
   /**
    * Create product in Shopify
    */
-  async createProduct(productData: ProductData): Promise<string> {
+  async createProduct(_productData: ProductData): Promise<string> {
     // Note: Product creation requires Admin API, not Storefront API
     // This is a placeholder - implement with Admin API if needed
     throw new Error('Product creation requires Shopify Admin API');
@@ -478,7 +478,7 @@ class ShopifyClient {
   /**
    * Update product in Shopify
    */
-  async updateProduct(id: string, updates: Partial<ProductData>): Promise<void> {
+  async updateProduct(_id: string, _updates: Partial<ProductData>): Promise<void> {
     // Note: Product updates require Admin API, not Storefront API
     // This is a placeholder - implement with Admin API if needed
     throw new Error('Product updates require Shopify Admin API');
@@ -487,7 +487,7 @@ class ShopifyClient {
   /**
    * Sync inventory/variants
    */
-  async syncInventory(variants: Array<{ variantId: string; quantity: number }>): Promise<void> {
+  async syncInventory(_variants: Array<{ variantId: string; quantity: number }>): Promise<void> {
     // Note: Inventory sync requires Admin API, not Storefront API
     // This is a placeholder - implement with Admin API if needed
     throw new Error('Inventory sync requires Shopify Admin API');

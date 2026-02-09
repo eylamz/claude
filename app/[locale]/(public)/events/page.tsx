@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, memo, useRef } from 'react';
+import { useEffect, useState, useCallback, memo, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { X, TrendingUp } from 'lucide-react';
@@ -380,7 +380,7 @@ const EventCard = memo(({
 });
 EventCard.displayName = 'EventCard';
 
-export default function EventsPage() {
+function EventsPageContent() {
   const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations('events');
@@ -1046,5 +1046,21 @@ export default function EventsPage() {
         )}
       </div>
     </div>
+  );
+}
+
+function EventsPageFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <LoadingSpinner className="w-8 h-8" />
+    </div>
+  );
+}
+
+export default function EventsPage() {
+  return (
+    <Suspense fallback={<EventsPageFallback />}>
+      <EventsPageContent />
+    </Suspense>
   );
 }

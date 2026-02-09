@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { Button, Card, CardContent } from '@/components/ui';
 import { Info } from 'lucide-react';
@@ -10,8 +10,6 @@ import { isGrowthLabEnabled } from '@/lib/utils/ecommerce';
 export default function FormFulfilledPage() {
   const locale = useLocale();
   const router = useRouter();
-  const params = useParams();
-  const _slug = params.slug as string;
   const growthLabEnabled = isGrowthLabEnabled();
 
   // Redirect if Growth Lab is disabled

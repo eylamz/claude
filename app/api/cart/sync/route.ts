@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // import { redis } from '@/lib/redis';
 // import { prisma } from '@/lib/prisma'; // If using database
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Get user session
     // const session = await getSession(request);

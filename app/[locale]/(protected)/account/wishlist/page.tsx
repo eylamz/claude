@@ -38,12 +38,6 @@ interface WishlistProduct {
   status: string;
 }
 
-interface AnimatedItem {
-  id: string;
-  element: HTMLElement;
-  imageUrl: string;
-}
-
 /**
  * Toast notification component
  */
@@ -256,7 +250,6 @@ export default function WishlistPage() {
   const [showOutOfStock, setShowOutOfStock] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set());
-  const _animatedItemsRef = useRef<AnimatedItem[]>([]);
 
   useEffect(() => {
     fetchWishlist();
@@ -357,8 +350,6 @@ export default function WishlistPage() {
 
     // Animation
     if (element) {
-      const _productName = typeof product.name === 'string' ? product.name : product.name.en || product.name.he;
-      
       // Create animated clone
       const clone = element.cloneNode(true) as HTMLElement;
       clone.style.position = 'fixed';

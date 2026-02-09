@@ -60,7 +60,6 @@ const callHistory: number[] = []; // Track calls for rate limiting
 function resetRateLimit() {
   const now = Date.now();
   const oneMinuteAgo = now - 60000;
-  const oneDayAgo = now - 86400000;
 
   // Remove calls older than 1 minute
   while (callHistory.length > 0 && callHistory[0] < oneMinuteAgo) {
@@ -218,7 +217,7 @@ function transformWeatherData(
     lastUpdated: new Date(),
     expiresAt,
     fetchedAt: new Date(),
-  };
+  } as Omit<IWeatherForecast, '_id' | 'createdAt' | 'updatedAt'>;
 }
 
 /**
@@ -248,7 +247,7 @@ export async function getCachedForecast(
  */
 export async function saveForecast(
   skateparkId: string,
-  skateparkSlug: string,
+  _skateparkSlug: string,
   forecastData: Omit<IWeatherForecast, '_id' | 'createdAt' | 'updatedAt'>
 ): Promise<IWeatherForecast> {
   await connectDB();

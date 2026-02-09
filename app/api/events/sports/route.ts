@@ -10,12 +10,9 @@ import Event from '@/lib/models/Event';
  * Returns unique list of sports from all published events
  */
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     await connectDB();
-
-    const searchParams = request.nextUrl.searchParams;
-    const locale = searchParams.get('locale') || 'en';
 
     // Build query for published, public events
     const query: any = {

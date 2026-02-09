@@ -98,6 +98,7 @@
     "dashboard": "Dashboard",
     "orders": "Orders",
     "addresses": "Addresses",
+    "settings": "Settings",
     "logout": "Logout",
     "totalOrders": "Total Orders",
     "wishlistItems": "Wishlist Items",

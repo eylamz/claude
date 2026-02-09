@@ -7,7 +7,7 @@ import Guide from '@/lib/models/Guide';
 import mongoose from 'mongoose';
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -40,7 +40,7 @@ export async function GET(
 
     // Format guide data
     const formattedGuide = {
-      id: guide._id.toString(),
+      id: String(guide._id),
       slug: guide.slug,
       title: {
         en: guide.title?.en || '',
@@ -298,7 +298,7 @@ export async function PUT(
 
     // Format response
     const formattedGuide = {
-      id: guide._id.toString(),
+      id: String(guide._id),
       slug: guide.slug,
       title: guide.title,
       description: guide.description,
@@ -354,7 +354,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

@@ -21,12 +21,19 @@ function emit(metric: WebVitalMetric) {
 export async function initCoreWebVitals() {
   if (typeof window === 'undefined') return;
   try {
-    const webVitals = await import('web-vitals');
+    const webVitals = await import(/* webpackIgnore: true */ 'web-vitals') as {
+      onFCP: (cb: (m: { value: number }) => void) => void;
+      onLCP: (cb: (m: { value: number }) => void) => void;
+      onCLS: (cb: (m: { value: number }) => void) => void;
+      onFID: (cb: (m: { value: number }) => void) => void;
+      onINP?: (cb: (m: { value: number }) => void) => void;
+      onTTFB: (cb: (m: { value: number }) => void) => void;
+    };
     webVitals.onFCP((m) => emit({ name: 'FCP', value: m.value }));
     webVitals.onLCP((m) => emit({ name: 'LCP', value: m.value }));
     webVitals.onCLS((m) => emit({ name: 'CLS', value: m.value }));
     webVitals.onFID((m) => emit({ name: 'FID', value: m.value }));
-    if ((webVitals as any).onINP) (webVitals as any).onINP((m: any) => emit({ name: 'INP', value: m.value }));
+    if (webVitals.onINP) webVitals.onINP((m) => emit({ name: 'INP', value: m.value }));
     webVitals.onTTFB((m) => emit({ name: 'TTFB', value: m.value }));
   } catch (e) {
     // web-vitals not installed; silently skip
@@ -120,7 +127,7 @@ export async function prefetchRoutes(paths: string[], prefetch: (href: string) =
 // Dynamic import helper with suspense
 export function dynamicImport<T extends React.ComponentType<any>>(
   loader: () => Promise<{ default: T }>,
-  options?: { ssr?: boolean }
+  _options?: { ssr?: boolean }
 ) {
   // Consumer should use React.lazy with Suspense in app router
   return loader;

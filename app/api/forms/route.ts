@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Form from '@/lib/models/Form';
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     await connectDB();
 

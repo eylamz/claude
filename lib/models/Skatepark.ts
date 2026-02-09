@@ -29,8 +29,8 @@ export interface ISkateparkImage {
  * Day schedule interface
  */
 export interface IDaySchedule {
-  openingTime: string;
-  closingTime: string;
+  openingTime?: string;
+  closingTime?: string;
   isOpen: boolean;
 }
 

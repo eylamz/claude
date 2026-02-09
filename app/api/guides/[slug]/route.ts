@@ -14,13 +14,11 @@ const ENDPOINT = '/api/guides/[slug]';
  */
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const { slug } = await params;
-    const { searchParams } = new URL(request.url);
-    const locale = searchParams.get('locale') || 'en';
 
     // Check circuit breaker - if blocked, return early without database call
     if (isBlocked(ENDPOINT, slug.toLowerCase())) {

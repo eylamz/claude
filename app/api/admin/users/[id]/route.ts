@@ -13,7 +13,7 @@ const ENDPOINT = '/api/admin/users/[id]';
  * Get a single user by ID
  */
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

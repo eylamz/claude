@@ -3,7 +3,7 @@ import connectDB from '@/lib/db/mongodb';
 import Form from '@/lib/models/Form';
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
@@ -24,7 +24,7 @@ export async function GET(
 
     // Format form data
     const formattedForm = {
-      id: form._id.toString(),
+      id: String(form._id),
       slug: form.slug,
       title: {
         en: form.title?.en || '',

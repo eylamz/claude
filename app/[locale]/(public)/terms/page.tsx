@@ -76,9 +76,6 @@ export default function TermsPage() {
   const sectionClass = '';
   const headingClass = 'text-lg sm:text-3xl font-bold mb-2 text-gray-900 dark:text-white';
   const blockClass = 'space-y-2 text-base text-text dark:text-text-dark';
-  const _listClass = 'my-6 space-y-3 list-none pl-0';
-  const _listItemClass = 'text-lg text-text dark:text-text-dark leading-relaxed flex gap-3';
-  const _bulletClass = 'text-brand-main dark:text-brand-dark font-bold flex-shrink-0';
 
   const hebrewContent = (
     <div className="space-y-6 px-2 font-medium">

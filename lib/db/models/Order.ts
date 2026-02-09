@@ -496,7 +496,7 @@ OrderSchema.index({ status: 1, createdAt: -1 });
 /**
  * Create and export Order model
  */
-const Order: IOrderModel = mongoose.models.Order || mongoose.model<IOrder, IOrderModel>('Order', OrderSchema);
+const Order = (mongoose.models.Order || mongoose.model<IOrder, IOrderModel>('Order', OrderSchema)) as IOrderModel;
 
 export default Order;
 

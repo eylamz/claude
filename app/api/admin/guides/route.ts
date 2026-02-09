@@ -129,7 +129,7 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Validate and clean contentBlocks before creating
-    let cleanedContentBlocks = { en: [], he: [] };
+    let cleanedContentBlocks: { en: any[]; he: any[] } = { en: [], he: [] };
     if (body.contentBlocks) {
       if (typeof body.contentBlocks === 'object' && !Array.isArray(body.contentBlocks)) {
         // Ensure we have en and he properties
@@ -184,7 +184,7 @@ export async function POST(request: Request) {
     }
 
     // Validate and clean tags
-    let cleanedTags = { en: [], he: [] };
+    let cleanedTags: { en: string[]; he: string[] } = { en: [], he: [] };
     if (body.tags) {
       if (typeof body.tags === 'object' && !Array.isArray(body.tags)) {
         // Ensure we have en and he properties
@@ -227,7 +227,7 @@ export async function POST(request: Request) {
       },
       tags: cleanedTags,
       authorId: session.user.id,
-      authorName: user.name || user.email,
+      authorName: user.fullName || user.email,
       viewsCount: 0,
       likesCount: 0,
       rating: 0,

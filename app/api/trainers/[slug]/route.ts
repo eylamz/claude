@@ -13,7 +13,7 @@ import { PLACEHOLDER_SKATEPARK_IMAGE } from '@/lib/constants/placeholders';
  */
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {

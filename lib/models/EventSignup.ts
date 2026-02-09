@@ -240,13 +240,14 @@ EventSignupSchema.methods.isCancelled = function (): boolean {
  */
 EventSignupSchema.pre('save', async function (next) {
   if (!this.confirmationNumber) {
+    const Model = this.constructor as Model<IEventSignup>;
     let confirmationNumber: string;
-    let exists: boolean;
+    let exists: IEventSignup | null;
     
     // Ensure unique confirmation number
     do {
-      confirmationNumber = EventSignupSchema.statics.generateConfirmationNumber();
-      exists = await this.constructor.findOne({ confirmationNumber });
+      confirmationNumber = (EventSignupSchema.statics as { generateConfirmationNumber: () => string }).generateConfirmationNumber();
+      exists = await Model.findOne({ confirmationNumber });
     } while (exists);
     
     this.confirmationNumber = confirmationNumber;

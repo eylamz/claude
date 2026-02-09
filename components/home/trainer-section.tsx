@@ -20,7 +20,7 @@ interface TrainerSectionProps {
   t: (key: string) => string;
 }
 
-export const TrainerSection = ({ trainers, t }: TrainerSectionProps) => {
+export const TrainerSection = ({ trainers, t: _t }: TrainerSectionProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showStartButton, setShowStartButton] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);

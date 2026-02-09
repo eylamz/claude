@@ -2,12 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import Guide from '@/lib/models/Guide';
 import connectDB from '@/lib/db/mongodb';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     await connectDB();
-
-    const { searchParams } = new URL(request.url);
-    const locale = searchParams.get('locale') || 'en';
 
     // Only fetch from published guides
     const publishedGuides = await Guide.find({ status: 'published' })
