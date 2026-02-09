@@ -7,7 +7,6 @@ import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper,
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ImageUploader } from '@/components/admin';
 import { useToast } from '@/hooks/use-toast';
 
 interface ContentBlock {
@@ -599,7 +598,7 @@ export default function NewGuidePage() {
             <CardContent>
               <div className="space-y-4">
                 <p className="text-gray-600">{formData.description[activeTab]}</p>
-                {formData.contentBlocks[activeTab].map((block, index) => (
+                {formData.contentBlocks[activeTab].map((block) => (
                   <RenderContentBlock key={block.id} block={block} lang={activeTab} />
                 ))}
               </div>
@@ -1059,7 +1058,6 @@ export default function NewGuidePage() {
                                       { value: 'h3', label: 'H3' },
                                       { value: 'h4', label: 'H4' },
                                     ]}
-                                    size="sm"
                                     className="max-w-[200px]"
                                   />
                                 </div>
@@ -1084,7 +1082,6 @@ export default function NewGuidePage() {
                                         { value: 'bullet', label: 'Bullet' },
                                         { value: 'numbered', label: 'Numbered' },
                                       ]}
-                                      size="sm"
                                       className="max-w-[200px]"
                                     />
                                   </div>
@@ -1324,11 +1321,11 @@ export default function NewGuidePage() {
                             {block.type === 'code' && (
                               <div className="space-y-2">
                                 <SelectWrapper
-                                  value={block.language}
+                                  value={block.language ?? ''}
                                   onChange={(e) =>
                                     handleUpdateContentBlock(block.id, { language: e.target.value })
                                   }
-                                  options={CODE_LANGUAGES.map(lang => ({ value: lang, label: lang }))}
+                                  options={CODE_LANGUAGES.map(l => ({ value: l, label: l }))}
                                 />
                                 <Textarea
                                   value={block.code || ''}
@@ -1441,14 +1438,14 @@ export default function NewGuidePage() {
 }
 
 // Helper component to render content blocks in preview
-function RenderContentBlock({ block, lang }: { block: ContentBlock; lang: 'en' | 'he' }) {
+function RenderContentBlock({ block, lang: _lang }: { block: ContentBlock; lang: 'en' | 'he' }) {
   switch (block.type) {
     case 'text':
       const textContent = block.text || '';
       // Parse markdown-style links [text](url)
       const parseTextWithLinks = (text: string) => {
         const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-        const parts: (string | JSX.Element)[] = [];
+        const parts: (string | React.ReactElement)[] = [];
         let lastIndex = 0;
         let match;
         let key = 0;

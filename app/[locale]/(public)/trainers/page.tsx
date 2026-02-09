@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, memo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { isTrainersEnabled } from '@/lib/utils/ecommerce';
 import {
@@ -22,7 +21,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { Input } from '@/components/ui';
-import { Select } from '@/components/ui';
+import { SelectWrapper } from '@/components/ui';
 import { Card, CardContent } from '@/components/ui';
 import { Drawer } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
@@ -585,7 +584,7 @@ export default function TrainersPage() {
             {/* Filters Bar */}
             <div className="flex flex-wrap items-center gap-3">
               {/* Area Filter */}
-              <Select
+              <SelectWrapper
                 value={areaFilter}
                 onChange={(e) => setAreaFilter(e.target.value)}
                 options={AREAS}
@@ -602,7 +601,7 @@ export default function TrainersPage() {
               </div>
 
               {/* Sort */}
-              <Select
+              <SelectWrapper
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
                 options={SORT_OPTIONS}
@@ -714,7 +713,7 @@ export default function TrainersPage() {
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
               {tr('Minimum Rating', 'דירוג מינימלי')}
             </h3>
-            <Select
+            <SelectWrapper
               value={minRating}
               onChange={(e) => setMinRating(e.target.value)}
               options={RATING_OPTIONS}

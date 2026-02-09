@@ -3,10 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardContent, CardHeader, CardTitle, Skeleton, Toaster } from '@/components/ui';
+import { Button, Card, CardContent, Skeleton, Toaster } from '@/components/ui';
 import { FormFieldRenderer } from '@/components/forms/FormFieldRenderer';
 import { useToast } from '@/hooks/use-toast';
-import { generateFormMetadata } from '@/lib/seo/metadata-generators';
 import { isGrowthLabEnabled } from '@/lib/utils/ecommerce';
 
 interface FormField {
@@ -21,6 +20,7 @@ interface FormField {
   images?: Array<{ url: string; alt?: { en: string; he: string } }>;
   min?: number;
   max?: number;
+  order?: number;
 }
 
 interface Form {
@@ -34,6 +34,9 @@ interface Form {
     en: string;
     he: string;
   };
+  metaTitle?: { en: string; he: string };
+  metaDescription?: { en: string; he: string };
+  metaKeywords?: { en: string; he: string };
   fields: FormField[];
   submissionsCount: number;
 }
@@ -384,7 +387,7 @@ export default function FormFillPage() {
         <Card className="bg-card dark:bg-card-dark">
           <CardContent className="p-6 space-y-6">
             {form.fields
-              .sort((a, b) => a.order - b.order)
+              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
               .map((field, index) => (
                 <div key={field.id}>
                   <FormFieldRenderer

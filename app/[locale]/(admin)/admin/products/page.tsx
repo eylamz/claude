@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Dropdown, Skeleton } from '@/components/ui';
+import { Button, Card, CardContent, Input, SelectWrapper, Dropdown, Skeleton } from '@/components/ui';
 
 interface Product {
   id: string;
@@ -173,9 +173,9 @@ export default function ProductsPage() {
               />
             </div>
             <div className="w-48">
-              <Select
+              <SelectWrapper
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e: { target: { value: string } }) => setCategory(e.target.value)}
                 options={[
                   { value: '', label: 'All Categories' },
                   { value: 'skateboards', label: 'Skateboards' },
@@ -187,9 +187,9 @@ export default function ProductsPage() {
               />
             </div>
             <div className="w-48">
-              <Select
+              <SelectWrapper
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                onChange={(e: { target: { value: string } }) => setStatus(e.target.value)}
                 options={[
                   { value: '', label: 'All Statuses' },
                   { value: 'active', label: 'Active' },
@@ -199,9 +199,9 @@ export default function ProductsPage() {
               />
             </div>
             <div className="w-48">
-              <Select
+              <SelectWrapper
                 value={stockLevel}
-                onChange={(e) => setStockLevel(e.target.value)}
+                onChange={(e: { target: { value: string } }) => setStockLevel(e.target.value)}
                 options={[
                   { value: '', label: 'All Stock Levels' },
                   { value: 'in-stock', label: 'In Stock' },
@@ -211,9 +211,9 @@ export default function ProductsPage() {
               />
             </div>
             <div className="w-48">
-              <Select
+              <SelectWrapper
                 value={featured}
-                onChange={(e) => setFeatured(e.target.value)}
+                onChange={(e: { target: { value: string } }) => setFeatured(e.target.value)}
                 options={[
                   { value: '', label: 'All Products' },
                   { value: 'true', label: 'Featured' },
@@ -222,9 +222,9 @@ export default function ProductsPage() {
               />
             </div>
             <div className="w-48">
-              <Select
+              <SelectWrapper
                 value={`${sortBy}-${sortOrder}`}
-                onChange={(e) => {
+                onChange={(e: { target: { value: string } }) => {
                   const [field, order] = e.target.value.split('-');
                   setSortBy(field);
                   setSortOrder(order);
@@ -264,7 +264,7 @@ export default function ProductsPage() {
                 <Button variant="secondary" onClick={() => router.push(`/${locale}/admin/products/export?ids=${Array.from(selectedProducts).join(',')}`)}>
                   Export Selected
                 </Button>
-                <Button variant="danger" onClick={handleBulkDelete}>
+                <Button variant="destructive" onClick={handleBulkDelete}>
                   Delete Selected
                 </Button>
               </div>

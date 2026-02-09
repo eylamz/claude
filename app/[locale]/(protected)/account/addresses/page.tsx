@@ -2,16 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
+import { Card, CardContent } from '@/components/ui';
 import { Button } from '@/components/ui';
 import { Input } from '@/components/ui';
-import { Select } from '@/components/ui';
+import { SelectWrapper } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
 import {
   MapPin,
   Home,
   Building2,
-  MoreHorizontal,
   Edit,
   Trash2,
   Star,
@@ -104,7 +103,7 @@ function AddressCard({
             <Button variant="outline" size="sm" onClick={() => onEdit(index)}>
               <Edit className="w-4 h-4" />
             </Button>
-            <Button variant="danger" size="sm" onClick={() => onDelete(index)}>
+            <Button variant="destructive" size="sm" onClick={() => onDelete(index)}>
               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
@@ -176,7 +175,7 @@ function AddressFormModal({
           </div>
           <div className="p-4 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Select
+              <SelectWrapper
                 label="Type"
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value as AddressType })}

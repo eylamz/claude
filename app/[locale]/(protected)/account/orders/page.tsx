@@ -6,9 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Package,
-  Search,
   Filter,
-  Calendar,
   X,
   Eye,
   Truck,
@@ -20,12 +18,11 @@ import {
   ChevronUp,
   CheckCircle,
   Clock,
-  AlertCircle,
   Ban,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { Input } from '@/components/ui';
-import { Select } from '@/components/ui';
+import { SelectWrapper } from '@/components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
 import type { OrderStatus } from '@/lib/db/models/Order';
@@ -275,7 +272,7 @@ function OrderDetailsModal({
                 Order Timeline
               </h3>
               <div className="space-y-4">
-                {timeline.map((step, index) => (
+                {timeline.map((step) => (
                   <div key={step.status} className="flex items-start gap-4">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                       step.completed
@@ -447,7 +444,7 @@ function OrderDetailsModal({
 /**
  * Order card component (mobile)
  */
-function OrderCard({ order, locale, onViewDetails, onTrackOrder, onReorder }: {
+function OrderCard({ order, locale: _locale, onViewDetails, onTrackOrder, onReorder }: {
   order: Order;
   locale: string;
   onViewDetails: () => void;
@@ -744,7 +741,7 @@ export default function OrdersPage() {
                   />
                 </div>
                 <div>
-                  <Select
+                  <SelectWrapper
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value as OrderStatus | '')}
                     options={[

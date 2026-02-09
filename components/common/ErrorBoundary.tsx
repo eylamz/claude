@@ -4,6 +4,7 @@ import React from 'react';
 import { logError } from '@/lib/logging/errorLogger';
 
 interface ErrorBoundaryProps {
+  children?: React.ReactNode;
   fallback?: React.ReactNode;
   onError?: (error: Error, info: React.ErrorInfo) => void;
 }
@@ -21,7 +22,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
 
   async componentDidCatch(error: Error, info: React.ErrorInfo) {
     this.props.onError?.(error, info);
-    await logError(error, { componentStack: info.componentStack });
+    await logError(error, { componentStack: info.componentStack ?? undefined });
   }
 
   render() {
@@ -33,7 +34,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
         </div>
       );
     }
-    return this.props.children as React.ReactNode;
+    return this.props.children ?? null;
   }
 }
 

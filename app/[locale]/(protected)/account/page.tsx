@@ -18,7 +18,6 @@ import {
   LogOut,
   LayoutDashboard,
   ListOrdered,
-  User,
   ChevronRight,
   ArrowRight,
 } from 'lucide-react';

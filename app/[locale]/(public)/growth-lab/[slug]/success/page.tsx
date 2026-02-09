@@ -11,7 +11,7 @@ export default function FormSuccessPage() {
   const locale = useLocale();
   const router = useRouter();
   const params = useParams();
-  const slug = params.slug as string;
+  const _slug = params.slug as string;
   const growthLabEnabled = isGrowthLabEnabled();
 
   // Redirect if Growth Lab is disabled

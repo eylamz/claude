@@ -50,7 +50,7 @@ export default function ResetConfirmPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const passwordStrength = getPasswordStrength(formData.password);
+  const _passwordStrength = getPasswordStrength(formData.password);
   const token = params.token as string;
 
   // Validate token on mount

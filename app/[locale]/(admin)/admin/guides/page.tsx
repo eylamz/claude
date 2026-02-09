@@ -794,7 +794,6 @@ export default function GuidesPage() {
                 onChange={(e) => setGuidesVersion(parseInt(e.target.value) || 1)}
                 min={1}
                 className="w-32"
-                showSpinner={true}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Increment this version to invalidate all client caches
@@ -1139,9 +1138,8 @@ export default function GuidesPage() {
                           <Select
                             value={guide.status}
                             onValueChange={(value) => handleStatusChange(guide.id, value)}
-                            disabled={updatingStatus === guide.id}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger disabled={updatingStatus === guide.id}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

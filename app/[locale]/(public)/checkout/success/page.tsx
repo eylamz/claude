@@ -237,7 +237,7 @@ export default function CheckoutSuccessPage() {
   };
 
   // Save order to user account
-  const handleSaveOrder = async () => {
+  const _handleSaveOrder = async () => {
     if (!orderData) return;
 
     try {

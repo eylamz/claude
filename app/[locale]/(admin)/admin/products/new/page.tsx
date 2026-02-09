@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select } from '@/components/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper } from '@/components/ui';
 
 interface ColorVariant {
   id: string;
@@ -364,10 +364,10 @@ export default function NewProductPage() {
 
             {/* Category */}
             <div className="grid grid-cols-2 gap-4">
-              <Select
+              <SelectWrapper
                 label="Category"
                 value={formData.category}
-                onChange={(e) => handleInputChange('category', e.target.value)}
+                onChange={(e: { target: { value: string } }) => handleInputChange('category', e.target.value)}
                 error={errors.category}
                 options={[
                   { value: '', label: 'Select Category' },
@@ -378,10 +378,10 @@ export default function NewProductPage() {
                   { value: 'accessories', label: 'Accessories' },
                 ]}
               />
-              <Select
+              <SelectWrapper
                 label="Subcategory"
                 value={formData.subcategory}
-                onChange={(e) => handleInputChange('subcategory', e.target.value)}
+                onChange={(e: { target: { value: string } }) => handleInputChange('subcategory', e.target.value)}
                 options={[
                   { value: '', label: 'Select Subcategory' },
                   { value: 'complete', label: 'Complete Boards' },
@@ -484,7 +484,7 @@ export default function NewProductPage() {
                   <h3 className="text-lg font-semibold text-gray-900">Color Variant {variantIndex + 1}</h3>
                   <Button
                     type="button"
-                    variant="danger"
+                    variant="destructive"
                     size="sm"
                     onClick={() => removeVariant(variant.id)}
                   >
@@ -537,9 +537,9 @@ export default function NewProductPage() {
                     {variant.sizes.map((size, sizeIndex) => (
                       <div key={sizeIndex} className="grid grid-cols-12 gap-2 items-end">
                         <div className="col-span-3">
-                          <Select
+                          <SelectWrapper
                             value={size.size}
-                            onChange={(e) => updateSize(variant.id, sizeIndex, 'size', e.target.value)}
+                            onChange={(e: { target: { value: string } }) => updateSize(variant.id, sizeIndex, 'size', e.target.value)}
                             options={[
                               ...standardSizes.map(s => ({ value: s, label: s })),
                               { value: 'custom', label: 'Custom' },
@@ -564,7 +564,7 @@ export default function NewProductPage() {
                         <div className="col-span-1">
                           <Button
                             type="button"
-                            variant="danger"
+                            variant="destructive"
                             size="sm"
                             onClick={() => removeSize(variant.id, sizeIndex)}
                           >
@@ -750,10 +750,10 @@ export default function NewProductPage() {
               </label>
             </div>
             <div>
-              <Select
+              <SelectWrapper
                 label="Status"
                 value={formData.status}
-                onChange={(e) => handleInputChange('status', e.target.value)}
+                onChange={(e: { target: { value: string } }) => handleInputChange('status', e.target.value)}
                 options={[
                   { value: 'draft', label: 'Draft' },
                   { value: 'active', label: 'Active' },

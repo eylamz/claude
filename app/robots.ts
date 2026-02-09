@@ -19,9 +19,7 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: '*',
-        allow: '/api/skateparks',
-        allow: '/api/events',
-        allow: '/api/products',
+        allow: ['/api/skateparks', '/api/events', '/api/products'],
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,

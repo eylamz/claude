@@ -2,12 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { usePathname, useParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
 import { isTrainersEnabled } from '@/lib/utils/ecommerce';
 import {
-  MapPin,
   Star,
   X,
   Share2,
@@ -19,12 +17,10 @@ import {
   Eye,
   EyeOff,
   MessageSquare,
-  Filter,
-  MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
-import { Select } from '@/components/ui';
+import { SelectWrapper } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
 import { Textarea } from '@/components/ui';
 import { Input } from '@/components/ui';
@@ -95,7 +91,8 @@ const areaLabels: Record<'north' | 'center' | 'south', { en: string; he: string 
 function getImageSliderImages(images: TrainerImage[], locale: string, trainerName: string): { url: string; alt?: string }[] {
   const getImageAlt = (alt: TrainerImage['alt']): string => {
     if (typeof alt === 'string') return alt;
-    return alt[locale] || alt.en || alt.he || trainerName;
+    const key = locale as 'en' | 'he';
+    return alt[key] ?? alt.en ?? alt.he ?? trainerName;
   };
 
   return images.map(img => ({
@@ -271,7 +268,8 @@ export default function TrainerPage() {
 
   const getLocalizedText = (text: { en: string; he: string } | string): string => {
     if (typeof text === 'string') return text;
-    return text[locale] || text.en || text.he || '';
+    const key = locale as 'en' | 'he';
+    return text[key] ?? text.en ?? text.he ?? '';
   };
 
   const handleShare = async () => {
@@ -726,9 +724,9 @@ export default function TrainerPage() {
 
               {/* Filters */}
               <div className="flex flex-wrap gap-3 mb-4">
-                <Select
+                <SelectWrapper
                   value={reviewSort}
-                  onChange={(e) => setReviewSort(e.target.value as ReviewSort)}
+                  onChange={(e: { target: { value: string } }) => setReviewSort(e.target.value as ReviewSort)}
                   options={[
                     { value: 'newest', label: tr('Newest', 'החדשים ביותר') },
                     { value: 'oldest', label: tr('Oldest', 'הישנים ביותר') },
@@ -736,9 +734,9 @@ export default function TrainerPage() {
                     { value: 'lowest', label: tr('Lowest Rated', 'דירוג נמוך') },
                   ]}
                 />
-                <Select
-                  value={ratingFilter}
-                  onChange={(e) => setRatingFilter(e.target.value === '' ? '' : parseInt(e.target.value))}
+                <SelectWrapper
+                  value={ratingFilter === '' ? '' : String(ratingFilter)}
+                  onChange={(e: { target: { value: string } }) => setRatingFilter(e.target.value === '' ? '' : parseInt(e.target.value, 10))}
                   options={[
                     { value: '', label: tr('All Ratings', 'כל הדירוגים') },
                     { value: '5', label: '5 ⭐' },

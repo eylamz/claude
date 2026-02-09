@@ -1,9 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { AccordionCard } from './AccordionCard';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+/** Simple collapsible accordion with title and optional defaultOpen. Used by shop filters etc. */
+export function AccordionSimple({
+  title,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-b border-border dark:border-border-dark">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between py-3 text-left text-sm font-medium"
+      >
+        {title}
+        <ChevronDown className={cn('h-4 w-4 transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && <div className="pb-3">{children}</div>}
+    </div>
+  );
+}
 
 // Mock Data Structure
 const FAQ_DATA = [
@@ -89,5 +115,8 @@ export const FAQContainer = () => {
   );
 };
 
-// Export as Accordion for compatibility with index.ts
-export const Accordion = FAQContainer;
+// FAQ-style accordion (used on FAQ pages)
+export const FAQAccordion = FAQContainer;
+
+// Default Accordion: simple collapsible with title + children (used by shop, product filters)
+export const Accordion = AccordionSimple;

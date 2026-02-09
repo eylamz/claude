@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useLocale } from 'next-intl';
 import { Card, CardHeader, CardTitle, CardContent, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Skeleton } from '@/components/ui';
 import {
   BarChart,
@@ -62,7 +61,6 @@ function formatDuration(ms: number): string {
 }
 
 export default function AdminMetricsPage() {
-  const locale = useLocale();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<MetricsData | null>(null);
@@ -225,7 +223,7 @@ export default function AdminMetricsPage() {
                           <Cell key={i} fill={REFERRER_COLORS[i % REFERRER_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value: unknown) => [value, 'Views']} />
+                      <Tooltip formatter={(value: unknown) => [value as React.ReactNode, 'Views']} />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -260,7 +258,7 @@ export default function AdminMetricsPage() {
                           <Cell key={i} fill={DEVICE_COLORS[i % DEVICE_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value: unknown) => [value, 'Sessions']} />
+                      <Tooltip formatter={(value: unknown) => [value as React.ReactNode, 'Sessions']} />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>
@@ -292,7 +290,7 @@ export default function AdminMetricsPage() {
                           <Cell key={i} fill={CONSENT_COLORS[i % CONSENT_COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value: unknown) => [value, 'Users']} />
+                      <Tooltip formatter={(value: unknown) => [value as React.ReactNode, 'Users']} />
                       <Legend />
                     </PieChart>
                   </ResponsiveContainer>

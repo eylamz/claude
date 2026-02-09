@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Dropdown, Skeleton } from '@/components/ui';
+import { Button, Card, CardContent, Input, SelectWrapper, Dropdown, Skeleton } from '@/components/ui';
 
 interface Trainer {
   id: string;
@@ -19,6 +19,7 @@ interface Trainer {
   profileImage: string;
   isFeatured: boolean;
   linkedSkateparks: any[];
+  reviews?: Array<{ isApproved: boolean; userName?: string; rating?: number; comment?: string; [key: string]: unknown }>;
 }
 
 interface Pagination {
@@ -107,22 +108,6 @@ export default function TrainersPage() {
     }
   };
 
-  const handleStatusChange = async (trainerId: string, newStatus: string) => {
-    try {
-      const response = await fetch('/api/admin/trainers', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trainerId, updates: { status: newStatus } }),
-      });
-
-      if (response.ok) {
-        fetchTrainers();
-      }
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
-  };
-
   const handleBulkAction = (action: string) => {
     if (selectedItems.size === 0) return;
     if (confirm(`Perform ${action} on ${selectedItems.size} selected trainer(s)?`)) {
@@ -193,9 +178,9 @@ export default function TrainersPage() {
               />
             </div>
             <div className="w-48">
-              <Select
+              <SelectWrapper
                 value={area}
-                onChange={(e) => setArea(e.target.value)}
+                onChange={(e: { target: { value: string } }) => setArea(e.target.value)}
                 options={[
                   { value: '', label: 'All Areas' },
                   { value: 'north', label: 'North' },
@@ -205,9 +190,9 @@ export default function TrainersPage() {
               />
             </div>
             <div className="w-48">
-              <Select
+              <SelectWrapper
                 value={status}
-                onChange={(e) => setStatus(e.target.value)}
+                onChange={(e: { target: { value: string } }) => setStatus(e.target.value)}
                 options={[
                   { value: '', label: 'All Statuses' },
                   { value: 'active', label: 'Active' },
@@ -217,9 +202,9 @@ export default function TrainersPage() {
               />
             </div>
             <div className="w-48">
-              <Select
+              <SelectWrapper
                 value={sport}
-                onChange={(e) => setSport(e.target.value)}
+                onChange={(e: { target: { value: string } }) => setSport(e.target.value)}
                 options={[
                   { value: '', label: 'All Sports' },
                   ...SPORTS.map(s => ({ value: s.toLowerCase(), label: s })),
@@ -245,7 +230,7 @@ export default function TrainersPage() {
                 <Button variant="secondary" onClick={() => handleBulkAction('activate')}>
                   Activate
                 </Button>
-                <Button variant="danger" onClick={() => handleBulkAction('delete')}>
+                <Button variant="destructive" onClick={() => handleBulkAction('delete')}>
                   Delete Selected
                 </Button>
               </div>
@@ -546,7 +531,7 @@ export default function TrainersPage() {
                                   <svg
                                     key={star}
                                     className={`w-4 h-4 ${
-                                      star <= item.review.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                      star <= (item.review.rating ?? 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'
                                     }`}
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
@@ -555,7 +540,7 @@ export default function TrainersPage() {
                                   </svg>
                                 ))}
                               </div>
-                              <p className="mt-2 text-sm text-gray-700">{item.review.comment}</p>
+                              <p className="mt-2 text-sm text-gray-700">{String(item.review.comment ?? '')}</p>
                             </div>
                             <div className="flex space-x-2">
                               <Button

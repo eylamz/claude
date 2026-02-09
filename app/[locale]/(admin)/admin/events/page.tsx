@@ -877,9 +877,8 @@ export default function EventsPage() {
                           <Select
                             value={event.status}
                             onValueChange={(value) => handleStatusChange(event.id, value)}
-                            disabled={updatingStatus === event.id}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger disabled={updatingStatus === event.id}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

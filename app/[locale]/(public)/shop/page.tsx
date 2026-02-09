@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { ProductCard } from '@/components/shop';
-import { Accordion, Checkbox, Slider, Drawer, Button, Select, Skeleton } from '@/components/ui';
+import { Accordion, Checkbox, Slider, Drawer, Button, SelectWrapper, Skeleton } from '@/components/ui';
 import { 
   Filter, 
   X, 
@@ -415,9 +415,9 @@ export default function ShopPage() {
               <span className="hidden sm:inline text-sm text-gray-600 dark:text-gray-400">
                 {locale === 'he' ? 'מיין לפי:' : 'Sort by:'}
               </span>
-              <Select
+              <SelectWrapper
                 value={sortBy}
-                onChange={handleSortChange}
+                onChange={(e) => handleSortChange(e as React.ChangeEvent<HTMLSelectElement>)}
                 options={[
                   { value: 'popular', label: t('popular') || 'Popular' },
                   { value: 'new', label: t('new') || 'Newest' },

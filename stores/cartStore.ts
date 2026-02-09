@@ -88,7 +88,9 @@ interface CartActions {
   
   // UI actions
   toggleCart: () => void;
-  
+  openCart: () => void;
+  setError: (error: string | null) => void;
+
   // Server sync
   syncWithServer: () => Promise<void>;
   
@@ -460,6 +462,14 @@ export const useCartStore = create<CartStore>()(
         set((draft) => {
           draft.isOpen = !draft.isOpen;
         });
+      },
+
+      openCart: () => {
+        set({ isOpen: true });
+      },
+
+      setError: (error: string | null) => {
+        set({ error });
       },
 
       // Sync with server (Redis for logged users)

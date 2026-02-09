@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Select } from '@/components/ui';
+import { SelectWrapper } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
 import ReviewCard, { ReviewData } from './ReviewCard';
 import ReviewForm from './ReviewForm';
@@ -60,7 +60,7 @@ export default function ReviewsList({ slug, canWrite = false }: { slug: string; 
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Select
+          <SelectWrapper
             value={String(ratingFilter)}
             onChange={(e) => setRatingFilter(e.target.value ? Number(e.target.value) : '')}
             options={[
@@ -72,7 +72,7 @@ export default function ReviewsList({ slug, canWrite = false }: { slug: string; 
               { value: '1', label: '1 star' },
             ]}
           />
-          <Select
+          <SelectWrapper
             value={sort}
             onChange={(e) => setSort(e.target.value as SortOption)}
             options={[

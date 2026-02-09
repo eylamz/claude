@@ -28,13 +28,6 @@ interface Pagination {
   limit: number;
 }
 
-interface ActivityLog {
-  id: string;
-  action: string;
-  timestamp: Date;
-  details: string;
-}
-
 export default function UsersPage() {
   const locale = useLocale();
   const router = useRouter();
@@ -57,8 +50,8 @@ export default function UsersPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [role, setRole] = useState('');
   const [status, setStatus] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [dateFrom] = useState('');
+  const [dateTo] = useState('');
 
   // Debounce search input
   useEffect(() => {
@@ -186,29 +179,6 @@ export default function UsersPage() {
   const handleSendBulkEmail = () => {
     if (selectedItems.size === 0) return;
     alert(`Send bulk email to ${selectedItems.size} users - Implementation needed`);
-  };
-
-  const handleExportCSV = () => {
-    // Convert users to CSV
-    const headers = ['Name', 'Email', 'Role', 'Registration Date', 'Last Login', 'Order Count', 'Status'];
-    const rows = users.map(u => [
-      u.fullName,
-      u.email,
-      u.role,
-      new Date(u.createdAt).toLocaleDateString(),
-      new Date(u.lastLogin).toLocaleDateString(),
-      u.orderCount.toString(),
-      u.emailVerified ? 'Active' : 'Pending',
-    ]);
-
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `users-${new Date().toISOString()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleDelete = (userId: string, userName: string) => {

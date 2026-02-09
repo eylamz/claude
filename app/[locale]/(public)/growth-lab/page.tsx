@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { TrendingUp, Users, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, CheckCircle2 } from 'lucide-react';
 import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, Skeleton, Toaster } from '@/components/ui';
 import { SearchInput } from '@/components/common/SearchInput';
 import { useToast } from '@/hooks/use-toast';

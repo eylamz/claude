@@ -11,14 +11,14 @@ export default function AccessibilityPageClient({ locale }: AccessibilityPageCli
   const t = useTranslations('accessibility');
   const isHebrew = locale === 'he';
 
-  const getMetaDescription = useMemo(() => {
+  useMemo(() => {
     return isHebrew 
       ? 'הצהרת נגישות של ENBOSS - קרא את הצהרת הנגישות המלאה שלנו המפרטת את המחויבות שלנו לנגישות דיגיטלית.'
       : 'Accessibility Statement for ENBOSS - Read our complete accessibility statement detailing our commitment to digital accessibility.';
   }, [isHebrew]);
 
   // Generate keywords based on language
-  const getMetaKeywords = useMemo(() => {
+  useMemo(() => {
     return isHebrew
       ? 'הצהרת נגישות, אנבוס, סקייטבורד, סקייטפארקים, ישראל, נגישות דיגיטלית'
       : 'accessibility statement, ENBOSS, skateboarding, skateparks, Israel, digital accessibility';

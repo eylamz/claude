@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { isCommunityEnabled } from '@/lib/utils/ecommerce';
 import { 
@@ -11,8 +10,6 @@ import {
   Award,
   MessageCircle,
   Camera,
-  Zap,
-  Target,
   Trophy,
   Sparkles,
   ArrowRight,
@@ -58,14 +55,13 @@ interface CommunityPost {
 }
 
 export default function CommunityPage() {
-  const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
   const isHebrew = locale === 'he';
   const t = useTranslations('common');
   const communityEnabled = isCommunityEnabled();
   
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [, setIsScrolled] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'feed' | 'stories' | 'events'>('feed');
 
   // Redirect if Community is disabled

@@ -2,17 +2,13 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Skeleton, SegmentedControls, Toaster } from '@/components/ui';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ImageUploader } from '@/components/admin';
-import { Moon, Sun, ChevronLeft, ExternalLink } from 'lucide-react';
+import { ChevronLeft, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import { Icon } from '@/components/icons';
-import { Label } from '@radix-ui/react-dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 
 interface ContentBlock {
@@ -95,7 +91,6 @@ const CODE_LANGUAGES = [
 ];
 
 export default function EditGuidePage() {
-  const locale = useLocale();
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
@@ -110,17 +105,7 @@ export default function EditGuidePage() {
     setSelectedBlock(null); // Clear selection when switching languages
   };
   
-  // Handle tab value change for Tabs component
-  const handleTabsValueChange = (value: string) => {
-    if (value === 'hebrew' || value === 'english') {
-      handleTabChange(value === 'hebrew' ? 'he' : 'en');
-    }
-  };
-  
-  const currentTabValue = activeTab === 'he' ? 'hebrew' : 'english';
-  
   const [previewMode, setPreviewMode] = useState(false);
-  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
@@ -133,7 +118,6 @@ export default function EditGuidePage() {
   // Toast hook
   const { toast } = useToast();
   const [draggedOverId, setDraggedOverId] = useState<string | null>(null);
-  const [tagInput, setTagInput] = useState({ en: '', he: '' });
 
   const [formData, setFormData] = useState<GuideFormData>({
     title: { en: '', he: '' },
@@ -519,26 +503,6 @@ export default function EditGuidePage() {
         }),
       },
     }));
-  };
-
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.title.en) newErrors['title.en'] = 'English title is required';
-    if (!formData.title.he) newErrors['title.he'] = 'Hebrew title is required';
-    if (!formData.slug) newErrors['slug'] = 'Slug is required';
-    if (!formData.description.en) newErrors['description.en'] = 'English description is required';
-    if (!formData.description.he) newErrors['description.he'] = 'Hebrew description is required';
-    if (!formData.coverImage) newErrors['coverImage'] = 'Cover image is required';
-    if (formData.contentBlocks.en.length === 0) {
-      newErrors['contentBlocks.en'] = 'At least one English content block is required';
-    }
-    if (formData.contentBlocks.he.length === 0) {
-      newErrors['contentBlocks.he'] = 'At least one Hebrew content block is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   // Track page visibility to avoid auto-saving when tab is in background
@@ -1365,7 +1329,6 @@ export default function EditGuidePage() {
                                       { value: 'h3', label: 'H3' },
                                       { value: 'h4', label: 'H4' },
                                     ]}
-                                    size="sm"
                                     className="max-w-[200px]"
                                   />
                                 </div>
@@ -1390,7 +1353,6 @@ export default function EditGuidePage() {
                                         { value: 'bullet', label: 'Bullet' },
                                         { value: 'numbered', label: 'Numbered' },
                                       ]}
-                                      size="sm"
                                       className="max-w-[200px]"
                                     />
                                   </div>
@@ -1630,7 +1592,7 @@ export default function EditGuidePage() {
                             {block.type === 'code' && (
                               <div className="space-y-2">
                                 <SelectWrapper
-                                  value={block.language}
+                                  value={block.language ?? ''}
                                   onChange={(e) =>
                                     handleUpdateContentBlock(block.id, { language: e.target.value })
                                   }

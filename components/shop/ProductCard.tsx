@@ -93,6 +93,7 @@ export const ProductCard: FC<ProductCardProps> = ({
   // Legacy props
   image,
   hasDiscount: hasDiscountProp,
+  highlightQuery,
 }) => {
   const t = useTranslation('shop');
   const { locale } = useLocaleInfo();

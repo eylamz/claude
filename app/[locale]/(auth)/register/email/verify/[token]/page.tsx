@@ -39,7 +39,7 @@ export default function VerifyEmailTokenPage() {
           body: JSON.stringify({ token }),
         });
 
-        const data = await response.json();
+        await response.json();
 
         if (!response.ok) {
           setIsValidating(false);
@@ -71,8 +71,6 @@ export default function VerifyEmailTokenPage() {
       router.push(`/${locale}`);
     }
   }, [isVerified, countdown, locale, router]);
-
-  const isRTL = locale === 'he';
 
   // Show loading state while validating
   if (isValidating) {

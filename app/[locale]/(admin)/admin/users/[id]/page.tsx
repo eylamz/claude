@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import Link from 'next/link';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Skeleton } from '@/components/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Skeleton } from '@/components/ui';
 
 interface User {
   id: string;
@@ -192,10 +191,10 @@ export default function UserDetailPage() {
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select
+            <SelectWrapper
               label="Role"
               value={user.role}
-              onChange={(e) => setUser({ ...user, role: e.target.value as 'user' | 'editor' | 'admin' })}
+              onChange={(e: { target: { value: string } }) => setUser({ ...user, role: e.target.value as 'user' | 'editor' | 'admin' })}
               options={[
                 { value: 'user', label: 'User' },
                 { value: 'editor', label: 'Editor' },
@@ -225,10 +224,10 @@ export default function UserDetailPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Select
+            <SelectWrapper
               label="Language"
               value={user.preferences.language}
-              onChange={(e) =>
+              onChange={(e: { target: { value: string } }) =>
                 setUser({
                   ...user,
                   preferences: { ...user.preferences, language: e.target.value as 'en' | 'he' },
@@ -239,10 +238,10 @@ export default function UserDetailPage() {
                 { value: 'he', label: 'Hebrew' },
               ]}
             />
-            <Select
+            <SelectWrapper
               label="Color Mode"
               value={user.preferences.colorMode}
-              onChange={(e) =>
+              onChange={(e: { target: { value: string } }) =>
                 setUser({
                   ...user,
                   preferences: { ...user.preferences, colorMode: e.target.value as 'light' | 'dark' | 'system' },
@@ -286,10 +285,10 @@ export default function UserDetailPage() {
               {user.addresses.map((address, index) => (
                 <div key={index} className="border rounded-lg p-4 space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <Select
+                    <SelectWrapper
                       label="Type"
                       value={address.type}
-                      onChange={(e) => {
+                      onChange={(e: { target: { value: string } }) => {
                         const newAddresses = [...user.addresses];
                         newAddresses[index].type = e.target.value as 'home' | 'work' | 'other';
                         setUser({ ...user, addresses: newAddresses });
@@ -382,7 +381,7 @@ export default function UserDetailPage() {
                       Default Address
                     </label>
                     <Button
-                      variant="danger"
+                      variant="destructive"
                       size="sm"
                       onClick={() => {
                         const newAddresses = user.addresses.filter((_, idx) => idx !== index);

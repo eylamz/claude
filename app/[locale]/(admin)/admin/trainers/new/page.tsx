@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select } from '@/components/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper } from '@/components/ui';
 import { ImageUploader } from '@/components/admin';
 
 interface TrainerFormData {
@@ -384,18 +384,16 @@ export default function NewTrainerPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Select
+              <SelectWrapper
                 label="Area"
                 value={formData.area}
-                onChange={(e) => handleInputChange('area', e.target.value)}
-                error={errors.area}
+                onChange={(e: { target: { value: string } }) => handleInputChange('area', e.target.value)}
                 options={[
                   { value: '', label: 'Select Area' },
                   { value: 'north', label: 'North' },
                   { value: 'center', label: 'Center' },
                   { value: 'south', label: 'South' },
                 ]}
-                required
               />
             </div>
 
@@ -495,10 +493,10 @@ export default function NewTrainerPage() {
             <p className="text-sm text-gray-500 mb-4">
               Select skateparks this trainer is associated with
             </p>
-            <Select
+            <SelectWrapper
               label="Skateparks"
               value=""
-              onChange={(e) => {
+              onChange={(e: { target: { value: string } }) => {
                 if (e.target.value && !formData.linkedSkateparks.includes(e.target.value)) {
                   handleInputChange('linkedSkateparks', [...formData.linkedSkateparks, e.target.value]);
                 }
@@ -541,10 +539,10 @@ export default function NewTrainerPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <Select
+              <SelectWrapper
                 label="Status"
                 value={formData.status}
-                onChange={(e) => handleInputChange('status', e.target.value)}
+                onChange={(e: { target: { value: string } }) => handleInputChange('status', e.target.value)}
                 options={[
                   { value: 'active', label: 'Active' },
                   { value: 'inactive', label: 'Inactive' },

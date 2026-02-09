@@ -8,14 +8,12 @@ import {
   Heart,
   ShoppingCart,
   X,
-  Plus,
   Trash2,
   Share2,
   CheckCircle,
   AlertCircle,
   Loader2,
   Package,
-  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { Card, CardContent } from '@/components/ui';
@@ -112,7 +110,8 @@ function WishlistProductCard({
 
   const getProductName = (name: WishlistProduct['name']): string => {
     if (typeof name === 'string') return name;
-    return name[locale] || name.en || name.he || 'Product';
+    const key = locale as 'en' | 'he';
+    return name[key] ?? name.en ?? name.he ?? 'Product';
   };
 
   const finalPrice = product.hasActiveDiscount && product.discountPrice
@@ -257,7 +256,7 @@ export default function WishlistPage() {
   const [showOutOfStock, setShowOutOfStock] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set());
-  const animatedItemsRef = useRef<AnimatedItem[]>([]);
+  const _animatedItemsRef = useRef<AnimatedItem[]>([]);
 
   useEffect(() => {
     fetchWishlist();
@@ -358,7 +357,7 @@ export default function WishlistPage() {
 
     // Animation
     if (element) {
-      const productName = typeof product.name === 'string' ? product.name : product.name.en || product.name.he;
+      const _productName = typeof product.name === 'string' ? product.name : product.name.en || product.name.he;
       
       // Create animated clone
       const clone = element.cloneNode(true) as HTMLElement;

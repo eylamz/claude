@@ -34,14 +34,6 @@ function getPasswordStrength(password: string): PasswordStrength {
   return { score, checks };
 }
 
-function getStrengthColor(score: number) {
-  const colors = {
-    0: 'bg-red-500',
-    1: 'bg-green-500',
-  };
-  return colors[score as keyof typeof colors] || 'bg-gray-300';
-}
-
 export default function RegisterPage() {
   const locale = useLocale();
   const t = useTranslation('auth');

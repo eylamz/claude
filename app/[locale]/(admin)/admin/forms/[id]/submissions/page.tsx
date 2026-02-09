@@ -31,6 +31,7 @@ interface Form {
     id: string;
     label: { en: string; he: string };
     type: string;
+    order: number;
   }>;
 }
 
@@ -103,13 +104,7 @@ export default function FormSubmissionsPage() {
     });
   };
 
-  const getFieldLabel = (fieldId: string) => {
-    if (!form) return fieldId;
-    const field = form.fields.find(f => f.id === fieldId);
-    return field ? (field.label[locale as 'en' | 'he'] || field.label.en) : fieldId;
-  };
-
-  const formatAnswer = (answer: any, fieldType: string): string => {
+  const formatAnswer = (answer: any, _fieldType: string): string => {
     if (answer === null || answer === undefined) return 'N/A';
     
     if (typeof answer === 'object' && answer.value === 'other') {

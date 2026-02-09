@@ -60,7 +60,7 @@ export default function ProductPage() {
   const router = useRouter();
   const locale = pathname.split('/')[1] || 'en';
   const t = useTranslation('shop');
-  const { isRTL } = useLocaleInfo();
+  useLocaleInfo();
   const ecommerceEnabled = isEcommerceEnabled();
 
   const [product, setProduct] = useState<Product | null>(null);

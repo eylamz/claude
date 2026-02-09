@@ -15,7 +15,7 @@ import mongoose from 'mongoose';
  * Returns user statistics: total orders, wishlist items, reviews, points
  */
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Authentication check
     const session = await getServerSession(authOptions);

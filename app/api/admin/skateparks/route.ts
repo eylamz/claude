@@ -5,6 +5,7 @@ import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import Skatepark from '@/lib/models/Skatepark';
 import Settings from '@/lib/models/Settings';
+import { PLACEHOLDER_SKATEPARK_IMAGE } from '@/lib/constants/placeholders';
 import { revalidatePath } from 'next/cache';
 import { locales } from '@/i18n';
 

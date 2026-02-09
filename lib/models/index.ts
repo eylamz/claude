@@ -21,7 +21,7 @@ export { default as Skatepark } from './Skatepark';
 export type {
   ISkatepark,
   ISkateparkImage,
-  IDayHours,
+  IDaySchedule,
   IOperatingHours,
   IAmenities,
   IMediaLinks,
@@ -31,11 +31,7 @@ export type {
 } from './Skatepark';
 
 export { default as Event } from './Event';
-export type {
-  IEvent,
-  IEventImage,
-  EventStatus,
-} from './Event';
+export type { IEvent, IEventModel } from './Event';
 
 export { default as EventSignup } from './EventSignup';
 export type {
@@ -57,7 +53,6 @@ export { default as Guide } from './Guide';
 export type {
   IGuide,
   IContentBlock,
-  ILocalizedField,
   ContentBlockType,
   HeadingLevel,
   ListType,

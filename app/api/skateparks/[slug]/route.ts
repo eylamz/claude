@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';
 import Settings from '@/lib/models/Settings';
+import { PLACEHOLDER_SKATEPARK_IMAGE } from '@/lib/constants/placeholders';
 import { isBlocked, record404, recordSuccess } from '@/lib/utils/circuitBreaker';
 
 const ENDPOINT = '/api/skateparks/[slug]';

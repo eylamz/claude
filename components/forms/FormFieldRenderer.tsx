@@ -240,7 +240,6 @@ export function FormFieldRenderer({ field, value, onChange, error, locale, quest
           <Select
             value={typeof value === 'string' ? value : (typeof value === 'object' ? value?.value : '')}
             onValueChange={handleSelectChange}
-            required={field.required}
           >
             <SelectTrigger className={error ? 'border-red-500' : ''}>
               <SelectValue placeholder={locale === 'en' ? 'Select an option...' : 'בחר אפשרות...'} />

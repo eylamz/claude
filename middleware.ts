@@ -89,7 +89,7 @@ function isPublicRoute(pathname: string): boolean {
 function isAdminRoute(pathname: string): boolean {
   return (
     pathname.includes('/admin') ||
-    pathname.match(/^\/[a-z]{2}\/admin/) ||
+    pathname.match(/^\/[a-z]{2}\/admin/) !== null ||
     pathname === '/admin'
   );
 }

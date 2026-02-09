@@ -316,7 +316,7 @@ export default function NewFormPage() {
         throw new Error(errorData.error || 'Failed to create form');
       }
 
-      const data = await response.json();
+      await response.json();
       setLastSaved(new Date());
 
       if (saveAsDraft) {
@@ -834,27 +834,25 @@ export default function NewFormPage() {
                             {(field.type === 'number' || field.type === 'date') && (
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
+                                  <label className="block text-sm font-medium mb-1">Minimum</label>
                                   <NumberInput
-                                    label="Minimum"
-                                    value={field.min}
+                                    value={field.min ?? ''}
                                     onChange={(e) =>
                                       handleUpdateField(field.id, {
                                         min: e.target.value ? parseFloat(e.target.value) : undefined,
                                       })
                                     }
-                                    placeholder="Min"
                                   />
                                 </div>
                                 <div>
+                                  <label className="block text-sm font-medium mb-1">Maximum</label>
                                   <NumberInput
-                                    label="Maximum"
-                                    value={field.max}
+                                    value={field.max ?? ''}
                                     onChange={(e) =>
                                       handleUpdateField(field.id, {
                                         max: e.target.value ? parseFloat(e.target.value) : undefined,
                                       })
                                     }
-                                    placeholder="Max"
                                   />
                                 </div>
                               </div>

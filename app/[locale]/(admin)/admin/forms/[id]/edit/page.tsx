@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Skeleton, Toaster } from '@/components/ui';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
@@ -59,7 +58,6 @@ const FORM_FIELD_TYPES: { value: FormFieldType; label: string; icon: string }[] 
 ];
 
 export default function EditFormPage() {
-  const locale = useLocale();
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
@@ -338,34 +336,6 @@ export default function EditFormPage() {
     }));
   };
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.title.en) newErrors['title.en'] = 'English title is required';
-    if (!formData.title.he) newErrors['title.he'] = 'Hebrew title is required';
-    if (!formData.slug) newErrors['slug'] = 'Slug is required';
-    if (!formData.description.en) newErrors['description.en'] = 'English description is required';
-    if (!formData.description.he) newErrors['description.he'] = 'Hebrew description is required';
-
-    formData.fields.forEach((field, index) => {
-      if (!field.label.en) {
-        newErrors[`field-${index}-label-en`] = 'English label is required';
-      }
-      if (!field.label.he) {
-        newErrors[`field-${index}-label-he`] = 'Hebrew label is required';
-      }
-      if ((field.type === 'radio' || field.type === 'select' || field.type === 'checkbox') && (!field.options || field.options.length === 0)) {
-        newErrors[`field-${index}-options`] = 'At least one option is required';
-      }
-      if (field.type === 'image-selection' && (!field.images || field.images.length === 0)) {
-        newErrors[`field-${index}-images`] = 'At least one image is required';
-      }
-    });
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
@@ -389,7 +359,7 @@ export default function EditFormPage() {
         throw new Error(errorData.error || 'Failed to save form');
       }
 
-      const data = await response.json();
+      await response.json();
       setLastSaved(new Date());
       const submitDataString = JSON.stringify(submitData);
       lastSavedDataRef.current = submitDataString;
@@ -920,27 +890,25 @@ export default function EditFormPage() {
                             {(field.type === 'number' || field.type === 'date') && (
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
+                                  <label className="block text-sm font-medium mb-1">Minimum</label>
                                   <NumberInput
-                                    label="Minimum"
-                                    value={field.min}
+                                    value={field.min ?? ''}
                                     onChange={(e) =>
                                       handleUpdateField(field.id, {
                                         min: e.target.value ? parseFloat(e.target.value) : undefined,
                                       })
                                     }
-                                    placeholder="Min"
                                   />
                                 </div>
                                 <div>
+                                  <label className="block text-sm font-medium mb-1">Maximum</label>
                                   <NumberInput
-                                    label="Maximum"
-                                    value={field.max}
+                                    value={field.max ?? ''}
                                     onChange={(e) =>
                                       handleUpdateField(field.id, {
                                         max: e.target.value ? parseFloat(e.target.value) : undefined,
                                       })
                                     }
-                                    placeholder="Max"
                                   />
                                 </div>
                               </div>

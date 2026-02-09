@@ -37,6 +37,7 @@ export const TrainerCard: FC<TrainerCardProps> = ({
   reviewCount,
   onContact,
   onShare,
+  highlightQuery,
 }) => {
   const [imageError, setImageError] = useState(false);
 
