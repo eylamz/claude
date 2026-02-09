@@ -995,6 +995,13 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                     ),
                   },
                   {
+                    href: `/${locale}/admin/metrics`,
+                    labelKey: 'metrics',
+                    icon: (
+                      <Icon name="chartBold" className="w-4 h-4" />
+                    ),
+                  },
+                  {
                     href: `/${locale}/admin/settings`,
                     labelKey: 'settings',
                     icon: (

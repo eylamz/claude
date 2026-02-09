@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { ChevronLeft } from 'lucide-react';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, Skeleton, Toaster, Textarea } from '@/components/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Skeleton, Toaster, Textarea } from '@/components/ui';
 import { Checkbox } from '@/components/ui/checkbox';
 import { NumberInput } from '@/components/ui/number-input';
 import { useToast } from '@/hooks/use-toast';
@@ -921,10 +921,10 @@ export default function EventSignupFormPage() {
                                 Conditional Logic (Show this field when...)
                               </label>
                               <div className="grid grid-cols-3 gap-4">
-                                <Select
+                                <SelectWrapper
                                   label="Depends On"
                                   value={field.conditionalLogic?.dependsOn || ''}
-                                  onChange={(e) => {
+                                  onChange={(e: { target: { value: string } }) => {
                                     if (e.target.value) {
                                       handleUpdateField(field.id, {
                                         conditionalLogic: field.conditionalLogic ? {
@@ -945,10 +945,10 @@ export default function EventSignupFormPage() {
                                       .map(f => ({ value: f.id, label: f.label[activeTab] || f.name })),
                                   ]}
                                 />
-                                <Select
+                                <SelectWrapper
                                   label="Condition"
                                   value={field.conditionalLogic?.condition || 'equals'}
-                                  onChange={(e) =>
+                                  onChange={(e: { target: { value: string } }) =>
                                     handleUpdateField(field.id, {
                                       conditionalLogic: field.conditionalLogic ? {
                                         ...field.conditionalLogic,
@@ -1092,7 +1092,9 @@ function RenderFormField({ field, lang }: { field: FormField; lang: 'en' | 'he' 
           <label className="block text-sm font-medium text-gray-700 mb-1">
             {field.label[lang]} {isRequired && <span className="text-red-500">*</span>}
           </label>
-          <Select
+          <SelectWrapper
+            value=""
+            onChange={() => {}}
             options={[
               { value: '', label: 'Select...' },
               ...(field.options?.[lang] || []).filter(Boolean).map(opt => ({
@@ -1100,7 +1102,6 @@ function RenderFormField({ field, lang }: { field: FormField; lang: 'en' | 'he' 
                 label: opt,
               })),
             ]}
-            required={isRequired}
           />
           {field.helpText[lang] && (
             <p className="mt-1 text-sm text-gray-500">{field.helpText[lang]}</p>

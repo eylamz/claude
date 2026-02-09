@@ -81,3 +81,14 @@ export type {
   IHourlyForecast,
   IDailyForecast,
 } from './WeatherForecast';
+
+export { default as AnalyticsEvent } from './AnalyticsEvent';
+export type {
+  IAnalyticsEvent,
+  IPageViewEvent,
+  IConsentEvent,
+  AnalyticsEventType,
+  DeviceCategory,
+  ReferrerCategory,
+  ConsentChoice,
+} from './AnalyticsEvent';

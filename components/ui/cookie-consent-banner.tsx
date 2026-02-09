@@ -15,6 +15,7 @@ import {
   hasGivenConsent,
   type CookieCategory,
 } from '@/lib/utils/cookie-consent';
+import { trackConsent } from '@/lib/analytics/internal';
 import { Switch } from '@/components/ui/switch';
 
 export default function CookieConsentBanner() {
@@ -58,6 +59,7 @@ export default function CookieConsentBanner() {
   }, []);
 
   const handleAcceptAll = () => {
+    trackConsent('accept_all');
     acceptAllCookies();
     setIsVisible(false);
     // Trigger analytics initialization if needed
@@ -67,6 +69,7 @@ export default function CookieConsentBanner() {
   };
 
   const handleRejectNonEssential = () => {
+    trackConsent('reject_non_essential');
     rejectNonEssentialCookies();
     setIsVisible(false);
     if (typeof window !== 'undefined') {
@@ -75,6 +78,7 @@ export default function CookieConsentBanner() {
   };
 
   const handleSavePreferences = () => {
+    trackConsent('save_preferences');
     setCookiePreferences({
       ...preferences,
       functional: true, // Always enabled, cannot be disabled

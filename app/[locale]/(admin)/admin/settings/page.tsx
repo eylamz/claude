@@ -16,6 +16,7 @@ const getMultilingualText = (text: string | IMultilingualText | undefined, lang:
 
 // Environment flag keys and human-readable descriptions (from .env.local)
 const ENV_FLAGS: { key: string; description: string }[] = [
+  { key: 'NEXT_PUBLIC_ENABLE_ANALYTICS', description: 'Enable analytics (page views, consent, device, referrer)' },
   { key: 'NEXT_PUBLIC_ENABLE_LOGIN', description: 'Turns user login on or off' },
   { key: 'NEXT_PUBLIC_ENABLE_REGISTER', description: 'Allow user registration' },
   { key: 'NEXT_PUBLIC_ENABLE_COMMUNITY', description: 'Community page' },
@@ -31,6 +32,7 @@ const ENV_FLAGS: { key: string; description: string }[] = [
 
 // Static process.env reads so Next.js inlines values at build time
 const ENV_FLAG_VALUES: Record<string, boolean> = {
+  NEXT_PUBLIC_ENABLE_ANALYTICS: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true',
   NEXT_PUBLIC_ENABLE_LOGIN: process.env.NEXT_PUBLIC_ENABLE_LOGIN === 'true',
   NEXT_PUBLIC_ENABLE_REGISTER: process.env.NEXT_PUBLIC_ENABLE_REGISTER === 'true',
   NEXT_PUBLIC_ENABLE_COMMUNITY: process.env.NEXT_PUBLIC_ENABLE_COMMUNITY === 'true',

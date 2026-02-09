@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useLocale } from 'next-intl';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Toaster, Skeleton } from '@/components/ui';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -81,7 +80,6 @@ const EVENT_TYPES = [
 ];
 
 export default function EditEventPage() {
-  const locale = useLocale();
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;

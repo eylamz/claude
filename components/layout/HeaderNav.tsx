@@ -28,6 +28,7 @@ import {
   Clock,
   ShoppingBag,
   Sparkles,
+  BarChart2,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
@@ -1065,6 +1066,11 @@ export default function HeaderNav() {
                                     href: `/${locale}/admin/forms`,
                                     labelKey: 'forms',
                                     icon: TestTubeDiagonal,
+                                  },
+                                  {
+                                    href: `/${locale}/admin/metrics`,
+                                    labelKey: 'metrics',
+                                    icon: BarChart2,
                                   },
                                   {
                                     href: `/${locale}/admin/settings`,
