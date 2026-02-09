@@ -317,7 +317,6 @@ const iconMap: Record<string, SvgComponent> = {
   chartBold: ChartBold,
   lightbulbBold: LightbulbBold,
   hours24: Hours24,
-  map: MapIcon,
   imageBold: ImageBold,
   bulkImage: BulkImage,
   sparks: Sparks,

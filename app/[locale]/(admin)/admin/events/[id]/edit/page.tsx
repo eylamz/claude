@@ -374,26 +374,6 @@ export default function EditEventPage() {
     }));
   };
 
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.title.en) newErrors['title.en'] = 'English title is required';
-    if (!formData.title.he) newErrors['title.he'] = 'Hebrew title is required';
-    if (!formData.slug) newErrors['slug'] = 'Slug is required';
-    if (!formData.description.en) newErrors['description.en'] = 'English description is required';
-    if (!formData.description.he) newErrors['description.he'] = 'Hebrew description is required';
-    if (!formData.startDate) newErrors['startDate'] = 'Start date is required';
-    if (!formData.endDate) newErrors['endDate'] = 'End date is required';
-    if (!formData.location.name.en) newErrors['location.name.en'] = 'Location name (EN) is required';
-    if (!formData.location.name.he) newErrors['location.name.he'] = 'Location name (HE) is required';
-    if (!formData.type) newErrors['type'] = 'Event type is required';
-    if (!formData.organizer.name) newErrors['organizer.name'] = 'Organizer name is required';
-    if (!formData.organizer.email) newErrors['organizer.email'] = 'Organizer email is required';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
@@ -435,7 +415,7 @@ export default function EditEventPage() {
         throw new Error(errorData.error || 'Failed to save event');
       }
 
-      const data = await response.json();
+      await response.json();
       setLastSaved(new Date());
       const submitDataString = JSON.stringify(submitData);
       lastSavedDataRef.current = submitDataString;

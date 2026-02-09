@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input, Textarea, Select, Checkbox, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge } from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardContent, Button, Input, Textarea, SelectWrapper, Checkbox, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge } from '@/components/ui';
 import { NumberInput } from '@/components/ui/number-input';
 import type { IHeroCarouselImage, IMultilingualText } from '@/lib/models/Settings';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -714,7 +714,6 @@ export default function SettingsPage() {
                 onChange={(e) => setFeaturedProductsCount(Number(e.target.value))}
                 min={1}
                 max={20}
-                showSpinner={true}
               />
             </div>
             <div>
@@ -726,7 +725,6 @@ export default function SettingsPage() {
                 onChange={(e) => setFeaturedSkateparksCount(Number(e.target.value))}
                 min={1}
                 max={20}
-                showSpinner={true}
               />
             </div>
             <div>
@@ -738,7 +736,6 @@ export default function SettingsPage() {
                 onChange={(e) => setFeaturedTrainersCount(Number(e.target.value))}
                 min={1}
                 max={20}
-                showSpinner={true}
               />
             </div>
             <div>
@@ -750,7 +747,6 @@ export default function SettingsPage() {
                 onChange={(e) => setFeaturedGuidesCount(Number(e.target.value))}
                 min={1}
                 max={20}
-                showSpinner={true}
               />
             </div>
           </div>
@@ -772,13 +768,12 @@ export default function SettingsPage() {
               onChange={(e) => setProductsPerPage(Number(e.target.value))}
               min={6}
               max={48}
-              showSpinner={true}
             />
           </div>
-          <Select
+          <SelectWrapper
             label="Default Sort Order"
             value={defaultSortOrder}
-            onChange={(e) => setDefaultSortOrder(e.target.value)}
+            onChange={(e: { target: { value: string } }) => setDefaultSortOrder(e.target.value)}
             options={[
               { value: 'createdAt-desc', label: 'Newest First' },
               { value: 'createdAt-asc', label: 'Oldest First' },

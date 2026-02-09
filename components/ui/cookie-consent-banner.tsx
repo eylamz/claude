@@ -4,9 +4,8 @@ import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
 import { Button } from './button';
-import { X, Settings, Check } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Icon } from '@/components/icons';
-import { Checkbox } from './checkbox';
 import {
   getCookiePreferences,
   setCookiePreferences,

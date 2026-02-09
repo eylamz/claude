@@ -137,8 +137,6 @@ const ParkImageGallery = ({
   images, 
   className, 
   parkName = '',
-  closingYear,
-  area = 'center',
   updatedAt,
   locale = 'en'
 }: ParkImageGalleryProps) => {

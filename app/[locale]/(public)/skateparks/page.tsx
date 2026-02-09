@@ -111,8 +111,8 @@ export default function SkateparksPage() {
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [selectedPark, setSelectedPark] = useState<Skatepark | null>(null);
   const [userCity, setUserCity] = useState<string | null>(null);
-  const [animatingIcons, setAnimatingIcons] = useState<Set<string>>(new Set());
-  const [shouldAnimateLocation, setShouldAnimateLocation] = useState(false);
+  const [, setAnimatingIcons] = useState<Set<string>>(new Set());
+  const [, setShouldAnimateLocation] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const heroSectionRef = useRef<HTMLDivElement>(null);
   const prevSelectedAmenitiesRef = useRef<string[]>([]);
@@ -760,8 +760,6 @@ export default function SkateparksPage() {
         loading={loading}
         skateparksCount={skateparks.length}
         allSkateparksCount={allSkateparks.length}
-        animatingIcons={animatingIcons}
-        shouldAnimateLocation={shouldAnimateLocation}
         requestLocation={requestLocation}
         clearFilters={clearFilters}
         heroSectionRef={heroSectionRef}

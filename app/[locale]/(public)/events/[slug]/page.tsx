@@ -109,7 +109,7 @@ export default function EventPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cacheInitialized, setCacheInitialized] = useState(false);
-  const [currentVersion, setCurrentVersion] = useState<number | null>(null);
+  const [, setCurrentVersion] = useState<number | null>(null);
 
   const fetchEvent = async () => {
     if (!cacheInitialized) return;

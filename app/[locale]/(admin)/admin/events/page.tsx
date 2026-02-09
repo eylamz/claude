@@ -548,7 +548,6 @@ export default function EventsPage() {
                 onChange={(e) => setEventsVersion(parseInt(e.target.value) || 1)}
                 min={1}
                 className="w-32"
-                showSpinner={true}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Increment this version to invalidate all client caches

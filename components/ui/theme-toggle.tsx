@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { Icon } from '@/components/icons/Icon'
 import { useTheme } from '@/context/ThemeProvider'
 import { useTranslation } from '@/lib/i18n/client'
@@ -18,7 +18,6 @@ interface ThemeToggleProps {
 
 export function ThemeToggle({ className = '', lng }: ThemeToggleProps) {
   const pathname = usePathname()
-  const router = useRouter()
   const localeFromHook = useLocale()
   const { theme, toggleTheme } = useTheme()
   const { toast } = useToast()

@@ -102,7 +102,7 @@ export default function MobileNavMinimal() {
               <Menu className="w-6 h-6" strokeWidth={2} />
             </button>
             <button
-              onClick={(e) => {
+              onClick={() => {
                 // 1. Synchronously focus a hidden input to "claim" the keyboard
                 const trigger = document.getElementById('safari-focus-trigger');
                 trigger?.focus();

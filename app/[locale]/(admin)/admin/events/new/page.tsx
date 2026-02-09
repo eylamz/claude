@@ -253,8 +253,8 @@ export default function NewEventPage() {
         throw new Error(errorData.error || 'Failed to create event');
       }
 
-      const data = await response.json();
-      
+      await response.json();
+
       if (saveAsDraft) {
         toast({
           title: 'Success',

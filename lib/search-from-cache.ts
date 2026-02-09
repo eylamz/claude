@@ -229,12 +229,6 @@ function getLocalizedText(value: string | { en?: string; he?: string } | undefin
   return value[loc] || value.en || value.he || '';
 }
 
-function matchesQuery(text: string, query: string): boolean {
-  if (!query.trim()) return true;
-  const q = query.toLowerCase().trim();
-  return text.toLowerCase().includes(q);
-}
-
 /** Match if text includes query OR flipped query (wrong keyboard layout, e.g. "zfrui" -> "זכרון"). */
 function matchesQueryOrFlipped(text: string, query: string): boolean {
   if (!query.trim()) return true;

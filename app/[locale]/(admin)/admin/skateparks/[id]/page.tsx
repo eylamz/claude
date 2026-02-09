@@ -8,6 +8,7 @@ import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper,
 import { Checkbox } from '@/components/ui/checkbox';
 import { ImageUploader } from '@/components/admin/image-uploader';
 import { Toaster } from '@/components/ui/toaster';
+import { PLACEHOLDER_SKATEPARK_IMAGE } from '@/lib/constants/placeholders';
 
 interface Skatepark {
   _id?: string;

@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Calendar, User, Tag, ExternalLink, ChevronLeft } from 'lucide-react';
+import { ExternalLink, ChevronLeft } from 'lucide-react';
 import { Icon } from '@/components/icons';
 import { Button, Skeleton } from '@/components/ui';
-import Breadcrumb from '@/components/common/Breadcrumb';
 import { generateArticleStructuredData } from '@/lib/seo/utils';
 import type { GuideData } from '@/lib/api/guides';
 import {
@@ -403,7 +402,6 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
 export default function GuidePage() {
   const params = useParams();
   const locale = useLocale();
-  const tCommon = useTranslations('common');
   const tGuides = useTranslations('guides');
   const slug = params.slug as string;
 
@@ -422,7 +420,7 @@ export default function GuidePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cacheInitialized, setCacheInitialized] = useState(false);
-  const [currentVersion, setCurrentVersion] = useState<number | null>(null);
+  const [, setCurrentVersion] = useState<number | null>(null);
 
   // Check version and cache on mount (refetch only after 1 hour from last fetch)
   useEffect(() => {

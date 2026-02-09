@@ -258,7 +258,6 @@ const GuideCard = memo(({
   const [showNameSection, setShowNameSection] = useState(false);
   const [showGuideName, setShowGuideName] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
-  const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
 
   // Show name section after 0.3s delay when card appears
   useEffect(() => {
@@ -280,15 +279,7 @@ const GuideCard = memo(({
     }, 300);
   }, [guide.slug, locale]);
 
-  // Truncate description for display
-  const truncateDescription = (text: string | undefined, maxLength: number = 80): string => {
-    if (!text) return '';
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-  };
-
   const guideTitle = getLocalizedText(guide.title, locale);
-  const guideDescription = guide.description ? truncateDescription(getLocalizedText(guide.description, locale), 80) : '';
 
   return (
     <div
@@ -421,7 +412,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   
   // Sort
-  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'newest');
+  const [sortBy] = useState(searchParams.get('sort') || 'newest');
   const [page, setPage] = useState(1);
   
   // UI State

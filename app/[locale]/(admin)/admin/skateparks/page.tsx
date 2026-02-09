@@ -237,8 +237,8 @@ export default function SkateparksPage() {
   const [area, setArea] = useState('');
   const [status, setStatus] = useState('');
   const [amenities, setAmenities] = useState('');
-  const [sortBy, setSortBy] = useState('createdAt');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [sortBy] = useState('createdAt');
+  const [sortOrder] = useState('desc');
   
   // Statistics modal
   const [showStatistics, setShowStatistics] = useState(false);
@@ -1481,7 +1481,7 @@ export default function SkateparksPage() {
                           { key: 'paidEntry', name: t('admin.statistics.amenities.paidEntry'), icon: 'shekel' as const, value: statisticsData.amenities.paidEntry?.count || 0 },
                           { key: 'bikesAllowed', name: t('admin.statistics.amenities.bikesAllowed'), icon: 'bmx-icon' as const, value: statisticsData.amenities.bikesAllowed?.count || 0 },
                           { key: 'parking', name: t('admin.statistics.amenities.parking'), icon: 'parking' as const, value: statisticsData.amenities.parking?.count || 0 },
-                          { key: 'shade', name: t('admin.statistics.amenities.shade'), icon: 'umbrella' as const, value: statisticsData.amenities.shade?.count || 0 },
+                          { key: 'shade', name: t('admin.statistics.amenities.shade'), icon: 'umbrellaBold' as const, value: statisticsData.amenities.shade?.count || 0 },
                           { key: 'bathroom', name: t('admin.statistics.amenities.bathroom'), icon: 'toilet' as const, value: statisticsData.amenities.bathroom?.count || 0 },
                           { key: 'helmetRequired', name: t('admin.statistics.amenities.helmetRequired'), icon: 'helmet' as const, value: statisticsData.amenities.helmetRequired?.count || 0 },
                           { key: 'guard', name: t('admin.statistics.amenities.guard'), icon: 'securityGuard' as const, value: statisticsData.amenities.guard?.count || 0 },

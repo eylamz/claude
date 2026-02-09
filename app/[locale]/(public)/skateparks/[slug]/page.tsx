@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback, Suspense, Fragment } from 'react';
-import { usePathname, useParams } from 'next/navigation';
+import {  useParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -700,7 +700,6 @@ function FormattedHours({
  * Main Skatepark Page
  */
 export default function SkateparkPage() {
-  const pathname = usePathname();
   const params = useParams();
   const locale = useLocale();
   const t = useTranslations('skateparks');
@@ -714,7 +713,6 @@ export default function SkateparkPage() {
   const [userHasReviewed, setUserHasReviewed] = useState<boolean | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
-  const [addressCopied, setAddressCopied] = useState(false);
   const [showAddReview, setShowAddReview] = useState(false);
   const [reviewModalClosing, setReviewModalClosing] = useState(false);
   const reviewModalCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1233,13 +1231,7 @@ export default function SkateparkPage() {
     return Number.isInteger(rating) ? rating.toString() : rating.toFixed(1);
   };
 
-  const copyAddress = async () => {
-    if (!skatepark) return;
-    const address = getLocalizedText(skatepark.address);
-    await navigator.clipboard.writeText(address);
-    setAddressCopied(true);
-    setTimeout(() => setAddressCopied(false), 2000);
-  };
+
 
   const getLocalizedNameHe = (): string => {
     if (!skatepark) return '';
@@ -1271,12 +1263,6 @@ export default function SkateparkPage() {
         Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
-  };
-
-  const areaLabels: Record<'north' | 'center' | 'south', { en: string; he: string }> = {
-    north: { en: 'North', he: 'צפון' },
-    center: { en: 'Center', he: 'מרכז' },
-    south: { en: 'South', he: 'דרום' },
   };
 
   const tr = (enText: string, heText: string) => (locale === 'he' ? heText : enText);
@@ -1516,21 +1502,9 @@ export default function SkateparkPage() {
   }
 
   const parkName = getLocalizedText(skatepark.name);
-  const parkNameEn = skatepark.name.en || skatepark.name.he || '';
   const address = getLocalizedText(skatepark.address);
   const notes = getLocalizedNotes(skatepark.notes);
 
-  // Get featured image (first image sorted by orderNumber, or first isFeatured image)
-  const getFeaturedImage = (images: SkateparkImage[]): string | null => {
-    if (!images || images.length === 0) return null;
-    const featuredImg = images.find(img => img.isFeatured);
-    if (featuredImg) return featuredImg.url;
-    const sortedImages = [...images].sort((a, b) => a.orderNumber - b.orderNumber);
-    return sortedImages[0]?.url || null;
-  };
-
-  const featuredImage = getFeaturedImage(skatepark.images);
-  
   // Handle both new format (coordinates array) and old format (lat/lng)
   const getCoordinates = () => {
     if (skatepark.location.coordinates && Array.isArray(skatepark.location.coordinates)) {
@@ -2284,13 +2258,12 @@ export default function SkateparkPage() {
                   {t('reviewsCount')}
                 </CardTitle>
                 {(() => {
-                  // Check environment variables for review permissions
-                  // Handle both string 'true' and boolean true, case-insensitive
+                  // Check environment variables for review permissions (env vars are always string | undefined)
                   const userReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_USERREVIEWS;
                   const everyoneReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS;
                   const enableMultipleReviews = process.env.NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS === 'true';
-                  const userReviewsEnabled = userReviewsEnv === 'true' || userReviewsEnv === true;
-                  const everyoneReviewsEnabled = everyoneReviewsEnv === 'true' || everyoneReviewsEnv === true;
+                  const userReviewsEnabled = userReviewsEnv === 'true';
+                  const everyoneReviewsEnabled = everyoneReviewsEnv === 'true';
                   
                   // Priority: If both are true, treat as userReviews only
                   const allowUserReviews = userReviewsEnabled;
@@ -2598,7 +2571,6 @@ export default function SkateparkPage() {
                         ? `במרחק ${distance.toFixed(1)} ${tr('km', 'ק"מ')}`
                         : `at distance ${distance.toFixed(1)} ${tr('km', 'ק"מ')}`
                       : null;
-                    const areaLabel = locale === 'he' ? areaLabels[park.area]?.he : areaLabels[park.area]?.en || park.area;
                     
                     // Hide items based on breakpoint:
                     // - Mobile: show only first 2 (index 0, 1)
@@ -2672,8 +2644,8 @@ export default function SkateparkPage() {
       {showAddReview && (() => {
         const userReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_USERREVIEWS;
         const everyoneReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS;
-        const userReviewsEnabled = userReviewsEnv === 'true' || userReviewsEnv === true;
-        const everyoneReviewsEnabled = everyoneReviewsEnv === 'true' || everyoneReviewsEnv === true;
+        const userReviewsEnabled = userReviewsEnv === 'true';
+        const everyoneReviewsEnabled = everyoneReviewsEnv === 'true';
         const allowUserReviews = userReviewsEnabled;
         const allowAnonymousReviews = !userReviewsEnabled && everyoneReviewsEnabled;
         

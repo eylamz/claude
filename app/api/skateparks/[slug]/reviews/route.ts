@@ -174,8 +174,8 @@ export async function POST(
     // Check environment variables for review permissions
     const userReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_USERREVIEWS;
     const everyoneReviewsEnv = process.env.NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS;
-    const userReviewsEnabled = userReviewsEnv === 'true' || userReviewsEnv === true;
-    const everyoneReviewsEnabled = everyoneReviewsEnv === 'true' || everyoneReviewsEnv === true;
+    const userReviewsEnabled = userReviewsEnv === 'true';
+    const everyoneReviewsEnabled = everyoneReviewsEnv === 'true';
     
     // Priority: If both are true, treat as userReviews only
     const allowUserReviews = userReviewsEnabled;
@@ -208,7 +208,7 @@ export async function POST(
       return NextResponse.json({ error: 'Rating must be 1-5' }, { status: 400 });
     }
     
-    const locale: Locale = isLocale(bodyLocale) ? bodyLocale : 'en';
+    const locale: Locale = (typeof bodyLocale === 'string' && isLocale(bodyLocale)) ? bodyLocale : 'en';
     // Authenticated: use session name; anonymous: require name from body
     let displayName: string;
     if (isAnonymous) {

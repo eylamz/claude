@@ -41,7 +41,7 @@ interface FilterBarProps {
   // Callbacks
   requestLocation: () => void;
   clearFilters: () => void;
-  heroSectionRef: React.RefObject<HTMLDivElement>;
+  heroSectionRef: React.RefObject<HTMLDivElement | null>;
   
   // Locale & translations
   locale: string;

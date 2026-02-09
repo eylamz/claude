@@ -134,7 +134,7 @@ export default function HomePage() {
         localStorage.setItem(cacheKey, JSON.stringify(allSkateparks));
         localStorage.setItem(
           versionKey,
-          JSON.stringify({ version: currentVersion, fetchedAt: getSkateparksFetchedAtReadable() })
+          JSON.stringify({ version: currentVersion, fetchedAt: new Date().toISOString() })
         );
       }
       
