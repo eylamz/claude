@@ -63,7 +63,7 @@ export default function LanguageToggle({ className = '', lng }: LanguageTogglePr
   return (
     <button
       onClick={toggleLanguage}
-      className={`group outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 inline-flex items-center gap-2 text-sm font-medium transition-all duration-200 text-gray-600 dark:text-gray-300 ${className}`}
+      className={`group outline-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 inline-flex items-center gap-2 text-sm font-medium transition-all duration-200 text-text dark:text-text-dark ${className}`}
       aria-label={t('toggle_language')}
       disabled={isLoading}
     >
@@ -73,13 +73,17 @@ export default function LanguageToggle({ className = '', lng }: LanguageTogglePr
         <>
           {currentLng === 'en' ? (
             <div className="flex items-center gap-2">
-              <Icon name="israelFlag" className="w-6 h-6" />
-              <p className="font-assistant transition-all duration-200 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">עברית</p>
+              <Icon name="israelFlag" className="w-6 h-6 group-hover:scale-105 transition-all duration-300 group-hover:text-brand-main dark:group-hover:text-brand-dark" />
+              <p className="font-assistant transition-colors duration-300  group-hover:text-black dark:group-hover:text-white">
+                עברית
+                </p>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Icon name="usaFlag" className="w-6 h-6" />
-              <p className="font-poppins transition-all duration-200 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">English</p>
+              <Icon name="usaFlag" className="w-6 h-6 group-hover:scale-105 transition-all duration-300 group-hover:text-brand-main dark:group-hover:text-brand-dark" />
+              <p className="font-poppins transition-colors duration-300  group-hover:text-black dark:group-hover:text-white">
+                English
+                </p>
             </div>
           )}
         </>

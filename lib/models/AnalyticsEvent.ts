@@ -72,6 +72,8 @@ AnalyticsEventSchema.index({ type: 1, choice: 1 });
 AnalyticsEventSchema.index({ type: 1, referrerCategory: 1 });
 AnalyticsEventSchema.index({ type: 1, deviceCategory: 1 });
 AnalyticsEventSchema.index({ type: 1, deviceType: 1 });
+AnalyticsEventSchema.index({ type: 1, userId: 1 });
+AnalyticsEventSchema.index({ type: 1, userId: 1, timestamp: -1 });
 
 const AnalyticsEvent: Model<IAnalyticsEvent> =
   (mongoose.models?.AnalyticsEvent as Model<IAnalyticsEvent>) ??

@@ -88,19 +88,19 @@ export function ThemeToggle({ className = '', lng }: ThemeToggleProps) {
   return (
     <button
       onClick={handleThemeToggle}
-      className={`group inline-flex items-center gap-2 rounded-lg text-sm font-medium transition-all duration-200 text-gray-600 dark:text-gray-300 ${className}`}
+      className={`group inline-flex items-center gap-2 rounded-lg text-sm font-semibold transition-colors duration-300 text-text dark:text-text-dark ${theme === 'dark' ? 'hover:text-yellow-500 dark:hover:text-yellow-400' : 'hover:text-blue dark:hover:text-blue-dark'} ${className}`}
       aria-label={theme === 'dark' ? t('light_mode') : t('dark_mode')}
     >
       {theme === 'dark' ? (
         <Icon name="sunBold"
-          className={`h-4 w-4 ${shouldAnimate ? 'animate-pop' : ''}`}
+          className={`h-4 w-4 group-hover:scale-105 group-hover:text-yellow-500 dark:group-hover:text-yellow-400 transition-all duration-300 ${shouldAnimate ? 'animate-pop' : ''}`}
         />
       ) : (
         <Icon name="moonBold"
-          className={`h-4 w-4 ${shouldAnimate ? 'animate-pop' : ''}`}
+        className={`h-4 w-4 group-hover:scale-105 group-hover:text-blue dark:group-hover:text-blue-dark transition-all duration-300 ${shouldAnimate ? 'animate-pop' : ''}`}
         />
       )}
-      <span className="transition-all duration-200 group-hover:scale-105 group-hover:text-gray-900 dark:group-hover:text-white">{theme === 'dark' ? t('light_mode') : t('dark_mode')}</span>
+      <span className="transition-colors duration-300  group-hover:text-black dark:group-hover:text-white">{theme === 'dark' ? t('light_mode') : t('dark_mode')}</span>
     </button>
   )
 }

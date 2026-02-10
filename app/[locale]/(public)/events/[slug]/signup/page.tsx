@@ -7,6 +7,8 @@ import { useLocale } from 'next-intl';
 import { ChevronLeft } from 'lucide-react';
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, SelectWrapper, Checkbox } from '@/components/ui';
 import { useToast } from '@/hooks/use-toast';
+import { formatConfirmationNumber } from '@/lib/utils/formatConfirmationNumber';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 interface SignupFormField {
   id: string;
@@ -189,7 +191,7 @@ export default function EventSignupPage() {
       setSuccess({ confirmationNumber: data.confirmationNumber });
       toast({
         title: locale === 'he' ? 'נרשמת בהצלחה' : 'Registered successfully',
-        description: locale === 'he' ? 'קיבלת אימייל לאישור.' : 'You will receive a confirmation email.',
+        description: locale === 'he' ? 'שמרו את מספר האישור.' : 'Save your confirmation number.',
         variant: 'success',
       });
     } catch {
@@ -221,9 +223,7 @@ export default function EventSignupPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center px-4">
-        <p className="text-muted-foreground">
-          {locale === 'he' ? 'טוען...' : 'Loading...'}
-        </p>
+        <LoadingSpinner />
       </div>
     );
   }
@@ -312,32 +312,34 @@ export default function EventSignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-background dark:bg-background-dark flex items-center justify-center px-4 py-12">
-        <Card className="w-full max-w-md bg-card dark:bg-card-dark">
+      <div className="min-h-screen  flex items-center justify-center px-4 py-12">
+        <Card className="w-full max-w-md bg-card dark:bg-card-dark box-shadow:0_1px_1px_#66666612,0_2px_2px_#5e5e5e12,0_4px_4px_#7a5d4413,0_8px_8px_#5e5e5e12,0_16px_16px_#5e5e5e12]">
           <CardHeader>
-            <CardTitle className="text-center text-green-600 dark:text-green-400">
+            <CardTitle className="text-center text-brand-main dark:text-brand-dark">
               {locale === 'he' ? 'נרשמת בהצלחה!' : 'You\'re registered!'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-center text-muted-foreground">
+            <p className="text-center text-text dark:text-text-dark">
               {locale === 'he' ? 'מספר האישור שלך:' : 'Your confirmation number:'}
             </p>
-            <p className="text-center font-mono font-bold text-lg bg-muted dark:bg-muted-dark px-4 py-2 rounded">
-              {success.confirmationNumber}
+            <p className="text-center font-poppins font-semibold text-2xl bg-muted dark:bg-muted-dark px-4 py-2 rounded">
+              {formatConfirmationNumber(success.confirmationNumber)}
             </p>
             <p className="text-center text-base text-muted-foreground">
-              {locale === 'he' ? 'שמרו את המספר. נשלח אליכם אימייל לאישור.' : 'Save this number. A confirmation email has been sent.'}
+              {locale === 'he' ? 'שמרו את המספר לאישור.' : 'Save this number for your records.'}
             </p>
-            <div className="flex flex-col gap-2 pt-4">
-              <Button asChild variant="brand">
+            <div className="flex flex-col gap-2 justify-center items-center">
+              <Button asChild variant="primary" className="w-fit max-w-[270px]">
                 <Link href={`/${locale}/events/${slug}`}>
-                  {locale === 'he' ? 'חזרה לאירוע' : 'Back to Event'}
+                  {locale === 'he'
+                    ? `חזרה ל- ${getEventTitle() || 'אירוע'}`
+                    : `Back to ${getEventTitle() || 'Event'}`}
                 </Link>
               </Button>
-              <Button asChild variant="gray">
+              <Button asChild variant="gray" className="w-fit max-w-[200px]">
                 <Link href={`/${locale}/events`}>
-                  {locale === 'he' ? 'כל האירועים' : 'All Events'}
+                  {locale === 'he' ? 'חזרה לאירועים' : 'Back to Events'}
                 </Link>
               </Button>
             </div>
@@ -348,14 +350,16 @@ export default function EventSignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark py-12 px-4">
+    <div className="min-h-screen bg-background dark:bg-background-dark pb-12 px-4 pt-20">
       <div className="max-w-lg mx-auto">
         <Link
           href={`/${locale}/events/${slug}`}
           className="inline-flex items-center gap-2 text-brand-main hover:text-brand-main/80 font-medium mb-6"
         >
           <ChevronLeft className="w-4 h-4" />
-          {locale === 'he' ? 'חזרה לאירוע' : 'Back to Event'}
+          {locale === 'he'
+            ? `חזרה ל-${getEventTitle() || 'אירוע'}`
+            : `Back to ${getEventTitle() || 'Event'}`}
         </Link>
 
         <Card className="bg-card dark:bg-card-dark">

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardContent, CardHeader, CardTitle, Skeleton, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Toaster } from '@/components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Skeleton, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Toaster, Input, SelectWrapper } from '@/components/ui';
 import { useToast } from '@/hooks/use-toast';
+import { formatConfirmationNumber } from '@/lib/utils/formatConfirmationNumber';
 
 interface FormFieldDef {
   id: string;
@@ -26,12 +27,8 @@ interface Signup {
   status: string;
 }
 
-interface Pagination {
-  currentPage: number;
-  totalPages: number;
-  totalCount: number;
-  limit: number;
-}
+const PAGE_SIZE = 50;
+const FETCH_LIMIT = 5000; // fetch all for this event in one request; filter/paginate on client
 
 export default function EventSignupFormSubmissionsPage() {
   const locale = useLocale() as 'en' | 'he';
@@ -42,14 +39,13 @@ export default function EventSignupFormSubmissionsPage() {
 
   const [eventTitle, setEventTitle] = useState<string>('');
   const [formFields, setFormFields] = useState<FormFieldDef[]>([]);
-  const [submissions, setSubmissions] = useState<Signup[]>([]);
+  const [allSubmissions, setAllSubmissions] = useState<Signup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState<Pagination>({
-    currentPage: 1,
-    totalPages: 1,
-    totalCount: 0,
-    limit: 20,
-  });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'submittedAt' | 'confirmationNumber'>('submittedAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -75,16 +71,15 @@ export default function EventSignupFormSubmissionsPage() {
         setLoading(true);
         const params = new URLSearchParams({
           eventId,
-          page: pagination.currentPage.toString(),
-          limit: pagination.limit.toString(),
+          page: '1',
+          limit: FETCH_LIMIT.toString(),
           sortBy: 'submittedAt',
           sortOrder: 'desc',
         });
         const res = await fetch(`/api/admin/event-signups?${params}`);
         if (!res.ok) throw new Error('Failed to fetch submissions');
         const data = await res.json();
-        setSubmissions(data.signups || []);
-        setPagination(data.pagination || pagination);
+        setAllSubmissions(data.signups || []);
       } catch (e) {
         toast({ title: 'Error', description: 'Failed to load submissions', variant: 'error' });
       } finally {
@@ -92,7 +87,51 @@ export default function EventSignupFormSubmissionsPage() {
       }
     };
     fetchSubmissions();
-  }, [eventId, pagination.currentPage, pagination.limit, toast]);
+  }, [eventId, toast]);
+
+  const matchesSearch = (s: Signup, q: string): boolean => {
+    if (!q.trim()) return true;
+    const lower = q.trim().toLowerCase();
+    if (s.confirmationNumber?.toLowerCase().includes(lower)) return true;
+    if (s.userEmail?.toLowerCase().includes(lower)) return true;
+    if (s.userName?.toLowerCase().includes(lower)) return true;
+    if (s.formData?.some((f) => String(f.value).toLowerCase().includes(lower))) return true;
+    return false;
+  };
+
+  const filteredAndSorted = useMemo(() => {
+    let list = allSubmissions;
+    if (statusFilter && statusFilter !== 'all') {
+      list = list.filter((s) => s.status === statusFilter);
+    }
+    if (searchQuery.trim()) {
+      list = list.filter((s) => matchesSearch(s, searchQuery));
+    }
+    list = [...list].sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'submittedAt') {
+        cmp = new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime();
+      } else {
+        cmp = (a.confirmationNumber || '').localeCompare(b.confirmationNumber || '');
+      }
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+    return list;
+  }, [allSubmissions, statusFilter, searchQuery, sortBy, sortOrder]);
+
+  const totalFiltered = filteredAndSorted.length;
+  const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
+  const pageIndex = Math.min(Math.max(1, currentPage), totalPages);
+  const paginatedSubmissions = useMemo(
+    () => filteredAndSorted.slice((pageIndex - 1) * PAGE_SIZE, pageIndex * PAGE_SIZE),
+    [filteredAndSorted, pageIndex]
+  );
+
+  useEffect(() => {
+    if (totalPages >= 1 && currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString(locale === 'he' ? 'he-IL' : 'en-US', {
@@ -120,7 +159,15 @@ export default function EventSignupFormSubmissionsPage() {
 
   const columnNames = formFields.length > 0
     ? formFields.map((f) => f.name)
-    : (submissions[0]?.formData?.map((f) => f.name) || []);
+    : (paginatedSubmissions[0]?.formData?.map((f) => f.name) || []);
+
+  const handleFilterChange = (updates: { search?: string; status?: string; sortBy?: typeof sortBy; sortOrder?: typeof sortOrder }) => {
+    if (updates.search !== undefined) setSearchQuery(updates.search);
+    if (updates.status !== undefined) setStatusFilter(updates.status);
+    if (updates.sortBy !== undefined) setSortBy(updates.sortBy);
+    if (updates.sortOrder !== undefined) setSortOrder(updates.sortOrder);
+    setCurrentPage(1);
+  };
 
   return (
     <div className="pt-16 space-y-6 max-w-6xl mx-auto px-4">
@@ -131,7 +178,7 @@ export default function EventSignupFormSubmissionsPage() {
             {eventTitle}
           </h1>
           <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">
-            {locale === 'en' ? 'Event signup submissions' : 'הגשות הרשמה לאירוע'} · {pagination.totalCount} {locale === 'en' ? 'total' : 'סה״כ'}
+            {locale === 'en' ? 'Event signup submissions' : 'הגשות הרשמה לאירוע'} · {totalFiltered} {locale === 'en' ? 'shown' : 'מוצג'} {searchQuery || statusFilter !== 'all' ? `(${locale === 'en' ? 'filtered from' : 'מתוך'} ${allSubmissions.length})` : ''}
           </p>
         </div>
         <Button variant="gray" onClick={() => router.push(`/${locale}/admin/events/${eventId}/signup-form`)}>
@@ -147,7 +194,7 @@ export default function EventSignupFormSubmissionsPage() {
             ))}
           </CardContent>
         </Card>
-      ) : submissions.length === 0 ? (
+      ) : allSubmissions.length === 0 ? (
         <Card>
           <CardContent className="p-12 text-center">
             <p className="text-text-secondary dark:text-text-secondary-dark">
@@ -158,9 +205,52 @@ export default function EventSignupFormSubmissionsPage() {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>{locale === 'en' ? 'Submissions' : 'הגשות'}</CardTitle>
+            <div className="flex flex-col gap-4">
+              <CardTitle>{locale === 'en' ? 'Submissions' : 'הגשות'}</CardTitle>
+              <div className="flex flex-wrap items-center gap-3">
+                <Input
+                  type="search"
+                  placeholder={locale === 'en' ? 'Search confirmation #, email, name...' : 'חיפוש מספר אימות, אימייל, שם...'}
+                  value={searchQuery}
+                  onChange={(e) => handleFilterChange({ search: e.target.value })}
+                  className="max-w-xs"
+                />
+                <SelectWrapper
+                  value={statusFilter}
+                  onChange={(e) => handleFilterChange({ status: e.target.value })}
+                  options={[
+                    { value: 'all', label: locale === 'en' ? 'All statuses' : 'כל הסטטוסים' },
+                    { value: 'confirmed', label: 'Confirmed' },
+                    { value: 'pending', label: 'Pending' },
+                    { value: 'cancelled', label: 'Cancelled' },
+                  ]}
+                  className="w-40"
+                />
+                <SelectWrapper
+                  value={sortBy}
+                  onChange={(e) => handleFilterChange({ sortBy: e.target.value as typeof sortBy })}
+                  options={[
+                    { value: 'submittedAt', label: locale === 'en' ? 'Date' : 'תאריך' },
+                    { value: 'confirmationNumber', label: locale === 'en' ? 'Confirmation #' : 'מספר אימות' },
+                  ]}
+                  className="w-36"
+                />
+                <Button
+                  variant="gray"
+                  size="sm"
+                  onClick={() => handleFilterChange({ sortOrder: sortOrder === 'asc' ? 'desc' : 'asc' })}
+                >
+                  {sortOrder === 'asc' ? '↑' : '↓'}
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
+            {totalFiltered === 0 ? (
+              <p className="text-center py-8 text-text-secondary dark:text-text-secondary-dark">
+                {locale === 'en' ? 'No submissions match your filters.' : 'אין הגשות התואמות את הסינון.'}
+              </p>
+            ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -175,12 +265,12 @@ export default function EventSignupFormSubmissionsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {submissions.map((s) => (
+                  {paginatedSubmissions.map((s) => (
                     <TableRow key={s.id}>
                       <TableCell className="whitespace-nowrap text-sm text-text-secondary dark:text-text-secondary-dark">
                         {formatDate(s.submittedAt)}
                       </TableCell>
-                      <TableCell className="font-mono text-sm">{s.confirmationNumber}</TableCell>
+                      <TableCell className="font-mono text-sm">{formatConfirmationNumber(s.confirmationNumber)}</TableCell>
                       {columnNames.map((name) => (
                         <TableCell key={name} className="max-w-xs">
                           <div className="text-sm truncate" title={getValue(s, name)}>
@@ -193,28 +283,29 @@ export default function EventSignupFormSubmissionsPage() {
                 </TableBody>
               </Table>
             </div>
+            )}
 
-            {pagination.totalPages > 1 && (
+            {totalFiltered > 0 && totalPages > 1 && (
               <div className="mt-6 flex items-center justify-between">
                 <div className="text-sm text-text-secondary dark:text-text-secondary-dark">
                   {locale === 'en'
-                    ? `Showing ${(pagination.currentPage - 1) * pagination.limit + 1} to ${Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} of ${pagination.totalCount}`
-                    : `מציג ${(pagination.currentPage - 1) * pagination.limit + 1} עד ${Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} מתוך ${pagination.totalCount}`}
+                    ? `Showing ${(pageIndex - 1) * PAGE_SIZE + 1} to ${Math.min(pageIndex * PAGE_SIZE, totalFiltered)} of ${totalFiltered}`
+                    : `מציג ${(pageIndex - 1) * PAGE_SIZE + 1} עד ${Math.min(pageIndex * PAGE_SIZE, totalFiltered)} מתוך ${totalFiltered}`}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage - 1 })}
-                    disabled={pagination.currentPage === 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={pageIndex === 1}
                   >
                     {locale === 'en' ? 'Previous' : 'הקודם'}
                   </Button>
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={() => setPagination({ ...pagination, currentPage: pagination.currentPage + 1 })}
-                    disabled={pagination.currentPage >= pagination.totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={pageIndex >= totalPages}
                   >
                     {locale === 'en' ? 'Next' : 'הבא'}
                   </Button>

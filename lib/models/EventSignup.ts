@@ -56,7 +56,10 @@ export interface IEventSignupModel extends Model<IEventSignup> {
   findByUserId(userId: string | mongoose.Types.ObjectId): Promise<IEventSignup[]>;
   findDuplicate(eventId: string | mongoose.Types.ObjectId, email: string, ipAddress?: string): Promise<IEventSignup | null>;
   countByEventId(eventId: string | mongoose.Types.ObjectId): Promise<number>;
+  /** Generates a single 6-digit confirmation number (no uniqueness check) */
   generateConfirmationNumber(): string;
+  /** Generates a unique 6-digit confirmation number (checks DB for uniqueness) */
+  generateUniqueConfirmationNumber(): Promise<string>;
 }
 
 /**
@@ -100,7 +103,7 @@ const EventSignupSchema: Schema<IEventSignup> = new Schema<IEventSignup>(
     userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
-      index: true,
+      // Index defined via EventSignupSchema.index({ userId: 1, eventId: 1 }) below
     },
     userEmail: {
       type: String,
@@ -121,6 +124,7 @@ const EventSignupSchema: Schema<IEventSignup> = new Schema<IEventSignup>(
       type: String,
       required: true,
       unique: true,
+      match: [/^\d{6}$/, 'Confirmation number must be exactly 6 digits'],
     },
     status: {
       type: String,
@@ -212,13 +216,24 @@ EventSignupSchema.statics.countByEventId = function (eventId: string | mongoose.
 };
 
 /**
- * Static method: Generate unique confirmation number
+ * Static method: Generate confirmation number (6 digits only). Use generateUniqueConfirmationNumber for DB-unique value.
  */
 EventSignupSchema.statics.generateConfirmationNumber = function (): string {
-  const prefix = 'EVT';
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `${prefix}-${timestamp}-${random}`;
+  const num = 100000 + Math.floor(Math.random() * 900000); // 100000–999999
+  return String(num);
+};
+
+/**
+ * Static method: Generate a unique 6-digit confirmation number (checks DB)
+ */
+EventSignupSchema.statics.generateUniqueConfirmationNumber = async function (): Promise<string> {
+  let confirmationNumber: string;
+  let exists: IEventSignup | null;
+  do {
+    confirmationNumber = this.generateConfirmationNumber();
+    exists = await this.findOne({ confirmationNumber });
+  } while (exists);
+  return confirmationNumber;
 };
 
 /**
@@ -236,21 +251,12 @@ EventSignupSchema.methods.isCancelled = function (): boolean {
 };
 
 /**
- * Pre-save middleware: Generate confirmation number if not present
+ * Pre-save middleware: Generate unique 6-digit confirmation number if not present
  */
 EventSignupSchema.pre('save', async function (next) {
   if (!this.confirmationNumber) {
-    const Model = this.constructor as Model<IEventSignup>;
-    let confirmationNumber: string;
-    let exists: IEventSignup | null;
-    
-    // Ensure unique confirmation number
-    do {
-      confirmationNumber = (EventSignupSchema.statics as { generateConfirmationNumber: () => string }).generateConfirmationNumber();
-      exists = await Model.findOne({ confirmationNumber });
-    } while (exists);
-    
-    this.confirmationNumber = confirmationNumber;
+    const Model = this.constructor as IEventSignupModel;
+    this.confirmationNumber = await Model.generateUniqueConfirmationNumber();
   }
   
   // Extract email from formData if not set

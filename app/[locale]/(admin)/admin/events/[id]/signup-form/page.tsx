@@ -388,7 +388,7 @@ export default function EventSignupFormPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pt-16">
       <Toaster />
       {/* Header - match guides edit */}
       <div className="pt-16 flex items-center justify-between">

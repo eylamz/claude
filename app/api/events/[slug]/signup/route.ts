@@ -4,7 +4,6 @@ import { authOptions } from '@/lib/auth/config';
 import { connectDB } from '@/lib/db/mongodb';
 import Event from '@/lib/models/Event';
 import EventSignup from '@/lib/models/EventSignup';
-import { sendEmail } from '@/lib/email/send';
 
 /**
  * Event Signup API Route
@@ -146,89 +145,21 @@ function validateFormData(formData: any[], _event: any): { valid: boolean; error
   return { valid: errors.length === 0, errors };
 }
 
-/**
- * Generate email confirmation HTML
- */
-function generateConfirmationEmail(event: any, confirmationNumber: string, formData: any[]): string {
-  const eventTitle = event.title?.en || event.title || 'Event';
-  const eventDate = new Date(event.startDate).toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-  const eventTime = event.isAllDay 
-    ? 'All Day' 
-    : new Date(event.startDate).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-  const eventLocation = event.location?.name?.en || event.location?.address?.en || 'TBA';
-  
-  const formFieldsHtml = formData.map((field) => {
-    const label = field.label || field.name;
-    const value = String(field.value);
-    return `
-      <tr>
-        <td style="padding: 8px 0; font-weight: bold; color: #333;">${label}:</td>
-        <td style="padding: 8px 0; color: #666;">${value}</td>
-      </tr>
-    `;
-  }).join('');
-  
-  return `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 40px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <h1 style="color: #333; text-align: center; margin-bottom: 30px;">Event Registration Confirmed</h1>
-          
-          <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin-bottom: 30px;">
-            <p style="margin: 0; color: #1e40af; font-weight: bold; font-size: 18px;">
-              Confirmation Number: ${confirmationNumber}
-            </p>
-          </div>
-          
-          <h2 style="color: #333; margin-top: 30px; margin-bottom: 15px;">Event Details</h2>
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; color: #333;">Event:</td>
-              <td style="padding: 8px 0; color: #666;">${eventTitle}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; color: #333;">Date:</td>
-              <td style="padding: 8px 0; color: #666;">${eventDate}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; color: #333;">Time:</td>
-              <td style="padding: 8px 0; color: #666;">${eventTime}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: bold; color: #333;">Location:</td>
-              <td style="padding: 8px 0; color: #666;">${eventLocation}</td>
-            </tr>
-          </table>
-          
-          <h2 style="color: #333; margin-top: 30px; margin-bottom: 15px;">Your Registration</h2>
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-            ${formFieldsHtml}
-          </table>
-          
-          <p style="color: #666; line-height: 1.6; font-size: 16px; margin-top: 30px;">
-            Thank you for registering! Please save this confirmation number for your records.
-          </p>
-          
-          <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-            This is an automated confirmation email. If you have any questions, please contact the event organizer.
-          </p>
-        </div>
-      </body>
-    </html>
-  `;
+/** Generate exactly one 6-digit number (100000–999999). No DB check. */
+function generateSixDigitCode(): string {
+  const num = 100000 + Math.floor(Math.random() * 900000);
+  return String(num);
+}
+
+/** Generate a unique 6-digit confirmation number (digits only). Always use this for new signups. */
+async function getUniqueConfirmationNumber(): Promise<string> {
+  let code: string;
+  let exists;
+  do {
+    code = generateSixDigitCode();
+    exists = await EventSignup.findOne({ confirmationNumber: code });
+  } while (exists);
+  return code;
 }
 
 /**
@@ -261,7 +192,7 @@ export async function POST(
       );
     }
     
-    // Get request body
+    // Get request body (never use confirmationNumber from client — always generate server-side)
     const body = await request.json();
     const { formData, captchaToken } = body;
     
@@ -381,7 +312,10 @@ export async function POST(
       }
     }
     
-    // Create signup
+    // Unique 6-digit confirmation number (required by schema; validation runs before pre-save)
+    const confirmationNumber = await getUniqueConfirmationNumber();
+
+    // Create signup (no email is sent; user sees success page with confirmation number)
     const signup = new EventSignup({
       eventId: String(event._id),
       eventSlug: event.slug,
@@ -391,36 +325,25 @@ export async function POST(
       ipAddress,
       userAgent,
       status: 'confirmed',
+      confirmationNumber,
     });
-    
+
     await signup.save();
-    
+
     // Update event attendance counter
     await Event.findByIdAndUpdate(event._id, {
       $inc: { attendingCount: 1 },
     });
-    
-    // Send confirmation email
-    if (email) {
-      try {
-        const emailHtml = generateConfirmationEmail(event, signup.confirmationNumber, formData);
-        const eventTitle = (event as { content?: { en?: { title?: string }; he?: { title?: string } } }).content?.en?.title || (event as { content?: { en?: { title?: string }; he?: { title?: string } } }).content?.he?.title || 'Event';
-    const emailSubject = `Event Registration Confirmation: ${eventTitle}`;
-        await sendEmail(email, emailSubject, emailHtml);
-      } catch (emailError) {
-        console.error('Failed to send confirmation email:', emailError);
-        // Don't fail the request if email fails
-      }
-    }
-    
+
+    // Always return the 6-digit code we generated (do not use signup.confirmationNumber in case of model override)
     return NextResponse.json(
       {
         success: true,
         message: 'Successfully registered for event',
-        confirmationNumber: signup.confirmationNumber,
+        confirmationNumber,
         signup: {
           id: signup._id,
-          confirmationNumber: signup.confirmationNumber,
+          confirmationNumber,
           submittedAt: signup.submittedAt,
           status: signup.status,
         },

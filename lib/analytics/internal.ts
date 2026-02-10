@@ -101,6 +101,8 @@ export interface PageViewPayload {
   deviceType?: string;
   deviceCategory?: DeviceCategory;
   sessionId?: string;
+  /** When set (e.g. logged-in user), events are attributed to this user for "my metrics" */
+  userId?: string;
 }
 
 function sendToTrack(body: object): void {
@@ -144,6 +146,7 @@ export function trackPageView(payload: PageViewPayload): void {
     deviceCategory: payload.deviceCategory ?? deviceCategory,
     referrer: referrer || undefined,
     referrerCategory,
+    ...(payload.userId && { userId: payload.userId }),
   });
 }
 

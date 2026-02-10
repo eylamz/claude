@@ -29,12 +29,14 @@ const Select = ({
   children, 
   value, 
   onValueChange,
-  variant = "default" 
+  variant = "default",
+  className 
 }: { 
   children: React.ReactNode; 
   value?: string; 
   onValueChange?: (val: string) => void;
   variant?: SelectVariant;
+  className?: string;
 }) => {
   const [open, setOpen] = React.useState(false);
   const [displayLabel, setDisplayLabel] = React.useState<React.ReactNode>(null);
@@ -52,7 +54,7 @@ const Select = ({
 
   return (
     <SelectContext.Provider value={{ open, setOpen, value: value || "", onValueChange: onValueChange || (() => {}), variant, displayLabel, setDisplayLabel }}>
-      <div className="relative w-full" ref={containerRef}>
+      <div className={cn("relative w-fit", className)} ref={containerRef}>
         {children}
       </div>
     </SelectContext.Provider>
@@ -77,7 +79,7 @@ const SelectTrigger = React.forwardRef<
       type="button"
       onClick={() => context?.setOpen(!context.open)}
       className={cn(
-        "flex h-10 w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition-all duration-200 border",
+        "flex h-10 gap-1 w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition-all duration-200 border",
         "focus:outline-none select-none",
         activeVariantClass,
         className
@@ -167,7 +169,7 @@ const SelectWrapper = React.forwardRef<HTMLButtonElement, SelectWrapperProps>(
     const currentLabel = options.find(opt => opt.value === value)?.label || options.find(o => o.value === '')?.label || "Select...";
 
     return (
-      <div className={cn("relative w-full", className)}>
+      <div className={cn("relative w-fit", className)}>
         {label && (
           <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1.5">
             {label}

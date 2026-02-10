@@ -38,12 +38,44 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const days = Math.min(365, Math.max(1, parseInt(searchParams.get('days') ?? String(DEFAULT_DAYS), 10) || DEFAULT_DAYS));
+    const userParam = searchParams.get('user');
+    const excludeAdmins = searchParams.get('excludeAdmins') === 'true';
+
+    const filterByCurrentUser = userParam === 'me';
+    const filterByAdminsOnly = userParam === 'admins';
+
+    let adminUserIds: string[] = [];
+    if (excludeAdmins || filterByAdminsOnly) {
+      const admins = await User.find({ role: 'admin' }).select('_id').lean();
+      adminUserIds = admins.map((u) => String(u._id));
+    }
+
+    const currentUserId = filterByCurrentUser && session.user?.id ? String(session.user.id) : null;
+
     const from = new Date();
     from.setDate(from.getDate() - days);
     from.setHours(0, 0, 0, 0);
 
-    const matchPageView = { type: 'page_view', timestamp: { $gte: from } };
-    const matchConsent = { type: 'consent', timestamp: { $gte: from } };
+    const matchPageView: Record<string, unknown> = { type: 'page_view', timestamp: { $gte: from } };
+    if (currentUserId) {
+      matchPageView.userId = currentUserId;
+    } else if (filterByAdminsOnly && adminUserIds.length > 0) {
+      matchPageView.userId = { $in: adminUserIds };
+    } else if (filterByAdminsOnly) {
+      matchPageView.userId = { $in: [] };
+    } else if (excludeAdmins && adminUserIds.length > 0) {
+      matchPageView.$or = [
+        { userId: { $exists: false } },
+        { userId: null },
+        { userId: { $nin: adminUserIds } },
+      ];
+    }
+    const matchConsent: Record<string, unknown> = { type: 'consent', timestamp: { $gte: from } };
+    // Only count sessions that have an id (so we can dedupe by session, not by page view)
+    const matchPageViewWithSession = {
+      ...matchPageView,
+      sessionId: { $exists: true, $nin: [null, ''] },
+    };
 
     const [
       pageViewsByPath,
@@ -72,14 +104,20 @@ export async function GET(request: NextRequest) {
         { $group: { _id: null, avgSessionMs: { $avg: '$totalMs' }, count: { $sum: 1 } } },
         { $project: { _id: 0, avgSessionDurationMs: { $round: ['$avgSessionMs', 0] }, totalSessions: '$count' } },
       ]),
+      // Device category: one count per session (first page view of session determines device)
       AnalyticsEvent.aggregate<{ _id: string; count: number }>([
-        { $match: matchPageView },
+        { $match: matchPageViewWithSession },
+        { $sort: { sessionId: 1, timestamp: 1 } },
+        { $group: { _id: '$sessionId', deviceCategory: { $first: '$deviceCategory' } } },
         { $group: { _id: { $ifNull: ['$deviceCategory', 'unknown'] }, count: { $sum: 1 } } },
         { $sort: { count: -1 } },
         { $project: { category: '$_id', count: 1, _id: 0 } },
       ]),
+      // Device type (OS): one count per session
       AnalyticsEvent.aggregate<{ _id: string; count: number }>([
-        { $match: matchPageView },
+        { $match: matchPageViewWithSession },
+        { $sort: { sessionId: 1, timestamp: 1 } },
+        { $group: { _id: '$sessionId', deviceType: { $first: '$deviceType' } } },
         { $group: { _id: { $ifNull: ['$deviceType', 'unknown'] }, count: { $sum: 1 } } },
         { $sort: { count: -1 } },
         { $project: { deviceType: '$_id', count: 1, _id: 0 } },
@@ -90,8 +128,11 @@ export async function GET(request: NextRequest) {
         { $sort: { count: -1 } },
         { $project: { choice: '$_id', count: 1, _id: 0 } },
       ]),
+      // Traffic source: one count per session (first page view determines referrer)
       AnalyticsEvent.aggregate<{ _id: string; count: number }>([
-        { $match: matchPageView },
+        { $match: matchPageViewWithSession },
+        { $sort: { sessionId: 1, timestamp: 1 } },
+        { $group: { _id: '$sessionId', referrerCategory: { $first: '$referrerCategory' } } },
         { $group: { _id: { $ifNull: ['$referrerCategory', 'direct'] }, count: { $sum: 1 } } },
         { $sort: { count: -1 } },
         { $project: { referrerCategory: '$_id', count: 1, _id: 0 } },
