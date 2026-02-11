@@ -19,14 +19,14 @@
   "toggle": "לחיצה",
   "toggle_language": "החלף שפה",
   "light_mode": "בהיר",
-  "dark_mode":"כהה",
+  "dark_mode": "כהה",
   "settings": "הגדרות",
   "home": "בית",
   "guides": "מדריכים",
   "login": "התחברות",
   "about": "אודות",
   "aboutDesc": "אודותינו",
-  "contact": "יצירת קשר",
+  "contact": "צור קשר",
   "signIn": "התחבר",
   "signInToReview": "התחבר כדי לכתוב ביקורת",
   "signUp": "הירשם",
@@ -185,7 +185,7 @@
     "termsOfService": "תנאי שימוש",
     "termsAndPrivacy": "תנאים ומדיניות פרטיות",
     "cookiePolicy": "מדיניות עוגיות",
-    "accessibility": "נגישות",
+    "accessibility": "הצהרת נגישות",
     "contactEmail": "hello@enboss.co",
     "contactPhone": "+972-XX-XXXXXXX",
     "contactLocation": "תל אביב, ישראל",
@@ -241,6 +241,13 @@
           "contentCache": "אחסון מקומי לשמירת מטמון נתונים לשיפור הטעינה והחיפוש"
         }
       }
+    },
+    "ilBanner": {
+      "textBeforeLink": "אנו משתמשים בעוגיות כדי לשפר את חוויית הגלישה שלך, להתאים תוכן, ולנתח את התעבורה שלנו.",
+      "moreInfoBeforeLink": "למידע נוסף, עיין ב",
+      "privacyPolicy": "מדיניות העוגיות",
+      "textAfterLink": " שלנו.",
+      "understand": "אישור"
     }
   },
   "mobileNav": {
@@ -264,7 +271,7 @@
     "comingSoon": "בשלבי סיום",
     "soon": "בקרוב",
     "termsAndConditions": "תנאי שימוש ופרטיות",
-    "accessibility": "נגישות",
+    "accessibility": "הצהרת נגישות",
     "myAccount": "החשבון שלי",
     "viewProfileSettings": "צפה בפרופיל והגדרות",
     "signIn": "התחבר",
@@ -393,4 +400,3 @@
     }
   }
 }
-

@@ -1,6 +1,6 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { MongoDBAdapter } from '@next-auth/mongodb-adapter';
+import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { MongoClient } from 'mongodb';
 import User from '@/lib/models/User';
 import { connectDB, isDBConnected } from '@/lib/db/mongodb';
@@ -16,7 +16,8 @@ const clientPromise = client.connect();
  */
 export const authOptions: NextAuthOptions = {
   // Use MongoDB adapter for session management
-  adapter: MongoDBAdapter(clientPromise),
+  // Cast: @auth/mongodb-adapter uses @auth/core types; next-auth expects extended User (e.g. role)
+  adapter: MongoDBAdapter(clientPromise) as NextAuthOptions['adapter'],
 
   // Providers
   providers: [

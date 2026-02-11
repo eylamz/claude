@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  experimental: {
+    // Use system TLS certs so Turbopack can fetch Google Fonts during build
+    turbopackUseSystemTlsCerts: true,
+  },
   images: {
     remotePatterns: [
       {

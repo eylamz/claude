@@ -131,6 +131,12 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
       label: tCommon('about'),
       description: tCommon('aboutDesc'),
     },
+    { 
+      href: `/${locale}/contact`, 
+      icon: 'messages', 
+      label: tCommon('contact'), 
+      description: tCommon('contactDesc') 
+    },
     ...(trainersEnabled ? [{
       href: `/${locale}/trainers`,
       icon: 'trainersBold' as IconName,
@@ -141,10 +147,9 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
 
   // 2. Secondary Links (Mini Cards)
   const miniCards: MiniCard[] = [
-    { href: `/${locale}/contact`, icon: 'messages', label: tCommon('contact') },
     { href: `/${locale}/terms`, icon: 'termsBold', label: tCommon('footer.termsAndPrivacy') },
-    { href: `/${locale}/cookies`, icon: 'cookieBold', label: tCommon('footer.cookiePolicy') },
     { href: `/${locale}/accessibility`, icon: 'accessibilityBold', label: tMobileNav('accessibility') },
+    { href: `/${locale}/cookies`, icon: 'cookieBold', label: tCommon('footer.cookiePolicy') },
 ];
 
   // Prevent body scroll when open
@@ -856,19 +861,19 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                 (card.href !== `/${locale}` && pathname.startsWith(card.href));
 
               return (
-                <div key={card.href} className={`overflow-hidden w-3/4 ${locale === 'he' ? 'rounded-l-full' : 'rounded-r-full'}`}>
+                <div key={card.href} className={`overflow-hidden min-w-fit w-3/4 ${locale === 'he' ? 'rounded-l-full' : 'rounded-r-full'}`}>
                 <Link
                   href={card.href}
                   onClick={onClose}
                   className={`flex items-center gap-5 px-2 py-3 text-3xl ${
                     isActive
-                      ? 'ps-4 bg-brand-main/20 dark:bg-brand-main/5 text-brand-main dark:text-brand-main'
+                      ? 'ps-4 pe-6 bg-brand-main/20 dark:bg-brand-main/5 text-brand-main dark:text-brand-main'
                       : 'ms-2 text-black/80 dark:text-white/90'
                   }`}
                 >
                   <Icon
                     name={card.icon}
-                    className={`flex-shrink-0 w-4 h-4 ${isActive ? 'text-brand-main dark:text-brand-main' : 'text-black/80 dark:text-white/90'}`}
+                    className={`flex-shrink-0 w-4 h-4 -mb-1 ${isActive ? 'text-brand-main dark:text-brand-main' : 'text-black/80 dark:text-white/90'}`}
                   />
                   <span className="font-medium">{card.label}</span>
                 </Link>

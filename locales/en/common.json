@@ -239,6 +239,13 @@
           "contentCache": "Local storage to cache data to improve loading and search"
         }
       }
+    },
+    "ilBanner": {
+      "textBeforeLink": "We use cookies to enhance your browsing experience, personalize content, and analyze our traffic.",
+      "moreInfoBeforeLink": "To learn more, see our ",
+      "privacyPolicy": "Cookie Policy",
+      "textAfterLink": ".",
+      "understand": "I Understand"
     }
   },
   "mobileNav": {

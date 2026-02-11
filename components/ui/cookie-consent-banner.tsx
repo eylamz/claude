@@ -17,6 +17,8 @@ import {
 import { trackConsent } from '@/lib/analytics/internal';
 import { Switch } from '@/components/ui/switch';
 
+const isIlCookiePolicy = process.env.NEXT_PUBLIC_SET_IL_COOKIE_POLICY === 'true';
+
 export default function CookieConsentBanner() {
   const t = useTranslations('common');
   const locale = useLocale();
@@ -34,7 +36,7 @@ export default function CookieConsentBanner() {
       setIsVisible(true);
     }
 
-    // Load existing preferences if any
+    // Load existing preferences if any (only for non-IL mode; IL mode always uses accept-all on accept)
     const existing = getCookiePreferences();
     if (existing) {
       setPreferences({
@@ -44,10 +46,12 @@ export default function CookieConsentBanner() {
       });
     }
 
-    // Listen for show cookie settings event
+    // Listen for show cookie settings event (only relevant when not IL mode)
     const handleShowSettings = () => {
-      setIsVisible(true);
-      setShowSettings(true);
+      if (!isIlCookiePolicy) {
+        setIsVisible(true);
+        setShowSettings(true);
+      }
     };
 
     window.addEventListener('showCookieSettings', handleShowSettings);
@@ -98,9 +102,74 @@ export default function CookieConsentBanner() {
     }));
   };
 
+  /** IL mode: close banner (X or Accept) and set all cookies accepted including analytics */
+  const handleIlAcceptOrClose = () => {
+    trackConsent('accept_all');
+    acceptAllCookies();
+    setIsVisible(false);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cookieConsentUpdated'));
+    }
+  };
+
   if (!isVisible) return null;
 
   const isRtl = locale === 'he';
+
+  // IL cookie policy banner: simplified, single Accept button, X close, same header
+  if (isIlCookiePolicy) {
+    return (
+      <div
+        dir={isRtl ? 'rtl' : 'ltr'}
+        className="fixed z-[10000] font-assistant bottom-4 left-4 right-4 lg:bottom-9 lg:left-9 lg:right-9 px-4 pb-4 pt-2 lg:py-6 lg:px-9 rounded-3xl border border-[#E5E5E5] dark:border-border-dark bg-white dark:bg-background-dark/80 backdrop-blur-xl shadow-[0_8px_25px_rgba(16,42,118,0.17)] dark:shadow-none dark:[filter:drop-shadow(0_1px_1px_#66666612)_drop-shadow(0_2px_2px_#5e5e5e12)_drop-shadow(0_4px_4px_#7a5d4413)_drop-shadow(0_8px_8px_#5e5e5e12)_drop-shadow(0_16px_16px_#5e5e5e12)] opacity-0 animate-popUp transition-all duration-300"
+        style={{ animationDelay: '3s' }}
+      >
+        <div>
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+            <div className="flex-1 w-full">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <Icon name="cookieBold" className="w-6 h-6" />
+                  <h3 className="text-lg -mb-2 font-semibold text-gray-900 dark:text-white">
+                    {t('cookieConsent.title')}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleIlAcceptOrClose}
+                  className="h-10 p-2 -me-2 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200 shrink-0"
+                  aria-label={t('close')}
+                >
+                  <Icon name="X" className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="max-w-[95%] md:max-w-[700px] text-sm text-gray-600 dark:text-gray-dark space-y-2">
+                <p>{t('cookieConsent.ilBanner.textBeforeLink')}</p>
+                <p>
+                  {t('cookieConsent.ilBanner.moreInfoBeforeLink')}
+                  <Link
+                    href={`/${locale}/cookies`}
+                    className=" text-brand-main dark:text-brand-dark hover:underline"
+                  >
+                    {t('cookieConsent.ilBanner.privacyPolicy')}
+                  </Link>
+                  {t('cookieConsent.ilBanner.textAfterLink')}
+                </p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              variant="primary"
+              onClick={handleIlAcceptOrClose}
+              className="w-full md:w-auto !px-4 font-semibold shrink-0 md:hidden"
+            >
+              {t('cookieConsent.ilBanner.understand')}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -121,10 +190,10 @@ export default function CookieConsentBanner() {
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
               <div className="flex-1">
                 <div className="flex items-start justify-start gap-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {t('cookieConsent.title')}
-                </h3>
-              <Icon name="cookieBold" className="w-6 h-6" />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {t('cookieConsent.title')}
+                  </h3>
+                  <Icon name="cookieBold" className="w-6 h-6" />
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-dark mb-4">
                   {t('cookieConsent.description')}{' '}
@@ -145,11 +214,7 @@ export default function CookieConsentBanner() {
                 >
                   <Icon name="settingsBold" className="w-4 h-4" />
                 </Button>
-                <Button
-                  variant="gray"
-                  size="sm"
-                  onClick={handleRejectNonEssential}
-                >
+                <Button variant="gray" size="sm" onClick={handleRejectNonEssential}>
                   {t('cookieConsent.rejectNonEssential')}
                 </Button>
                 <Button
@@ -173,157 +238,156 @@ export default function CookieConsentBanner() {
             }`}
           >
             <div className="max-w-2xl mx-auto">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-              <h3 className="text-xl font-semibold text-text dark:text-text-dark">
-                {t('cookieConsent.settings.title')}
-              </h3>
-              <Icon name="cookieBold" className="w-5 h-5" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-semibold text-text dark:text-text-dark">
+                    {t('cookieConsent.settings.title')}
+                  </h3>
+                  <Icon name="cookieBold" className="w-5 h-5" />
+                </div>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="text-gray dark:text-gray-dark  hover:text-text-dark dark:hover:text-text-dark"
+                  aria-label={t('cookieConsent.settings.close')}
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button
-                onClick={() => setShowSettings(false)}
-                className="text-gray dark:text-gray-dark  hover:text-text-dark dark:hover:text-text-dark"
-                aria-label={t('cookieConsent.settings.close')}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            <p className="mb-4 text-sm text-gray dark:text-gray-dark">
-              {t('cookieConsent.settings.description')}
-            </p>
+              <p className="mb-4 text-sm text-gray dark:text-gray-dark">
+                {t('cookieConsent.settings.description')}
+              </p>
 
-            {/* Cookie Categories */}
-            <div className="space-y-4">
-              {/* Essential Cookies */}
-              <div className="border border-gray-border dark:border-gray-border-dark rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-semibold text-text dark:text-text-dark">
-                        {t('cookieConsent.categories.essential.title')}
-                      </h4>
-                      <span className="text-xs bg-green-bg dark:bg-green-bg-dark border border-green-border dark:border-green-border-dark text-green dark:text-green-dark px-2 py-1 rounded">
-                        {t('cookieConsent.categories.essential.required')}
-                      </span>
+              {/* Cookie Categories */}
+              <div className="space-y-4">
+                {/* Essential Cookies */}
+                <div className="border border-gray-border dark:border-gray-border-dark rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-semibold text-text dark:text-text-dark">
+                          {t('cookieConsent.categories.essential.title')}
+                        </h4>
+                        <span className="text-xs bg-green-bg dark:bg-green-bg-dark border border-green-border dark:border-green-border-dark text-green dark:text-green-dark px-2 py-1 rounded">
+                          {t('cookieConsent.categories.essential.required')}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray dark:text-gray-dark mb-2">
+                        {t('cookieConsent.categories.essential.description')}
+                      </p>
+                      <ul className="text-xs text-gray/70 dark:text-gray-dark/70 space-y-1 list-disc list-inside">
+                        <li>{t('cookieConsent.categories.essential.examples.session')}</li>
+                        <li>{t('cookieConsent.categories.essential.examples.security')}</li>
+                        <li>{t('cookieConsent.categories.essential.examples.authentication')}</li>
+                      </ul>
                     </div>
-                    <p className="text-sm text-gray dark:text-gray-dark mb-2">
-                      {t('cookieConsent.categories.essential.description')}
-                    </p>
-                    <ul className="text-xs text-gray/70 dark:text-gray-dark/70 space-y-1 list-disc list-inside">
-                      <li>{t('cookieConsent.categories.essential.examples.session')}</li>
-                      <li>{t('cookieConsent.categories.essential.examples.security')}</li>
-                      <li>{t('cookieConsent.categories.essential.examples.authentication')}</li>
-                    </ul>
-                  </div>
-                  <div className="flex items-center">
-                  <Switch
-                    checked={preferences.essential}
-                    onCheckedChange={() => toggleCategory('essential')}
-                    variant="brand"
-                    size="sm"
-                    disabled={true}
-                  />
+                    <div className="flex items-center">
+                      <Switch
+                        checked={preferences.essential}
+                        onCheckedChange={() => toggleCategory('essential')}
+                        variant="brand"
+                        size="sm"
+                        disabled={true}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Analytics Cookies */}
-              <div className="border border-gray-border dark:border-gray-border-dark rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-text dark:text-text-dark mb-2">
-                      {t('cookieConsent.categories.analytics.title')}
-                    </h4>
-                    <p className="text-sm text-gray dark:text-gray-dark mb-2">
-                      {t('cookieConsent.categories.analytics.description')}
-                    </p>
-                    <ul className="text-xs text-gray/70 dark:text-gray-dark/70 space-y-1 list-disc list-inside">
-                      <li>{t('cookieConsent.categories.analytics.examples.pageViews')}</li>
-                      <li>{t('cookieConsent.categories.analytics.examples.userBehavior')}</li>
-                      <li>{t('cookieConsent.categories.analytics.examples.performance')}</li>
-                    </ul>
-                  </div>
-                  <Switch
-                    checked={preferences.analytics}
-                    onCheckedChange={() => toggleCategory('analytics')}
-                    variant="brand"
-                    size="sm"
-                  />
-                 
-                </div>
-              </div>
-
-              {/* Functional Cookies */}
-              <div className="border border-gray-border dark:border-gray-border-dark rounded-lg p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h4 className="font-semibold text-text dark:text-text-dark">
-                        {t('cookieConsent.categories.functional.title')}
+                {/* Analytics Cookies */}
+                <div className="border border-gray-border dark:border-gray-border-dark rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-text dark:text-text-dark mb-2">
+                        {t('cookieConsent.categories.analytics.title')}
                       </h4>
-                      <span className="text-xs bg-green-bg dark:bg-green-bg-dark border border-green-border dark:border-green-border-dark text-green dark:text-green-dark px-2 py-1 rounded">
-                        {t('cookieConsent.categories.functional.required')}
-                      </span>
+                      <p className="text-sm text-gray dark:text-gray-dark mb-2">
+                        {t('cookieConsent.categories.analytics.description')}
+                      </p>
+                      <ul className="text-xs text-gray/70 dark:text-gray-dark/70 space-y-1 list-disc list-inside">
+                        <li>{t('cookieConsent.categories.analytics.examples.pageViews')}</li>
+                        <li>{t('cookieConsent.categories.analytics.examples.userBehavior')}</li>
+                        <li>{t('cookieConsent.categories.analytics.examples.performance')}</li>
+                      </ul>
                     </div>
-                    <p className="text-sm text-gray dark:text-gray-dark mb-2">
-                      {t('cookieConsent.categories.functional.description')}
-                    </p>
-                    <ul className="text-xs text-gray/70 dark:text-gray-dark/70 space-y-1 list-disc list-inside">
-                      <li>{t('cookieConsent.categories.functional.examples.language')}</li>
-                      <li>{t('cookieConsent.categories.functional.examples.theme')}</li>
-                      <li>{t('cookieConsent.categories.functional.examples.preferences')}</li>
-                      <li>{t('cookieConsent.categories.functional.examples.contentCache')}</li>
-                    </ul>
-                  </div>
-                  <div className="flex items-center">
                     <Switch
-                      checked={preferences.functional}
-                      onCheckedChange={() => toggleCategory('functional')}
+                      checked={preferences.analytics}
+                      onCheckedChange={() => toggleCategory('analytics')}
                       variant="brand"
                       size="sm"
-                      disabled={true}
                     />
                   </div>
                 </div>
+
+                {/* Functional Cookies */}
+                <div className="border border-gray-border dark:border-gray-border-dark rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-semibold text-text dark:text-text-dark">
+                          {t('cookieConsent.categories.functional.title')}
+                        </h4>
+                        <span className="text-xs bg-green-bg dark:bg-green-bg-dark border border-green-border dark:border-green-border-dark text-green dark:text-green-dark px-2 py-1 rounded">
+                          {t('cookieConsent.categories.functional.required')}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray dark:text-gray-dark mb-2">
+                        {t('cookieConsent.categories.functional.description')}
+                      </p>
+                      <ul className="text-xs text-gray/70 dark:text-gray-dark/70 space-y-1 list-disc list-inside">
+                        <li>{t('cookieConsent.categories.functional.examples.language')}</li>
+                        <li>{t('cookieConsent.categories.functional.examples.theme')}</li>
+                        <li>{t('cookieConsent.categories.functional.examples.preferences')}</li>
+                        <li>{t('cookieConsent.categories.functional.examples.contentCache')}</li>
+                      </ul>
+                    </div>
+                    <div className="flex items-center">
+                      <Switch
+                        checked={preferences.functional}
+                        onCheckedChange={() => toggleCategory('functional')}
+                        variant="brand"
+                        size="sm"
+                        disabled={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="my-4 flex flex-wrap items-center gap-3 pt-4 border-t border-gray-border dark:border-gray-border-dark">
+                <Button
+                  variant="gray"
+                  size="sm"
+                  onClick={() => {
+                    setShowSettings(false);
+                    handleRejectNonEssential();
+                  }}
+                >
+                  {t('cookieConsent.rejectNonEssential')}
+                </Button>
+                <Button
+                  variant="gray"
+                  size="sm"
+                  onClick={() => {
+                    setPreferences({
+                      essential: true,
+                      analytics: true,
+                      functional: true,
+                    });
+                  }}
+                >
+                  {t('cookieConsent.selectAll')}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={handleSavePreferences}
+                  className="!px-4 font-semibold"
+                >
+                  {t('cookieConsent.savePreferences')}
+                </Button>
               </div>
             </div>
-
-            {/* Action Buttons */}
-            <div className="my-4 flex flex-wrap items-center gap-3 pt-4 border-t border-gray-border dark:border-gray-border-dark">
-              <Button
-                variant="gray"
-                size="sm"
-                onClick={() => {
-                  setShowSettings(false);
-                  handleRejectNonEssential();
-                }}
-              >
-                {t('cookieConsent.rejectNonEssential')}
-              </Button>
-              <Button
-                variant="gray"
-                size="sm"
-                onClick={() => {
-                  setPreferences({
-                    essential: true,
-                    analytics: true,
-                    functional: true,
-                  });
-                }}
-              >
-                {t('cookieConsent.selectAll')}
-              </Button>
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={handleSavePreferences}
-                className="!px-4 font-semibold"
-              >
-                {t('cookieConsent.savePreferences')}
-              </Button>
-            </div>
-          </div>
           </div>
         </div>
       </div>
