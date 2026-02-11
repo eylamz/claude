@@ -29,38 +29,43 @@ export function Footer() {
 
   const secondaryLinks = [
     { href: `/${locale}/contact`, label: t('contact') },
-    { href: `/${locale}/terms`, label: t('footer.termsOfService') },
-    { href: `/${locale}/privacy`, label: t('footer.privacyPolicy') },
+    { href: `/${locale}/terms`, label: t('footer.termsAndPrivacy') },
+    { href: `/${locale}/cookies`, label: t('footer.cookiePolicy') },
     { href: `/${locale}/accessibility`, label: tMobileNav('accessibility') },
   ];
 
   return (
     <footer className="bg-header dark:bg-header-dark border-t border-border dark:border-border-dark transition-colors duration-300">
       <div className="max-w-6xl mx-auto px-4 lg:px-2 py-12">
-        <div className="flex flex-col md:flex-row justify-between items-start gap-10">
+        <div className="flex flex-col justify-start items-start gap-1">
           
-          {/* Brand Section */}
-          <div className="max-w-xs">
-            <Link href={`/${locale}`} className="inline-block mb-4 ">
+          {/* Logo */}
+          <div>
+            <Link href={`/${locale}`} className="inline-block group">
               <Icon name="logo"
-              className="text-brand-dark dark:text-brand-main stroke-[7px] stroke-text dark:stroke-text-dark w-32 h-8 overflow-visible"
+              className="text-brand-main dark:text-brand-dark stroke-[7px] stroke-[#003f03] dark:stroke-transparent dark:group-hover:stroke-[#012f03] w-32 h-8 overflow-visible transition-all duration-200 group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.35))]"
               style={{ paintOrder: 'stroke' }}
               />
             </Link>
-            <p className="text-sm w-full max-w-[120%] text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
-              {t('footer.missionStatement')}
-            </p>
-            <div className="flex items-center gap-4 md:mb-4 mt-6 overflow-visible">
-            <a href="https://www.instagram.com/enboss_official" className="group relative flex items-center justify-center p-1 cursor-pointer touch-manipulation">
+          </div>
+
+          {/* Mission Statement & Navigation Links */}
+          <div className="flex flex-col md:flex-row gap-8 md:gap-20 flex-1 max-w-2xl">
+            <div className="max-w-xs">
+              <p className="text-sm w-full max-w-[120%] text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
+                {t('footer.missionStatement')}
+              </p>
+              <div className="flex items-center gap-4 md:gap-2 md:mb-4 mt-6 overflow-visible">
+            <a href="https://www.instagram.com/enboss_official" className="group relative flex items-center justify-center p-1 cursor-pointer touch-manipulation transition-all duration-200">
               <svg
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
-                className="w-8 h-8 transition-all duration-500 
+                className="w-8 h-8 md:w-6 md:h-6 transition-all duration-200 
                 stroke-black/0 dark:stroke-white/80 stroke-[1px]            
                fill-[url(#insta-gradient)] 
                /* צל שחור ב-Light Mode וצל לבן ב-Dark Mode על ה-SVG */
                [filter:drop-shadow(0_0_3px_rgba(0,0,0,0.15))_drop-shadow(0_0_8px_rgba(238,42,123,0.4))] 
-               dark:[filter:drop-shadow(0_0_3px_rgba(255,255,255,0.25))_drop-shadow(0_0_8px_rgba(238,42,123,0.4))]
+               
                
               md:stroke-transparent md:fill-text md:dark:fill-text-dark md:drop-shadow-none 
                md:group-hover:scale-110 md:group-hover:stroke-black md:group-hover:stroke-[1px] 
@@ -82,28 +87,28 @@ export function Footer() {
             </a>
               <a 
                 href="https://www.tiktok.com/enboss_official" 
-                className="flex items-center justify-center cursor-pointer transition-all duration-300 text-white stroke-black stroke-[0.75px] [filter:drop-shadow(-1px_-0.7px_0_#25F4EEd9)_drop-shadow(1.25px_1.25px_0_#FE2C55d9)_drop-shadow(0_0_8px_rgba(37,244,238,0.25))_drop-shadow(0_0_8px_rgba(227,45,21,0.35))] md:text-text md:dark:text-text-dark md:stroke-transparent md:[filter:none] md:hover:text-white md:hover:stroke-black md:hover:scale-110 
+                className="flex items-center justify-center cursor-pointer transition-all duration-200 text-white stroke-black stroke-[0.75px] [filter:drop-shadow(-1px_-0.7px_0_#25F4EEd9)_drop-shadow(1.25px_1.25px_0_#FE2C55d9)_drop-shadow(0_0_8px_rgba(37,244,238,0.25))_drop-shadow(0_0_8px_rgba(227,45,21,0.35))] md:text-text md:dark:text-text-dark md:stroke-transparent md:[filter:none] md:hover:text-white md:hover:stroke-black md:hover:scale-110 
                 md:hover:[filter:drop-shadow(-1px_-0.7px_0_#25F4EEd9)_drop-shadow(1.25px_1.25px_0_#FE2C55d9)_drop-shadow(0_0_8px_rgba(37,244,238,0.25))_drop-shadow(0_0_8px_rgba(227,45,21,0.35))]"
               >
-                <Icon name="tiktok" size={32} />
+                <Icon name="tiktok" size={32} className="md:w-6 md:h-6 transition-all duration-200" />
               </a>
               <a href={`/${locale}/contact`} className="flex items-center justify-center group cursor-pointer p-1 transition-all duration-200 touch-manipulation">
                 <svg
                   viewBox="0 0 24 24"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="w-8 h-8 transition-all duration-200 drop-shadow-[0_0_10px_rgba(60,170,65,0.4)] md:fill-text md:dark:fill-text-dark md:drop-shadow-none md:group-hover:drop-shadow-[0_0_10px_rgba(60,170,65,0.4)] md:group-hover:scale-110"
+                  className="w-8 md:w-6 h-8 md:h-6 transition-all duration-200 drop-shadow-[0_0_10px_rgba(60,170,65,0.4)] md:fill-text md:dark:fill-text-dark md:drop-shadow-none md:group-hover:drop-shadow-[0_0_10px_rgba(60,170,65,0.4)] md:group-hover:scale-110"
                 >
                   <path className="fill-brand-main dark:fill-brand-dark md:fill-text dark:md:fill-text-dark md:group-hover:fill-brand-main md:dark:group-hover:fill-brand-dark" d="M18.4704 16.83L18.8604 19.99C18.9604 20.82 18.0704 21.4 17.3604 20.97L13.9004 18.91C13.6604 18.77 13.6004 18.47 13.7304 18.23C14.2304 17.31 14.5004 16.27 14.5004 15.23C14.5004 11.57 11.3604 8.59 7.50038 8.59C6.71038 8.59 5.94038 8.71 5.22038 8.95C4.85038 9.07 4.49038 8.73 4.58038 8.35C5.49038 4.71 8.99038 2 13.1704 2C18.0504 2 22.0004 5.69 22.0004 10.24C22.0004 12.94 20.6104 15.33 18.4704 16.83Z" />
                   <path className="fill-[#4cdb52] dark:fill-[#55f15e] md:fill-text dark:md:fill-text-dark md:group-hover:fill-[#4cdb52] md:dark:group-hover:fill-[#55f15e]" d="M13 15.2298C13 16.4198 12.56 17.5198 11.82 18.3898C10.83 19.5898 9.26 20.3598 7.5 20.3598L4.89 21.9098C4.45 22.1798 3.89 21.8098 3.95 21.2998L4.2 19.3298C2.86 18.3998 2 16.9098 2 15.2298C2 13.4698 2.94 11.9198 4.38 10.9998C5.27 10.4198 6.34 10.0898 7.5 10.0898C10.54 10.0898 13 12.3898 13 15.2298Z" />
                 </svg>
               </a>
               <a href="https://www.youtube.com/@enboss2136" className="flex items-center justify-center cursor-pointer transition-all duration-200 text-[#FF0000] scale-110 [filter:drop-shadow(0_0_8px_rgba(255,0,0,0.25))] md:text-text md:dark:text-text-dark md:scale-100 md:[filter:none] md:hover:text-[#FF0000] md:hover:scale-110 md:hover:[filter:drop-shadow(0_0_8px_rgba(255,0,0,0.25))]">
-              <Icon name="youtube" size={28} /></a>
+              <Icon name="youtube" size={28} className="md:w-6 md:h-6 transition-all duration-200" /></a>
+              </div>
             </div>
-          </div>
 
-          {/* Navigation Links */}
-          <div className="grid grid-cols-2 gap-12 mb-8">
+            {/* Navigation Links */}
+            <div className="grid grid-cols-2 gap-12 mb-8">
             <div>
               <h4 className="text-xs font-bold uppercase tracking-widest text-text dark:text-text-dark mb-4">{t('footer.discover')}</h4>
               <ul className="space-y-3">
@@ -127,6 +132,7 @@ export function Footer() {
                   </li>
                 ))}
               </ul>
+            </div>
             </div>
           </div>
         </div>

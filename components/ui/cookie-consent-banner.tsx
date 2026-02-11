@@ -100,21 +100,22 @@ export default function CookieConsentBanner() {
 
   if (!isVisible) return null;
 
+  const isRtl = locale === 'he';
+
   return (
-    <div className={` fixed bottom-0 left-0 right-0 z-[80] bg-card dark:bg-card-dark border-t border-border dark:border-border-dark opacity-0 animate-popUp transition-all duration-300 ${showSettings ? 'max-h-screen overflow-y-auto pt-6' : 'py-6'}`}
-     style={{
-      animationDelay: '3s',
-      boxShadow: '15px 0 20px 5px rgba(0, 0, 0, 0.5)',
-     }}
+    <div
+      dir={isRtl ? 'rtl' : 'ltr'}
+      className={`fixed z-[10000] font-assistant bottom-4 left-4 right-4 lg:bottom-9 lg:left-9 lg:right-9 p-4 lg:py-6 lg:px-9 rounded-3xl border border-[#E5E5E5] dark:border-border-dark bg-white dark:bg-background-dark shadow-[0_8px_25px_rgba(16,42,118,0.17)] dark:shadow-none dark:[filter:drop-shadow(0_1px_1px_#66666612)_drop-shadow(0_2px_2px_#5e5e5e12)_drop-shadow(0_4px_4px_#7a5d4413)_drop-shadow(0_8px_8px_#5e5e5e12)_drop-shadow(0_16px_16px_#5e5e5e12)] opacity-0 animate-popUp transition-all duration-300 ${showSettings ? 'max-h-[85vh] overflow-y-auto' : ''}`}
+      style={{ animationDelay: '3s' }}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
+      <div className="flex-1 min-w-0 w-full">
         <div className="relative">
           {/* Main banner view */}
           <div
             className={`transition-all duration-200 ease-in-out ${
               showSettings
-                ? 'opacity-0  pointer-events-none absolute inset-0'
-                : 'animate-fadeIn  pointer-events-auto relative'
+                ? 'opacity-0 pointer-events-none absolute inset-0'
+                : 'animate-fadeIn pointer-events-auto relative'
             }`}
           >
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">

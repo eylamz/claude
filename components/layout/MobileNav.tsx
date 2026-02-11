@@ -129,7 +129,8 @@ export default function MobileNavMinimal() {
           <Link href={`/${locale}`} className="flex flex-col items-center group">
             <Icon 
               name="logo" 
-              className="w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] text-brand-main dark:text-brand-dark transition-opacity group-hover:opacity-80" 
+              className="w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] text-brand-main dark:text-brand-dark overflow-visible group-hover:stroke-[7px] group-hover:stroke-[#003f03] dark:group-hover:stroke-[#011c02] group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.35))] dark:group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.15))] transition-all duration-200" 
+              style={{ paintOrder: 'stroke' }}
             />
           </Link>
 

@@ -528,7 +528,7 @@ export default function EventSignupPage() {
                     <a
                       href={(() => {
                         const url = event.signupForm?.privacyPolicyUrl?.trim();
-                        if (!url || url === '/[locale]/privacy') return `/${locale}/privacy`;
+                        if (!url || url === '/[locale]/privacy' || url === '/[locale]/terms#privacy-policy') return `/${locale}/terms#privacy-policy`;
                         return url.replace('[locale]', locale);
                       })()}
                       target="_blank"

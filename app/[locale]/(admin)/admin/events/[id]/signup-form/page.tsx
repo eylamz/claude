@@ -116,7 +116,7 @@ export default function EventSignupFormPage() {
         if (typeof sf?.privacyPolicyUrl === 'string' && sf.privacyPolicyUrl.trim()) {
           setPrivacyPolicyUrl(sf.privacyPolicyUrl);
         } else if (sf?.showPrivacyCheckbox) {
-          setPrivacyPolicyUrl('/[locale]/privacy');
+          setPrivacyPolicyUrl('/[locale]/terms#privacy-policy');
         }
         if (Array.isArray(sf?.fields) && sf.fields.length > 0) {
           const mapped: FormField[] = sf.fields.map((f: any, idx: number) => {
@@ -565,26 +565,26 @@ export default function EventSignupFormPage() {
                 onChange={(checked) => {
                   setShowPrivacyCheckbox(checked);
                   if (checked && !privacyPolicyUrl.trim()) {
-                    setPrivacyPolicyUrl('/[locale]/privacy');
+                    setPrivacyPolicyUrl('/[locale]/terms#privacy-policy');
                   }
                 }}
                 label={activeTab === 'en' ? 'Add Privacy Policy acceptance checkbox' : 'הוסף תיבת סימון להסכמה למדיניות פרטיות'}
               />
               <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">
                 {activeTab === 'en'
-                  ? 'When on, signup form shows a required "I agree to the Privacy Policy" checkbox with link to the privacy page (default: /[locale]/privacy).'
-                  : 'כשמופעל, טופס ההרשמה מציג תיבת סימון חובה "אני מסכים/ה למדיניות הפרטיות" עם קישור לדף המדיניות (ברירת מחדל: /[locale]/privacy).'}
+                  ? 'When on, signup form shows a required "I agree to the Privacy Policy" checkbox with link to the terms page (default: /[locale]/terms#privacy-policy).'
+                  : 'כשמופעל, טופס ההרשמה מציג תיבת סימון חובה "אני מסכים/ה למדיניות הפרטיות" עם קישור לדף המדיניות (ברירת מחדל: /[locale]/terms#privacy-policy).'}
               </p>
               {showPrivacyCheckbox && (
                 <div className="mt-2">
                   <Input
                     value={privacyPolicyUrl}
                     onChange={(e) => setPrivacyPolicyUrl(e.target.value)}
-                    placeholder="/[locale]/privacy"
+                    placeholder="/[locale]/terms#privacy-policy"
                     className="w-full"
                   />
                   <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">
-                    {activeTab === 'en' ? 'Default /[locale]/privacy is used when the value is empty or exactly /[locale]/privacy.' : 'ברירת המחדל /[locale]/privacy משמשת כאשר הערך ריק או בדיוק /[locale]/privacy.'}
+                    {activeTab === 'en' ? 'Default /[locale]/terms#privacy-policy is used when the value is empty.' : 'ברירת המחדל /[locale]/terms#privacy-policy משמשת כאשר הערך ריק.'}
                   </p>
                 </div>
               )}

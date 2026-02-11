@@ -227,11 +227,12 @@ EventSignupSchema.statics.generateConfirmationNumber = function (): string {
  * Static method: Generate a unique 6-digit confirmation number (checks DB)
  */
 EventSignupSchema.statics.generateUniqueConfirmationNumber = async function (): Promise<string> {
+  const Model = this as IEventSignupModel;
   let confirmationNumber: string;
   let exists: IEventSignup | null;
   do {
-    confirmationNumber = this.generateConfirmationNumber();
-    exists = await this.findOne({ confirmationNumber });
+    confirmationNumber = Model.generateConfirmationNumber();
+    exists = await Model.findOne({ confirmationNumber });
   } while (exists);
   return confirmationNumber;
 };

@@ -35,8 +35,6 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/context/ThemeProvider';
-import { hasConsent } from '@/lib/utils/cookie-consent';
-import { useToast } from '@/hooks/use-toast';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { 
   useCartStore, 
@@ -118,7 +116,6 @@ export default function HeaderNav() {
   const tMobileNav = useTranslations('common.mobileNav');
   const tSearch = useTranslations('search');
   const { theme, toggleTheme } = useTheme();
-  const { toast } = useToast();
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -534,9 +531,11 @@ export default function HeaderNav() {
           <div className="flex items-center justify-between h-16">
             {/* LEFT: Logo*/}
             <div className="flex items-center gap-4">
-              <Link href={`/${locale}`} className="flex flex-col items-start gap-0.5">
+              <Link href={`/${locale}`} className="flex flex-col items-start gap-0.5 group overflow-visible">
                 {/* Logo */}
-                <Icon name="logo" className="text-brand-main dark:text-brand-dark w-[124px] h-[39px] sm:w-[128px] sm:h-[24px]" />
+                <Icon name="logo" className="text-brand-main dark:text-brand-dark overflow-visible w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] group-hover:stroke-[7px] group-hover:stroke-[#003f03] dark:group-hover:stroke-[#011c02] group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.35))] dark:group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.15))] transition-all duration-200"
+                style={{ paintOrder: 'stroke' }}
+                />
 
               </Link>
             </div>
@@ -890,32 +889,7 @@ export default function HeaderNav() {
                       <Button
                         variant="none"
                         size="sm"
-                        onClick={() => {
-                          if (!hasConsent('essential')) {
-                            toast({
-                              title: tCommon('cookieConsent.functionalConsentRequired'),
-                              description: tCommon('cookieConsent.functionalConsentMessage'),
-                              action: (
-                                <Button
-                                  size="sm"
-                                  variant="blue"
-                                  className="!px-4 w-fit"
-                                  onClick={() => {
-                                    if (typeof window !== 'undefined') {
-                                      const event = new CustomEvent('showCookieSettings');
-                                      window.dispatchEvent(event);
-                                    }
-                                  }}
-                                >
-                                  {tCommon('cookieConsent.openCookieSettings')}
-                                </Button>
-                              ),
-                              variant: 'default',
-                            });
-                            return;
-                          }
-                          toggleTheme();
-                        }}
+                        onClick={() => toggleTheme()}
                         className={`!px-6 group w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                         aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
                       >

@@ -124,7 +124,7 @@ export interface IEventSignupForm {
   showEventRulesCheckbox?: boolean;
   /** When true, show a required "I agree to the Privacy Policy" checkbox. */
   showPrivacyCheckbox?: boolean;
-  /** URL for privacy policy link when showPrivacyCheckbox is true. If empty, uses /[locale]/privacy. */
+  /** URL for privacy policy link when showPrivacyCheckbox is true. If empty, uses /[locale]/terms#privacy-policy. */
   privacyPolicyUrl?: string;
 }
 

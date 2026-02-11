@@ -330,7 +330,7 @@ function RegisterPageContent() {
             </Link>
             <span className="text-gray-400 dark:text-gray-500">•</span>
             <Link
-              href={`/${locale}/privacy`}
+              href={`/${locale}/terms#privacy-policy`}
               className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline"
             >
               {commonT('footer.privacyPolicy')}

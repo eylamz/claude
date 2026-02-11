@@ -2150,7 +2150,7 @@ export default function SkateparkPage() {
             skatepark.qualityRating.cleanliness || 
             skatepark.qualityRating.maintenance
           ) ? (
-            <Card className="px-5 sm:px-0 md:p-4 shadow-none w-full max-w-6xl mx-auto mb-8">
+            <Card className="px-5 sm:px-4 md:p-4 shadow-none w-full max-w-6xl mx-auto mb-8">
               <div className="flex items-center md:justify-center mb-4 text-text dark:text-text-dark">
                 <h2 className={`text-base sm:text-xl font-semibold flex items-center gap-2 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
                 {tr('Rating', 'דירוג')}
@@ -2461,7 +2461,7 @@ export default function SkateparkPage() {
 
           {/* Nearby Parks */}
           {nearbyParks.length > 0 && (
-            <Card className="!overflow-visible !shadow-none w-full max-w-6xl mx-auto transition-all duration-200 transform-gpu !px-4 ">
+            <Card className="!overflow-visible !shadow-none w-full max-w-6xl mb-12 mx-auto transition-all duration-200 transform-gpu !px-4 ">
               <CardHeader className="flex flex-row items-center justify-start gap-2  text-text dark:text-text-dark">
               <Icon name="trees" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
                 <CardTitle className="!mt-0 text-base font-medium">{t('nearbySkateparks')}</CardTitle>

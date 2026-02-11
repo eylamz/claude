@@ -2,21 +2,21 @@
 
 import { useEffect, useMemo } from 'react';
 import { useLocale } from 'next-intl';
-import Link from 'next/link';
-export default function TermsPage() {
+
+export default function TermsAndPrivacyPage() {
   const locale = useLocale();
   const isHebrew = locale === 'he';
 
   const getMetaDescription = useMemo(() => {
     return isHebrew
-      ? 'תנאי שימוש של ENBOSS - קרא את התנאים וההגבלות המלאים לשימוש באתר ובשירותים שלנו.'
-      : 'Terms of Use for ENBOSS - Read the complete terms and conditions for using our website and services.';
+      ? 'תנאי שימוש ומדיניות פרטיות של ENBOSS - קרא את התנאים וההגבלות המלאים לשימוש באתר ובשירותים שלנו.'
+      : 'Terms of Use and Privacy Policy for ENBOSS - Read the complete terms, conditions, and privacy policy for using our website and services.';
   }, [isHebrew]);
 
   const getMetaKeywords = useMemo(() => {
     return isHebrew
-      ? 'תנאי שימוש, ENBOSS, סקייטבורד, סקייטפארקים, ישראל, תנאים והגבלות'
-      : 'terms of use, ENBOSS, skateboarding, skateparks, Israel, terms and conditions';
+      ? 'תנאי שימוש, מדיניות פרטיות, ENBOSS, סקייטבורד, סקייטפארקים, ישראל'
+      : 'terms of use, privacy policy, ENBOSS, skateboarding, skateparks, Israel';
   }, [isHebrew]);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
@@ -25,7 +25,8 @@ export default function TermsPage() {
   const alternateHeUrl = `${siteUrl}/he/terms`;
 
   useEffect(() => {
-    document.title = isHebrew ? 'תנאי שימוש - ENBOSS' : 'Terms of Use - ENBOSS';
+    const pageTitle = isHebrew ? 'תנאי שימוש ומדיניות פרטיות - ENBOSS' : 'Terms of Use and Privacy Policy - ENBOSS';
+    document.title = pageTitle;
 
     const setMetaTag = (name: string, content: string, isProperty = false) => {
       const attribute = isProperty ? 'property' : 'name';
@@ -60,8 +61,7 @@ export default function TermsPage() {
       setLinkTag('alternate', alternateHeUrl, 'he');
       setLinkTag('alternate', alternateEnUrl, 'x-default');
     }
-    const metaTitle = isHebrew ? 'תנאי שימוש - ENBOSS' : 'Terms of Use - ENBOSS';
-    setMetaTag('og:title', metaTitle, true);
+    setMetaTag('og:title', pageTitle, true);
     setMetaTag('og:description', getMetaDescription, true);
     if (canonicalUrl) setMetaTag('og:url', canonicalUrl, true);
     setMetaTag('og:type', 'website', true);
@@ -69,7 +69,7 @@ export default function TermsPage() {
     if (locale === 'en') setMetaTag('og:locale:alternate', 'he_IL', true);
     else setMetaTag('og:locale:alternate', 'en_US', true);
     setMetaTag('twitter:card', 'summary');
-    setMetaTag('twitter:title', metaTitle);
+    setMetaTag('twitter:title', pageTitle);
     setMetaTag('twitter:description', getMetaDescription);
   }, [locale, isHebrew, getMetaDescription, getMetaKeywords, canonicalUrl, alternateEnUrl, alternateHeUrl]);
 
@@ -81,223 +81,218 @@ export default function TermsPage() {
     <div className="space-y-6 px-2 font-medium">
       <div className="space-y-4">
         <p>
-          ברוך הבא לאתר ENBOSS (להלן: "האתר" או "החברה"). שימושך באתר כפוף לתנאי השימוש המפורטים להלן. אנא קרא אותם בעיון. הכתוב מטה מתייחס באופן שווה לכל מין ומגדר, ומנוסח בלשון זכר מטעמי נוחות בלבד. מתחת לגיל 18? הכתוב מטה עשוי להיות מעט מורכב. אנא היוועץ במבוגר אחראי לפני השימוש באתר.
+          ברוך הבא לאתר ENBOSS (להלן: &quot;האתר&quot;). האתר מופעל ומנוהל על ידי ENBOSS (להלן: &quot;החברה&quot;). השימוש באתר, בתכניו ובשירותיו כפוף לתנאי השימוש ומדיניות הפרטיות המפורטים להלן. אנא קרא אותם בעיון, שכן גלישה באתר או ביצוע פעולה בו מהווים הסכמה לכל האמור במסמך זה.
+        </p>
+        <p className="text-sm">
+          המסמך מנוסח בלשון זכר מטעמי נוחות בלבד, אך פונה לכל המינים והמגדרים באופן שווה.
         </p>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>1. כללי</h2>
+        <h2 className={headingClass}>1. כללי והסכמה לתנאים</h2>
         <div className={blockClass}>
-          <p>1.1 האתר מופעל ומנוהל על ידי ENBOSS (להלן: "החברה").</p>
-          <p>1.2 כל שימוש באתר, לרבות גלישה, רכישת מוצרים, השתתפות בדירוג פארקים או כל פעילות אחרת, מהווה הסכמה לתנאי השימוש ומדיניות הפרטיות המפורטים במסמך זה.</p>
-          <p>1.3 החברה שומרת לעצמה את הזכות לשנות את התנאים הללו בכל עת. שינויים מהותיים יועברו למשתמשים באמצעות דוא"ל או הודעה באתר.</p>
-          <p>1.4 במקרה של סתירה בין האמור בתנאי השימוש לבין כל פרסום אחר, יגברו הוראות תנאי השימוש.</p>
+          <p>1.1. כל שימוש באתר, לרבות גלישה, רכישת מוצרים, השתתפות בדירוג פארקים, מילוי טפסים (לרבות רישום לאירועים, שאלוני &quot;המרחב&quot;, Growth Lab וכיו&quot;ב), מהווה הסכמה בלתי מסויגת לתנאי שימוש אלו.</p>
+          <p>1.2. החברה שומרת לעצמה את הזכות לעדכן או לשנות את תנאי השימוש מעת לעת, לפי שיקול דעתה הבלעדי וללא חובת הודעה מוקדמת. שינויים מהותיים יפורסמו באתר או יישלחו בדוא&quot;ל למשתמשים רשומים. המשך השימוש באתר לאחר העדכון מהווה הסכמה לתנאים החדשים.</p>
+          <p>1.3. במקרה של סתירה בין הוראות מסמך זה לבין פרסום אחר של החברה, יגברו הוראות מסמך זה.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>2. גיל המשתמש</h2>
+        <h2 className={headingClass}>2. כשירות המשתמש וגיל</h2>
         <div className={blockClass}>
-          <p>2.1 השימוש באתר לצורך רכישת מוצרים מותר למשתמשים מגיל 18 ומעלה בלבד או לקטינים בהסכמת הורה או אפוטרופוס.</p>
-          <p>2.2 משתמש מתחת לגיל 18 המבצע רכישה באתר מצהיר כי קיבל את הסכמת הוריו או האפוטרופוס החוקי שלו לביצוע הרכישה.</p>
+          <p>2.1. האתר מיועד לשימוש משתמשים בני 18 ומעלה. משתמש מתחת לגיל 18 (להלן: &quot;קטין&quot;) נדרש לקבל הסכמת הורה או אפוטרופוס חוקי טרם השימוש באתר או מסירת פרטים אישיים.</p>
+          <p>2.2. ביצוע רכישה על ידי קטין מהווה הצהרה כי ניתן לכך אישור מהוריו או מהאפוטרופוס החוקי שלו.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>3. הרשמה ומסירת מידע אישי</h2>
+        <h2 className={headingClass}>3. הרשמה ומסירת מידע</h2>
         <div className={blockClass}>
-          <p>3.1 חלק מהשירותים והפעולות באתר, לרבות רכישת מוצרים, דורשים הרשמה וחובה למסור פרטים אישיים כגון שם, כתובת, דוא"ל ומספר טלפון.</p>
-          <p>3.2 המשתמש מתחייב למסור פרטים נכונים, מדויקים ומלאים, ולעדכן את פרטיו במידת הצורך.</p>
-          <p>3.3 מסירת פרטים כוזבים מהווה עבירה פלילית והעושה כן צפוי להליכים משפטיים, פליליים ואזרחיים.</p>
-          <p>3.4 החברה שומרת לעצמה את הזכות למנוע ממשתמש את השימוש באתר בכל מקרה של מסירת פרטים שגויים או חשד לכך.</p>
+          <p>3.1. חלק מהשירותים (רכישה, רישום לאירועים, סקרים) מחייבים מסירת פרטים אישיים (שם, טלפון, דוא&quot;ל וכו&apos;). המשתמש מתחייב למסור פרטים נכונים ומדויקים בלבד.</p>
+          <p>3.2. מסירת פרטים כוזבים הנה אסורה בהחלט ועשויה להוות עבירה פלילית. החברה שומרת לעצמה את הזכות לנקוט בהליכים משפטיים כנגד מוסרי פרטים כוזבים וכן לחסום את גישתם לאתר לאלתר.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>4. רכישת מוצרים</h2>
+        <h2 className={headingClass}>4. רכישת מוצרים ומדיניות מחירים</h2>
         <div className={blockClass}>
-          <p>4.1 המוצרים המוצגים באתר הינם להמחשה בלבד. ייתכנו הבדלים בין מראה המוצר בתמונה למראהו במציאות.</p>
-          <p>4.2 מחירי המוצרים כוללים מע"מ, אלא אם צוין אחרת במפורש.</p>
-          <p>4.3 החברה שומרת לעצמה את הזכות לשנות את מחירי המוצרים בכל עת וללא הודעה מוקדמת.</p>
-          <p>4.4 כל רכישה באתר כפופה לאישור החברה ולזמינות המוצר במלאי. במקרה של אי זמינות מוצר לאחר ביצוע ההזמנה, החברה תיצור קשר עם הלקוח ותציע לו פתרון חלופי או זיכוי.</p>
-          <p>4.5 ההזמנה תאושר רק לאחר אישור העסקה על ידי חברת האשראי.</p>
+          <p>4.1. תמונות המוצרים באתר נועדו להמחשה בלבד; ייתכנו שינויים קלים בין מראה המוצר בתמונה לבין המוצר בפועל.</p>
+          <p>4.2. מחירי המוצרים כוללים מע&quot;מ כחוק, אלא אם צוין אחרת. החברה רשאית לעדכן מחירים בכל עת.</p>
+          <p>4.3. השלמת רכישה מותנית בזמינות המוצר במלאי ובאישור חברת האשראי. במידה ומוצר אזל מהמלאי לאחר ההזמנה, החברה תציע מוצר חלופי או ביטול עסקה והשבה כספית מלאה.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>5. משלוחים והחזרות</h2>
+        <h2 className={headingClass}>5. אספקה, ביטולים והחזרות</h2>
         <div className={blockClass}>
-          <p>5.1 החברה מספקת משלוחים בתחומי מדינת ישראל בלבד.</p>
-          <p>5.2 זמני האספקה המצוינים באתר הינם משוערים ואינם מהווים התחייבות מצד החברה.</p>
-          <p>5.3 החברה לא תהיה אחראית לעיכובים במשלוח הנובעים מכוח עליון או מגורמים שאינם בשליטתה.</p>
-          <p>5.4 מדיניות החזרת מוצרים: בהתאם להוראות חוק הגנת הצרכן, התשמ"א-1981, הלקוח רשאי לבטל את העסקה תוך 14 ימים מיום קבלת המוצר או מיום קבלת מסמך המכיל את פרטי העסקה (המאוחר מביניהם), ובתנאי שהמוצר לא נפגם ולא נעשה בו שימוש.</p>
-          <p>5.5 ביטול העסקה יחויב בדמי ביטול בשיעור של 5% ממחיר העסקה או 100 ₪, לפי הנמוך ביניהם.</p>
+          <p>5.1. המשלוחים מבוצעים בתחומי מדינת ישראל בלבד. זמני האספקה המצוינים באתר הם משוערים בלבד. החברה לא תישא באחריות לעיכובים הנובעים מכוח עליון, שביתות או גורמים שאינם בשליטתה.</p>
+          <p>5.2. ביטול עסקה: בהתאם לחוק הגנת הצרכן, התשמ&quot;א-1981, המשתמש רשאי לבטל עסקת מכר מרחוק תוך 14 ימים מיום קבלת המוצר או מסמך הגילוי (המאוחר מביניהם), ובתנאי שהמוצר יוחזר ללא פגם ומבלי שנעשה בו שימוש.</p>
+          <p>5.3. בעת ביטול שלא עקב פגם, ינוכו דמי ביטול בשיעור 5% ממחיר העסקה או 100 ש&quot;ח (לפי הנמוך מביניהם).</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>6. קניין רוחני וזכויות יוצרים</h2>
+        <h2 className={headingClass}>6. קניין רוחני</h2>
         <div className={blockClass}>
-          <p>6.1 כל זכויות הקניין הרוחני באתר, לרבות זכויות היוצרים, סימני המסחר והעיצובים הם רכושה הבלעדי של החברה או שהחברה קיבלה רישיון להשתמש בהם.</p>
-          <p>6.2 אין להעתיק, לשכפל, להפיץ או לעשות כל שימוש מסחרי בתוכן האתר ללא אישור מפורש מראש ובכתב מהחברה.</p>
+          <p>6.1. מלוא זכויות הקניין הרוחני באתר, לרבות סימני מסחר, עיצובים, קוד מקור, טקסטים ותמונות, שייכים ל-ENBOSS בלבד (או לצדדים שלישיים שהעניקו לה רישיון).</p>
+          <p>6.2. אין להעתיק, להפיץ, להציג בפומבי או לעשות שימוש מסחרי בתוכן האתר ללא אישור מפורש ובכתב מהחברה.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>7. דירוג וביקורות משתמשים</h2>
+        <h2 className={headingClass}>7. תוכן משתמשים ודירוג פארקים</h2>
         <div className={blockClass}>
-          <p>7.1 האתר מאפשר למשתמשים לדרג פארקים על פי אמות מידה שונות. המשתמש מתחייב לדרג באופן אמין והוגן.</p>
-          <p>7.2 החברה שומרת לעצמה את הזכות להסיר כל תוכן פוגעני, גזעני או לא ראוי, לפי שיקול דעתה הבלעדי.</p>
-          <p>7.3 המשתמש מעניק לחברה רישיון בלתי חוזר להשתמש ולפרסם כל תוכן שהועלה על ידו לאתר. גם לאחר מחיקת חשבון, תוכן זה עשוי להישאר באתר באופן אנונימי.</p>
+          <p>7.1. האתר מאפשר דירוג פארקים ופרסום ביקורות. המשתמש מתחייב כי התוכן אמין ואינו פוגעני, גזעני או מפר חוק.</p>
+          <p>7.2. בהעלאת תוכן, המשתמש מעניק לחברה רישיון בלתי חוזר, ללא תמלוגים, להשתמש ולפרסם את התוכן בכל מדיה.</p>
+          <p>7.3. החברה שומרת על זכותה להמשיך להציג ביקורות ודירוגים גם לאחר סגירת חשבון המשתמש, לצורך שמירה על רצף המידע באתר.</p>
+        </div>
+      </div>
+
+      <div className={sectionClass} id="privacy-policy">
+        <h2 className={headingClass}>8. מדיניות פרטיות ואבטחת מידע</h2>
+        <div className={blockClass}>
+          <p>8.1. החברה אוספת מידע שהוזן מרצון (בטפסים ורכישות) ומידע טכני (IP, Cookies).</p>
+          <p>8.2. שימוש במידע: המידע ישמש לתפעול האתר, שיפור חוויית המשתמש, אנליטיקה, ודיוור שיווקי (בכפוף להסכמה).</p>
+          <p>8.3. העברת מידע: המידע לא יועבר לצד ג&apos;, למעט לצורך השלמת השירות (חברות שילוח, סליקה, מארגני אירועים אליהם נרשם המשתמש) או על פי צו שיפוטי.</p>
+          <p>8.4. זכויות המשתמש: למשתמש זכות לעיין במידע, לתקנו או לבקש מחיקתו (בכפוף לחובות שמירת מידע על פי חוק – לרוב 7 שנים לעסקאות).</p>
+          <p>8.5. הפרת אבטחה: במקרה של אירוע אבטחה חמור, החברה תפעל בהתאם להוראות הדין ותעדכן את המשתמשים הרלוונטיים במידת הצורך.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>8. הגבלת אחריות</h2>
+        <h2 className={headingClass}>9. הגבלת אחריות</h2>
         <div className={blockClass}>
-          <p>8.1 השימוש באתר הינו באחריות המשתמש בלבד. החברה לא תישא באחריות לכל נזק ישיר או עקיף שייגרם למשתמש כתוצאה מהשימוש באתר.</p>
-          <p>8.2 החברה עושה מאמצים לוודא שהמידע באתר יהיה מדויק, אך אינה מתחייבת שהאתר יפעל ללא תקלות.</p>
+          <p>9.1. השירות באתר ניתן לשימוש כמות שהוא (AS-IS). החברה לא תישא באחריות לכל נזק ישיר, עקיף או תוצאתי הנובע משימוש באתר או מהסתמכות על התוכן המופיע בו.</p>
+          <p>9.2. החברה אינה מתחייבת שהאתר יהיה חסין מתקלות או מגישה בלתי מורשית, ואינה אחראית לנזק שייגרם כתוצאה מפעילות עוינת של צדדים שלישיים.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>9. יישוב סכסוכים וסמכות שיפוט</h2>
+        <h2 className={headingClass}>10. יישוב סכסוכים</h2>
         <div className={blockClass}>
-          <p>9.1 על תנאי שימוש אלו יחולו דיני מדינת ישראל בלבד. סמכות השיפוט הבלעדית תהא נתונה לבתי המשפט המוסמכים במחוז תל אביב-יפו.</p>
+          <p>10.1. על הסכם זה יחולו דיני מדינת ישראל בלבד. סמכות השיפוט הבלעדית בכל מחלוקת תהא לבתי המשפט המוסמכים במחוז תל אביב-יפו.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>10. ביטול והשעיית חשבון</h2>
+        <h2 className={headingClass}>11. יצירת קשר</h2>
         <div className={blockClass}>
-          <p>10.1 החברה שומרת לעצמה את הזכות להשעות או לבטל את חשבון המשתמש בכל עת, במקרים של הפרת תנאי השימוש או פעילות לא חוקית.</p>
-          <p>10.2 המשתמש רשאי לבטל את חשבונו בכל עת על ידי פנייה לשירות הלקוחות בכתב.</p>
+          <p>לכל שאלה ניתן לפנות בדוא&quot;ל: enbossblading@gmail.com.</p>
         </div>
       </div>
 
-      <p className="mt-8 text-sm text-gray dark:text-gray-dark">עדכון אחרון: 13.4.2025</p>
-
-      <p className="mt-6 text-sm">
-        {isHebrew ? 'מדיניות הפרטיות שלנו: ' : 'Our Privacy Policy: '}
-        <Link href={`/${locale}/privacy`} className="text-brand-main dark:text-brand-dark hover:underline">
-          {isHebrew ? 'מדיניות פרטיות' : 'Privacy Policy'}
-        </Link>
+      <p className="mt-8 text-sm text-gray dark:text-gray-dark">
+        {isHebrew ? 'עדכון אחרון: 11.2.2026' : 'Last updated: 2/11/2026'}
       </p>
     </div>
   );
 
   const englishContent = (
     <div className="space-y-6 px-2 font-medium">
-      <div className="space-y-4 text-base text-text dark:text-text-dark">
+      <div className="space-y-4">
         <p>
-          Welcome to the ENBOSS website (hereinafter: "the Website" or "the Company"). Your use of the Website is subject to the Terms of Use detailed below. Please read them carefully. The content below applies equally to all genders and is written in the masculine form for convenience only. Under 18? The content below may be somewhat complex. Please consult a responsible adult before using the Website.
+          Welcome to ENBOSS (hereinafter: &quot;the Site&quot;). The Site is operated and managed by ENBOSS (hereinafter: &quot;the Company&quot;). Your use of the Site, its content, and services is subject to the Terms of Use and Privacy Policy detailed below. Please read them carefully, as browsing or performing any action on the Site constitutes your unconditional agreement to all terms in this document.
+        </p>
+        <p className="text-sm">
+          This document is drafted in the masculine gender for convenience purposes only, but applies equally to all genders.
         </p>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>1. General</h2>
-        <div className={`${blockClass} px-6`}>
-          <p>1.1 The Website is operated and managed by ENBOSS (hereinafter: "the Company").</p>
-          <p>1.2 Any use of the Website, including browsing, purchasing products, participating in skatepark ratings, or any other activity, constitutes agreement to the Terms of Use and Privacy Policy detailed in this document.</p>
-          <p>1.3 The Company reserves the right to change these terms at any time. Material changes will be notified via email or website notice. It is the user's responsibility to stay updated on these changes from time to time.</p>
-          <p>1.4 In case of contradiction between the provisions of the Terms of Use and any other publication, the provisions of the Terms of Use shall prevail.</p>
+        <h2 className={headingClass}>1. General and Consent to Terms</h2>
+        <div className={blockClass}>
+          <p>1.1. Any use of the Site, including browsing, purchasing products, participating in park ratings, filling out forms (including event registration, &quot;Ha-Merchav&quot; surveys, Growth Lab, etc.), constitutes unreserved consent to these Terms of Use.</p>
+          <p>1.2. The Company reserves the right to update or change these Terms of Use from time to time, at its sole discretion and without prior notice. Material changes will be published on the Site or sent via email to registered users. Continued use of the Site following an update constitutes consent to the new terms.</p>
+          <p>1.3. In the event of a contradiction between the provisions of this document and any other publication by the Company, the provisions of this document shall prevail.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>2. User Age</h2>
-        <div className={`${blockClass} px-6`}>
-          <p>2.1 The use of the Website for purchasing products is permitted only to users aged 18 and above or to minors with parental or guardian consent.</p>
-          <p>2.2 A user under the age of 18 who makes a purchase on the Website declares that they have received consent from their parents or legal guardian to make the purchase.</p>
+        <h2 className={headingClass}>2. User Eligibility and Age</h2>
+        <div className={blockClass}>
+          <p>2.1. The Site is intended for users aged 18 and over. Users under the age of 18 (hereinafter: &quot;Minors&quot;) are required to obtain the consent of a parent or legal guardian prior to using the Site or providing personal information.</p>
+          <p>2.2. A purchase made by a Minor constitutes a declaration that approval was granted by their parents or legal guardian.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>3. Registration and Personal Information</h2>
-        <div className={`${blockClass} px-6`}>
-          <p>3.1 Some services and activities on the Website, including purchasing products, require registration and mandatory submission of personal details such as name, address, email, and phone number.</p>
-          <p>3.2 The user undertakes to provide correct, accurate, and complete details, and to update their details as necessary.</p>
-          <p>3.3 Providing false details constitutes a criminal offense, and anyone who does so may be subject to legal, criminal, and civil proceedings.</p>
-          <p>3.4 The Company reserves the right to prevent a user from using the Website in any case of providing incorrect details or suspicion thereof.</p>
+        <h2 className={headingClass}>3. Registration and Information Submission</h2>
+        <div className={blockClass}>
+          <p>3.1. Certain services (purchases, event registration, surveys) require the submission of personal details (name, phone, email, etc.). The user undertakes to provide only accurate and complete information.</p>
+          <p>3.2. Providing false information is strictly prohibited and may constitute a criminal offense. The Company reserves the right to take legal action against those providing false information and to block their access to the Site immediately.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>4. Product Purchases</h2>
-        <div className={`${blockClass} px-6`}>
-          <p>4.1 The products displayed on the Website are for illustration purposes only. There may be differences between the appearance of the product in the image and its appearance in reality.</p>
-          <p>4.2 Product prices include VAT, unless explicitly stated otherwise.</p>
-          <p>4.3 The Company reserves the right to change product prices at any time without prior notice.</p>
-          <p>4.4 All purchases on the Website are subject to Company approval and product availability in stock. In case of product unavailability after placing an order, the Company will contact the customer and offer an alternative solution or credit.</p>
-          <p>4.5 The order will be approved only after authorization by the credit card company.</p>
+        <h2 className={headingClass}>4. Product Purchases and Pricing Policy</h2>
+        <div className={blockClass}>
+          <p>4.1. Product images on the Site are for illustrative purposes only; slight variations may occur between the product image and the actual product.</p>
+          <p>4.2. Product prices include VAT as required by law, unless stated otherwise. The Company may update prices at any time.</p>
+          <p>4.3. Completion of a purchase is subject to product availability and credit card company approval. If a product is out of stock after an order is placed, the Company will offer an alternative product or a full refund.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>5. Shipping and Returns</h2>
-        <div className={`${blockClass} px-6`}>
-          <p>5.1 The Company provides shipping within the State of Israel only.</p>
-          <p>5.2 The delivery times specified on the Website are estimated and do not constitute a commitment by the Company.</p>
-          <p>5.3 The Company will not be responsible for shipping delays resulting from force majeure or factors beyond its control.</p>
-          <p>5.4 Product Return Policy: In accordance with the provisions of the Consumer Protection Law of 1981, the customer may cancel the transaction within 14 days from the date of receiving the product or from the date of receiving the document containing the transaction details (whichever is later), provided that the product has not been damaged and has not been used.</p>
-          <p>5.5 Cancellation of the transaction will incur a cancellation fee of 5% of the transaction price or 100 NIS, whichever is lower.</p>
+        <h2 className={headingClass}>5. Delivery, Cancellations, and Returns</h2>
+        <div className={blockClass}>
+          <p>5.1. Deliveries are provided within the borders of the State of Israel only. Delivery times stated on the Site are estimates only. The Company shall not be held liable for delays resulting from force majeure, strikes, or factors beyond its control.</p>
+          <p>5.2. Cancellation of Transaction: In accordance with the Israeli Consumer Protection Law, 1981, a user may cancel a remote sales transaction within 14 days of receiving the product or the disclosure document (whichever is later), provided the product is returned undamaged and unused.</p>
+          <p>5.3. Upon cancellation not due to a defect, a cancellation fee of 5% of the transaction price or 100 NIS (whichever is lower) will be deducted.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>6. Intellectual Property and Copyright</h2>
-        <div className={`${blockClass} px-6`}>
-          <p>6.1 All intellectual property rights on the Website, including copyrights, trademarks, designs, trade names, and goodwill, are the exclusive property of the Company or the Company has received a license to use them.</p>
-          <p>6.2 It is prohibited to copy, duplicate, distribute, sell, publish, or make any other commercial use of the Website content without explicit prior written approval from the Company.</p>
-          <p>6.3 It is prohibited to use the Company's trademarks without explicit written approval from the Company.</p>
+        <h2 className={headingClass}>6. Intellectual Property</h2>
+        <div className={blockClass}>
+          <p>6.1. All intellectual property rights on the Site, including trademarks, designs, source code, texts, and images, belong exclusively to ENBOSS (or third parties who have granted a license).</p>
+          <p>6.2. No part of the Site&apos;s content may be copied, distributed, publicly displayed, or used for commercial purposes without express written permission from the Company.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>7. User Ratings and Reviews</h2>
-        <div className={`${blockClass} px-6`}>
-          <p>7.1 The Website allows users to rate skateparks according to various criteria such as maintenance, cleanliness, difficulty level, and more.</p>
-          <p>7.2 The user undertakes to rate in a reliable and fair manner, based on their personal experience.</p>
-          <p>7.3 The Company reserves the right to remove any offensive, insulting, racist, threatening, illegal, or inappropriate content, at its sole discretion.</p>
-          <p>7.4 The user grants the Company an irrevocable, worldwide, royalty-free license to use, copy, distribute, and publish any content uploaded by them to the Website.</p>
-          <p>7.5 In case of account deletion by the user, user-generated content (such as ratings and reviews) may be retained on the Website but will be displayed as anonymous. The license granted in section 7.4 shall continue to apply even after account deletion. The user may request removal of specific content they created by contacting customer service.</p>
+        <h2 className={headingClass}>7. User Content and Park Ratings</h2>
+        <div className={blockClass}>
+          <p>7.1. The Site allows for park ratings and reviews. The user undertakes that the content is authentic and not offensive, racist, or in violation of any law.</p>
+          <p>7.2. By uploading content, the user grants the Company an irrevocable, royalty-free, worldwide license to use and publish the content in any media.</p>
+          <p>7.3. The Company reserves the right to continue displaying ratings and reviews even after a user account is closed, to maintain information continuity on the Site.</p>
+        </div>
+      </div>
+
+      <div className={sectionClass} id="privacy-policy">
+        <h2 className={headingClass}>8. Privacy Policy and Data Security</h2>
+        <div className={blockClass}>
+          <p>8.1. The Company collects information voluntarily provided (via forms and purchases) and technical information (IP address, Cookies).</p>
+          <p>8.2. Use of Information: The information will be used for operating the Site, improving user experience, analytics, and marketing communications (subject to consent).</p>
+          <p>8.3. Information Transfer: Information will not be transferred to third parties, except as necessary to complete the service (shipping companies, clearing services, event organizers) or by judicial order.</p>
+          <p>8.4. User Rights: The user has the right to review their information, correct it, or request its deletion (subject to legal data retention obligations – typically 7 years for transactions).</p>
+          <p>8.5. Security Breach: In the event of a severe security incident, the Company will act in accordance with legal requirements and update relevant users as necessary.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>8. Limitation of Liability</h2>
-        <div className={`${blockClass} px-6`}>
-          <p>8.1 The use of the Website is at the user's sole responsibility. The Company shall not be liable for any direct or indirect damage caused to the user or a third party as a result of use or reliance on the information appearing on the Website.</p>
-          <p>8.2 The Company makes efforts to ensure that the information displayed on the Website is accurate and up-to-date, but does not guarantee that the information will be complete or accurate or that the Website will operate without malfunctions.</p>
-          <p>8.3 The Company will not be responsible for damages resulting from unauthorized access to user information.</p>
+        <h2 className={headingClass}>9. Limitation of Liability</h2>
+        <div className={blockClass}>
+          <p>9.1. The service on the Site is provided on an &quot;AS-IS&quot; and &quot;AS-AVAILABLE&quot; basis. The Company shall not be held liable for any direct, indirect, or consequential damage resulting from the use of the Site or reliance on its content.</p>
+          <p>9.2. The Company does not guarantee that the Site will be immune to malfunctions or unauthorized access and is not responsible for damage caused by hostile activity from third parties.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>9. Dispute Resolution and Jurisdiction</h2>
-        <div className={`${blockClass} px-6`}>
-          <p>9.1 These Terms of Use and the use of the Website shall be governed solely by the laws of the State of Israel.</p>
-          <p>9.2 In any dispute arising from or related to the use of the Website, exclusive jurisdiction shall be vested in the competent courts in the Tel Aviv-Jaffa District.</p>
+        <h2 className={headingClass}>10. Jurisdiction and Dispute Resolution</h2>
+        <div className={blockClass}>
+          <p>10.1. This agreement shall be governed solely by the laws of the State of Israel. Exclusive jurisdiction over any dispute shall be granted to the competent courts in the District of Tel Aviv-Jaffa.</p>
         </div>
       </div>
 
       <div className={sectionClass}>
-        <h2 className={headingClass}>10. Account Termination and Suspension</h2>
-        <div className={`${blockClass} px-6`}>
-          <p>10.1 The Company reserves the right to suspend or terminate a user's account at any time, without prior notice, in the following cases: violation of the Terms of Use, illegal activity, fraud, offensive or harassing behavior towards other users, or any other action that constitutes a violation of the law or the Company's policies.</p>
-          <p>10.2 The user may terminate their account at any time by contacting customer service in writing. Account termination will take effect within 30 days of the request, unless there are ongoing transactions or other obligations that justify a longer waiting period.</p>
-          <p>10.3 Upon account termination or suspension, the user will lose access to the Website's services, including their user account, purchase history, and personal preferences.</p>
-          <p>10.4 Despite account termination, the Company may retain some information for legal purposes, law compliance, dispute resolution, and enforcement of the Terms of Use.</p>
+        <h2 className={headingClass}>11. Contact Information</h2>
+        <div className={blockClass}>
+          <p>For any questions, please contact us via email: enbossblading@gmail.com.</p>
         </div>
       </div>
 
-      <p className="mt-8 text-sm text-gray dark:text-gray-dark">Last updated: 4/13/2025</p>
-
-      <p className="mt-6 text-sm">
-        Our Privacy Policy:{' '}
-        <Link href={`/${locale}/privacy`} className="text-brand-main dark:text-brand-dark hover:underline">
-          Privacy Policy
-        </Link>
+      <p className="mt-8 text-sm text-gray dark:text-gray-dark">
+        Last updated: 2/11/2026
       </p>
     </div>
   );
@@ -307,7 +302,7 @@ export default function TermsPage() {
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <header className="my-10">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2 text-gray-900 dark:text-white leading-tight py-3">
-            {isHebrew ? 'תנאי שימוש' : 'Terms of Use'}
+            {isHebrew ? 'תנאי שימוש ומדיניות פרטיות' : 'Terms of Use and Privacy Policy'}
           </h1>
         </header>
         <article>{isHebrew ? hebrewContent : englishContent}</article>
