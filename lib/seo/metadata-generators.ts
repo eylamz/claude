@@ -157,9 +157,9 @@ export async function generateSkateparksListingMetadata(params: { locale: string
   const { locale } = params;
   
   
-  // Fetch skateparks count (lightweight request)
   let parksCount = 0;
   try {
+    await connectDB();
     parksCount = await Skatepark.countDocuments({ status: 'active' });
   } catch (error) {
     console.warn('Failed to fetch skateparks count for metadata', error);
