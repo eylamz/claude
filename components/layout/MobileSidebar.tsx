@@ -135,7 +135,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
       href: `/${locale}/contact`, 
       icon: 'messages', 
       label: tCommon('contact'), 
-      description: tCommon('contactDesc') 
+      description: tMobileNav('findCoaches') || '',
     },
     ...(trainersEnabled ? [{
       href: `/${locale}/trainers`,

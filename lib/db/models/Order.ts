@@ -481,7 +481,8 @@ OrderSchema.pre('save', async function (next) {
  * Indexes
  */
 OrderSchema.index({ orderNumber: 1 }, { unique: true });
-OrderSchema.index({ userId: 1 });
+// userId: compound index below covers userId-only queries (left-prefix rule)
+// Removed standalone userId index to avoid duplicate with userId sparse/index
 OrderSchema.index({ status: 1 });
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ shopifyOrderId: 1 }, { sparse: true, unique: true });

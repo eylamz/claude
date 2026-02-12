@@ -156,16 +156,11 @@ export async function generateSkateparkMetadata(params: { slug: string; locale: 
 export async function generateSkateparksListingMetadata(params: { locale: string }): Promise<Metadata> {
   const { locale } = params;
   
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
   
   // Fetch skateparks count (lightweight request)
   let parksCount = 0;
   try {
-    const res = await fetch(`${siteUrl}/api/skateparks`, { next: { revalidate: 3600 } });
-    if (res.ok) {
-      const data = await res.json();
-      parksCount = data.skateparks?.length || 0;
-    }
+    parksCount = await Skatepark.countDocuments({ status: 'active' });
   } catch (error) {
     console.warn('Failed to fetch skateparks count for metadata', error);
   }

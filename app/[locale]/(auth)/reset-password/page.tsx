@@ -340,9 +340,7 @@ function ResetPasswordFallback() {
       </div>
     </div>
   );
-}
-
-export default function ResetPasswordPage() {
+}export default function ResetPasswordPage() {
   return (
     <Suspense fallback={<ResetPasswordFallback />}>
       <ResetPasswordContent />
