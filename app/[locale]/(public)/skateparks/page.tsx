@@ -85,13 +85,13 @@ export default function SkateparksPage() {
 
   const AMENITY_OPTIONS = [
     { key: 'parking', label: tr('Parking', 'חניה'), iconName: 'parking' },
-    { key: 'shade', label: tr('Shade', 'הצללה'), iconName: 'umbrellaBold' },
+    { key: 'shade', label: tr('Shade', 'הצללה'), iconName: 'shadeBold' },
     { key: 'bathroom', label: tr('Bathroom', 'שירותים'), iconName: 'toilet' },
-    { key: 'seating', label: tr('Seating', 'מקומות ישיבה'), iconName: 'couch' },
-    { key: 'nearbyRestaurants', label: tr('Restaurants Nearby', 'מסעדות בקרבת מקום'), iconName: 'nearbyResturants' },
+    { key: 'seating', label: tr('Seating', 'מקומות ישיבה'), iconName: 'seatBold' },
+    { key: 'nearbyRestaurants', label: tr('Restaurants Nearby', 'מסעדות בקרבת מקום'), iconName: 'foodBold' },
     { key: 'scootersAllowed', label: tr('Scooters Allowed', 'קורקינטים'), iconName: 'scooter' },
     { key: 'bikesAllowed', label: tr('Bikes Allowed', 'אופניים'), iconName: 'bmx-icon' },
-    { key: 'entryFee', label: tr('Entry Fee', 'דמי כניסה'), iconName: 'shekel' },
+    { key: 'entryFee', label: tr('Entry Fee', 'דמי כניסה'), iconName: 'moneyBold' },
     { key: 'helmetRequired', label: tr('Helmet Required', 'חובה קסדה'), iconName: 'helmet' },
     { key: 'bombShelter', label: tr('Bomb Shelter', 'מקלט'), iconName: 'safe-house' },
     { key: 'noWax', label: tr('No Wax', 'ללא שעווה'), iconName: 'Wax' },

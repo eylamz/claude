@@ -80,7 +80,12 @@ import NoWax from './Wax.svg';
 import NearbyRestaurants from './nearbyResturants.svg';
 import Roller from './Roller.svg';
 import Skate from './skate.svg';
-import SkateBoard from './SkateBoard.svg';
+import SkateBold from './skateBold.svg';
+import SkateBoard from './Skateboard.svg';
+import Clipboard from './clipboard.svg';
+import ClipboardBold from './clipboardBold.svg';
+import Review from './review.svg';
+import ReviewBold from './reviewBold.svg';
 import Longboard from './longboard.svg';
 import Search from './search.svg';
 import SearchBold from './SearchBold.svg';
@@ -386,11 +391,16 @@ const iconMap: Record<string, SvgComponent> = {
   monitorBold: MonitorBold,
   category: Category,
   categoryBold: CategoryBold,
+  clipboard: Clipboard,
+  clipboardBold: ClipboardBold,
+  review: Review,
+  reviewBold: ReviewBold,
 
   
   // Guide Icons
   Roller: Roller,
   Skate: Skate,
+  SkateBold: SkateBold,
   SkateBoard: SkateBoard,
   Longboard: Longboard,
   
@@ -509,6 +519,9 @@ export type IconName =
   | 'favIconNew'
   | 'springjam25'
   | 'SkateBoard'
+  | 'skate' | 'skateBold'
+  | 'clipboard' | 'clipboardBold'
+  | 'review' | 'reviewBold'
   | 'Longboard'
   | 'Roller'
   | 'Wax'
@@ -576,7 +589,12 @@ export type IconName =
   | 'chart' | 'chartBold'
   | 'target' | 'targetBold'
   | 'wrench' | 'wrenchBold'
-  | 'objects' | 'objectsBold';
+  | 'objects' | 'objectsBold'
+  | 'emptyCart'
+  | 'SearchBold'
+  | 'shekel-icon'
+  | 'Skateboard'
+  | 'mapSheet2';
   // Alias for clockBold if needed
 
 interface IconProps extends Omit<React.HTMLAttributes<HTMLSpanElement>, 'size'> {

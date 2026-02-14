@@ -131,14 +131,14 @@ interface NearbyPark {
 
 const AMENITY_ICONS: Record<string, string> = {
   parking: 'parking',
-  shade: 'umbrellaBold',
+  shade: 'shadeBold',
   bathroom: 'toilet',
   guard: 'securityGuard',
-  seating: 'couch', // Using couch as closest match for seating
-  nearbyRestaurants: 'nearbyResturants',
+  seating: 'seatBold', // Using couch as closest match for seating
+  nearbyRestaurants: 'foodBold',
   scootersAllowed: 'scooter',
   bikesAllowed: 'bmx-icon', // Using parking as placeholder
-  entryFee: 'shekel',
+  entryFee: 'moneyBold',
   helmetRequired: 'helmet',
   bombShelter: 'safe-house',
   noWax: 'Wax', // Note: Wax icon exists, we'll show it crossed out for noWax

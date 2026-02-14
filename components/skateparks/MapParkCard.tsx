@@ -65,14 +65,14 @@ const getOptimizedImageUrl = (originalUrl: string): string | null => {
 // Amenity icon mapping (for Icon component - matches AmenitiesButton)
 const AMENITY_ICON_MAP: Record<string, string> = {
   parking: 'parking',
-  shade: 'umbrellaBold',
+  shade: 'shadeBold',
   bathroom: 'toilet',
   guard: 'securityGuard',
-  seating: 'couch',
-  nearbyRestaurants: 'nearbyResturants',
+  seating: 'seatBold',
+  nearbyRestaurants: 'foodBold',
   scootersAllowed: 'scooter',
   bikesAllowed: 'bmx-icon',
-  entryFee: 'shekel',
+  entryFee: 'moneyBold',
   helmetRequired: 'helmet',
   bombShelter: 'safe-house',
   noWax: 'Wax',

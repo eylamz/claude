@@ -1429,18 +1429,18 @@ export default function SkateparksPage() {
                       </h3>
                       <ResponsiveContainer width="100%" height={400}>
                         <BarChart data={[
-                          { key: 'paidEntry', name: t('admin.statistics.amenities.paidEntry'), icon: 'shekel', value: statisticsData.amenities.paidEntry?.count || 0, parks: statisticsData.amenities.paidEntry?.parks || [] },
+                          { key: 'paidEntry', name: t('admin.statistics.amenities.paidEntry'), icon: 'moneyBold', value: statisticsData.amenities.paidEntry?.count || 0, parks: statisticsData.amenities.paidEntry?.parks || [] },
                           { key: 'bikesAllowed', name: t('admin.statistics.amenities.bikesAllowed'), icon: 'bmx-icon', value: statisticsData.amenities.bikesAllowed?.count || 0, parks: statisticsData.amenities.bikesAllowed?.parks || [] },
                           { key: 'parking', name: t('admin.statistics.amenities.parking'), icon: 'parking', value: statisticsData.amenities.parking?.count || 0, parks: statisticsData.amenities.parking?.parks || [] },
-                          { key: 'shade', name: t('admin.statistics.amenities.shade'), icon: 'umbrellaBold', value: statisticsData.amenities.shade?.count || 0, parks: statisticsData.amenities.shade?.parks || [] },
+                          { key: 'shade', name: t('admin.statistics.amenities.shade'), icon: 'shadeBold', value: statisticsData.amenities.shade?.count || 0, parks: statisticsData.amenities.shade?.parks || [] },
                           { key: 'bathroom', name: t('admin.statistics.amenities.bathroom'), icon: 'toilet', value: statisticsData.amenities.bathroom?.count || 0, parks: statisticsData.amenities.bathroom?.parks || [] },
                           { key: 'helmetRequired', name: t('admin.statistics.amenities.helmetRequired'), icon: 'helmet', value: statisticsData.amenities.helmetRequired?.count || 0, parks: statisticsData.amenities.helmetRequired?.parks || [] },
                           { key: 'guard', name: t('admin.statistics.amenities.guard'), icon: 'securityGuard', value: statisticsData.amenities.guard?.count || 0, parks: statisticsData.amenities.guard?.parks || [] },
-                          { key: 'seating', name: t('admin.statistics.amenities.seating'), icon: 'couch', value: statisticsData.amenities.seating?.count || 0, parks: statisticsData.amenities.seating?.parks || [] },
+                          { key: 'seating', name: t('admin.statistics.amenities.seating'), icon: 'seatBold', value: statisticsData.amenities.seating?.count || 0, parks: statisticsData.amenities.seating?.parks || [] },
                           { key: 'bombShelter', name: t('admin.statistics.amenities.bombShelter'), icon: 'safe-house', value: statisticsData.amenities.bombShelter?.count || 0, parks: statisticsData.amenities.bombShelter?.parks || [] },
                           { key: 'scootersAllowed', name: t('admin.statistics.amenities.scootersAllowed'), icon: 'scooter', value: statisticsData.amenities.scootersAllowed?.count || 0, parks: statisticsData.amenities.scootersAllowed?.parks || [] },
                           { key: 'noWax', name: t('admin.statistics.amenities.noWax'), icon: 'Wax', value: statisticsData.amenities.noWax?.count || 0, parks: statisticsData.amenities.noWax?.parks || [] },
-                          { key: 'nearbyRestaurants', name: t('admin.statistics.amenities.nearbyRestaurants'), icon: 'nearbyResturants', value: statisticsData.amenities.nearbyRestaurants?.count || 0, parks: statisticsData.amenities.nearbyRestaurants?.parks || [] },
+                          { key: 'nearbyRestaurants', name: t('admin.statistics.amenities.nearbyRestaurants'), icon: 'foodBold', value: statisticsData.amenities.nearbyRestaurants?.count || 0, parks: statisticsData.amenities.nearbyRestaurants?.parks || [] },
                         ]}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#006f4e" className="dark:stroke-gray-700" />
                           <XAxis 
@@ -1452,18 +1452,18 @@ export default function SkateparksPage() {
                             className="text-header-text dark:text-header-text-dark"
                             tickFormatter={(value, index) => {
                               const data = [
-                                { key: 'paidEntry', name: t('admin.statistics.amenities.paidEntry'), icon: 'shekel' },
+                                { key: 'paidEntry', name: t('admin.statistics.amenities.paidEntry'), icon: 'moneyBold' },
                                 { key: 'bikesAllowed', name: t('admin.statistics.amenities.bikesAllowed'), icon: 'bmx-icon' },
                                 { key: 'parking', name: t('admin.statistics.amenities.parking'), icon: 'parking' },
-                                { key: 'shade', name: t('admin.statistics.amenities.shade'), icon: 'umbrellaBold' },
+                                { key: 'shade', name: t('admin.statistics.amenities.shade'), icon: 'shadeBold' },
                                 { key: 'bathroom', name: t('admin.statistics.amenities.bathroom'), icon: 'toilet' },
                                 { key: 'helmetRequired', name: t('admin.statistics.amenities.helmetRequired'), icon: 'helmet' },
                                 { key: 'guard', name: t('admin.statistics.amenities.guard'), icon: 'securityGuard' },
-                                { key: 'seating', name: t('admin.statistics.amenities.seating'), icon: 'couch' },
+                                { key: 'seating', name: t('admin.statistics.amenities.seating'), icon: 'seatBold' },
                                 { key: 'bombShelter', name: t('admin.statistics.amenities.bombShelter'), icon: 'safe-house' },
                                 { key: 'scootersAllowed', name: t('admin.statistics.amenities.scootersAllowed'), icon: 'scooter' },
                                 { key: 'noWax', name: t('admin.statistics.amenities.noWax'), icon: 'Wax' },
-                                { key: 'nearbyRestaurants', name: t('admin.statistics.amenities.nearbyRestaurants'), icon: 'nearbyResturants' },
+                                { key: 'nearbyRestaurants', name: t('admin.statistics.amenities.nearbyRestaurants'), icon: 'foodBold' },
                               ];
                               return data[index]?.name || value;
                             }}
@@ -1478,18 +1478,18 @@ export default function SkateparksPage() {
                       </ResponsiveContainer>
                       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mt-4">
                         {[
-                          { key: 'paidEntry', name: t('admin.statistics.amenities.paidEntry'), icon: 'shekel' as const, value: statisticsData.amenities.paidEntry?.count || 0 },
+                          { key: 'paidEntry', name: t('admin.statistics.amenities.paidEntry'), icon: 'moneyBold' as const, value: statisticsData.amenities.paidEntry?.count || 0 },
                           { key: 'bikesAllowed', name: t('admin.statistics.amenities.bikesAllowed'), icon: 'bmx-icon' as const, value: statisticsData.amenities.bikesAllowed?.count || 0 },
                           { key: 'parking', name: t('admin.statistics.amenities.parking'), icon: 'parking' as const, value: statisticsData.amenities.parking?.count || 0 },
-                          { key: 'shade', name: t('admin.statistics.amenities.shade'), icon: 'umbrellaBold' as const, value: statisticsData.amenities.shade?.count || 0 },
+                          { key: 'shade', name: t('admin.statistics.amenities.shade'), icon: 'shadeBold' as const, value: statisticsData.amenities.shade?.count || 0 },
                           { key: 'bathroom', name: t('admin.statistics.amenities.bathroom'), icon: 'toilet' as const, value: statisticsData.amenities.bathroom?.count || 0 },
                           { key: 'helmetRequired', name: t('admin.statistics.amenities.helmetRequired'), icon: 'helmet' as const, value: statisticsData.amenities.helmetRequired?.count || 0 },
                           { key: 'guard', name: t('admin.statistics.amenities.guard'), icon: 'securityGuard' as const, value: statisticsData.amenities.guard?.count || 0 },
-                          { key: 'seating', name: t('admin.statistics.amenities.seating'), icon: 'couch' as const, value: statisticsData.amenities.seating?.count || 0 },
+                          { key: 'seating', name: t('admin.statistics.amenities.seating'), icon: 'seatBold' as const, value: statisticsData.amenities.seating?.count || 0 },
                           { key: 'bombShelter', name: t('admin.statistics.amenities.bombShelter'), icon: 'safe-house' as const, value: statisticsData.amenities.bombShelter?.count || 0 },
                           { key: 'scootersAllowed', name: t('admin.statistics.amenities.scootersAllowed'), icon: 'scooter' as const, value: statisticsData.amenities.scootersAllowed?.count || 0 },
                           { key: 'noWax', name: t('admin.statistics.amenities.noWax'), icon: 'Wax' as const, value: statisticsData.amenities.noWax?.count || 0 },
-                          { key: 'nearbyRestaurants', name: t('admin.statistics.amenities.nearbyRestaurants'), icon: 'nearbyResturants' as const, value: statisticsData.amenities.nearbyRestaurants?.count || 0 },
+                          { key: 'nearbyRestaurants', name: t('admin.statistics.amenities.nearbyRestaurants'), icon: 'foodBold' as const, value: statisticsData.amenities.nearbyRestaurants?.count || 0 },
                         ].map((amenity) => (
                           <div key={amenity.key} className="flex flex-col items-center p-3 bg-white/50 dark:bg-black/0 rounded-lg">
                             <Icon name={amenity.icon} className="w-6 h-6 text-[#006f4e]/80 dark:text-header-text-dark mb-2" />
