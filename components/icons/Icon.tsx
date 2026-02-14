@@ -48,6 +48,12 @@ import Heart from './heart.svg';
 import HeartBold from './heartBold.svg';
 import FilterBold from './filterBold.svg';
 import Filter from './filter.svg';
+import Seat from './seat.svg';
+import SeatBold from './seatBold.svg';
+import Shade from './shade.svg';
+import ShadeBold from './shadeBold.svg';
+import Money from './money.svg';
+import MoneyBold from './moneyBold.svg';
 import Close from './close.svg';
 import X from './X.svg';
 import ImageBold from './imageBold.svg';
@@ -73,7 +79,8 @@ import WazeBold from './wazeBold.svg';
 import NoWax from './Wax.svg';
 import NearbyRestaurants from './nearbyResturants.svg';
 import Roller from './Roller.svg';
-import Skate from './Skate.svg';
+import Skate from './skate.svg';
+import SkateBoard from './SkateBoard.svg';
 import Longboard from './longboard.svg';
 import Search from './search.svg';
 import SearchBold from './SearchBold.svg';
@@ -91,6 +98,13 @@ import UsaFlag from './usaFlag.svg';
 import Instagram from './instagram.svg';
 import Youtube from './youtube.svg';
 import Messages from './messages.svg';
+import MessagesBold from './messagesBold.svg';
+import Stairs from './stairs.svg';
+import StairsBold from './stairsBold.svg';
+import Bell from './bell.svg';
+import BellBold from './bellBold.svg';
+import Food from './food.svg';
+import FoodBold from './foodBold.svg';
 import Tiktok from './tiktok.svg';
 import Trash from './trash.svg';
 import TrashBold from './trashBold.svg';
@@ -103,7 +117,9 @@ import Trainers from './trainers.svg';
 import TrainersBold from './trainersBold.svg';
 import Moovit from './moovit.svg';
 import MoovitDark from './moovitDark.svg';
-import Park from './trees.svg';
+import Park from './park.svg';
+import Trees from './trees.svg';
+import TreesBold from './treesBold.svg';
 import Books from './books.svg';
 import Star from './star.svg';
 import StarWand from './starWand.svg';
@@ -194,6 +210,12 @@ const iconMap: Record<string, SvgComponent> = {
   'safe-house': BombShelter,
   shekel: Shekel,
   couch: Couch,
+  seat: Seat,
+  seatBold: SeatBold,
+  shade: Shade,
+  shadeBold: ShadeBold,
+  money: Money,
+  moneyBold: MoneyBold,
   umbrellaBold: UmbrellaBold,
   Wax: NoWax,
   nearbyResturants: NearbyRestaurants,
@@ -265,6 +287,13 @@ const iconMap: Record<string, SvgComponent> = {
   instagram: Instagram,
   youtube: Youtube,
   messages: Messages,
+  messagesBold: MessagesBold,
+  stairs: Stairs,
+  stairsBold: StairsBold,
+  bell: Bell,
+  bellBold: BellBold,
+  food: Food,
+  foodBold: FoodBold,
   tiktok: Tiktok,
   trash: Trash,
   trashBold: TrashBold,
@@ -327,7 +356,7 @@ const iconMap: Record<string, SvgComponent> = {
   closedPark: ClosedPark,
   israelFlag: IsraelFlag,
   usaFlag: UsaFlag,
-  trees: Park,
+  park: Park,
   books: Books,
   star: Star,
   starWand: StarWand,
@@ -362,6 +391,7 @@ const iconMap: Record<string, SvgComponent> = {
   // Guide Icons
   Roller: Roller,
   Skate: Skate,
+  SkateBoard: SkateBoard,
   Longboard: Longboard,
   
   // Banner Icons
@@ -420,6 +450,9 @@ export type IconName =
   | 'X'
   | 'cart'
   | 'plantBold'
+  | 'seat'  | 'seatBold'
+  | 'shade'  | 'shadeBold'
+  | 'money'  | 'moneyBold'
   | 'cookie'  | 'cookieBold'
   | 'backpack'  | 'backpackBold'  | 'emptyBackpack'
   | 'shopCart'  | 'shopCartBold'
@@ -454,7 +487,10 @@ export type IconName =
   | 'instagram'
   | 'youtube'
   | 'tiktok'
-  | 'messages'
+  | 'messages'  | 'messagesBold'
+  | 'stairs'  | 'stairsBold'
+  | 'bell'  | 'bellBold'
+  | 'food'  | 'foodBold'
   | 'usaFlag'
   | 'israelFlag'
   | 'scooter'
@@ -472,7 +508,7 @@ export type IconName =
   | 'favIcon'
   | 'favIconNew'
   | 'springjam25'
-  | 'Skate'
+  | 'SkateBoard'
   | 'Longboard'
   | 'Roller'
   | 'Wax'
@@ -504,7 +540,8 @@ export type IconName =
   | 'couch'
   | 'nearbyResturants'
   | 'books'
-  | 'trees'
+  | 'park'
+  | 'trees' | 'treesBold'
   | 'newGoogleMaps'
   | 'newAppleMaps'
   | 'newAppleMapsDark'
