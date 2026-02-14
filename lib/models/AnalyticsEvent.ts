@@ -4,7 +4,12 @@ export type AnalyticsEventType = 'page_view' | 'consent';
 
 export type DeviceCategory = 'mobile' | 'tablet' | 'desktop';
 export type ReferrerCategory = 'direct' | 'internal' | 'google' | 'social' | 'other';
-export type ConsentChoice = 'accept_all' | 'reject_non_essential' | 'save_preferences';
+export type ConsentChoice =
+  | 'accept_all'
+  | 'reject_non_essential'
+  | 'save_preferences'
+  | 'il_consent_x'
+  | 'il_consent_confirm';
 
 export interface IAnalyticsEventBase extends Document {
   type: AnalyticsEventType;
@@ -23,6 +28,8 @@ export interface IPageViewEvent extends IAnalyticsEventBase {
   referrer?: string;
   referrerCategory?: ReferrerCategory;
   userId?: string;
+  /** ISO 3166-1 alpha-2 country code from request IP (e.g. Vercel/Cloudflare headers) */
+  country?: string;
 }
 
 export interface IConsentEvent extends IAnalyticsEventBase {
@@ -55,8 +62,12 @@ const AnalyticsEventSchema = new Schema<IAnalyticsEvent>(
     referrer: { type: String },
     referrerCategory: { type: String, enum: ['direct', 'internal', 'google', 'social', 'other'] },
     userId: { type: String },
+    country: { type: String },
     // consent fields
-    choice: { type: String, enum: ['accept_all', 'reject_non_essential', 'save_preferences'] },
+    choice: {
+      type: String,
+      enum: ['accept_all', 'reject_non_essential', 'save_preferences', 'il_consent_x', 'il_consent_confirm'],
+    },
   },
   {
     timestamps: true,
@@ -74,6 +85,7 @@ AnalyticsEventSchema.index({ type: 1, deviceCategory: 1 });
 AnalyticsEventSchema.index({ type: 1, deviceType: 1 });
 AnalyticsEventSchema.index({ type: 1, userId: 1 });
 AnalyticsEventSchema.index({ type: 1, userId: 1, timestamp: -1 });
+AnalyticsEventSchema.index({ type: 1, country: 1 });
 
 const AnalyticsEvent: Model<IAnalyticsEvent> =
   (mongoose.models?.AnalyticsEvent as Model<IAnalyticsEvent>) ??

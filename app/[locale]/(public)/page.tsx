@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { HeroCarousel, FixedBanner, SkeletonSection, ProductSection, ParkSection, PhotoCollage, GuideSection, ArrowRight } from '@/components/home';
+import { HeroCarousel, FixedBanner, SkeletonSection, ProductSection, ParkSection, GuideSection, ArrowRight } from '@/components/home';
 import { Button } from '@/components/ui';
 import { Locale } from '@/i18n';
 import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
@@ -215,7 +215,7 @@ export default function HomePage() {
             className="hero-title-gradient font-extrabold mb-6 leading-[1] tracking-[-0.02em]"
             style={{
               fontSize: 'clamp(2.5rem, 8vw, 6rem)',
-              animation: 'fadeInUp 1s ease-out'
+              animation: 'fadeInUp 0.7s ease-out'
             }}
           >
             {t('heroTitle').split('<br/>').map((line, i, arr) => (
@@ -232,7 +232,7 @@ export default function HomePage() {
             style={{
               fontSize: 'clamp(1.1rem, 2.5vw, 1.5rem)',
               lineHeight: '1.6',
-              animation: 'fadeInUp 1s ease-out 0.2s backwards'
+              animation: 'fadeInUp 0.7s ease-out 0.2s backwards'
             }}
           >
             {t('heroSubtitle')}
@@ -244,7 +244,7 @@ export default function HomePage() {
             style={{
               fontSize: 'clamp(1.3rem, 3vw, 2rem)',
               letterSpacing: '-0.01em',
-              animation: 'fadeInUp 1s ease-out 0.3s backwards'
+              animation: 'fadeInUp 0.7s ease-out 0.25s backwards'
             }}
           >
             {t('heroTagline')}
@@ -258,7 +258,7 @@ export default function HomePage() {
               style={{
                 background: '#3caa41',
                 boxShadow: '0 10px 40px rgba(13, 119, 19, 0.3)',
-                animation: 'popUp 0.3s ease-out 0.6s forwards'
+                animation: 'popFadeIn 0.3s ease-out 0.6s  forwards'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-3px)';
@@ -370,16 +370,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Photo Collage Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900 overflow-visible">
-        <div className="max-w-6xl mx-auto overflow-visible">
-          {loading || !skateparks || skateparks.length === 0 ? (
-            <SkeletonSection />
-          ) : (
-            <PhotoCollage parks={skateparks} />
-          )}
-        </div>
-      </section>
 
       {/* Fixed Banner Section */}
       <section>
@@ -431,10 +421,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
             {[
               { icon: '🗺️', title: t('featureDiscoverTitle'), description: t('featureDiscoverDesc') },
-              { icon: '👥', title: t('featureBuildTitle'), description: t('featureBuildDesc') },
               { icon: '⭐', title: t('featureRateTitle'), description: t('featureRateDesc') },
-              { icon: '📈', title: t('featureTrackTitle'), description: t('featureTrackDesc') },
-              { icon: '🎯', title: t('featurePlanTitle'), description: t('featurePlanDesc') },
               { icon: '🌍', title: t('featureSpreadTitle'), description: t('featureSpreadDesc') },
             ].map((feature, index) => (
               <div
@@ -492,8 +479,8 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
             {[
-              { number: '10K+', label: t('statsActiveRiders') },
-              { number: '500+', label: t('statsParksMapped') },
+              { number: '1,000+', label: t('statsActiveRiders') },
+              { number: '40+', label: t('statsParksMapped') },
               { number: '25K+', label: t('statsReviewsShared') },
               { number: '∞', label: t('statsPassionJoy') },
             ].map((stat, index) => (

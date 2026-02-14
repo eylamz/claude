@@ -5,9 +5,26 @@ import type { ConsentChoice, DeviceCategory, ReferrerCategory } from '@/lib/mode
 
 const ENABLE_ANALYTICS = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true';
 
-const CONSENT_CHOICES: ConsentChoice[] = ['accept_all', 'reject_non_essential', 'save_preferences'];
+const CONSENT_CHOICES: ConsentChoice[] = [
+  'accept_all',
+  'reject_non_essential',
+  'save_preferences',
+  'il_consent_x',
+  'il_consent_confirm',
+];
 const DEVICE_CATEGORIES: DeviceCategory[] = ['mobile', 'tablet', 'desktop'];
 const REFERRER_CATEGORIES: ReferrerCategory[] = ['direct', 'internal', 'google', 'social', 'other'];
+
+/** ISO 3166-1 alpha-2 country code from request IP. Vercel: x-vercel-ip-country, Cloudflare: cf-ipcountry. */
+function getCountryFromRequest(request: NextRequest): string | undefined {
+  const vercel = request.headers.get('x-vercel-ip-country');
+  if (vercel && /^[A-Z]{2}$/i.test(vercel.trim())) return vercel.trim().toUpperCase();
+  const cf = request.headers.get('cf-ipcountry');
+  if (cf && cf !== 'XX' && /^[A-Z]{2}$/i.test(cf.trim())) return cf.trim().toUpperCase();
+  // Localhost: no geo headers (they are set by Vercel/Cloudflare in production). Use "LOCAL" in dev so the chart is testable.
+  if (process.env.NODE_ENV === 'development') return 'LOCAL';
+  return undefined;
+}
 
 function isValidString(v: unknown, maxLen = 2048): v is string {
   return typeof v === 'string' && v.length <= maxLen;
@@ -65,6 +82,7 @@ export async function POST(request: NextRequest) {
           ? body.referrerCategory
           : undefined;
       const userId = body.userId != null && isValidString(body.userId, 128) ? body.userId : undefined;
+      const country = getCountryFromRequest(request);
 
       await connectDB();
       await AnalyticsEvent.create({
@@ -79,6 +97,7 @@ export async function POST(request: NextRequest) {
         ...(referrer !== undefined && { referrer }),
         ...(referrerCategory && { referrerCategory }),
         ...(userId && { userId }),
+        ...(country && { country }),
       });
       return new NextResponse(null, { status: 204 });
     }

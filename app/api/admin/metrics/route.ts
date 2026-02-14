@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
         deviceBreakdown: { byCategory: [], byType: [] },
         consentBreakdown: [],
         referrerBreakdown: [],
+        countryBreakdown: [],
         topPages: [],
       });
     }
@@ -85,6 +86,7 @@ export async function GET(request: NextRequest) {
       deviceByType,
       consentBreakdown,
       referrerBreakdown,
+      countryBreakdown,
     ] = await Promise.all([
       AnalyticsEvent.aggregate<{ _id: string; count: number }>([
         { $match: matchPageView },
@@ -137,6 +139,15 @@ export async function GET(request: NextRequest) {
         { $sort: { count: -1 } },
         { $project: { referrerCategory: '$_id', count: 1, _id: 0 } },
       ]),
+      // Country (from IP): one count per session (first page view determines country)
+      AnalyticsEvent.aggregate<{ _id: string; count: number }>([
+        { $match: matchPageViewWithSession },
+        { $sort: { sessionId: 1, timestamp: 1 } },
+        { $group: { _id: '$sessionId', country: { $first: '$country' } } },
+        { $group: { _id: { $ifNull: ['$country', 'unknown'] }, count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $project: { country: '$_id', count: 1, _id: 0 } },
+      ]),
     ]);
 
     const sessionsSummary = sessionDurations[0]
@@ -158,6 +169,7 @@ export async function GET(request: NextRequest) {
       deviceBreakdown: { byCategory: deviceByCategory, byType: deviceByType },
       consentBreakdown,
       referrerBreakdown,
+      countryBreakdown,
       topPages,
     });
   } catch (error) {

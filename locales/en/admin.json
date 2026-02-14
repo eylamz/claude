@@ -87,8 +87,14 @@
     "consent": {
       "accept_all": "Accept all",
       "reject_non_essential": "Reject non-essential",
-      "save_preferences": "Save preferences"
-    }
+      "save_preferences": "Save preferences",
+      "il_consent_x": "IL banner – closed (X)",
+      "il_consent_confirm": "IL banner – Confirm button"
+    },
+    "ilCookieConsent": "IL Cookie consent",
+    "usersByCountry": "Users by country (IP)",
+    "country": "Country",
+    "noCountryData": "No country data yet."
   },
   "eventSignups": {
     "title": "Event Signups",

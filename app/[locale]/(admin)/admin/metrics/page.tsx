@@ -34,6 +34,7 @@ interface MetricsData {
   };
   consentBreakdown: Array<{ choice: string; count: number }>;
   referrerBreakdown: Array<{ referrerCategory: string; count: number }>;
+  countryBreakdown: Array<{ country: string; count: number }>;
   topPages: Array<{ path: string; count: number }>;
 }
 
@@ -553,6 +554,86 @@ export default function AdminMetricsPage() {
                   </ResponsiveContainer>
                 ) : (
                   <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noConsentData')}</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* IL Cookie consent: X button vs Confirm button */}
+            <Card className="bg-card dark:bg-card-dark">
+              <CardHeader>
+                <CardTitle className="text-gray-900 dark:text-white">{t('metrics.ilCookieConsent')}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                {(() => {
+                  const ilChoices = ['il_consent_x', 'il_consent_confirm'] as const;
+                  const ilBreakdown =
+                    data?.consentBreakdown?.filter((c) => ilChoices.includes(c.choice as (typeof ilChoices)[number])) ?? [];
+                  if (ilBreakdown.length > 0) {
+                    return (
+                      <ResponsiveContainer width="100%" height={260}>
+                        <PieChart>
+                          <Pie
+                            data={ilBreakdown.map((c) => ({
+                              name: t(`metrics.consent.${c.choice}` as const),
+                              value: c.count,
+                            }))}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={50}
+                            outerRadius={80}
+                            paddingAngle={2}
+                            dataKey="value"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {ilBreakdown.map((_, i) => (
+                              <Cell key={i} fill={CONSENT_COLORS[i % CONSENT_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value: unknown) => [value as React.ReactNode, t('metrics.users')]} />
+                          <Legend formatter={(value, entry) => `${value} (${entry?.payload?.value ?? 0})`} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    );
+                  }
+                  return (
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                      {t('metrics.noConsentData')}
+                    </p>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+
+            {/* Users by country (from IP) */}
+            <Card className="bg-card dark:bg-card-dark">
+              <CardHeader>
+                <CardTitle className="text-gray-900 dark:text-white">{t('metrics.usersByCountry')}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                {data?.countryBreakdown?.length ? (
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart
+                      data={data.countryBreakdown.slice(0, 15)}
+                      layout="vertical"
+                      margin={{ left: 20, right: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border dark:stroke-border-dark" />
+                      <XAxis type="number" tick={{ fill: 'currentColor', fontSize: 12 }} />
+                      <YAxis
+                        type="category"
+                        dataKey="country"
+                        width={48}
+                        tick={{ fill: 'currentColor', fontSize: 11 }}
+                      />
+                      <Tooltip
+                        formatter={(value: unknown) => [value as React.ReactNode, t('metrics.sessions')]}
+                        labelFormatter={(label: unknown) => `${t('metrics.country')}: ${String(label)}`}
+                      />
+                      <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} name={t('metrics.sessions')} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noCountryData')}</p>
                 )}
               </CardContent>
             </Card>

@@ -87,8 +87,14 @@
     "consent": {
       "accept_all": "קבל הכל",
       "reject_non_essential": "דחה לא חיוני",
-      "save_preferences": "שמור העדפות"
-    }
+      "save_preferences": "שמור העדפות",
+      "il_consent_x": "באנר IL – סגירה (X)",
+      "il_consent_confirm": "באנר IL – כפתור אישור"
+    },
+    "ilCookieConsent": "הסכמת עוגיות IL",
+    "usersByCountry": "משתמשים לפי מדינה (IP)",
+    "country": "מדינה",
+    "noCountryData": "אין עדיין נתוני מדינה."
   },
   "eventSignups": {
     "title": "הרשמות לאירועים",

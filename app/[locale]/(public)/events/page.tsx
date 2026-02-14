@@ -759,28 +759,32 @@ function EventsPageContent() {
         <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
-              {t('title')}
+            {tr(
+              "Join the Experience",
+              "הצטרפו לחוויה"
+            )}
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               {tr(
-                'Join exciting events and connect with the community.',
-                'הצטרף לאירועים מרגשים והתחבר לקהילה.'
+                "Upcoming events and unforgettable moments.",
+                "אירועים קרובים ורגעים בלתי נשכחים."
               )}
             </p>
             
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center justify-end gap-2 text-sm w-1/2">
                 <div className="w-2 h-2 rounded-full bg-brand-main animate-pulse" />
                 <span className="text-gray-600 dark:text-gray-400">
-                  {totalResults} {totalResults === 1 ? t('event') : t('events')}
+                  {tr('Stay Tuned', 'הישארו מעודכנים')}
                 </span>
               </div>
               <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2 text-sm w-1/2">
                 <TrendingUp className="w-4 h-4 text-green-500" />
+                
                 <span className="text-gray-600 dark:text-gray-400">
-                  {tr('Updated Daily', 'מתעדכן יומי')}
+                  {totalResults} {totalResults === 1 ? t('event') : t('events')}
                 </span>
               </div>
             </div>

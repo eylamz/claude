@@ -102,9 +102,19 @@ export default function CookieConsentBanner() {
     }));
   };
 
-  /** IL mode: close banner (X or Accept) and set all cookies accepted including analytics */
-  const handleIlAcceptOrClose = () => {
-    trackConsent('accept_all');
+  /** IL mode: close via X button – track and accept all */
+  const handleIlClose = () => {
+    trackConsent('il_consent_x');
+    acceptAllCookies();
+    setIsVisible(false);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cookieConsentUpdated'));
+    }
+  };
+
+  /** IL mode: confirm (Understand) button – track and accept all */
+  const handleIlConfirm = () => {
+    trackConsent('il_consent_confirm');
     acceptAllCookies();
     setIsVisible(false);
     if (typeof window !== 'undefined') {
@@ -121,7 +131,7 @@ export default function CookieConsentBanner() {
     return (
       <div
         dir={isRtl ? 'rtl' : 'ltr'}
-        className="fixed z-[10000] font-assistant bottom-4 left-4 right-4 lg:bottom-9 lg:left-9 lg:right-9 px-4 pb-4 pt-2 lg:py-6 lg:px-9 rounded-3xl border border-[#E5E5E5] dark:border-border-dark bg-white dark:bg-background-dark/80 backdrop-blur-xl shadow-[0_8px_25px_rgba(16,42,118,0.17)] dark:shadow-none dark:[filter:drop-shadow(0_1px_1px_#66666612)_drop-shadow(0_2px_2px_#5e5e5e12)_drop-shadow(0_4px_4px_#7a5d4413)_drop-shadow(0_8px_8px_#5e5e5e12)_drop-shadow(0_16px_16px_#5e5e5e12)] opacity-0 animate-popUp transition-all duration-300"
+        className="fixed z-[10000] font-assistant bottom-4 left-4 right-4 lg:bottom-9 lg:left-9 lg:right-9 px-4 pb-4 pt-2 lg:py-6 lg:px-9 rounded-3xl border border-[#E5E5E5] dark:border-border-dark bg-white/80 dark:bg-background-dark/80 backdrop-blur-[12px] shadow-[0_8px_25px_rgba(16,42,118,0.17)] dark:shadow-none dark:[filter:drop-shadow(0_1px_1px_#66666612)_drop-shadow(0_2px_2px_#5e5e5e12)_drop-shadow(0_4px_4px_#7a5d4413)_drop-shadow(0_8px_8px_#5e5e5e12)_drop-shadow(0_16px_16px_#5e5e5e12)] opacity-0 animate-popUp transition-all duration-300"
         style={{ animationDelay: '3s' }}
       >
         <div>
@@ -136,7 +146,7 @@ export default function CookieConsentBanner() {
                 </div>
                 <button
                   type="button"
-                  onClick={handleIlAcceptOrClose}
+                  onClick={handleIlClose}
                   className="h-10 p-2 -me-2 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200 shrink-0"
                   aria-label={t('close')}
                 >
@@ -160,7 +170,7 @@ export default function CookieConsentBanner() {
             <Button
               size="sm"
               variant="primary"
-              onClick={handleIlAcceptOrClose}
+              onClick={handleIlConfirm}
               className="w-full md:w-auto !px-4 font-semibold shrink-0 md:hidden"
             >
               {t('cookieConsent.ilBanner.understand')}
