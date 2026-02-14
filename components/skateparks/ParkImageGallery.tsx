@@ -639,7 +639,7 @@ const ParkImageGallery = ({
                       className="!h-8 px-2 py-1 rounded-lg font-medium flex-shrink-0"
                       aria-label={locale === 'he' ? 'שתף סקייטפארק' : 'Share skatepark'}
                     >
-                      <Icon name="shareBold" className="-mt-[1px] w-4 h-4" />
+                      <Icon name="shareBold" className="w-4 h-4" />
                     </Button>
                   )}
                 </div>

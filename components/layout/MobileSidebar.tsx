@@ -873,7 +873,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                 >
                   <Icon
                     name={card.icon}
-                    className={`flex-shrink-0 w-4 h-4 -mb-0.5 ${isActive ? 'text-brand-main dark:text-brand-main' : 'text-black/80 dark:text-white/90'}`}
+                    className={`flex-shrink-0 w-4 h-4 -mb-0.5 overflow-visible ${isActive ? 'text-brand-main dark:text-brand-main' : 'text-black/80 dark:text-white/90'}`}
                   />
                   <span className="font-medium">{card.label}</span>
                 </Link>

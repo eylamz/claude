@@ -4,6 +4,7 @@
     <style>
       .messages-1 {
         fill: none;
+	stroke-width: 2px;
         stroke: CurrentColor;
         stroke-linecap: round;
         stroke-linejoin: round;

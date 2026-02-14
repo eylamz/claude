@@ -878,10 +878,10 @@ export default function GuidePage() {
                     navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : canonicalUrl);
                   }
                 }}
-                className="!h-8 px-2 py-1 rounded-lg font-medium flex-shrink-0"
+                className="!h-8 px-2 py-1rounded-lg font-medium flex-shrink-0"
                 aria-label={locale === 'he' ? 'שתף מדריך' : 'Share guide'}
               >
-                <Icon name="shareBold" className="-mt-[1px] w-4 h-4" />
+                <Icon name="shareBold" className="w-4 h-4" />
               </Button>
             </div>
           </header>
