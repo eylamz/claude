@@ -8,6 +8,8 @@ import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, 
 import { SearchInput } from '@/components/common/SearchInput';
 import { useToast } from '@/hooks/use-toast';
 import { isGrowthLabEnabled } from '@/lib/utils/ecommerce';
+import { Icon } from '@/components/icons/Icon';
+
 
 interface Form {
   id: string;
@@ -319,15 +321,15 @@ export default function GrowingTogetherPage() {
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-brand-main animate-pulse" />
+                  <Icon name="clipboardBold" className="w-3 h-3 text-green-500" />
                 <span className="text-gray-600 dark:text-gray-400">
                 {tr('Updated Daily', 'סקרים משתנים')}
                 </span>
               </div>
               <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
               <div className="flex items-center gap-2 text-sm">
-                <TrendingUp className="w-4 h-4 text-green-500" />
-                <span className="text-gray-600 dark:text-gray-400">
+              <Icon name="plantBold" className="w-3.5 h-3.5 text-green-500" />
+              <span className="text-gray-600 dark:text-gray-400">
                   {tr('Updated Daily', 'שדרוגים גדולים')}
                 </span>
               </div>
@@ -381,7 +383,7 @@ export default function GrowingTogetherPage() {
       {/* Forms Grid */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="space-y-2">
                 <Skeleton className="h-[12rem] md:h-[16rem] w-full rounded-2xl" />
@@ -431,7 +433,7 @@ export default function GrowingTogetherPage() {
             )}
 
             {/* Forms Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {forms.map((form, index) => {
                 // Check if form has been submitted
                 const submittedKey = `form_submission_${form.slug}`;

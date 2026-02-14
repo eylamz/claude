@@ -96,7 +96,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
   const navCards: NavCard[] = [
     {
       href: `/${locale}`,
-      icon: 'global',
+      icon: 'house',
       label: tMobileNav('home'),
       description: tMobileNav('homeDesc'),
     },
@@ -823,9 +823,9 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                                   ) : (
                                     <Icon
                                       name={
-                                        result.type === 'skateparks' ? 'trees' :
+                                        result.type === 'skateparks' ? 'treesBold' :
                                         result.type === 'products' ? 'shopBold' :
-                                        result.type === 'guides' ? 'books' :
+                                        result.type === 'guides' ? 'bookBold' :
                                         result.type === 'trainers' ? 'trainersBold' :
                                         'calendarBold'
                                       }
@@ -873,7 +873,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                 >
                   <Icon
                     name={card.icon}
-                    className={`flex-shrink-0 w-4 h-4 -mb-1 ${isActive ? 'text-brand-main dark:text-brand-main' : 'text-black/80 dark:text-white/90'}`}
+                    className={`flex-shrink-0 w-4 h-4 -mb-0.5 ${isActive ? 'text-brand-main dark:text-brand-main' : 'text-black/80 dark:text-white/90'}`}
                   />
                   <span className="font-medium">{card.label}</span>
                 </Link>
@@ -961,7 +961,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                     href: `/${locale}/admin/skateparks`,
                     labelKey: 'findParks',
                     icon: (
-                      <Icon name="trees" className="w-4 h-4" />
+                      <Icon name="treesBold" className="w-4 h-4" />
                     ),
                   },
                   {

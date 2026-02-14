@@ -800,7 +800,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
               <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-brand-main animate-pulse" />
+                <Icon name="bookBold" className="w-3 h-3 text-green-500" />
                 <span className="text-gray-600 dark:text-gray-400">
                   {totalGuidesCount} {totalGuidesCount === 1 ? t('guide') : t('guides')}
                 </span>

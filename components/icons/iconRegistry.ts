@@ -138,6 +138,9 @@ const iconRegistry: Record<string, () => Promise<IconModule>> = {
   stairs: () => import('./stairs.svg'),
   bellBold: () => import('./bellBold.svg'),
   bell: () => import('./bell.svg'),
+  house: () => import('./house.svg'),
+  houseBold: () => import('./houseBold.svg'),
+  
   // Additional icons (registered from components/icons)
   accessibility: () => import('./accessibility.svg'),
   accessibilityBold: () => import('./accessibilityBold.svg'),

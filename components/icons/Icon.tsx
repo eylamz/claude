@@ -123,6 +123,8 @@ import TrainersBold from './trainersBold.svg';
 import Moovit from './moovit.svg';
 import MoovitDark from './moovitDark.svg';
 import Park from './park.svg';
+import House from './house.svg';
+import HouseBold from './houseBold.svg';
 import Trees from './trees.svg';
 import TreesBold from './treesBold.svg';
 import Books from './books.svg';
@@ -362,6 +364,10 @@ const iconMap: Record<string, SvgComponent> = {
   israelFlag: IsraelFlag,
   usaFlag: UsaFlag,
   park: Park,
+  house: House,
+  houseBold: HouseBold,
+  trees: Trees,
+  treesBold: TreesBold,
   books: Books,
   star: Star,
   starWand: StarWand,
@@ -554,6 +560,7 @@ export type IconName =
   | 'nearbyResturants'
   | 'books'
   | 'park'
+  | 'house' | 'houseBold'
   | 'trees' | 'treesBold'
   | 'newGoogleMaps'
   | 'newAppleMaps'
