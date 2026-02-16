@@ -138,9 +138,9 @@
     "newsletterDescriptionNew": "קבל את הפארקים, האירועים וההצעות הבלעדיות האחרונות.",
     "subscribe": "הירשם",
     "subscribing": "נרשם...",
-    "subscribed": "נרשמת!",
+    "subscribed": "נרשמת בהצלחה!",
     "subscribeError": "משהו השתבש. אנא נסה שוב.",
-    "enterYourEmail": "הזן את כתובת האימייל שלך",
+    "enterYourEmail": "אימייל",
     "platform": "פלטפורמה",
     "features": "תכונות",
     "pricing": "תמחור",
@@ -189,7 +189,8 @@
     "contactEmail": "hello@enboss.co",
     "contactPhone": "+972-XX-XXXXXXX",
     "contactLocation": "תל אביב, ישראל",
-    "soon": "בקרוב"
+    "soon": "בקרוב",
+    "newsletterThankYouMessage": "תקבל עדכון כשנשלח את הניוזלטר."
   },
   "cookieConsent": {
     "title": "אנו משתמשים בעוגיות",
@@ -292,6 +293,7 @@
     "reviews": "ביקורות",
     "eventSignups": "הרשמות לאירועים",
     "metrics": "מדדים",
+    "newsletter": "ניוזלטר",
     "settings": "הגדרות"
   },
   "community": {

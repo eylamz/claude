@@ -17,6 +17,7 @@ const getMultilingualText = (text: string | IMultilingualText | undefined, lang:
 // Environment flag keys and human-readable descriptions (from .env.local)
 const ENV_FLAGS: { key: string; description: string }[] = [
   { key: 'NEXT_PUBLIC_ENABLE_ANALYTICS', description: 'Enable analytics (page views, consent, device, referrer)' },
+  { key: 'NEXT_PUBLIC_SET_IL_COOKIE_POLICY', description: 'IL cookie policy: simplified banner, accept all cookies (including analytics)' },
   { key: 'NEXT_PUBLIC_ENABLE_LOGIN', description: 'Turns user login on or off' },
   { key: 'NEXT_PUBLIC_ENABLE_REGISTER', description: 'Allow user registration' },
   { key: 'NEXT_PUBLIC_ENABLE_COMMUNITY', description: 'Community page' },
@@ -27,12 +28,14 @@ const ENV_FLAGS: { key: string; description: string }[] = [
   { key: 'NEXT_PUBLIC_ENABLE_USERREVIEWS', description: 'Only logged-in users can add reviews' },
   { key: 'NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS', description: 'Everyone can add reviews' },
   { key: 'NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS', description: 'Allow multiple reviews from same user' },
+  { key: 'NEXT_PUBLIC_ENABLE_NEWSLETTER', description: 'Newsletter (footer + admin newsletter page)' },
   { key: 'NEXT_PUBLIC_ENABLE_WEATHER_FORECAST', description: 'Weather forecast' },
 ];
 
 // Static process.env reads so Next.js inlines values at build time
 const ENV_FLAG_VALUES: Record<string, boolean> = {
   NEXT_PUBLIC_ENABLE_ANALYTICS: process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true',
+  NEXT_PUBLIC_SET_IL_COOKIE_POLICY: process.env.NEXT_PUBLIC_SET_IL_COOKIE_POLICY === 'true',
   NEXT_PUBLIC_ENABLE_LOGIN: process.env.NEXT_PUBLIC_ENABLE_LOGIN === 'true',
   NEXT_PUBLIC_ENABLE_REGISTER: process.env.NEXT_PUBLIC_ENABLE_REGISTER === 'true',
   NEXT_PUBLIC_ENABLE_COMMUNITY: process.env.NEXT_PUBLIC_ENABLE_COMMUNITY === 'true',
@@ -43,6 +46,7 @@ const ENV_FLAG_VALUES: Record<string, boolean> = {
   NEXT_PUBLIC_ENABLE_USERREVIEWS: process.env.NEXT_PUBLIC_ENABLE_USERREVIEWS === 'true',
   NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS: process.env.NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS === 'true',
   NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS: process.env.NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS === 'true',
+  NEXT_PUBLIC_ENABLE_NEWSLETTER: process.env.NEXT_PUBLIC_ENABLE_NEWSLETTER === 'true',
   NEXT_PUBLIC_ENABLE_WEATHER_FORECAST: process.env.NEXT_PUBLIC_ENABLE_WEATHER_FORECAST === 'true',
 };
 

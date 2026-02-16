@@ -4,7 +4,18 @@ import { useEffect, useState, useCallback, memo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { X, TrendingUp } from 'lucide-react';
-import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui';
+import {
+  Button,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Icon } from '@/components/icons';
@@ -28,7 +39,9 @@ const getLocalizedText = (field: ILocalizedField | string | undefined, locale: s
 };
 
 /** Parse "tag:name" or "תג:name" from search query. isTagSearch is true when query starts with tag: or תג:. */
-function parseTagSearch(query: string): { isTagSearch: true; tag: string } | { isTagSearch: false } {
+function parseTagSearch(
+  query: string
+): { isTagSearch: true; tag: string } | { isTagSearch: false } {
   if (!query || typeof query !== 'string') return { isTagSearch: false };
   const trimmed = query.trim();
   // Match "tag:" or "תג:" at start (with optional content after), case-insensitive for "tag"
@@ -107,13 +120,13 @@ const SPORT_CONFIG = [
     variant: 'blue' as const,
     tooltipEn: 'Filter by Longboarding guides',
     tooltipHe: 'סנן לפי מדריכי לונגבורד',
-  }
+  },
 ] as const;
 
 // Utility function to optimize image URLs
 const getOptimizedImageUrl = (originalUrl: string): string | null => {
   if (!originalUrl || originalUrl.trim() === '') return null;
-  
+
   if (originalUrl.includes('cloudinary.com')) {
     const urlParts = originalUrl.split('/upload/');
     if (urlParts.length === 2) {
@@ -124,221 +137,227 @@ const getOptimizedImageUrl = (originalUrl: string): string | null => {
 };
 
 // Memoized thumbnail component
-const GuideThumbnail = memo(({ 
-  photoUrl, 
-  guideTitle, 
-  onLoad,
-  alwaysSaturated = false
-}: { 
-  photoUrl: string, 
-  guideTitle: string,
-  onLoad?: () => void,
-  alwaysSaturated?: boolean
-}) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
-  
-  useEffect(() => {
-    setIsLoaded(false);
-    setHasError(false);
-  }, [photoUrl]);
-  
-  // Check if image is already loaded (cached) after render
-  useEffect(() => {
-    const checkImageLoaded = () => {
-      if (imgRef.current) {
-        const img = imgRef.current;
-        // Check if image is already complete (cached)
-        if (img.complete && img.naturalHeight !== 0) {
-          setIsLoaded(true);
-          setHasError(false);
-          onLoad?.();
-          return true;
-        } else if (img.complete && img.naturalHeight === 0) {
-          // Image failed to load
-          setIsLoaded(true);
-          setHasError(true);
-          return true;
+const GuideThumbnail = memo(
+  ({
+    photoUrl,
+    guideTitle,
+    onLoad,
+    alwaysSaturated = false,
+  }: {
+    photoUrl: string;
+    guideTitle: string;
+    onLoad?: () => void;
+    alwaysSaturated?: boolean;
+  }) => {
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [hasError, setHasError] = useState(false);
+    const imgRef = useRef<HTMLImageElement>(null);
+
+    useEffect(() => {
+      setIsLoaded(false);
+      setHasError(false);
+    }, [photoUrl]);
+
+    // Check if image is already loaded (cached) after render
+    useEffect(() => {
+      const checkImageLoaded = () => {
+        if (imgRef.current) {
+          const img = imgRef.current;
+          // Check if image is already complete (cached)
+          if (img.complete && img.naturalHeight !== 0) {
+            setIsLoaded(true);
+            setHasError(false);
+            onLoad?.();
+            return true;
+          } else if (img.complete && img.naturalHeight === 0) {
+            // Image failed to load
+            setIsLoaded(true);
+            setHasError(true);
+            return true;
+          }
         }
-      }
-      return false;
-    };
-    
-    // Check immediately
-    if (checkImageLoaded()) return;
-    
-    // Check after a small delay to allow ref to be set
-    const timeout1 = setTimeout(() => {
-      checkImageLoaded();
-    }, 100);
-    
-    // Fallback: if image hasn't loaded after 3 seconds, hide spinner
-    const timeout2 = setTimeout(() => {
-      if (!isLoaded && !hasError && imgRef.current) {
-        const img = imgRef.current;
-        if (!img.complete || img.naturalHeight === 0) {
-          setIsLoaded(true);
-          setHasError(true);
+        return false;
+      };
+
+      // Check immediately
+      if (checkImageLoaded()) return;
+
+      // Check after a small delay to allow ref to be set
+      const timeout1 = setTimeout(() => {
+        checkImageLoaded();
+      }, 100);
+
+      // Fallback: if image hasn't loaded after 3 seconds, hide spinner
+      const timeout2 = setTimeout(() => {
+        if (!isLoaded && !hasError && imgRef.current) {
+          const img = imgRef.current;
+          if (!img.complete || img.naturalHeight === 0) {
+            setIsLoaded(true);
+            setHasError(true);
+          }
         }
-      }
-    }, 3000);
-    
-    return () => {
-      clearTimeout(timeout1);
-      clearTimeout(timeout2);
+      }, 3000);
+
+      return () => {
+        clearTimeout(timeout1);
+        clearTimeout(timeout2);
+      };
+    }, [photoUrl, onLoad]);
+
+    const handleImageLoad = () => {
+      setIsLoaded(true);
+      setHasError(false);
+      onLoad?.();
     };
-  }, [photoUrl, onLoad]);
-  
-  const handleImageLoad = () => {
-    setIsLoaded(true);
-    setHasError(false);
-    onLoad?.();
-  };
 
-  const handleImageError = () => {
-    setIsLoaded(true); // Hide spinner even on error
-    setHasError(true);
-  };
+    const handleImageError = () => {
+      setIsLoaded(true); // Hide spinner even on error
+      setHasError(true);
+    };
 
-  const optimizedUrl = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
+    const optimizedUrl = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
 
-  return (
-    <>
-      {!isLoaded && !hasError && (
-        <div className="absolute inset-0 bg-background/20 dark:bg-background/20 flex items-center justify-center z-10">
-          <LoadingSpinner />
-        </div>
-      )}
-      {optimizedUrl ? (
-        <img
-          ref={imgRef}
-          src={optimizedUrl}
-          alt={guideTitle}
-          className={`w-full h-full rounded-xl object-cover transition-all duration-200 select-none ${
-            alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
-          } ${
-            isLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
-          loading="lazy"
-          decoding="async"
-          draggable={false}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
-      ) : (
-        <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-          <div className="w-16 h-16" />
-        </div>
-      )}
-    </>
-  );
-});
+    return (
+      <>
+        {!isLoaded && !hasError && (
+          <div className="absolute inset-0 bg-background/20 dark:bg-background/20 flex items-center justify-center z-10">
+            <LoadingSpinner />
+          </div>
+        )}
+        {optimizedUrl ? (
+          <img
+            ref={imgRef}
+            src={optimizedUrl}
+            alt={guideTitle}
+            className={`w-full h-full rounded-xl object-cover transition-all duration-200 select-none ${
+              alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
+            } ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <div className="w-16 h-16" />
+          </div>
+        )}
+      </>
+    );
+  }
+);
 GuideThumbnail.displayName = 'GuideThumbnail';
 
 /**
  * Guide Card Component
  */
-const GuideCard = memo(({ 
-  guide, 
-  locale, 
-  animationDelay = 0,
-  getSportTranslation,
-  getDifficultyTranslation,
-  highlightQuery,
-}: { 
-  guide: Guide; 
-  locale: string; 
-  animationDelay?: number;
-  getSportTranslation: (sport: string) => string;
-  getDifficultyTranslation: (difficulty: string) => string;
-  highlightQuery?: string;
-}) => {
-  const [isClicked, setIsClicked] = useState(false);
-  const [showNameSection, setShowNameSection] = useState(false);
-  const [showGuideName, setShowGuideName] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+const GuideCard = memo(
+  ({
+    guide,
+    locale,
+    animationDelay = 0,
+    getSportTranslation,
+    getDifficultyTranslation,
+    highlightQuery,
+  }: {
+    guide: Guide;
+    locale: string;
+    animationDelay?: number;
+    getSportTranslation: (sport: string) => string;
+    getDifficultyTranslation: (difficulty: string) => string;
+    highlightQuery?: string;
+  }) => {
+    const [isClicked, setIsClicked] = useState(false);
+    const [showNameSection, setShowNameSection] = useState(false);
+    const [showGuideName, setShowGuideName] = useState(false);
+    const cardRef = useRef<HTMLDivElement>(null);
 
-  // Show name section after 0.3s delay when card appears
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowNameSection(true);
-      // Show guide name with pop animation after height starts growing
-      setTimeout(() => {
-        setShowGuideName(true);
-      }, 0); // Small delay to let height transition start
-    }, 300 + animationDelay);
-    return () => clearTimeout(timer);
-  }, [animationDelay]);
+    // Show name section after 0.3s delay when card appears
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setShowNameSection(true);
+        // Show guide name with pop animation after height starts growing
+        setTimeout(() => {
+          setShowGuideName(true);
+        }, 0); // Small delay to let height transition start
+      }, 300 + animationDelay);
+      return () => clearTimeout(timer);
+    }, [animationDelay]);
 
-  const handleCardClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsClicked(true);
-    setTimeout(() => {
-      window.location.href = `/${locale}/guides/${guide.slug}`;
-    }, 300);
-  }, [guide.slug, locale]);
+    const handleCardClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsClicked(true);
+        setTimeout(() => {
+          window.location.href = `/${locale}/guides/${guide.slug}`;
+        }, 300);
+      },
+      [guide.slug, locale]
+    );
 
-  const guideTitle = getLocalizedText(guide.title, locale);
+    const guideTitle = getLocalizedText(guide.title, locale);
 
-  return (
-    <div
-      ref={cardRef}
-      onClick={handleCardClick}
-      className={`h-fit group  rounded-xl  cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
-      style={{ animationDelay: `${animationDelay}ms` }}
-      aria-label={guideTitle}
-    >
-      <div className="group-hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden"
-              style={{
-                filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
-              }}
-      
+    return (
+      <div
+        ref={cardRef}
+        onClick={handleCardClick}
+        className={`h-fit group  rounded-xl  cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+        style={{ animationDelay: `${animationDelay}ms` }}
+        aria-label={guideTitle}
       >
-        {/* Sports Tags Overlay */}
-        {guide.relatedSports && guide.relatedSports.length > 0 && (
-          <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
-            {guide.relatedSports.slice(0, 4).map((sport, idx) => {
-              const sportConfig = SPORT_CONFIG.find(s => s.value === sport.toLowerCase());
-              return (
-                <div
-                  key={idx}
-                  className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg"
-                  title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
-                >
-                  {sportConfig ? (
-                    <Icon name={sportConfig.iconName as any} className="w-4 h-4 text-white" />
-                  ) : (
-                    <span className="text-xs font-medium text-white">{getSportTranslation(sport)}</span>
-                  )}
+        <div
+          className="group-hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden"
+          style={{
+            filter:
+              'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)',
+          }}
+        >
+          {/* Sports Tags Overlay */}
+          {guide.relatedSports && guide.relatedSports.length > 0 && (
+            <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
+              {guide.relatedSports.slice(0, 4).map((sport, idx) => {
+                const sportConfig = SPORT_CONFIG.find((s) => s.value === sport.toLowerCase());
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg"
+                    title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
+                  >
+                    {sportConfig ? (
+                      <Icon name={sportConfig.iconName as any} className="w-4 h-4 text-white" />
+                    ) : (
+                      <span className="text-xs font-medium text-white">
+                        {getSportTranslation(sport)}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              {guide.relatedSports.length > 4 && (
+                <div className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg">
+                  <span className="text-xs font-medium text-white">
+                    +{guide.relatedSports.length - 4}
+                  </span>
                 </div>
-              );
-            })}
-            {guide.relatedSports.length > 4 && (
-              <div className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg">
-                <span className="text-xs font-medium text-white">+{guide.relatedSports.length - 4}</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Difficulty Badge */}
-        {guide.difficulty && (
-          <div className="absolute bottom-2 left-0 z-10">
-            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
-              {getDifficultyTranslation(guide.difficulty)}
+              )}
             </div>
-          </div>
-        )}
+          )}
 
-        <GuideThumbnail
-          photoUrl={guide.coverImage || ''}
-          guideTitle={guideTitle}
-        />
-      </div>
+          {/* Difficulty Badge */}
+          {guide.difficulty && (
+            <div className="absolute bottom-2 left-0 z-10">
+              <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
+                {getDifficultyTranslation(guide.difficulty)}
+              </div>
+            </div>
+          )}
 
-      {/* Name Section */}
-      <div 
+          <GuideThumbnail photoUrl={guide.coverImage || ''} guideTitle={guideTitle} />
+        </div>
+
+        {/* Name Section */}
+        <div
           className="space-y-1 overflow-hidden transition-all duration-300 ease-out"
           style={{
             maxHeight: showNameSection ? '200px' : '0',
@@ -346,53 +365,62 @@ const GuideCard = memo(({
             paddingBottom: showNameSection ? '0.5rem' : '0',
           }}
         >
-          <h3 
+          <h3
             className={`text-lg font-medium opacity-0 ${showGuideName ? 'animate-fadeInDown animation-delay-[1s]' : ''}`}
           >
             {highlightQuery ? highlightMatch(guideTitle, highlightQuery) : guideTitle}
           </h3>
-         
         </div>
-    </div>
-  );
-});
+      </div>
+    );
+  }
+);
 GuideCard.displayName = 'GuideCard';
 
 export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations('guides');
-  
-  const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
-  
+
+  const tr = useCallback(
+    (enText: string, heText: string) => (locale === 'he' ? heText : enText),
+    [locale]
+  );
+
   // Helper function to get translated sport name
-  const getSportTranslation = useCallback((sport: string): string => {
-    if (!sport) return sport;
-    const sportKey = sport.toLowerCase();
-    const translationKey = `sports.${sportKey}`;
-    const translated = t(translationKey as any);
-    // If translation key doesn't exist, next-intl returns the key path, so check if it's different
-    if (translated && translated !== translationKey && !translated.startsWith('sports.')) {
-      return translated;
-    }
-    // Fallback to original sport name (capitalize first letter)
-    return sport.charAt(0).toUpperCase() + sport.slice(1);
-  }, [t]);
+  const getSportTranslation = useCallback(
+    (sport: string): string => {
+      if (!sport) return sport;
+      const sportKey = sport.toLowerCase();
+      const translationKey = `sports.${sportKey}`;
+      const translated = t(translationKey as any);
+      // If translation key doesn't exist, next-intl returns the key path, so check if it's different
+      if (translated && translated !== translationKey && !translated.startsWith('sports.')) {
+        return translated;
+      }
+      // Fallback to original sport name (capitalize first letter)
+      return sport.charAt(0).toUpperCase() + sport.slice(1);
+    },
+    [t]
+  );
 
   // Helper function to get translated difficulty name
-  const getDifficultyTranslation = useCallback((difficulty: string): string => {
-    if (!difficulty) return difficulty;
-    const difficultyKey = difficulty.toLowerCase();
-    const translationKey = `difficulty.${difficultyKey}`;
-    const translated = t(translationKey as any);
-    // If translation key doesn't exist, next-intl returns the key path, so check if it's different
-    if (translated && translated !== translationKey && !translated.startsWith('difficulty.')) {
-      return translated;
-    }
-    // Fallback to original difficulty name (capitalize first letter)
-    return difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
-  }, [t]);
-  
+  const getDifficultyTranslation = useCallback(
+    (difficulty: string): string => {
+      if (!difficulty) return difficulty;
+      const difficultyKey = difficulty.toLowerCase();
+      const translationKey = `difficulty.${difficultyKey}`;
+      const translated = t(translationKey as any);
+      // If translation key doesn't exist, next-intl returns the key path, so check if it's different
+      if (translated && translated !== translationKey && !translated.startsWith('difficulty.')) {
+        return translated;
+      }
+      // Fallback to original difficulty name (capitalize first letter)
+      return difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+    },
+    [t]
+  );
+
   const [guides, setGuides] = useState<Guide[]>(initialData?.guides || []);
   const [filtersData, setFiltersData] = useState<FiltersData>(
     initialData?.filters || { sports: [], difficulties: [] }
@@ -402,7 +430,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   const [totalGuidesCount, setTotalGuidesCount] = useState(initialData?.pagination?.total || 0); // Unfiltered total
   const [cacheInitialized, setCacheInitialized] = useState(false);
   const [currentVersion, setCurrentVersion] = useState<number | null>(null);
-  
+
   // Filters
   const [selectedSports, setSelectedSports] = useState<string[]>(
     searchParams.get('sports')?.split(',').filter(Boolean) || []
@@ -410,11 +438,11 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   const [difficulty, setDifficulty] = useState(searchParams.get('difficulty') || '');
   const [minRating, setMinRating] = useState(parseFloat(searchParams.get('minRating') || '0'));
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
-  
+
   // Sort
   const [sortBy] = useState(searchParams.get('sort') || 'newest');
   const [page, setPage] = useState(1);
-  
+
   // UI State
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
@@ -425,14 +453,14 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const prevScrollY = prevScrollYRef.current;
-      
+
       // Determine header visibility
       if (currentScrollY < prevScrollY || currentScrollY < 10) {
         setIsHeaderVisible(true);
       } else if (currentScrollY > prevScrollY) {
         setIsHeaderVisible(false);
       }
-      
+
       prevScrollYRef.current = currentScrollY;
       setIsScrolled(currentScrollY > 240);
     };
@@ -511,10 +539,16 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   // Fetch guides only when filters/pagination change (wait for cache to initialize)
   useEffect(() => {
     if (!cacheInitialized) return; // Wait for cache check to complete
-    
+
     // For initial load with no filters, try to use cache first
-    const isInitialLoad = page === 1 && selectedSports.length === 0 && !difficulty && minRating === 0 && !searchQuery && sortBy === 'newest';
-    
+    const isInitialLoad =
+      page === 1 &&
+      selectedSports.length === 0 &&
+      !difficulty &&
+      minRating === 0 &&
+      !searchQuery &&
+      sortBy === 'newest';
+
     if (isInitialLoad && initialData) {
       const cacheKey = 'guides_cache';
       const versionKey = 'guides_version';
@@ -530,37 +564,49 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             // Apply pagination
             const limit = 12;
             const paginatedGuides = allCachedGuides.slice(0, limit);
-            
+
             setGuides(paginatedGuides);
             setTotalResults(allCachedGuides.length);
             setTotalGuidesCount(allCachedGuides.length); // Set unfiltered total
-            
+
             // Extract filters from cached data
             const sportsSet = new Set<string>();
             allCachedGuides.forEach((guide: Guide) => {
-              guide.relatedSports?.forEach(sport => sportsSet.add(sport));
+              guide.relatedSports?.forEach((sport) => sportsSet.add(sport));
             });
             setFiltersData({
               sports: Array.from(sportsSet).sort(),
-              difficulties: ['Beginner', 'Intermediate', 'Advanced', 'Expert'].filter(diff =>
-                allCachedGuides.some((guide: Guide) => guide.difficulty?.toLowerCase() === diff.toLowerCase())
+              difficulties: ['Beginner', 'Intermediate', 'Advanced', 'Expert'].filter((diff) =>
+                allCachedGuides.some(
+                  (guide: Guide) => guide.difficulty?.toLowerCase() === diff.toLowerCase()
+                )
               ),
             });
-            
+
             return; // Use cache, don't fetch
           }
         } catch (e) {
           console.warn('Failed to use cached guides on initial load', e);
         }
       }
-      
+
       // No valid cache, use initialData (already set in state)
       return;
     }
-    
+
     // For filtered/searched/paginated views, always fetch (or use cache in fetchGuides)
     fetchGuides();
-  }, [cacheInitialized, selectedSports, difficulty, minRating, searchQuery, sortBy, page, locale, initialData]);
+  }, [
+    cacheInitialized,
+    selectedSports,
+    difficulty,
+    minRating,
+    searchQuery,
+    sortBy,
+    page,
+    locale,
+    initialData,
+  ]);
 
   const fetchGuides = async () => {
     setLoading(true);
@@ -589,110 +635,117 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             }
           }
 
-            // If version matches, filter cached guides client-side
-            if (versionMatches && Array.isArray(allCachedGuides)) {
-              let filteredGuides = [...allCachedGuides];
+          // If version matches, filter cached guides client-side
+          if (versionMatches && Array.isArray(allCachedGuides)) {
+            let filteredGuides = [...allCachedGuides];
 
-              // Apply filters: tag: / תג: search, category trigger, or title/description search
-              if (searchQuery) {
-                const tagSearch = parseTagSearch(searchQuery);
-                if (tagSearch.isTagSearch) {
-                  const tagLower = tagSearch.tag.toLowerCase().trim();
-                  const flippedTag = flipLanguage(tagSearch.tag);
-                  const flippedLower = flippedTag ? flippedTag.toLowerCase().trim() : '';
-                  filteredGuides = filteredGuides.filter((guide: Guide) => {
-                    const tags = getGuideTags(guide);
-                    return tags.some((t) => {
-                      const tLower = t.toLowerCase();
-                      return (
-                        tLower === tagLower ||
-                        tLower.includes(tagLower) ||
-                        (flippedLower && (tLower === flippedLower || tLower.includes(flippedLower)))
-                      );
-                    });
-                  });
-                } else if (queryMatchesCategory(searchQuery, 'guides')) {
-                  // Show all guides when user types e.g. "מדריכים", "guides", "nsrhfho"
-                } else {
-                  const searchLower = searchQuery.toLowerCase().trim();
-                  const flipped = flipLanguage(searchQuery);
-                  const flippedLower = flipped ? flipped.toLowerCase().trim() : '';
-                  filteredGuides = filteredGuides.filter((guide: Guide) => {
-                    const title = getLocalizedText(guide.title, locale);
-                    const description = guide.description ? getLocalizedText(guide.description, locale) : '';
-                    const titleLower = title.toLowerCase();
-                    const descLower = description.toLowerCase();
+            // Apply filters: tag: / תג: search, category trigger, or title/description search
+            if (searchQuery) {
+              const tagSearch = parseTagSearch(searchQuery);
+              if (tagSearch.isTagSearch) {
+                const tagLower = tagSearch.tag.toLowerCase().trim();
+                const flippedTag = flipLanguage(tagSearch.tag);
+                const flippedLower = flippedTag ? flippedTag.toLowerCase().trim() : '';
+                filteredGuides = filteredGuides.filter((guide: Guide) => {
+                  const tags = getGuideTags(guide);
+                  return tags.some((t) => {
+                    const tLower = t.toLowerCase();
                     return (
-                      titleLower.includes(searchLower) ||
-                      descLower.includes(searchLower) ||
-                      (flippedLower && (titleLower.includes(flippedLower) || descLower.includes(flippedLower)))
+                      tLower === tagLower ||
+                      tLower.includes(tagLower) ||
+                      (flippedLower && (tLower === flippedLower || tLower.includes(flippedLower)))
                     );
                   });
-                }
-              }
-
-              if (selectedSports.length > 0) {
-                filteredGuides = filteredGuides.filter((guide: Guide) => 
-                  guide.relatedSports?.some(sport => selectedSports.includes(sport))
-                );
-              }
-
-              if (difficulty) {
-                filteredGuides = filteredGuides.filter((guide: Guide) => 
-                  guide.difficulty?.toLowerCase() === difficulty.toLowerCase()
-                );
-              }
-
-              if (minRating > 0) {
-                filteredGuides = filteredGuides.filter((guide: Guide) => 
-                  (guide.rating || 0) >= minRating
-                );
-              }
-
-              // Apply sorting
-              filteredGuides.sort((a: Guide, b: Guide) => {
-                switch (sortBy) {
-                  case 'rating':
-                    return (b.rating || 0) - (a.rating || 0);
-                  case 'views':
-                    return (b.viewsCount || 0) - (a.viewsCount || 0);
-                  case 'title':
-                    return getLocalizedText(a.title, locale).localeCompare(getLocalizedText(b.title, locale));
-                  case 'newest':
-                  default:
-                    return 0; // Already sorted by newest in cache
-                }
-              });
-
-              // Apply pagination
-              const limit = 12;
-              const startIndex = (page - 1) * limit;
-              const paginatedGuides = filteredGuides.slice(startIndex, startIndex + limit);
-
-              setGuides(paginatedGuides);
-              setTotalResults(filteredGuides.length);
-              setTotalGuidesCount(allCachedGuides.length); // Always set unfiltered total
-              
-              // Extract filters from cached data if needed
-              if (filtersData.sports.length === 0 && allCachedGuides.length > 0) {
-                const sportsSet = new Set<string>();
-                allCachedGuides.forEach((guide: Guide) => {
-                  guide.relatedSports?.forEach(sport => sportsSet.add(sport));
                 });
-                setFiltersData({
-                  sports: Array.from(sportsSet).sort(),
-                  difficulties: ['Beginner', 'Intermediate', 'Advanced', 'Expert'].filter(diff =>
-                    allCachedGuides.some((guide: Guide) => guide.difficulty?.toLowerCase() === diff.toLowerCase())
-                  ),
+              } else if (queryMatchesCategory(searchQuery, 'guides')) {
+                // Show all guides when user types e.g. "מדריכים", "guides", "nsrhfho"
+              } else {
+                const searchLower = searchQuery.toLowerCase().trim();
+                const flipped = flipLanguage(searchQuery);
+                const flippedLower = flipped ? flipped.toLowerCase().trim() : '';
+                filteredGuides = filteredGuides.filter((guide: Guide) => {
+                  const title = getLocalizedText(guide.title, locale);
+                  const description = guide.description
+                    ? getLocalizedText(guide.description, locale)
+                    : '';
+                  const titleLower = title.toLowerCase();
+                  const descLower = description.toLowerCase();
+                  return (
+                    titleLower.includes(searchLower) ||
+                    descLower.includes(searchLower) ||
+                    (flippedLower &&
+                      (titleLower.includes(flippedLower) || descLower.includes(flippedLower)))
+                  );
                 });
               }
-
-              setLoading(false);
-              return; // Exit early, used cache
-            } else {
-              // Version mismatch, fetch fresh data
-              console.log('Guides version mismatch, fetching fresh data');
             }
+
+            if (selectedSports.length > 0) {
+              filteredGuides = filteredGuides.filter((guide: Guide) =>
+                guide.relatedSports?.some((sport) => selectedSports.includes(sport))
+              );
+            }
+
+            if (difficulty) {
+              filteredGuides = filteredGuides.filter(
+                (guide: Guide) => guide.difficulty?.toLowerCase() === difficulty.toLowerCase()
+              );
+            }
+
+            if (minRating > 0) {
+              filteredGuides = filteredGuides.filter(
+                (guide: Guide) => (guide.rating || 0) >= minRating
+              );
+            }
+
+            // Apply sorting
+            filteredGuides.sort((a: Guide, b: Guide) => {
+              switch (sortBy) {
+                case 'rating':
+                  return (b.rating || 0) - (a.rating || 0);
+                case 'views':
+                  return (b.viewsCount || 0) - (a.viewsCount || 0);
+                case 'title':
+                  return getLocalizedText(a.title, locale).localeCompare(
+                    getLocalizedText(b.title, locale)
+                  );
+                case 'newest':
+                default:
+                  return 0; // Already sorted by newest in cache
+              }
+            });
+
+            // Apply pagination
+            const limit = 12;
+            const startIndex = (page - 1) * limit;
+            const paginatedGuides = filteredGuides.slice(startIndex, startIndex + limit);
+
+            setGuides(paginatedGuides);
+            setTotalResults(filteredGuides.length);
+            setTotalGuidesCount(allCachedGuides.length); // Always set unfiltered total
+
+            // Extract filters from cached data if needed
+            if (filtersData.sports.length === 0 && allCachedGuides.length > 0) {
+              const sportsSet = new Set<string>();
+              allCachedGuides.forEach((guide: Guide) => {
+                guide.relatedSports?.forEach((sport) => sportsSet.add(sport));
+              });
+              setFiltersData({
+                sports: Array.from(sportsSet).sort(),
+                difficulties: ['Beginner', 'Intermediate', 'Advanced', 'Expert'].filter((diff) =>
+                  allCachedGuides.some(
+                    (guide: Guide) => guide.difficulty?.toLowerCase() === diff.toLowerCase()
+                  )
+                ),
+              });
+            }
+
+            setLoading(false);
+            return; // Exit early, used cache
+          } else {
+            // Version mismatch, fetch fresh data
+            console.log('Guides version mismatch, fetching fresh data');
+          }
         } catch (e) {
           console.warn('Failed to use cached guides data', e);
           // Continue to fetch from API
@@ -730,7 +783,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             const allGuidesData = await allGuidesResponse.json();
             const fetchedVersion = allGuidesData.version || 1;
             const allGuides = allGuidesData.guides || [];
-            
+
             localStorage.setItem(cacheKey, JSON.stringify(allGuides));
             localStorage.setItem(
               versionKey,
@@ -762,25 +815,28 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
   const showingFrom = (currentPage - 1) * 12 + 1;
   const showingTo = Math.min(currentPage * 12, totalResults);
 
-  const hasAnyFilter = selectedSports.length > 0 || difficulty || minRating > 0 || searchQuery.trim();
-  
+  const hasAnyFilter =
+    selectedSports.length > 0 || difficulty || minRating > 0 || searchQuery.trim();
+
   // Count active filters (each selected sport counts as a separate filter)
-  const activeFiltersCount = 
-    selectedSports.length + 
-    (difficulty ? 1 : 0) + 
-    (minRating > 0 ? 1 : 0) + 
+  const activeFiltersCount =
+    selectedSports.length +
+    (difficulty ? 1 : 0) +
+    (minRating > 0 ? 1 : 0) +
     (searchQuery.trim() ? 1 : 0);
   const hasMultipleFilters = activeFiltersCount > 1;
 
   // Filter sport buttons to only show those with available guides
-  const availableSportButtons = SPORT_CONFIG.filter(sport => {
+  const availableSportButtons = SPORT_CONFIG.filter((sport) => {
     // Show button only if this sport exists in filtersData
     return filtersData.sports.includes(sport.value);
   });
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark" dir={locale === 'he' ? 'rtl' : 'ltr'}>
-      
+    <div
+      className="min-h-screen bg-background dark:bg-background-dark"
+      dir={locale === 'he' ? 'rtl' : 'ltr'}
+    >
       {/* ========================================
           HERO SECTION - Brand Messaging  
       ======================================== */}
@@ -796,7 +852,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                 'גלה מדריכים שיעזרו לך ללמוד ולהשתפר. הצטרף לקהילה.'
               )}
             </p>
-            
+
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
               <div className="flex items-center gap-2 text-sm">
@@ -820,19 +876,18 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
       {/* ========================================
           STICKY FILTER BAR - Modern & Clean
       ======================================== */}
-      <div 
+      <div
         className={`sticky z-40 transition-all duration-300 border-b-2 border-transparent ${
           isHeaderVisible ? 'top-16 md:top-16' : 'top-0'
         } ${
-          isScrolled 
-            ? 'shadow-xl bg-header dark:bg-header-dark border-header-border dark:border-header-border-dark py-3' 
+          isScrolled
+            ? 'shadow-xl bg-header dark:bg-header-dark border-header-border dark:border-header-border-dark py-3'
             : 'py-4'
         }`}
       >
         <div className="max-w-6xl mx-auto px-4">
           {/* Main Filter Row */}
           <div className="flex flex-col sm:flex-row items-stretch md:items-center gap-3">
-            
             {/* Left: Search */}
             <div className="flex items-center gap-1 flex-1">
               <div className="flex-1 min-w-0 w-full">
@@ -854,7 +909,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                 <div className="flex items-center gap-2 flex-wrap">
                   {availableSportButtons.map((sport) => {
                     const isSelected = selectedSports.includes(sport.value);
-                    
+
                     return (
                       <Tooltip key={sport.value}>
                         <TooltipTrigger asChild>
@@ -863,9 +918,9 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                             size="sm"
                             onClick={() => {
                               // Toggle this sport
-                              setSelectedSports(prev => {
+                              setSelectedSports((prev) => {
                                 if (prev.includes(sport.value)) {
-                                  return prev.filter(s => s !== sport.value);
+                                  return prev.filter((s) => s !== sport.value);
                                 } else {
                                   return [...prev, sport.value];
                                 }
@@ -877,8 +932,8 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                             <Icon name={sport.iconName as any} className="w-5 h-5" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent 
-                          side="bottom" 
+                        <TooltipContent
+                          side="bottom"
                           className="text-center"
                           variant={isSelected ? sport.variant : 'gray'}
                         >
@@ -914,7 +969,6 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                   </Select>
                 </div>
               )}
-
             </div>
           </div>
 
@@ -958,7 +1012,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                 {selectedSports.map((sport) => (
                   <button
                     key={sport}
-                    onClick={() => setSelectedSports(prev => prev.filter(s => s !== sport))}
+                    onClick={() => setSelectedSports((prev) => prev.filter((s) => s !== sport))}
                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
                   >
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -987,7 +1041,10 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                     onClick={() => setMinRating(0)}
                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-full border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors cursor-pointer"
                   >
-                    <Icon name="star" className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-400" />
+                    <Icon
+                      name="star"
+                      className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-400"
+                    />
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {tr('Rating', 'דירוג')} ≥ {minRating.toFixed(1)}
                     </span>
@@ -1001,7 +1058,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                     onClick={handleClearFilters}
                     className="opacity-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-full transition-colors duration-200 animate-fadeIn"
                     style={{ animationDelay: `400ms` }}
-                 >
+                  >
                     <X className="w-3.5 h-3.5" />
                     {tr('Clear All', 'נקה הכל')}
                   </button>
@@ -1032,10 +1089,10 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {guides.map((guide, index) => (
-                <GuideCard 
-                  key={guide.id} 
-                  guide={guide} 
-                  locale={locale} 
+                <GuideCard
+                  key={guide.id}
+                  guide={guide}
+                  locale={locale}
                   animationDelay={index * 50}
                   getSportTranslation={getSportTranslation}
                   getDifficultyTranslation={getDifficultyTranslation}
@@ -1048,7 +1105,8 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             {totalPages > 1 && (
               <div className="mt-8 flex items-center justify-between">
                 <div className="text-sm text-gray-700 dark:text-gray-300">
-                  {tr('Showing', 'מציג')} {showingFrom} {tr('to', 'עד')} {showingTo} {tr('of', 'מתוך')} {totalResults} {totalResults === 1 ? t('guide') : t('guides')}
+                  {tr('Showing', 'מציג')} {showingFrom} {tr('to', 'עד')} {showingTo}{' '}
+                  {tr('of', 'מתוך')} {totalResults} {totalResults === 1 ? t('guide') : t('guides')}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
@@ -1060,8 +1118,8 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                     {t('pagination.previous')}
                   </Button>
                   <div className="flex items-center space-x-1">
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1)
-                      .map((pageNum) => (
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(
+                      (pageNum) => (
                         <button
                           key={pageNum}
                           onClick={() => setPage(pageNum)}
@@ -1073,7 +1131,8 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                         >
                           {pageNum}
                         </button>
-                      ))}
+                      )
+                    )}
                   </div>
                   <Button
                     variant="secondary"
@@ -1093,10 +1152,9 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
               <Icon name="searchQuest" className="w-8 h-8 text-brand-main" />
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              {searchQuery 
-                ? tr('No guides match your search', 'לא נמצאו מדריכים') 
-                : tr('No guides found', 'לא נמצאו מדריכים')
-              }
+              {searchQuery
+                ? tr('No guides match your search', 'לא נמצאו מדריכים')
+                : tr('No guides found', 'לא נמצאו מדריכים')}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               {tr('Try adjusting your filters or search terms', 'נסה לשנות את הפילטרים או החיפוש')}

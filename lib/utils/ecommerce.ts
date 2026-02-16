@@ -95,3 +95,13 @@ export function isCommunityEnabled(): boolean {
     return envValue !== 'false';
   }
 }
+
+/**
+ * Utility function to check if newsletter (and footer) is enabled.
+ * Uses NEXT_PUBLIC_ENABLE_NEWSLETTER environment variable.
+ * Footer is shown only when this is explicitly "true".
+ */
+export function isNewsletterEnabled(): boolean {
+  const envValue = process.env.NEXT_PUBLIC_ENABLE_NEWSLETTER;
+  return envValue === 'true';
+}

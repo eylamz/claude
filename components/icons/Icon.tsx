@@ -122,7 +122,7 @@ import Trainers from './trainers.svg';
 import TrainersBold from './trainersBold.svg';
 import Moovit from './moovit.svg';
 import MoovitDark from './moovitDark.svg';
-import Park from './park.svg';
+import ParkBold from './parkBold.svg';
 import House from './house.svg';
 import HouseBold from './houseBold.svg';
 import Trees from './trees.svg';
@@ -363,7 +363,7 @@ const iconMap: Record<string, SvgComponent> = {
   closedPark: ClosedPark,
   israelFlag: IsraelFlag,
   usaFlag: UsaFlag,
-  park: Park,
+  parkBold: ParkBold,
   house: House,
   houseBold: HouseBold,
   trees: Trees,
@@ -559,7 +559,7 @@ export type IconName =
   | 'couch'
   | 'nearbyResturants'
   | 'books'
-  | 'park'
+  | 'parkBold'
   | 'house' | 'houseBold'
   | 'trees' | 'treesBold'
   | 'newGoogleMaps'

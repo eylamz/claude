@@ -2,15 +2,14 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import {
-  TrendingUp,
-} from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui';
 import ParkCardSkeleton from '@/components/skateparks/ParkCardSkeleton';
 import { MapView } from '@/components/skateparks/MapView';
 import { ParkCard } from '@/components/skateparks/ParkCard';
 import { FilterBar } from '@/components/skateparks/FilterBar';
 import { Icon } from '@/components/icons';
+import { usePageLoading } from '@/context/PageLoadingContext';
 import { useTranslations } from 'next-intl';
 import { flipLanguage } from '@/lib/utils/transliterate';
 import {
@@ -71,8 +70,6 @@ interface UserLocation {
 type ViewMode = 'map' | 'grid';
 type SortOption = 'nearest' | 'alphabetical' | 'newest' | 'rating';
 
-
-
 /**
  * Main Skateparks Page
  */
@@ -81,14 +78,21 @@ export default function SkateparksPage() {
   const locale = pathname.split('/')[1] || 'en';
   const t = useTranslations('skateparks');
 
-  const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
+  const tr = useCallback(
+    (enText: string, heText: string) => (locale === 'he' ? heText : enText),
+    [locale]
+  );
 
   const AMENITY_OPTIONS = [
     { key: 'parking', label: tr('Parking', 'חניה'), iconName: 'parking' },
     { key: 'shade', label: tr('Shade', 'הצללה'), iconName: 'shadeBold' },
     { key: 'bathroom', label: tr('Bathroom', 'שירותים'), iconName: 'toilet' },
     { key: 'seating', label: tr('Seating', 'מקומות ישיבה'), iconName: 'seatBold' },
-    { key: 'nearbyRestaurants', label: tr('Restaurants Nearby', 'מסעדות בקרבת מקום'), iconName: 'foodBold' },
+    {
+      key: 'nearbyRestaurants',
+      label: tr('Restaurants Nearby', 'מסעדות בקרבת מקום'),
+      iconName: 'foodBold',
+    },
     { key: 'scootersAllowed', label: tr('Scooters Allowed', 'קורקינטים'), iconName: 'scooter' },
     { key: 'bikesAllowed', label: tr('Bikes Allowed', 'אופניים'), iconName: 'bmx-icon' },
     { key: 'entryFee', label: tr('Entry Fee', 'דמי כניסה'), iconName: 'moneyBold' },
@@ -103,7 +107,9 @@ export default function SkateparksPage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [areaFilter, setAreaFilter] = useState('');
-  const [skillLevelFilter, setSkillLevelFilter] = useState<'beginners' | 'advanced' | 'pro' | ''>('');
+  const [skillLevelFilter, setSkillLevelFilter] = useState<'beginners' | 'advanced' | 'pro' | ''>(
+    ''
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [openNowOnly, setOpenNowOnly] = useState(false);
@@ -119,13 +125,19 @@ export default function SkateparksPage() {
   const prevUserLocationRef = useRef<UserLocation | null>(null);
   const isFetchingRef = useRef(false); // Prevent duplicate concurrent fetches
 
+  const { setLoading: setPageLoading } = usePageLoading();
+  useEffect(() => {
+    setPageLoading(loading);
+    return () => setPageLoading(false);
+  }, [loading, setPageLoading]);
+
   // Track newly added amenities for pop animation
   useEffect(() => {
     const prev = prevSelectedAmenitiesRef.current;
     const current = selectedAmenities;
 
     // Find newly added amenities
-    const newlyAdded = current.filter(amenity => !prev.includes(amenity));
+    const newlyAdded = current.filter((amenity) => !prev.includes(amenity));
 
     if (newlyAdded.length > 0) {
       // Add animation to newly added icons
@@ -165,52 +177,57 @@ export default function SkateparksPage() {
     }
   }, [userLocation, sortBy]);
 
-
   // Reverse geocode coordinates to get city name
-  const getCityFromCoordinates = useCallback(async (lat: number, lng: number) => {
-    try {
-      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-      if (!apiKey) {
-        console.warn('Google Maps API key not found');
-        return null;
-      }
+  const getCityFromCoordinates = useCallback(
+    async (lat: number, lng: number) => {
+      try {
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+        if (!apiKey) {
+          console.warn('Google Maps API key not found');
+          return null;
+        }
 
-      const region = locale === 'he' ? 'IL' : undefined;
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}&language=${locale}${region ? `&region=${region}` : ''}`
-      );
+        const region = locale === 'he' ? 'IL' : undefined;
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}&language=${locale}${region ? `&region=${region}` : ''}`
+        );
 
-      if (!response.ok) {
-        console.error('Reverse geocoding failed');
-        return null;
-      }
+        if (!response.ok) {
+          console.error('Reverse geocoding failed');
+          return null;
+        }
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (data.results && data.results.length > 0) {
-        // Find city name from address components
-        for (const result of data.results) {
-          const addressComponents = result.address_components;
-          for (const component of addressComponents) {
-            if (component.types.includes('locality') || component.types.includes('administrative_area_level_1')) {
-              return component.long_name;
+        if (data.results && data.results.length > 0) {
+          // Find city name from address components
+          for (const result of data.results) {
+            const addressComponents = result.address_components;
+            for (const component of addressComponents) {
+              if (
+                component.types.includes('locality') ||
+                component.types.includes('administrative_area_level_1')
+              ) {
+                return component.long_name;
+              }
             }
+          }
+
+          // Fallback: use first result's formatted address
+          if (data.results[0]?.formatted_address) {
+            const parts = data.results[0].formatted_address.split(',');
+            return parts[0]?.trim() || null;
           }
         }
 
-        // Fallback: use first result's formatted address
-        if (data.results[0]?.formatted_address) {
-          const parts = data.results[0].formatted_address.split(',');
-          return parts[0]?.trim() || null;
-        }
+        return null;
+      } catch (error) {
+        console.error('Error getting city name:', error);
+        return null;
       }
-
-      return null;
-    } catch (error) {
-      console.error('Error getting city name:', error);
-      return null;
-    }
-  }, [locale]);
+    },
+    [locale]
+  );
 
   // Request location permission or toggle it off
   const requestLocation = useCallback(async () => {
@@ -256,7 +273,7 @@ export default function SkateparksPage() {
     try {
       const inactiveCacheKey = 'skateparks_cache_inactive';
       const inactiveCachedData = localStorage.getItem(inactiveCacheKey);
-      
+
       if (!inactiveCachedData) {
         return activeParks;
       }
@@ -285,8 +302,10 @@ export default function SkateparksPage() {
 
       // Merge inactive parks with active parks (avoid duplicates by slug)
       const activeSlugs = new Set(activeParks.map((p: any) => p.slug));
-      const uniqueInactiveParks = normalizedInactiveParks.filter((p: any) => !activeSlugs.has(p.slug));
-      
+      const uniqueInactiveParks = normalizedInactiveParks.filter(
+        (p: any) => !activeSlugs.has(p.slug)
+      );
+
       return [...activeParks, ...uniqueInactiveParks];
     } catch (e) {
       console.warn('Failed to merge inactive parks', e);
@@ -358,7 +377,9 @@ export default function SkateparksPage() {
 
                 // If versions don't match, refetch skateparks data and update both cache and version
                 if (storedVersion !== currentVersion) {
-                  console.log(`Version mismatch: cached=${storedVersion}, current=${currentVersion}, fetching full data`);
+                  console.log(
+                    `Version mismatch: cached=${storedVersion}, current=${currentVersion}, fetching full data`
+                  );
                   isFetchingRef.current = true;
                   const response = await fetch('/api/skateparks');
                   if (response.ok) {
@@ -386,7 +407,10 @@ export default function SkateparksPage() {
                     localStorage.setItem(cacheKey, JSON.stringify(normalizedSkateparks));
                     localStorage.setItem(
                       versionKey,
-                      JSON.stringify({ version: newVersion, fetchedAt: getSkateparksFetchedAtReadable() })
+                      JSON.stringify({
+                        version: newVersion,
+                        fetchedAt: getSkateparksFetchedAtReadable(),
+                      })
                     );
 
                     // Merge with inactive parks and update state
@@ -396,7 +420,9 @@ export default function SkateparksPage() {
                   isFetchingRef.current = false;
                 } else {
                   // Versions match, no need to fetch
-                  console.log(`Version match: ${storedVersion} === ${currentVersion}, using cached data`);
+                  console.log(
+                    `Version match: ${storedVersion} === ${currentVersion}, using cached data`
+                  );
                 }
               }
             } catch (e) {
@@ -435,7 +461,10 @@ export default function SkateparksPage() {
                 localStorage.setItem(cacheKey, JSON.stringify(normalizedSkateparks));
                 localStorage.setItem(
                   versionKey,
-                  JSON.stringify({ version: currentVersion, fetchedAt: getSkateparksFetchedAtReadable() })
+                  JSON.stringify({
+                    version: currentVersion,
+                    fetchedAt: getSkateparksFetchedAtReadable(),
+                  })
                 );
 
                 // Merge with inactive parks and update state
@@ -506,119 +535,139 @@ export default function SkateparksPage() {
   }, [mergeInactiveParks]);
 
   // Calculate distance between two coordinates (Haversine formula)
-  const calculateDistance = useCallback((lat1: number, lng1: number, lat2: number, lng2: number): number => {
-    const R = 6371; // Earth's radius in km
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLng = ((lng2 - lng1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLng / 2) *
-        Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }, []);
+  const calculateDistance = useCallback(
+    (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+      const R = 6371; // Earth's radius in km
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLng = ((lng2 - lng1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLng / 2) *
+          Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    },
+    []
+  );
 
   // Normalize text for search (handles apostrophes, diacritics, and whitespace)
   const normalizeSearchText = useCallback((text: string): string => {
-    return text
-      .toLowerCase()
-      .trim()
-      // Remove/normalize apostrophes (both regular ' and curly apostrophes ')
-      .replace(/[''']/g, '')
-      // Normalize whitespace (multiple spaces to single space)
-      .replace(/\s+/g, ' ')
-      // Remove diacritics for better matching (e.g., é -> e, ü -> u)
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
+    return (
+      text
+        .toLowerCase()
+        .trim()
+        // Remove/normalize apostrophes (both regular ' and curly apostrophes ')
+        .replace(/[''']/g, '')
+        // Normalize whitespace (multiple spaces to single space)
+        .replace(/\s+/g, ' ')
+        // Remove diacritics for better matching (e.g., é -> e, ü -> u)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+    );
   }, []);
 
   // Client-side filtering function. Returns { filtered, areaMatchedIds } so area-matched parks can be sorted last.
-  const filterSkateparks = useCallback((parks: Skatepark[]): { filtered: Skatepark[]; areaMatchedIds: Set<string> } => {
-    let filtered = [...parks];
-    const areaMatchedIds = new Set<string>();
+  const filterSkateparks = useCallback(
+    (parks: Skatepark[]): { filtered: Skatepark[]; areaMatchedIds: Set<string> } => {
+      let filtered = [...parks];
+      const areaMatchedIds = new Set<string>();
 
-    // Area filter
-    if (areaFilter) {
-      filtered = filtered.filter((park) => park.area === areaFilter);
-    }
-
-    // Skill level filter (beginners, advanced, pro)
-    if (skillLevelFilter) {
-      filtered = filtered.filter((park) => {
-        const level = skillLevelFilter as 'beginners' | 'advanced' | 'pro';
-        const sl = park.skillLevel;
-        if (!sl) return false;
-        return sl[level] === true;
-      });
-    }
-
-    // Search filter: flipLanguage (wrong keyboard), category trigger (show all), area search (show area last)
-    if (searchQuery.trim()) {
-      if (queryMatchesCategory(searchQuery, 'skateparks')) {
-        // Show all skateparks when user types e.g. "סקייטפארקים", "skateparks", "xehhyptreho"
-      } else {
-        const normalizedQuery = normalizeSearchText(searchQuery);
-        const flipped = flipLanguage(searchQuery);
-        const normalizedFlipped = flipped ? normalizeSearchText(flipped) : '';
-        const areaFromQuery = getAreaFromQuery(searchQuery);
-
-        const nameStartsWith: Skatepark[] = [];
-        const nameIncludes: Skatepark[] = [];
-        const areaOnlyMatched: Skatepark[] = [];
-
-        for (const park of filtered) {
-          let nameEn = '';
-          let nameHe = '';
-          if (typeof park.name === 'string') {
-            nameEn = park.name;
-            nameHe = park.name;
-          } else {
-            nameEn = park.name.en || '';
-            nameHe = park.name.he || '';
-          }
-          const normalizedNameEn = normalizeSearchText(nameEn);
-          const normalizedNameHe = normalizeSearchText(nameHe);
-          const startsWithMatch =
-            normalizedNameEn.startsWith(normalizedQuery) ||
-            normalizedNameHe.startsWith(normalizedQuery) ||
-            (normalizedFlipped && (normalizedNameEn.startsWith(normalizedFlipped) || normalizedNameHe.startsWith(normalizedFlipped)));
-          const includesMatch =
-            normalizedNameEn.includes(normalizedQuery) ||
-            normalizedNameHe.includes(normalizedQuery) ||
-            (normalizedFlipped && (normalizedNameEn.includes(normalizedFlipped) || normalizedNameHe.includes(normalizedFlipped)));
-
-          if (startsWithMatch) {
-            nameStartsWith.push(park);
-          } else if (includesMatch) {
-            nameIncludes.push(park);
-          } else if (areaFromQuery && park.area === areaFromQuery) {
-            areaOnlyMatched.push(park);
-            areaMatchedIds.add(park._id);
-          }
-        }
-
-        filtered = [...nameStartsWith, ...nameIncludes, ...areaOnlyMatched];
+      // Area filter
+      if (areaFilter) {
+        filtered = filtered.filter((park) => park.area === areaFilter);
       }
-    }
 
-    // Amenities filter
-    if (selectedAmenities.length > 0) {
-      filtered = filtered.filter((park) => {
-        return selectedAmenities.every((amenity) => {
-          return park.amenities[amenity as keyof typeof park.amenities] === true;
+      // Skill level filter (beginners, advanced, pro)
+      if (skillLevelFilter) {
+        filtered = filtered.filter((park) => {
+          const level = skillLevelFilter as 'beginners' | 'advanced' | 'pro';
+          const sl = park.skillLevel;
+          if (!sl) return false;
+          return sl[level] === true;
         });
-      });
-    }
+      }
 
-    // Open now filter (check is24Hours)
-    if (openNowOnly) {
-      filtered = filtered.filter((park) => park.is24Hours === true);
-    }
+      // Search filter: flipLanguage (wrong keyboard), category trigger (show all), area search (show area last)
+      if (searchQuery.trim()) {
+        if (queryMatchesCategory(searchQuery, 'skateparks')) {
+          // Show all skateparks when user types e.g. "סקייטפארקים", "skateparks", "xehhyptreho"
+        } else {
+          const normalizedQuery = normalizeSearchText(searchQuery);
+          const flipped = flipLanguage(searchQuery);
+          const normalizedFlipped = flipped ? normalizeSearchText(flipped) : '';
+          const areaFromQuery = getAreaFromQuery(searchQuery);
 
-    return { filtered, areaMatchedIds };
-  }, [areaFilter, skillLevelFilter, searchQuery, selectedAmenities, openNowOnly, locale, normalizeSearchText]);
+          const nameStartsWith: Skatepark[] = [];
+          const nameIncludes: Skatepark[] = [];
+          const areaOnlyMatched: Skatepark[] = [];
+
+          for (const park of filtered) {
+            let nameEn = '';
+            let nameHe = '';
+            if (typeof park.name === 'string') {
+              nameEn = park.name;
+              nameHe = park.name;
+            } else {
+              nameEn = park.name.en || '';
+              nameHe = park.name.he || '';
+            }
+            const normalizedNameEn = normalizeSearchText(nameEn);
+            const normalizedNameHe = normalizeSearchText(nameHe);
+            const startsWithMatch =
+              normalizedNameEn.startsWith(normalizedQuery) ||
+              normalizedNameHe.startsWith(normalizedQuery) ||
+              (normalizedFlipped &&
+                (normalizedNameEn.startsWith(normalizedFlipped) ||
+                  normalizedNameHe.startsWith(normalizedFlipped)));
+            const includesMatch =
+              normalizedNameEn.includes(normalizedQuery) ||
+              normalizedNameHe.includes(normalizedQuery) ||
+              (normalizedFlipped &&
+                (normalizedNameEn.includes(normalizedFlipped) ||
+                  normalizedNameHe.includes(normalizedFlipped)));
+
+            if (startsWithMatch) {
+              nameStartsWith.push(park);
+            } else if (includesMatch) {
+              nameIncludes.push(park);
+            } else if (areaFromQuery && park.area === areaFromQuery) {
+              areaOnlyMatched.push(park);
+              areaMatchedIds.add(park._id);
+            }
+          }
+
+          filtered = [...nameStartsWith, ...nameIncludes, ...areaOnlyMatched];
+        }
+      }
+
+      // Amenities filter
+      if (selectedAmenities.length > 0) {
+        filtered = filtered.filter((park) => {
+          return selectedAmenities.every((amenity) => {
+            return park.amenities[amenity as keyof typeof park.amenities] === true;
+          });
+        });
+      }
+
+      // Open now filter (check is24Hours)
+      if (openNowOnly) {
+        filtered = filtered.filter((park) => park.is24Hours === true);
+      }
+
+      return { filtered, areaMatchedIds };
+    },
+    [
+      areaFilter,
+      skillLevelFilter,
+      searchQuery,
+      selectedAmenities,
+      openNowOnly,
+      locale,
+      normalizeSearchText,
+    ]
+  );
 
   // Client-side sorting function
   const sortSkateparks = useCallback((parks: Skatepark[], sortOption: SortOption): Skatepark[] => {
@@ -682,7 +731,18 @@ export default function SkateparksPage() {
     const sortedName = sortSkateparks(nameMatched, sortBy);
     const sortedArea = sortSkateparks(areaMatched, sortBy);
     setSkateparks([...sortedName, ...sortedArea]);
-  }, [allSkateparks, areaFilter, searchQuery, selectedAmenities, openNowOnly, sortBy, userLocation, filterSkateparks, sortSkateparks, calculateDistance]);
+  }, [
+    allSkateparks,
+    areaFilter,
+    searchQuery,
+    selectedAmenities,
+    openNowOnly,
+    sortBy,
+    userLocation,
+    filterSkateparks,
+    sortSkateparks,
+    calculateDistance,
+  ]);
 
   // Fetch all skateparks once on mount
   useEffect(() => {
@@ -703,39 +763,53 @@ export default function SkateparksPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark" dir={locale === 'he' ? 'rtl' : 'ltr'}>
-
+    <div
+      className="min-h-screen bg-background dark:bg-background-dark"
+      dir={locale === 'he' ? 'rtl' : 'ltr'}
+    >
       {/* ========================================
           HERO SECTION - Brand Messaging  
       ======================================== */}
-      <div ref={heroSectionRef} className="relative pt-14 md:pt-14 bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5 z-10">
+      <div
+        ref={heroSectionRef}
+        className="relative pt-14 md:pt-14 bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5 z-10"
+      >
         <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
               {tr('Find Your Park', 'מצא את הבית שלך')}
             </h1>
             <h2 className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              {tr(
-                'Where wheels meet concrete, community happens.',
-                'פה הגלגלים והחברים נפגשים.'
-              )}
+              {tr('Where wheels meet concrete, community happens.', 'פה הגלגלים והחברים נפגשים.')}
             </h2>
 
-            {/* Stats Bar */}
-            <div className="flex items-center justify-center gap-6 pt-4">
-              <div className="flex items-center gap-2 text-sm">
-                <div className="w-2 h-2 rounded-full bg-brand-main animate-pulse" />
-                <span className="text-gray-600 dark:text-gray-400">
-                  {allSkateparks.length} {tr('Parks', 'פארקים')}
-                </span>
-              </div>
-              <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
-              <div className="flex items-center gap-2 text-sm">
-                <TrendingUp className="w-4 h-4 text-green-500" />
-                <span className="text-gray-600 dark:text-gray-400">
-                  {tr('Community Reviews', 'ביקורות קהילה')}
-                </span>
-              </div>
+            {/* Stats Bar or Loading Spinner */}
+            <div className="flex items-center justify-center min-h-[2.5rem] pt-4">
+              {loading ? (
+                <div className="h-10 flex items-center justify-center" aria-hidden="true">
+                  <span
+                    className="inline-block w-10 h-10 rounded-full border-2 border-gray-200 dark:border-gray-700 border-t-[#143116] dark:border-t-brand-main animate-spin"
+                    role="status"
+                    aria-label={tr('Loading...', 'טוען...')}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Icon name="parkBold" className="w-4 h-4 text-green-500" />
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {allSkateparks.length} {tr('Parks', 'פארקים')}
+                    </span>
+                  </div>
+                  <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
+                  <div className="flex items-center gap-2 text-sm">
+                    <Icon name="reviewBold" className="w-5 h-5 text-green-500" />
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {tr('Community Reviews', 'ביקורות קהילה')}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -763,7 +837,7 @@ export default function SkateparksPage() {
         requestLocation={requestLocation}
         clearFilters={clearFilters}
         heroSectionRef={heroSectionRef}
-                  locale={locale}
+        locale={locale}
         tr={tr}
         t={t}
         amenityOptions={AMENITY_OPTIONS}
@@ -782,27 +856,27 @@ export default function SkateparksPage() {
         ) : viewMode === 'map' ? (
           /* MAP VIEW */
           <MapView
-                skateparks={skateparks}
-                userLocation={userLocation}
+            skateparks={skateparks}
+            userLocation={userLocation}
             selectedPark={selectedPark}
             onParkSelect={setSelectedPark}
-                locale={locale}
-                hasAmenitiesFilter={selectedAmenities.length > 0}
+            locale={locale}
+            hasAmenitiesFilter={selectedAmenities.length > 0}
             mapContainerRef={mapContainerRef}
             tr={tr}
           />
         ) : (
           /* GRID VIEW */
           <>
-            <section 
+            <section
               aria-label={tr('Skatepark listings', 'רשימת פארקים')}
               className=" grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6"
             >
               {skateparks.map((park, index) => (
-                <ParkCard 
-                  key={park._id} 
-                  park={park} 
-                  locale={locale} 
+                <ParkCard
+                  key={park._id}
+                  park={park}
+                  locale={locale}
                   animationDelay={index * 50}
                   sortBy={sortBy}
                   userLocation={userLocation}
@@ -818,15 +892,20 @@ export default function SkateparksPage() {
                   <Icon name="searchQuest" className="w-8 h-8 text-gray dark:text-gray-dark" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                  {searchQuery 
-                    ? tr('No parks match your search', 'לא נמצאו פארקים') 
-                    : tr('No parks found', 'לא נמצאו פארקים')
-                  }
+                  {searchQuery
+                    ? tr('No parks match your search', 'לא נמצאו פארקים')
+                    : tr('No parks found', 'לא נמצאו פארקים')}
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  {tr('Try adjusting your filters or search terms', 'נסה לשנות את הפילטרים או החיפוש')}
+                  {tr(
+                    'Try adjusting your filters or search terms',
+                    'נסה לשנות את הפילטרים או החיפוש'
+                  )}
                 </p>
-                {(searchQuery || selectedAmenities.length > 0 || areaFilter || skillLevelFilter) && (
+                {(searchQuery ||
+                  selectedAmenities.length > 0 ||
+                  areaFilter ||
+                  skillLevelFilter) && (
                   <Button variant="gray" onClick={clearFilters}>
                     {tr('Clear All Filters', 'נקה את כל הפילטרים')}
                   </Button>

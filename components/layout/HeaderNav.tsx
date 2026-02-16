@@ -1045,6 +1045,11 @@ export default function HeaderNav() {
                                     icon: BarChart2,
                                   },
                                   {
+                                    href: `/${locale}/admin/newsletter`,
+                                    labelKey: 'newsletter',
+                                    icon: ClipboardList,
+                                  },
+                                  {
                                     href: `/${locale}/admin/settings`,
                                     labelKey: 'settings',
                                     icon: SettingsIcon,

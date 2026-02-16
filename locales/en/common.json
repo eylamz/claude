@@ -139,7 +139,7 @@
     "subscribing": "Subscribing...",
     "subscribed": "Subscribed!",
     "subscribeError": "Something went wrong. Please try again.",
-    "enterYourEmail": "Enter your email",
+    "enterYourEmail": "Email",
     "platform": "Platform",
     "features": "Features",
     "pricing": "Pricing",
@@ -187,7 +187,8 @@
     "contactEmail": "hello@enboss.co",
     "contactPhone": "+972-XX-XXXXXXX",
     "contactLocation": "Tel Aviv, Israel",
-    "soon": "SOON"
+    "soon": "SOON",
+    "newsletterThankYouMessage": "You'll be notified when we launch."
   },
   "cookieConsent": {
     "title": "We use cookies",
@@ -290,6 +291,7 @@
     "reviews": "Reviews",
     "eventSignups": "Event Signups",
     "metrics": "Metrics",
+    "newsletter": "Newsletter",
     "settings": "Settings"
   },
   "community": {

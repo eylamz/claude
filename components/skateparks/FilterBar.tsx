@@ -30,19 +30,19 @@ interface FilterBarProps {
   sortBy: 'nearest' | 'alphabetical' | 'newest' | 'rating';
   viewMode: 'map' | 'grid';
   setViewMode: (mode: 'map' | 'grid') => void;
-  
+
   // UI states
   loading: boolean;
-  
+
   // Data
   skateparksCount: number;
   allSkateparksCount: number;
-  
+
   // Callbacks
   requestLocation: () => void;
   clearFilters: () => void;
   heroSectionRef: React.RefObject<HTMLDivElement | null>;
-  
+
   // Locale & translations
   locale: string;
   tr: (enText: string, heText: string) => string;
@@ -119,21 +119,24 @@ export function FilterBar({
   const hasSkillLevelFilter = !!skillLevelFilter;
   const hasOpenNowFilter = openNowOnly;
   const hasSearchQuery = !!searchQuery.trim();
-  const activeFiltersCount = selectedAmenities.length + (hasAreaFilter ? 1 : 0) + (hasSkillLevelFilter ? 1 : 0) + (hasOpenNowFilter ? 1 : 0) + (hasSearchQuery ? 1 : 0);
+  const activeFiltersCount =
+    selectedAmenities.length +
+    (hasAreaFilter ? 1 : 0) +
+    (hasSkillLevelFilter ? 1 : 0) +
+    (hasOpenNowFilter ? 1 : 0) +
+    (hasSearchQuery ? 1 : 0);
   const hasAnyFilter = activeFiltersCount > 0;
   const hasMultipleFilters = activeFiltersCount > 1;
   const hasLocationSorting = userLocation && sortBy === 'nearest';
   const showStatus = hasAnyFilter || hasLocationSorting;
 
   return (
-    <div 
+    <div
       className={`sticky z-40  bg-background dark:bg-background-dark transition-all duration-200 border-b-2 border-transparent ${
-        isScrolled 
+        isScrolled
           ? `!bg-header dark:!bg-header-dark shadow-xl border-header-border dark:border-header-border-dark py-3 ${
-              isScrollingUp 
-                ? 'top-16' 
-                : 'top-0 pt-6 sm:pt-4'
-            }` 
+              isScrollingUp ? 'top-16' : 'top-0 pt-6 sm:pt-4'
+            }`
           : 'py-4 pt-6 sm:pt-4'
       }`}
     >
@@ -156,8 +159,12 @@ export function FilterBar({
             <div className="w-[130px] flex-shrink-0 [&_[data-slot=select-trigger]]:h-9">
               <SelectWrapper
                 value={skillLevelFilter}
-                variant='purple'
-                onChange={(e) => setSkillLevelFilter((e.target.value || '') as '' | 'beginners' | 'advanced' | 'pro')}
+                variant="purple"
+                onChange={(e) =>
+                  setSkillLevelFilter(
+                    (e.target.value || '') as '' | 'beginners' | 'advanced' | 'pro'
+                  )
+                }
                 options={[
                   { value: '', label: t('search.skillLevel.all') },
                   { value: 'beginners', label: t('search.skillLevel.beginners') },
@@ -170,16 +177,16 @@ export function FilterBar({
 
           {/* Right: Location + View Toggle */}
           <div className="flex items-center gap-2 xsm:gap-3">
-                        {/* Mobile: Search toggle button (green, no tooltip) */}
-                        <div className="flex-shrink-0 md:hidden">
+            {/* Mobile: Search toggle button (green, no tooltip) */}
+            <div className="flex-shrink-0 md:hidden">
               <Button
-                variant={mobileSearchOpen ? "orange" : "gray"}
+                variant={mobileSearchOpen ? 'orange' : 'gray'}
                 size="sm"
                 onClick={() => setMobileSearchOpen((open) => !open)}
                 className="overflow-hidden"
                 aria-label={tr('Search parks...', 'חפש פארקים...')}
               >
-                <Icon name={mobileSearchOpen ? "searchBold" : "search"} className="w-5 h-5" />
+                <Icon name={mobileSearchOpen ? 'searchBold' : 'search'} className="w-5 h-5" />
               </Button>
             </div>
 
@@ -197,24 +204,30 @@ export function FilterBar({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    variant={userLocation ? "green" : "gray"}
+                    variant={userLocation ? 'green' : 'gray'}
                     size="sm"
                     onClick={requestLocation}
-                    className='overflow-hidden'
-                    aria-label={userLocation ? tr('Disable Location', 'כבה מיקום') : tr('Use My Location', 'השתמש במיקומי')}
+                    className="overflow-hidden"
+                    aria-label={
+                      userLocation
+                        ? tr('Disable Location', 'כבה מיקום')
+                        : tr('Use My Location', 'השתמש במיקומי')
+                    }
                   >
-                    <Icon 
-                      name={userLocation ? "locationBold" : "location"}
+                    <Icon
+                      name={userLocation ? 'locationBold' : 'location'}
                       className={`w-5 h-5 ${userLocation ? '' : 'animate-locationPin'}`}
                     />
                   </Button>
-                </TooltipTrigger> 
-                <TooltipContent 
-                  side="bottom" 
+                </TooltipTrigger>
+                <TooltipContent
+                  side="bottom"
                   className="text-center"
-                  variant={userLocation ? "red" : "gray"}
+                  variant={userLocation ? 'red' : 'gray'}
                 >
-                  {userLocation ? tr('Disable Location', 'כבה מיקום') : tr('Use My Location', 'השתמש במיקומי')}
+                  {userLocation
+                    ? tr('Disable Location', 'כבה מיקום')
+                    : tr('Use My Location', 'השתמש במיקומי')}
                 </TooltipContent>
               </Tooltip>
 
@@ -223,30 +236,34 @@ export function FilterBar({
                 <TooltipTrigger asChild>
                   <div className="relative">
                     <Button
-                      variant={viewMode === 'map' ? "pink" : "gray"}
+                      variant={viewMode === 'map' ? 'pink' : 'gray'}
                       size="sm"
                       onClick={() => {
                         const newViewMode = viewMode === 'grid' ? 'map' : 'grid';
                         setViewMode(newViewMode);
-                        
+
                         // Scroll down when switching to map view
                         if (newViewMode === 'map' && heroSectionRef.current) {
                           const heroHeight = heroSectionRef.current.offsetHeight;
                           window.scrollTo({
                             top: heroHeight,
-                            behavior: 'smooth'
+                            behavior: 'smooth',
                           });
                         }
                         // Scroll to top when switching to grid view
                         else if (newViewMode === 'grid') {
                           window.scrollTo({
                             top: 0,
-                            behavior: 'smooth'
+                            behavior: 'smooth',
                           });
                         }
                       }}
-                      className=''
-                      aria-label={viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
+                      className=""
+                      aria-label={
+                        viewMode === 'grid'
+                          ? tr('Map View', 'תצוגת מפה')
+                          : tr('Grid View', 'תצוגת רשת')
+                      }
                     >
                       {viewMode === 'grid' ? (
                         <Icon name="map" className="w-5 h-5" />
@@ -256,9 +273,9 @@ export function FilterBar({
                     </Button>
                   </div>
                 </TooltipTrigger>
-                <TooltipContent 
+                <TooltipContent
                   variant={viewMode === 'grid' ? 'gray' : 'pink'}
-                  side="bottom" 
+                  side="bottom"
                   className="text-center"
                 >
                   {viewMode === 'grid' ? tr('Map View', 'תצוגת מפה') : tr('Grid View', 'תצוגת רשת')}
@@ -304,9 +321,7 @@ export function FilterBar({
                   onClick={() => setSearchQuery('')}
                   className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-bg dark:bg-orange-bg-dark rounded-full border border-orange-border dark:border-orange-border-dark hover:bg-orange-bg/80 dark:hover:bg-orange-bg-dark/80 transition-colors cursor-pointer animate-pop"
                 >
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    "{searchQuery}"
-                  </span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">"{searchQuery}"</span>
                   <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                 </button>
               )}
@@ -340,13 +355,15 @@ export function FilterBar({
 
               {/* Amenities Badges */}
               {selectedAmenities.map((amenity) => {
-                const amenityOption = amenityOptions.find(a => a.key === amenity);
+                const amenityOption = amenityOptions.find((a) => a.key === amenity);
                 const iconName = amenityOption?.iconName;
 
                 return (
                   <button
                     key={amenity}
-                    onClick={() => setSelectedAmenities(prev => prev.filter(a => a !== amenity))}
+                    onClick={() =>
+                      setSelectedAmenities((prev) => prev.filter((a) => a !== amenity))
+                    }
                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-bg/80 dark:hover:bg-blue-bg-dark/80 transition-colors cursor-pointer animate-pop"
                   >
                     {iconName && (
@@ -374,9 +391,7 @@ export function FilterBar({
                     {tr('Nearest First', 'הקרובים ביותר')}
                   </span>
                   {userCity && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      ({userCity})
-                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">({userCity})</span>
                   )}
                 </div>
               )}
@@ -399,4 +414,3 @@ export function FilterBar({
     </div>
   );
 }
-

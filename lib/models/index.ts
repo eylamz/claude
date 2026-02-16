@@ -87,3 +87,6 @@ export type {
   ReferrerCategory,
   ConsentChoice,
 } from './AnalyticsEvent';
+
+export { default as NewsletterSubscriber } from './NewsletterSubscriber';
+export type { INewsletterSubscriber, NewsletterSource } from './NewsletterSubscriber';

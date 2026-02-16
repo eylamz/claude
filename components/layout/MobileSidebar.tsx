@@ -1007,6 +1007,13 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                     ),
                   },
                   {
+                    href: `/${locale}/admin/newsletter`,
+                    labelKey: 'newsletter',
+                    icon: (
+                      <Icon name="clipboardBold" className="w-4 h-4" />
+                    ),
+                  },
+                  {
                     href: `/${locale}/admin/settings`,
                     labelKey: 'settings',
                     icon: (

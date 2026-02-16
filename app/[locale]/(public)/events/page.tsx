@@ -28,7 +28,9 @@ function cacheToListEvents(cache: any[], locale: 'en' | 'he') {
 }
 
 /** Parse "tag:name" or "תג:name" from search query. */
-function parseTagSearch(query: string): { isTagSearch: true; tag: string } | { isTagSearch: false } {
+function parseTagSearch(
+  query: string
+): { isTagSearch: true; tag: string } | { isTagSearch: false } {
   if (!query || typeof query !== 'string') return { isTagSearch: false };
   const trimmed = query.trim();
   const match = trimmed.match(/^\s*(?:tag|תג)\s*:\s*(.*)$/i);
@@ -108,13 +110,13 @@ const SPORT_CONFIG = [
     variant: 'blue' as const,
     tooltipEn: 'Filter by Longboarding events',
     tooltipHe: 'סנן לפי אירועי לונגבורד',
-  }
+  },
 ] as const;
 
 // Utility function to optimize image URLs
 const getOptimizedImageUrl = (originalUrl: string): string | null => {
   if (!originalUrl || originalUrl.trim() === '') return null;
-  
+
   if (originalUrl.includes('cloudinary.com')) {
     const urlParts = originalUrl.split('/upload/');
     if (urlParts.length === 2) {
@@ -125,242 +127,251 @@ const getOptimizedImageUrl = (originalUrl: string): string | null => {
 };
 
 // Memoized thumbnail component
-const EventThumbnail = memo(({ 
-  photoUrl, 
-  eventTitle, 
-  onLoad,
-  alwaysSaturated = false
-}: { 
-  photoUrl: string, 
-  eventTitle: string,
-  onLoad?: () => void,
-  alwaysSaturated?: boolean
-}) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
-  
-  useEffect(() => {
-    setIsLoaded(false);
-    setHasError(false);
-  }, [photoUrl]);
-  
-  useEffect(() => {
-    const checkImageLoaded = () => {
-      if (imgRef.current) {
-        const img = imgRef.current;
-        if (img.complete && img.naturalHeight !== 0) {
-          setIsLoaded(true);
-          setHasError(false);
-          onLoad?.();
-          return true;
-        } else if (img.complete && img.naturalHeight === 0) {
-          setIsLoaded(true);
-          setHasError(true);
-          return true;
+const EventThumbnail = memo(
+  ({
+    photoUrl,
+    eventTitle,
+    onLoad,
+    alwaysSaturated = false,
+  }: {
+    photoUrl: string;
+    eventTitle: string;
+    onLoad?: () => void;
+    alwaysSaturated?: boolean;
+  }) => {
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [hasError, setHasError] = useState(false);
+    const imgRef = useRef<HTMLImageElement>(null);
+
+    useEffect(() => {
+      setIsLoaded(false);
+      setHasError(false);
+    }, [photoUrl]);
+
+    useEffect(() => {
+      const checkImageLoaded = () => {
+        if (imgRef.current) {
+          const img = imgRef.current;
+          if (img.complete && img.naturalHeight !== 0) {
+            setIsLoaded(true);
+            setHasError(false);
+            onLoad?.();
+            return true;
+          } else if (img.complete && img.naturalHeight === 0) {
+            setIsLoaded(true);
+            setHasError(true);
+            return true;
+          }
         }
-      }
-      return false;
-    };
-    
-    if (checkImageLoaded()) return;
-    
-    const timeout1 = setTimeout(() => {
-      checkImageLoaded();
-    }, 100);
-    
-    const timeout2 = setTimeout(() => {
-      if (!isLoaded && !hasError && imgRef.current) {
-        const img = imgRef.current;
-        if (!img.complete || img.naturalHeight === 0) {
-          setIsLoaded(true);
-          setHasError(true);
+        return false;
+      };
+
+      if (checkImageLoaded()) return;
+
+      const timeout1 = setTimeout(() => {
+        checkImageLoaded();
+      }, 100);
+
+      const timeout2 = setTimeout(() => {
+        if (!isLoaded && !hasError && imgRef.current) {
+          const img = imgRef.current;
+          if (!img.complete || img.naturalHeight === 0) {
+            setIsLoaded(true);
+            setHasError(true);
+          }
         }
-      }
-    }, 3000);
-    
-    return () => {
-      clearTimeout(timeout1);
-      clearTimeout(timeout2);
+      }, 3000);
+
+      return () => {
+        clearTimeout(timeout1);
+        clearTimeout(timeout2);
+      };
+    }, [photoUrl, onLoad]);
+
+    const handleImageLoad = () => {
+      setIsLoaded(true);
+      setHasError(false);
+      onLoad?.();
     };
-  }, [photoUrl, onLoad]);
-  
-  const handleImageLoad = () => {
-    setIsLoaded(true);
-    setHasError(false);
-    onLoad?.();
-  };
 
-  const handleImageError = () => {
-    setIsLoaded(true);
-    setHasError(true);
-  };
+    const handleImageError = () => {
+      setIsLoaded(true);
+      setHasError(true);
+    };
 
-  const optimizedUrl = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
+    const optimizedUrl = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
 
-  return (
-    <>
-      {!isLoaded && !hasError && (
-        <div className="absolute inset-0 bg-card dark:bg-card-dark flex items-center justify-center z-10">
-          <LoadingSpinner />
-        </div>
-      )}
-      {optimizedUrl ? (
-        <img
-          ref={imgRef}
-          src={optimizedUrl}
-          alt={eventTitle}
-          className={`w-full h-full rounded-xl object-cover transition-all duration-200 select-none ${
-            alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
-          } ${
-            isLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
-          loading="lazy"
-          decoding="async"
-          draggable={false}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
-      ) : (
-        <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-          <div className="w-16 h-16 opacity-50 " />
-        </div>
-      )}
-    </>
-  );
-});
+    return (
+      <>
+        {!isLoaded && !hasError && (
+          <div className="absolute inset-0 bg-card dark:bg-card-dark flex items-center justify-center z-10">
+            <LoadingSpinner />
+          </div>
+        )}
+        {optimizedUrl ? (
+          <img
+            ref={imgRef}
+            src={optimizedUrl}
+            alt={eventTitle}
+            className={`w-full h-full rounded-xl object-cover transition-all duration-200 select-none ${
+              alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
+            } ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <div className="w-16 h-16 opacity-50 " />
+          </div>
+        )}
+      </>
+    );
+  }
+);
 EventThumbnail.displayName = 'EventThumbnail';
 
 /**
  * Event Card Component
  */
-const EventCard = memo(({ 
-  event, 
-  locale, 
-  animationDelay = 0,
-  getSportTranslation,
-  highlightQuery,
-}: { 
-  event: Event; 
-  locale: string; 
-  animationDelay?: number;
-  getSportTranslation: (sport: string) => string;
-  highlightQuery?: string;
-}) => {
-  const [isClicked, setIsClicked] = useState(false);
-  const [showNameSection, setShowNameSection] = useState(false);
-  const [showEventName, setShowEventName] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
+const EventCard = memo(
+  ({
+    event,
+    locale,
+    animationDelay = 0,
+    getSportTranslation,
+    highlightQuery,
+  }: {
+    event: Event;
+    locale: string;
+    animationDelay?: number;
+    getSportTranslation: (sport: string) => string;
+    highlightQuery?: string;
+  }) => {
+    const [isClicked, setIsClicked] = useState(false);
+    const [showNameSection, setShowNameSection] = useState(false);
+    const [showEventName, setShowEventName] = useState(false);
+    const cardRef = useRef<HTMLDivElement>(null);
+    const tr = useCallback(
+      (enText: string, heText: string) => (locale === 'he' ? heText : enText),
+      [locale]
+    );
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowNameSection(true);
-      setTimeout(() => {
-        setShowEventName(true);
-      }, 0);
-    }, 300 + animationDelay);
-    return () => clearTimeout(timer);
-  }, [animationDelay]);
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setShowNameSection(true);
+        setTimeout(() => {
+          setShowEventName(true);
+        }, 0);
+      }, 300 + animationDelay);
+      return () => clearTimeout(timer);
+    }, [animationDelay]);
 
-  const handleCardClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsClicked(true);
-    setTimeout(() => {
-      window.location.href = `/${locale}/events/${event.slug}`;
-    }, 300);
-  }, [event.slug, locale]);
+    const handleCardClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsClicked(true);
+        setTimeout(() => {
+          window.location.href = `/${locale}/events/${event.slug}`;
+        }, 300);
+      },
+      [event.slug, locale]
+    );
 
-  const isPast = event.isPast;
-  const isFull = event.maxParticipants && event.currentParticipants >= event.maxParticipants;
+    const isPast = event.isPast;
+    const isFull = event.maxParticipants && event.currentParticipants >= event.maxParticipants;
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const formatted = date.toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-    // Normalize to slashes (e.g. he-IL may use dots)
-    return formatted.replace(/\./g, '/');
-  };
+    const formatDate = (dateStr: string) => {
+      const date = new Date(dateStr);
+      const formatted = date.toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+      // Normalize to slashes (e.g. he-IL may use dots)
+      return formatted.replace(/\./g, '/');
+    };
 
-  return (
-    <div
-      ref={cardRef}
-      onClick={handleCardClick}
-      className={`h-fit group rounded-xl cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} ${isPast ? 'opacity-60' : ''}`}
-      style={{ animationDelay: `${animationDelay}ms` }}
-      aria-label={event.title}
-    >
-      <div className="group-hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden"
-              style={{
-                filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
-              }}
+    return (
+      <div
+        ref={cardRef}
+        onClick={handleCardClick}
+        className={`h-fit group rounded-xl cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} ${isPast ? 'opacity-60' : ''}`}
+        style={{ animationDelay: `${animationDelay}ms` }}
+        aria-label={event.title}
       >
-        {/* Sports Tags Overlay */}
-        {event.sports && event.sports.length > 0 && (
-          <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
-            {event.sports.slice(0, 4).map((sport, idx) => {
-              const sportLower = sport.toLowerCase();
-              const sportConfig = SPORT_CONFIG.find(s => 
-                s.value === sportLower || 
-                sportLower.includes(s.value) ||
-                s.displayName.toLowerCase() === sportLower
-              );
-              return (
-                <div
-                  key={idx}
-                  className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg"
-                  title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
-                >
-                  {sportConfig ? (
-                    <Icon name={sportConfig.iconName as any} className="w-4 h-4 text-white" />
-                  ) : (
-                    <span className="text-xs font-medium text-white">{getSportTranslation(sport)}</span>
-                  )}
+        <div
+          className="group-hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden"
+          style={{
+            filter:
+              'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)',
+          }}
+        >
+          {/* Sports Tags Overlay */}
+          {event.sports && event.sports.length > 0 && (
+            <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
+              {event.sports.slice(0, 4).map((sport, idx) => {
+                const sportLower = sport.toLowerCase();
+                const sportConfig = SPORT_CONFIG.find(
+                  (s) =>
+                    s.value === sportLower ||
+                    sportLower.includes(s.value) ||
+                    s.displayName.toLowerCase() === sportLower
+                );
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg"
+                    title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
+                  >
+                    {sportConfig ? (
+                      <Icon name={sportConfig.iconName as any} className="w-4 h-4 text-white" />
+                    ) : (
+                      <span className="text-xs font-medium text-white">
+                        {getSportTranslation(sport)}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              {event.sports.length > 4 && (
+                <div className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg">
+                  <span className="text-xs font-medium text-white">+{event.sports.length - 4}</span>
                 </div>
-              );
-            })}
-            {event.sports.length > 4 && (
-              <div className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg">
-                <span className="text-xs font-medium text-white">+{event.sports.length - 4}</span>
+              )}
+            </div>
+          )}
+
+          {/* Status Badges */}
+          {event.isHappeningNow && (
+            <div className="absolute top-2 right-2 z-10">
+              <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-red-500 dark:bg-red-600 text-white text-xs md:text-sm font-semibold px-2 md:px-3 py-1 rounded-full shadow-lg">
+                {tr('Happening Now', 'קורה עכשיו')}
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+          {isFull && !event.isHappeningNow && (
+            <div className="absolute top-2 right-2 z-10">
+              <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-gray-800 dark:bg-gray-700 text-white text-xs md:text-sm font-semibold px-2 md:px-3 py-1 rounded-full shadow-lg">
+                {tr('Full', 'מלא')}
+              </div>
+            </div>
+          )}
 
-        {/* Status Badges */}
-        {event.isHappeningNow && (
-          <div className="absolute top-2 right-2 z-10">
-            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-red-500 dark:bg-red-600 text-white text-xs md:text-sm font-semibold px-2 md:px-3 py-1 rounded-full shadow-lg">
-              {tr('Happening Now', 'קורה עכשיו')}
+          {/* Date Badge */}
+          <div className="absolute bottom-2 left-0 z-10">
+            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold px-2 md:px-3 py-1 rounded-r-full shadow-lg">
+              {formatDate(event.startDate)}
             </div>
           </div>
-        )}
-        {isFull && !event.isHappeningNow && (
-          <div className="absolute top-2 right-2 z-10">
-            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-gray-800 dark:bg-gray-700 text-white text-xs md:text-sm font-semibold px-2 md:px-3 py-1 rounded-full shadow-lg">
-              {tr('Full', 'מלא')}
-            </div>
-          </div>
-        )}
 
-        {/* Date Badge */}
-        <div className="absolute bottom-2 left-0 z-10">
-          <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold px-2 md:px-3 py-1 rounded-r-full shadow-lg">
-            {formatDate(event.startDate)}
-          </div>
+          <EventThumbnail photoUrl={event.image || ''} eventTitle={event.title} />
         </div>
 
-        <EventThumbnail
-          photoUrl={event.image || ''}
-          eventTitle={event.title}
-        />
-      </div>
-
-      {/* Name Section */}
-      <div 
+        {/* Name Section */}
+        <div
           className="space-y-1 overflow-hidden transition-all duration-300 ease-out"
           style={{
             maxHeight: showNameSection ? '200px' : '0',
@@ -368,40 +379,46 @@ const EventCard = memo(({
             paddingBottom: showNameSection ? '0.5rem' : '0',
           }}
         >
-          <h3 
+          <h3
             className={`text-lg font-medium opacity-0 ${showEventName ? 'animate-fadeInDown animation-delay-[1s]' : ''}`}
           >
             {highlightQuery ? highlightMatch(event.title, highlightQuery) : event.title}
           </h3>
-         
         </div>
-    </div>
-  );
-});
+      </div>
+    );
+  }
+);
 EventCard.displayName = 'EventCard';
 
 function EventsPageContent() {
   const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations('events');
-  
-  const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
-  
+
+  const tr = useCallback(
+    (enText: string, heText: string) => (locale === 'he' ? heText : enText),
+    [locale]
+  );
+
   // Helper function to get translated sport name
-  const getSportTranslation = useCallback((sport: string): string => {
-    if (!sport) return sport;
-    const sportKey = sport.toLowerCase();
-    const translationKey = `sports.${sportKey}`;
-    try {
-      const translated = t(translationKey as any);
-      if (translated && translated !== translationKey && !translated.startsWith('sports.')) {
-        return translated;
+  const getSportTranslation = useCallback(
+    (sport: string): string => {
+      if (!sport) return sport;
+      const sportKey = sport.toLowerCase();
+      const translationKey = `sports.${sportKey}`;
+      try {
+        const translated = t(translationKey as any);
+        if (translated && translated !== translationKey && !translated.startsWith('sports.')) {
+          return translated;
+        }
+      } catch (e) {
+        // Translation key doesn't exist
       }
-    } catch (e) {
-      // Translation key doesn't exist
-    }
-    return sport.charAt(0).toUpperCase() + sport.slice(1);
-  }, [t]);
+      return sport.charAt(0).toUpperCase() + sport.slice(1);
+    },
+    [t]
+  );
 
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
@@ -409,7 +426,7 @@ function EventsPageContent() {
   const [loading, setLoading] = useState(true);
   const [cacheInitialized, setCacheInitialized] = useState(false);
   const [currentVersion, setCurrentVersion] = useState<number | null>(null);
-  
+
   // Filters — support ?tag= for tag search (same as guides); ?search= for free text
   const tagFromUrl = searchParams.get('tag');
   const searchFromUrl = searchParams.get('search');
@@ -419,14 +436,16 @@ function EventsPageContent() {
   const [searchQuery, setSearchQuery] = useState(
     tagFromUrl != null && tagFromUrl !== ''
       ? (locale === 'he' ? 'תג: ' : 'tag: ') + tagFromUrl
-      : (searchFromUrl || '')
+      : searchFromUrl || ''
   );
-  const [hasSpotsAvailable, setHasSpotsAvailable] = useState(searchParams.get('hasSpots') === 'true');
-  
+  const [hasSpotsAvailable, setHasSpotsAvailable] = useState(
+    searchParams.get('hasSpots') === 'true'
+  );
+
   // Pagination
   const [page, setPage] = useState(1);
   const limit = 12;
-  
+
   // UI State
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
@@ -438,13 +457,13 @@ function EventsPageContent() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const prevScrollY = prevScrollYRef.current;
-      
+
       if (currentScrollY < prevScrollY || currentScrollY < 10) {
         setIsHeaderVisible(true);
       } else if (currentScrollY > prevScrollY) {
         setIsHeaderVisible(false);
       }
-      
+
       prevScrollYRef.current = currentScrollY;
       setIsScrolled(currentScrollY > 240);
     };
@@ -507,7 +526,11 @@ function EventsPageContent() {
               return;
             }
             versionCheckInFlightRef.current = true;
-            console.log('Cache exists with', parsedCache.length, 'events, checking version (cache older than 1h)');
+            console.log(
+              'Cache exists with',
+              parsedCache.length,
+              'events, checking version (cache older than 1h)'
+            );
             try {
               const versionResponse = await fetch('/api/events?versionOnly=true');
               if (versionResponse.ok) {
@@ -526,7 +549,10 @@ function EventsPageContent() {
                     localStorage.setItem(cacheKey, JSON.stringify(allEvents));
                     localStorage.setItem(
                       versionKey,
-                      JSON.stringify({ version: newVersion, fetchedAt: getEventsFetchedAtReadable() })
+                      JSON.stringify({
+                        version: newVersion,
+                        fetchedAt: getEventsFetchedAtReadable(),
+                      })
                     );
                     setCurrentVersion(newVersion);
                   }
@@ -568,13 +594,14 @@ function EventsPageContent() {
     if (events.length > 0) {
       const sportsSet = new Set<string>();
       events.forEach((event) => {
-        event.sports?.forEach(sport => {
+        event.sports?.forEach((sport) => {
           // Normalize sport name to match SPORT_CONFIG values
           const sportLower = sport.toLowerCase();
-          const matchingConfig = SPORT_CONFIG.find(config => 
-            config.value === sportLower ||
-            sportLower.includes(config.value) ||
-            config.displayName.toLowerCase() === sportLower
+          const matchingConfig = SPORT_CONFIG.find(
+            (config) =>
+              config.value === sportLower ||
+              sportLower.includes(config.value) ||
+              config.displayName.toLowerCase() === sportLower
           );
           if (matchingConfig) {
             sportsSet.add(matchingConfig.value);
@@ -664,18 +691,19 @@ function EventsPageContent() {
 
     // Sports filter - using relatedSports like guides
     if (selectedSports.length > 0) {
-      filtered = filtered.filter(event =>
-        event.sports?.some(sport => {
+      filtered = filtered.filter((event) =>
+        event.sports?.some((sport) => {
           const sportLower = sport.toLowerCase();
-          return selectedSports.some(selectedSport => {
+          return selectedSports.some((selectedSport) => {
             // Check if sport matches selected sport (config value)
             if (selectedSport === sportLower) return true;
             // Check if sport matches any SPORT_CONFIG
-            const matchingConfig = SPORT_CONFIG.find(config => 
-              config.value === selectedSport &&
-              (config.value === sportLower ||
-               sportLower.includes(config.value) ||
-               config.displayName.toLowerCase() === sportLower)
+            const matchingConfig = SPORT_CONFIG.find(
+              (config) =>
+                config.value === selectedSport &&
+                (config.value === sportLower ||
+                  sportLower.includes(config.value) ||
+                  config.displayName.toLowerCase() === sportLower)
             );
             return !!matchingConfig;
           });
@@ -688,9 +716,11 @@ function EventsPageContent() {
       const tagSearch = parseTagSearch(searchQuery);
       if (tagSearch.isTagSearch) {
         const tagLower = tagSearch.tag.toLowerCase();
-        filtered = filtered.filter(event => {
+        filtered = filtered.filter((event) => {
           const tags = getEventTags(event);
-          return tags.some((t) => t.toLowerCase() === tagLower || t.toLowerCase().includes(tagLower));
+          return tags.some(
+            (t) => t.toLowerCase() === tagLower || t.toLowerCase().includes(tagLower)
+          );
         });
       } else if (queryMatchesCategory(searchQuery, 'events')) {
         // Show all events when user types e.g. "אירועים", "events", "thrugho"
@@ -698,13 +728,14 @@ function EventsPageContent() {
         const query = searchQuery.toLowerCase().trim();
         const flipped = flipLanguage(searchQuery);
         const flippedLower = flipped ? flipped.toLowerCase().trim() : '';
-        filtered = filtered.filter(event => {
+        filtered = filtered.filter((event) => {
           const titleLower = event.title.toLowerCase();
           const locationLower = event.location?.toLowerCase() ?? '';
           return (
             titleLower.includes(query) ||
             locationLower.includes(query) ||
-            (flippedLower && (titleLower.includes(flippedLower) || locationLower.includes(flippedLower)))
+            (flippedLower &&
+              (titleLower.includes(flippedLower) || locationLower.includes(flippedLower)))
           );
         });
       }
@@ -712,8 +743,8 @@ function EventsPageContent() {
 
     // Has spots available
     if (hasSpotsAvailable) {
-      filtered = filtered.filter(event =>
-        !event.maxParticipants || event.currentParticipants < event.maxParticipants
+      filtered = filtered.filter(
+        (event) => !event.maxParticipants || event.currentParticipants < event.maxParticipants
       );
     }
 
@@ -736,11 +767,9 @@ function EventsPageContent() {
   const showingTo = Math.min(currentPage * limit, totalResults);
 
   const hasAnyFilter = selectedSports.length > 0 || hasSpotsAvailable || searchQuery.trim();
-  
-  const activeFiltersCount = 
-    selectedSports.length + 
-    (hasSpotsAvailable ? 1 : 0) + 
-    (searchQuery.trim() ? 1 : 0);
+
+  const activeFiltersCount =
+    selectedSports.length + (hasSpotsAvailable ? 1 : 0) + (searchQuery.trim() ? 1 : 0);
   const hasMultipleFilters = activeFiltersCount > 1;
 
   // Show relatedSports filter buttons only when 2+ sports have events (no point filtering with one)
@@ -750,8 +779,10 @@ function EventsPageContent() {
       : [];
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background-dark" dir={locale === 'he' ? 'rtl' : 'ltr'}>
-      
+    <div
+      className="min-h-screen bg-background dark:bg-background-dark"
+      dir={locale === 'he' ? 'rtl' : 'ltr'}
+    >
       {/* ========================================
           HERO SECTION - Brand Messaging  
       ======================================== */}
@@ -759,18 +790,15 @@ function EventsPageContent() {
         <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           <div className="text-center space-y-2">
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
-            {tr(
-              "Join the Experience",
-              "הצטרפו לחוויה"
-            )}
+              {tr('Join the Experience', 'הצטרפו לחוויה')}
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               {tr(
-                "Upcoming events and unforgettable moments.",
-                "אירועים קרובים ורגעים בלתי נשכחים."
+                'Upcoming events and unforgettable moments.',
+                'אירועים קרובים ורגעים בלתי נשכחים.'
               )}
             </p>
-            
+
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
               <div className="flex items-center justify-end gap-2 text-sm w-1/2">
@@ -782,7 +810,7 @@ function EventsPageContent() {
               <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
               <div className="flex items-center gap-2 text-sm w-1/2">
                 <TrendingUp className="w-4 h-4 text-green-500" />
-                
+
                 <span className="text-gray-600 dark:text-gray-400">
                   {totalResults} {totalResults === 1 ? t('event') : t('events')}
                 </span>
@@ -795,19 +823,18 @@ function EventsPageContent() {
       {/* ========================================
           STICKY FILTER BAR - Modern & Clean
       ======================================== */}
-      <div 
+      <div
         className={`sticky z-40 transition-all duration-300 border-b-2 border-transparent ${
           isHeaderVisible ? 'top-16 md:top-16' : 'top-0'
         } ${
-          isScrolled 
-            ? 'shadow-xl bg-header dark:bg-header-dark border-header-border dark:border-header-border-dark py-3' 
+          isScrolled
+            ? 'shadow-xl bg-header dark:bg-header-dark border-header-border dark:border-header-border-dark py-3'
             : 'py-4'
         }`}
       >
         <div className="max-w-6xl mx-auto px-4">
           {/* Main Filter Row */}
           <div className="flex flex-col xxs:flex-row items-stretch md:items-center gap-3">
-            
             {/* Left: Search */}
             <div className="flex items-center gap-1 flex-1">
               <div className="flex-1 min-w-0">
@@ -901,16 +928,19 @@ function EventsPageContent() {
 
                 {/* Sports Badges */}
                 {selectedSports.map((sport) => {
-                  const sportConfig = SPORT_CONFIG.find(s => s.value === sport);
+                  const sportConfig = SPORT_CONFIG.find((s) => s.value === sport);
                   return (
                     <button
                       key={sport}
-                      onClick={() => setSelectedSports(prev => prev.filter(s => s !== sport))}
+                      onClick={() => setSelectedSports((prev) => prev.filter((s) => s !== sport))}
                       className="inline-flex items-center gap-2 px-3 py-2 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
                       title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
                     >
                       {sportConfig ? (
-                        <Icon name={sportConfig.iconName as any} className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                        <Icon
+                          name={sportConfig.iconName as any}
+                          className="w-4 h-4 text-gray-700 dark:text-gray-300"
+                        />
                       ) : (
                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                           {getSportTranslation(sport)}
@@ -940,7 +970,7 @@ function EventsPageContent() {
                     onClick={handleClearFilters}
                     className="opacity-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-full transition-colors duration-200 animate-fadeIn"
                     style={{ animationDelay: `400ms` }}
-                 >
+                  >
                     <X className="w-3.5 h-3.5" />
                     {tr('Clear All', 'נקה הכל')}
                   </button>
@@ -973,10 +1003,10 @@ function EventsPageContent() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {paginatedEvents.map((event, index) => (
-                <EventCard 
-                  key={event.id} 
-                  event={event} 
-                  locale={locale} 
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  locale={locale}
                   animationDelay={index * 50}
                   getSportTranslation={getSportTranslation}
                   highlightQuery={searchQuery || undefined}
@@ -988,7 +1018,8 @@ function EventsPageContent() {
             {totalPages > 1 && (
               <div className="mt-8 flex items-center justify-between">
                 <div className="text-sm text-gray-700 dark:text-gray-300">
-                  {tr('Showing', 'מציג')} {showingFrom} {tr('to', 'עד')} {showingTo} {tr('of', 'מתוך')} {totalResults} {totalResults === 1 ? t('event') : t('events')}
+                  {tr('Showing', 'מציג')} {showingFrom} {tr('to', 'עד')} {showingTo}{' '}
+                  {tr('of', 'מתוך')} {totalResults} {totalResults === 1 ? t('event') : t('events')}
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
@@ -1000,8 +1031,8 @@ function EventsPageContent() {
                     {tr('Previous', 'הקודם')}
                   </Button>
                   <div className="flex items-center space-x-1">
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1)
-                      .map((pageNum) => (
+                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(
+                      (pageNum) => (
                         <button
                           key={pageNum}
                           onClick={() => setPage(pageNum)}
@@ -1013,7 +1044,8 @@ function EventsPageContent() {
                         >
                           {pageNum}
                         </button>
-                      ))}
+                      )
+                    )}
                   </div>
                   <Button
                     variant="secondary"
@@ -1033,10 +1065,9 @@ function EventsPageContent() {
               <Icon name="searchQuest" className="w-8 h-8 text-brand-main" />
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              {searchQuery 
-                ? tr('No events match your search', 'לא נמצאו אירועים') 
-                : tr('No events found', 'לא נמצאו אירועים')
-              }
+              {searchQuery
+                ? tr('No events match your search', 'לא נמצאו אירועים')
+                : tr('No events found', 'לא נמצאו אירועים')}
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               {tr('Try adjusting your filters or search terms', 'נסה לשנות את הפילטרים או החיפוש')}
