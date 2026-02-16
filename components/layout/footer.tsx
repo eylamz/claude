@@ -97,7 +97,7 @@ export function Footer() {
           {/* Mission Statement & Navigation Links */}
           <div className="flex flex-col md:flex-row gap-8 md:gap-20 justify-between flex-1 max-w-2xl md:max-w-full mb-8">
             <div className="max-w-xs">
-              <p className="text-sm w-full max-w-[120%] text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
+              <p className="text-sm min-w-[230px] w-full max-w-[120%] text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
                 {t('footer.missionStatement')}
               </p>
               <div className="flex items-center gap-4 md:gap-2 md:mb-4 mt-6 overflow-visible">

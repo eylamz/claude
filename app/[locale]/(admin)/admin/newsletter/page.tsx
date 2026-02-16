@@ -4,7 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLocale } from 'next-intl';
 import { useTranslations } from 'next-intl';
 import { Button, Card, CardHeader, CardTitle, CardContent, Skeleton } from '@/components/ui';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/components/ui/table';
 import { SearchInput } from '@/components/common/SearchInput';
 
 interface Subscriber {
@@ -168,23 +175,27 @@ export default function NewsletterPage() {
     <div className="space-y-6 pt-16">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {t('newsletter')}
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('newsletter')}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Subscribers: {pagination.totalCount}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleExportCsv}
-            disabled={exportingCsv || loading}
-          >
+          <Button variant="outline" onClick={handleExportCsv} disabled={exportingCsv || loading}>
             {exportingCsv ? (
               <span className="flex items-center gap-2">
-                <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <svg
+                  className="w-4 h-4 animate-spin"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
                 </svg>
                 Exporting...
               </span>
@@ -205,7 +216,12 @@ export default function NewsletterPage() {
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
             {tAdmin('metrics.refresh') || 'Refresh'}
           </Button>
@@ -250,7 +266,10 @@ export default function NewsletterPage() {
                 <TableBody>
                   {subscribers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-gray-500 dark:text-gray-400 py-8">
+                      <TableCell
+                        colSpan={3}
+                        className="text-center text-gray-500 dark:text-gray-400 py-8"
+                      >
                         No subscribers yet.
                       </TableCell>
                     </TableRow>

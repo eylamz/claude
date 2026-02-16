@@ -18,6 +18,8 @@ export default function InternalAnalytics() {
   const { data: session } = useSession();
   const previousPathRef = useRef<string | null>(null);
   const enterTimeRef = useRef<number>(Date.now());
+  const lastTrackedPathRef = useRef<string | null>(null);
+  const lastTrackedAtRef = useRef<number>(0);
   const userId = getUserId(session);
 
   useEffect(() => {
@@ -39,6 +41,17 @@ export default function InternalAnalytics() {
       });
     }
 
+    // Dedupe: avoid double-sending same page view (e.g. React Strict Mode runs effects twice in dev)
+    const DEDUPE_MS = 2000;
+    if (
+      lastTrackedPathRef.current === pathname &&
+      now - lastTrackedAtRef.current < DEDUPE_MS
+    ) {
+      previousPathRef.current = pathname;
+      enterTimeRef.current = Date.now();
+      return;
+    }
+
     // Send current page view (enter)
     trackPageView({
       path: pathname,
@@ -46,6 +59,8 @@ export default function InternalAnalytics() {
       timeOnPageMs: 0,
     });
 
+    lastTrackedPathRef.current = pathname;
+    lastTrackedAtRef.current = Date.now();
     previousPathRef.current = pathname;
     enterTimeRef.current = Date.now();
   }, [pathname, locale, userId]);

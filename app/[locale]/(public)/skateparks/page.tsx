@@ -2,14 +2,12 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { usePathname } from 'next/navigation';
-import { TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui';
 import ParkCardSkeleton from '@/components/skateparks/ParkCardSkeleton';
 import { MapView } from '@/components/skateparks/MapView';
 import { ParkCard } from '@/components/skateparks/ParkCard';
 import { FilterBar } from '@/components/skateparks/FilterBar';
 import { Icon } from '@/components/icons';
-import { usePageLoading } from '@/context/PageLoadingContext';
 import { useTranslations } from 'next-intl';
 import { flipLanguage } from '@/lib/utils/transliterate';
 import {
@@ -125,11 +123,6 @@ export default function SkateparksPage() {
   const prevUserLocationRef = useRef<UserLocation | null>(null);
   const isFetchingRef = useRef(false); // Prevent duplicate concurrent fetches
 
-  const { setLoading: setPageLoading } = usePageLoading();
-  useEffect(() => {
-    setPageLoading(loading);
-    return () => setPageLoading(false);
-  }, [loading, setPageLoading]);
 
   // Track newly added amenities for pop animation
   useEffect(() => {

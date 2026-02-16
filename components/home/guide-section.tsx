@@ -1,10 +1,10 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import { useLocale } from 'next-intl';
-import { Card, CardContent } from '@/components/ui/card';
+import { useRef, useState, useEffect, useCallback, memo } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { ArrowRight } from './arrow-right';
+import { Icon } from '@/components/icons';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
 interface Guide {
   id: string;
@@ -13,6 +13,8 @@ interface Guide {
   description?: string;
   image: string;
   views?: number;
+  sports?: string[];
+  difficulty?: string;
 }
 
 interface GuideSectionProps {
@@ -20,23 +22,161 @@ interface GuideSectionProps {
   t: (key: string) => string;
 }
 
+// Sport icon mapping (matches guides-page-client)
+const SPORT_CONFIG = [
+  { value: 'roller', iconName: 'Roller' as const, displayName: 'Rollerblading' },
+  { value: 'skate', iconName: 'Skate' as const, displayName: 'Skating' },
+  { value: 'scoot', iconName: 'scooter' as const, displayName: 'Scootering' },
+  { value: 'bmx', iconName: 'bmx-icon' as const, displayName: 'BMXing' },
+  { value: 'longboard', iconName: 'Longboard' as const, displayName: 'Longboarding' },
+] as const;
+
+const getOptimizedImageUrl = (originalUrl: string): string | null => {
+  if (!originalUrl || originalUrl.trim() === '') return null;
+  if (originalUrl.includes('cloudinary.com')) {
+    const urlParts = originalUrl.split('/upload/');
+    if (urlParts.length === 2) {
+      return `${urlParts[0]}/upload/w_800,c_fill,q_auto:good,f_auto/${urlParts[1]}`;
+    }
+  }
+  return originalUrl;
+};
+
+const GuideThumbnail = memo(
+  ({
+    photoUrl,
+    guideTitle,
+    onLoad,
+  }: {
+    photoUrl: string;
+    guideTitle: string;
+    onLoad?: () => void;
+  }) => {
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [hasError, setHasError] = useState(false);
+    const imgRef = useRef<HTMLImageElement>(null);
+
+    useEffect(() => {
+      setIsLoaded(false);
+      setHasError(false);
+    }, [photoUrl]);
+
+    useEffect(() => {
+      const checkImageLoaded = () => {
+        if (imgRef.current) {
+          const img = imgRef.current;
+          if (img.complete && img.naturalHeight !== 0) {
+            setIsLoaded(true);
+            setHasError(false);
+            onLoad?.();
+            return true;
+          } else if (img.complete && img.naturalHeight === 0) {
+            setIsLoaded(true);
+            setHasError(true);
+            return true;
+          }
+        }
+        return false;
+      };
+      if (checkImageLoaded()) return;
+      const t1 = setTimeout(() => checkImageLoaded(), 100);
+      const t2 = setTimeout(() => {
+        if (!isLoaded && !hasError && imgRef.current) {
+          const img = imgRef.current;
+          if (!img.complete || img.naturalHeight === 0) {
+            setIsLoaded(true);
+            setHasError(true);
+          }
+        }
+      }, 3000);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
+    }, [photoUrl, onLoad]);
+
+    const handleImageLoad = () => {
+      setIsLoaded(true);
+      setHasError(false);
+      onLoad?.();
+    };
+
+    const handleImageError = () => {
+      setIsLoaded(true);
+      setHasError(true);
+    };
+
+    const optimizedUrl = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
+
+    return (
+      <>
+        {!isLoaded && !hasError && (
+          <div className="absolute inset-0 bg-background/20 dark:bg-background/20 flex items-center justify-center z-10">
+            <LoadingSpinner />
+          </div>
+        )}
+        {optimizedUrl ? (
+          <img
+            ref={imgRef}
+            src={optimizedUrl}
+            alt={guideTitle}
+            className={`w-full h-full rounded-xl object-cover transition-all duration-200 select-none saturate-150 group-hover:saturate-[1.75] ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <div className="w-16 h-16" />
+          </div>
+        )}
+      </>
+    );
+  }
+);
+GuideThumbnail.displayName = 'GuideThumbnail';
+
 export const GuideSection = ({ guides, t: _t }: GuideSectionProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showStartButton, setShowStartButton] = useState(false);
   const [hasOverflow, setHasOverflow] = useState(false);
-  const [clickedCardId, setClickedCardId] = useState<string | null>(null);
   const locale = useLocale();
   const isRtl = locale === 'he';
+  const tGuides = useTranslations('guides');
+
+  const getSportTranslation = useCallback(
+    (sport: string): string => {
+      if (!sport) return sport;
+      const key = sport.toLowerCase();
+      const translated = tGuides(`sports.${key}` as any);
+      if (translated && translated !== `sports.${key}` && !translated.startsWith('sports.')) {
+        return translated;
+      }
+      return sport.charAt(0).toUpperCase() + sport.slice(1);
+    },
+    [tGuides]
+  );
+
+  const getDifficultyTranslation = useCallback(
+    (difficulty: string): string => {
+      if (!difficulty) return difficulty;
+      const key = difficulty.toLowerCase();
+      const translated = tGuides(`difficulty.${key}` as any);
+      if (translated && translated !== `difficulty.${key}` && !translated.startsWith('difficulty.')) {
+        return translated;
+      }
+      return difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+    },
+    [tGuides]
+  );
 
   const updateButtonVisibility = () => {
     if (scrollContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      
-      // Check if content overflows
       setHasOverflow(scrollWidth > clientWidth);
-      
       if (isRtl) {
-        // In RTL, scrollLeft is negative
         const maxScroll = scrollWidth - clientWidth;
         const isAtStart = Math.abs(scrollLeft) >= maxScroll;
         setShowStartButton(!isAtStart);
@@ -50,17 +190,13 @@ export const GuideSection = ({ guides, t: _t }: GuideSectionProps) => {
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (container) {
-      // Set initial scroll position for RTL
       if (isRtl) {
         container.scrollLeft = container.scrollWidth - container.clientWidth;
       }
       updateButtonVisibility();
       container.addEventListener('scroll', updateButtonVisibility);
-      
-      // Add resize observer to check for overflow on window resize
       const resizeObserver = new ResizeObserver(updateButtonVisibility);
       resizeObserver.observe(container);
-      
       return () => {
         container.removeEventListener('scroll', updateButtonVisibility);
         resizeObserver.disconnect();
@@ -68,53 +204,37 @@ export const GuideSection = ({ guides, t: _t }: GuideSectionProps) => {
     }
   }, [isRtl]);
 
-  const scroll = useCallback((direction: 'left' | 'right') => {
-    if (scrollContainerRef.current) {
+  const scroll = useCallback(
+    (direction: 'left' | 'right') => {
+      if (!scrollContainerRef.current) return;
       const scrollAmount = 300;
       const container = scrollContainerRef.current;
       const { scrollLeft, scrollWidth, clientWidth } = container;
-      
-      // Normalize scrollLeft across browsers for RTL mode
-      const normalizedScrollLeft = isRtl 
-        ? (scrollLeft >= 0 
-            ? scrollLeft  // Firefox-style RTL (positive from right)
-            : Math.abs(scrollLeft)) // Chrome/Safari RTL (negative from right)
-        : scrollLeft;
-      
-      // Calculate normalized position for limit detection
+      const normalizedScrollLeft =
+        isRtl ? (scrollLeft >= 0 ? scrollLeft : Math.abs(scrollLeft)) : scrollLeft;
       const scrollStart = isRtl ? scrollWidth - clientWidth - normalizedScrollLeft : normalizedScrollLeft;
       const scrollEnd = isRtl ? normalizedScrollLeft : scrollLeft + clientWidth;
-      
-      // Check limits using normalized values
       const isAtStart = scrollStart <= 0;
       const isAtEnd = scrollEnd >= scrollWidth;
-      
-      const isAtLimit = (direction === 'left' && isAtStart) || (direction === 'right' && isAtEnd);
-      
+      const isAtLimit =
+        (direction === 'left' && isAtStart) || (direction === 'right' && isAtEnd);
       if (isAtLimit) {
-        // Trigger the scale animation by adding and removing the class
-        const button = direction === 'right' 
-          ? container.nextElementSibling as HTMLElement
-          : container.previousElementSibling as HTMLElement;
-        
+        const button =
+          direction === 'right'
+            ? (container.nextElementSibling as HTMLElement)
+            : (container.previousElementSibling as HTMLElement);
         if (button) {
           button.classList.add('errorPop');
           setTimeout(() => button.classList.remove('errorPop'), 200);
         }
         return;
       }
-      
-      // Adjust scrollBy parameters for RTL
       const scrollDelta = direction === 'right' ? scrollAmount : -scrollAmount;
-      // In RTL, we need to invert the scroll direction
       const adjustedScrollDelta = isRtl ? -scrollDelta : scrollDelta;
-      
-      container.scrollBy({
-        left: adjustedScrollDelta,
-        behavior: 'smooth'
-      });
-    }
-  }, [isRtl]);
+      container.scrollBy({ left: adjustedScrollDelta, behavior: 'smooth' });
+    },
+    [isRtl]
+  );
 
   return (
     <section className="mx-auto relative rtl:pr-4 ltr:pl-4 xl:!px-0">
@@ -128,49 +248,19 @@ export const GuideSection = ({ guides, t: _t }: GuideSectionProps) => {
             <ArrowRight className="h-6 w-6 rotate-180" />
           </button>
         )}
-        <div 
+        <div
           ref={scrollContainerRef}
           className={`flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory pt-2 scrollbar-hide hover:scrollbar-show ${isRtl ? 'rtl' : 'ltr'}`}
         >
-          {guides.map((guide: Guide, index: number) => (
-            <Link 
-              href={`/${locale}/guides/${guide.slug}`} 
+          {guides.map((guide, index) => (
+            <GuideSectionCard
               key={guide.id}
-              onClick={(e) => {
-                e.preventDefault();
-                setClickedCardId(guide.id);
-                setTimeout(() => {
-                  window.location.href = `/${locale}/guides/${guide.slug}`;
-                }, 700);
-              }}
-            >
-              <Card 
-                className={`flex-none bg-card dark:bg-card-dark opacity-0 snap-center w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] hover:shadow-lg dark:hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent before:z-[1] before:pointer-events-none ${clickedCardId === guide.id ? 'before:animate-shimmer' : ''}`}
-                style={{ animationDelay: `${1400 + (index * 125)}ms` }}
-              >
-                <img
-                  src={guide.image ?? '/placeholder.jpg'}
-                  alt={guide.title}
-                  className="select-none w-full h-36 md:h-40 object-cover rounded-t-lg saturate-[1.75] bg-black/10 dark:bg-white/10"
-                />
-                <CardContent className="p-2 w-full h-[120px] flex flex-col">
-                  <div className="flex flex-col w-full text-text-secondary dark:text-text-secondary-dark flex-grow">
-                    <div className="w-full">
-                      <h3 className="h3 leading-none font-semibold text-lg text-text dark:text-text-dark w-full min-h-[2rem] line-clamp-2">
-                        {guide.title}
-                      </h3>
-                      <div className="w-full flex justify-between items-center px-1 mt-1">
-                        <div className="flex">
-                          <span className="text-sm line-clamp-2 h-[2.5rem]">
-                            {guide.description}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+              guide={guide}
+              locale={locale}
+              animationDelay={1400 + index * 125}
+              getSportTranslation={getSportTranslation}
+              getDifficultyTranslation={getDifficultyTranslation}
+            />
           ))}
         </div>
         {hasOverflow && (
@@ -218,7 +308,118 @@ export const GuideSection = ({ guides, t: _t }: GuideSectionProps) => {
   );
 };
 
+// Single card matching guides-page-client GuideCard design
+const GuideSectionCard = memo(
+  ({
+    guide,
+    locale,
+    animationDelay,
+    getSportTranslation,
+    getDifficultyTranslation,
+  }: {
+    guide: Guide;
+    locale: string;
+    animationDelay: number;
+    getSportTranslation: (sport: string) => string;
+    getDifficultyTranslation: (difficulty: string) => string;
+  }) => {
+    const [isClicked, setIsClicked] = useState(false);
+    const [showNameSection, setShowNameSection] = useState(false);
+    const [showGuideName, setShowGuideName] = useState(false);
 
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setShowNameSection(true);
+        setTimeout(() => setShowGuideName(true), 0);
+      }, 300 + animationDelay);
+      return () => clearTimeout(timer);
+    }, [animationDelay]);
 
+    const handleCardClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsClicked(true);
+        setTimeout(() => {
+          window.location.href = `/${locale}/guides/${guide.slug}`;
+        }, 300);
+      },
+      [guide.slug, locale]
+    );
 
+    const sports = guide.sports ?? [];
 
+    return (
+      <div
+        onClick={handleCardClick}
+        className={`h-fit group rounded-xl cursor-pointer relative select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''}`}
+        style={{ animationDelay: `${animationDelay}ms` }}
+        aria-label={guide.title}
+      >
+        <div
+          className="group-hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden flex-none w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] snap-center"
+          style={{
+            filter:
+              'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)',
+          }}
+        >
+          {/* Sports Tags Overlay */}
+          {sports.length > 0 && (
+            <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
+              {sports.slice(0, 4).map((sport, idx) => {
+                const sportConfig = SPORT_CONFIG.find((s) => s.value === sport.toLowerCase());
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg"
+                    title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
+                  >
+                    {sportConfig ? (
+                      <Icon name={sportConfig.iconName as any} className="w-4 h-4 text-white" />
+                    ) : (
+                      <span className="text-xs font-medium text-white">
+                        {getSportTranslation(sport)}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              {sports.length > 4 && (
+                <div className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg">
+                  <span className="text-xs font-medium text-white">+{sports.length - 4}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Difficulty Badge */}
+          {guide.difficulty && (
+            <div className="absolute bottom-2 left-0 z-10">
+              <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
+                {getDifficultyTranslation(guide.difficulty)}
+              </div>
+            </div>
+          )}
+
+          <GuideThumbnail photoUrl={guide.image ?? ''} guideTitle={guide.title} />
+        </div>
+
+        {/* Name Section - matches guides page */}
+        <div
+          className="space-y-1 overflow-hidden transition-all duration-300 ease-out w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px]"
+          style={{
+            maxHeight: showNameSection ? '200px' : '0',
+            paddingTop: showNameSection ? '0.5rem' : '0',
+            paddingBottom: showNameSection ? '0.5rem' : '0',
+          }}
+        >
+          <h3
+            className={`text-lg font-medium text-text dark:text-text-dark opacity-0 ${showGuideName ? 'animate-fadeInDown animation-delay-[1s]' : ''}`}
+          >
+            {guide.title}
+          </h3>
+        </div>
+      </div>
+    );
+  }
+);
+GuideSectionCard.displayName = 'GuideSectionCard';

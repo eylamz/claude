@@ -450,7 +450,7 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
               : `opacity-0 ${hasOpeningYear ? 'translate-x-[30px]' : 'translate-x-[-30px]'}`
           }`}>
             <div className={`flex gap-0.5 md:gap-1 justify-center items-center bg-red dark:bg-red-dark text-red-bg dark:text-red-bg-dark px-1 xsm:px-2 py-1 shadow-lg ${
-              hasOpeningYear ? 'rounded-l-3xl' : 'rounded-r-3xl'
+              hasOpeningYear ? 'rounded-l-3xl flex-row-reverse' : 'rounded-r-3xl '
             }`}>
               <span className={`text-sm md:text-base font-medium transition-opacity duration-200 ${showBadgeContent.closed ? 'opacity-100' : 'opacity-0'}`}>
                 {tr('Permanently Closed', 'נסגר לצמיתות')}
@@ -479,7 +479,7 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
                 <span className={`text-sm md:text-base transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`}>
                   {tr('New', 'חדש')}
                 </span>
-                <Icon name="trees" className={`w-3 h-3 md:w-4 md:h-4 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
+                <Icon name="treesBold" className={`w-3 h-3 md:w-4 md:h-4 transition-opacity duration-200 ${showBadgeContent.new ? 'opacity-100' : 'opacity-0'}`} />
               </div>
             </div>
           );

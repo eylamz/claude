@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       // Featured guides
       Guide.find({ isFeatured: true, status: 'published' })
         .limit(homepageSettings?.featuredGuidesCount || 3)
-        .select('slug title description coverImage relatedSports viewsCount')
+        .select('slug title description coverImage relatedSports viewsCount difficulty')
         .lean(),
     ]);
     
@@ -65,10 +65,11 @@ export async function GET(request: NextRequest) {
       id: guide._id.toString(),
       slug: guide.slug,
       title: guide.title[locale as 'en' | 'he'] || guide.title.en,
-      description: guide.description[locale as 'en' | 'he'] || guide.description.en,
+      description: guide.description?.[locale as 'en' | 'he'] || guide.description?.en,
       image: guide.coverImage,
       sports: guide.relatedSports,
       views: guide.viewsCount,
+      difficulty: guide.difficulty || undefined,
     }));
     
     // Return all homepage data in one response (skateparks are fetched separately from /api/skateparks)

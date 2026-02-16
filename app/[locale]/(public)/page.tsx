@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { HeroCarousel, FixedBanner, SkeletonSection, ProductSection, ParkSection, GuideSection, ArrowRight } from '@/components/home';
 import { Button } from '@/components/ui';
+import { Icon } from '@/components/icons/Icon';
 import { Locale } from '@/i18n';
 import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
 import { parseSkateparksVersion, isSkateparksCacheFresh } from '@/lib/search-from-cache';
@@ -42,13 +43,26 @@ interface Product {
   category?: string;
 }
 
-interface Skatepark {
-  id: string;
+// Full park shape for ParkCard (matches API + ParkCard Skatepark)
+interface HomeSkatepark {
+  _id: string;
+  id?: string;
   slug: string;
-  name: string;
-  image: string;
+  name: { en: string; he: string } | string;
+  image?: string;
+  imageUrl?: string;
+  images?: { url: string; order: number; isFeatured?: boolean }[];
   area: 'north' | 'center' | 'south';
-  openingYear?: number;
+  location?: { lat: number; lng: number };
+  amenities?: Record<string, boolean>;
+  rating?: number;
+  totalReviews?: number;
+  isFeatured?: boolean;
+  openingYear?: number | null;
+  openingMonth?: number | null;
+  closingYear?: number | null;
+  createdAt?: string | null;
+  [key: string]: unknown;
 }
 
 interface Guide {
@@ -58,6 +72,8 @@ interface Guide {
   description?: string;
   image: string;
   views?: number;
+  sports?: string[];
+  difficulty?: string;
 }
 
 export default function HomePage() {
@@ -71,7 +87,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [homepageSettings, setHomepageSettings] = useState<HomepageSettings | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
-  const [skateparks, setSkateparks] = useState<Skatepark[]>([]);
+  const [skateparks, setSkateparks] = useState<HomeSkatepark[]>([]);
   const [guides, setGuides] = useState<Guide[]>([]);
 
   useEffect(() => {
@@ -142,43 +158,49 @@ export default function HomePage() {
       const currentYear = new Date().getFullYear();
       const recentYearThreshold = currentYear - 2; // Last 3 years (current and previous 2)
       
-      // Sort all parks by opening year (newest first)
-      const sortedParks = [...allSkateparks].sort((a: any, b: any) => 
-          (b.openingYear || 0) - (a.openingYear || 0)
-        );
+      // Sort all parks by opening year (newest first), then by opening month (latest month first) when year is equal
+      const sortedParks = [...allSkateparks].sort((a: any, b: any) => {
+        const yearDiff = (b.openingYear || 0) - (a.openingYear || 0);
+        if (yearDiff !== 0) return yearDiff;
+        return (b.openingMonth || 0) - (a.openingMonth || 0);
+      });
         
-        // First try to get parks from the last 3 years
-        const recentParks = sortedParks.filter((park: any) => 
-          park.openingYear && park.openingYear >= recentYearThreshold
-        );
+      // First try to get parks from the last 3 years
+      const recentParks = sortedParks.filter((park: any) => 
+        park.openingYear && park.openingYear >= recentYearThreshold
+      );
         
-        // If we have at least 4 recent parks, use them
-        // Otherwise, return recent parks + enough older parks to make at least 4 total
-        const filteredParks = recentParks.length >= 4 
-          ? recentParks 
-          : sortedParks.slice(0, Math.max(4, recentParks.length));
+      // If we have at least 4 recent parks, use them
+      // Otherwise, return recent parks + enough older parks to make at least 4 total
+      const filteredParks = recentParks.length >= 4 
+        ? recentParks 
+        : sortedParks.slice(0, Math.max(4, recentParks.length));
         
-        // Transform to match the expected format
-        const transformedParks = filteredParks.map((park: any) => {
-          const name = typeof park.name === 'string' 
-            ? park.name 
-            : (locale === 'he' ? park.name.he : park.name.en) || park.name.en || park.name.he;
-          
-          const image = park.images && park.images.length > 0
-            ? park.images.find((img: any) => img.isFeatured)?.url || park.images[0]?.url
-            : park.imageUrl || '';
-          
-          return {
-            id: park._id || park.id,
-            slug: park.slug,
-            name,
-            image,
-            area: park.area,
-            openingYear: park.openingYear,
-          };
-        });
+      // Normalize to full park shape for ParkCard (preserve all fields, normalize location)
+      const transformedParks: HomeSkatepark[] = filteredParks.map((park: any) => {
+        const coords = park.location?.coordinates;
+        const id = park._id || park.id;
+        return {
+          ...park,
+          _id: id,
+          id,
+          name: park.name,
+          imageUrl: park.images?.[0]?.url || park.imageUrl || '',
+          images: park.images || [],
+          area: park.area,
+          amenities: park.amenities || {},
+          openingYear: park.openingYear ?? null,
+          openingMonth: park.openingMonth ?? null,
+          closingYear: park.closingYear ?? null,
+          createdAt: park.createdAt ?? null,
+          isFeatured: park.isFeatured || false,
+          location: coords
+            ? { lat: coords[1], lng: coords[0] }
+            : park.location,
+        };
+      });
         
-        setSkateparks(transformedParks);
+      setSkateparks(transformedParks);
     } catch (error) {
       console.error('Error fetching homepage data:', error);
     } finally {
@@ -379,7 +401,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Guides Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-2 px-4 xl:px-0 select-none">
             <h2
@@ -409,7 +431,7 @@ export default function HomePage() {
 
 
       {/* Features Section */}
-      <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-white dark:bg-gray-900">
+      <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 ">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-4 text-text dark:text-text-dark">
             {t('whyEnboss')}
@@ -418,27 +440,104 @@ export default function HomePage() {
             {t('whyEnbossSubtitle')}
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
-            {[
-              { icon: '🗺️', title: t('featureDiscoverTitle'), description: t('featureDiscoverDesc') },
-              { icon: '⭐', title: t('featureRateTitle'), description: t('featureRateDesc') },
-              { icon: '🌍', title: t('featureSpreadTitle'), description: t('featureSpreadDesc') },
-            ].map((feature, index) => (
-              <div
-                key={index}
-                className="bg-[rgba(13,115,119,0.05)] dark:bg-[rgba(20,163,168,0.08)] border border-[rgba(13,115,119,0.15)] dark:border-[rgba(20,163,168,0.2)] rounded-3xl p-8 lg:p-10 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:border-[#0D7377] dark:hover:border-[#14A3A8]"
-              >
-                <div className="w-16 h-16 bg-gradient-to-br from-[#0D7377] to-[#32CD32] rounded-2xl flex items-center justify-center text-3xl mb-6">
-                  {feature.icon}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
+            <Link
+              href={`/${locale}/skateparks`}
+              className="group block rounded-3xl p-[2px] bg-transparent hover:bg-gradient-to-br hover:from-brand-purple hover:via-brand-main hover:to-brand-blue dark:hover:from-brand-purple dark:hover:via-brand-dark dark:hover:to-brand-blue transition-all duration-300 md:hover:-translate-y-2 hover:shadow-xl"
+            >
+              <div className="rounded-[22px] overflow-hidden relative bg-card dark:bg-card-dark min-h-full">
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-purple/20 via-brand-main/10 to-brand-blue/20 dark:from-brand-purple/10 dark:via-brand-dark/10 dark:to-brand-blue/10 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-purple/40 via-brand-main/25 to-brand-blue/40 dark:from-brand-purple/30 dark:via-brand-dark/25 dark:to-brand-blue/30 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                <div className="relative z-10 p-8 lg:p-10 text-text dark:text-text-dark">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-br from-brand-purple/25 via-brand-main/15 to-brand-blue/25 dark:from-brand-purple/15 dark:via-brand-dark/15 dark:to-brand-blue/15 transition-all duration-300">
+                    <Icon name="mapBold" className="w-8 h-8 text-text dark:text-text-dark" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-text dark:text-text-dark">
+                    {t('featureDiscoverTitle')}
+                  </h3>
+                  <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
+                    {t('featureDiscoverDesc')}
+                  </p>
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-text dark:text-text-dark">
-                  {feature.title}
-                </h3>
-                <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
-                  {feature.description}
-                </p>
               </div>
-            ))}
+            </Link>
+
+            <Link
+              href={`/${locale}/guides`}
+              className="group block rounded-3xl p-[2px] bg-transparent hover:bg-gradient-to-bl hover:from-brand-blue hover:via-brand-main hover:to-brand-purple dark:hover:from-brand-blue dark:hover:via-brand-dark dark:hover:to-brand-purple transition-all duration-300 md:hover:-translate-y-2 hover:shadow-xl"
+            >
+              <div className="rounded-[22px] overflow-hidden relative bg-card dark:bg-card-dark min-h-full">
+                <div className="absolute inset-0 bg-gradient-to-bl from-brand-blue/20 via-brand-main/10 to-brand-purple/20 dark:from-brand-blue/10 dark:via-brand-dark/10 dark:to-brand-purple/10 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-bl from-brand-blue/40 via-brand-main/25 to-brand-purple/40 dark:from-brand-blue/30 dark:via-brand-dark/25 dark:to-brand-purple/30 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                <div className="relative z-10 p-8 lg:p-10 text-text dark:text-text-dark">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-bl from-brand-blue/25 via-brand-main/15 to-brand-purple/25 dark:from-brand-blue/15 dark:via-brand-dark/15 dark:to-brand-purple/15 transition-all duration-300">
+                    <Icon name="bookBold" className="w-8 h-8 text-text dark:text-text-dark" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-text dark:text-text-dark">
+                    {t('featureLearnTitle')}
+                  </h3>
+                  <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
+                    {t('featureLearnDesc')}
+                  </p>
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              href={`/${locale}/skateparks`}
+              className="group block rounded-3xl p-[2px] bg-transparent hover:bg-gradient-to-tr hover:from-brand-main hover:via-brand-purple hover:to-brand-blue dark:hover:from-brand-dark dark:hover:via-brand-purple dark:hover:to-brand-blue transition-all duration-300 md:hover:-translate-y-2 hover:shadow-xl"
+            >
+              <div className="rounded-[22px] overflow-hidden relative bg-card dark:bg-card-dark min-h-full">
+                <div className="absolute inset-0 bg-gradient-to-tr from-brand-main/15 via-brand-purple/20 to-brand-blue/20 dark:from-brand-dark/10 dark:via-brand-purple/10 dark:to-brand-blue/10 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-brand-main/30 via-brand-purple/40 to-brand-blue/40 dark:from-brand-dark/25 dark:via-brand-purple/30 dark:to-brand-blue/30 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                <div className="relative z-10 p-8 lg:p-10 text-text dark:text-text-dark">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-tr from-brand-main/20 via-brand-purple/25 to-brand-blue/25 dark:from-brand-dark/15 dark:via-brand-purple/15 dark:to-brand-blue/15 transition-all duration-300">
+                    <Icon name="reviewBold" className="w-8 h-8 text-text dark:text-text-dark" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3 text-text dark:text-text-dark">
+                    {t('featureRateTitle')}
+                  </h3>
+                  <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
+                    {t('featureRateDesc')}
+                  </p>
+                </div>
+              </div>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof navigator !== 'undefined' && navigator.share) {
+                  navigator.share({
+                    title: 'Enboss',
+                    text: t('whyEnbossSubtitle'),
+                    url: typeof window !== 'undefined' ? window.location.origin + (locale ? `/${locale}` : '') : '',
+                  }).catch((err) => {
+                    console.error('Error sharing:', err);
+                  });
+                } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                  const url = typeof window !== 'undefined' ? window.location.origin + (locale ? `/${locale}` : '') : '';
+                  navigator.clipboard.writeText(url);
+                }
+              }}
+              className="group block rounded-3xl p-[2px] bg-transparent hover:bg-gradient-to-tl hover:from-brand-purple hover:via-brand-blue hover:to-brand-main dark:hover:from-brand-purple dark:hover:via-brand-blue dark:hover:to-brand-dark transition-all duration-300 md:hover:-translate-y-2 hover:shadow-xl text-left w-full cursor-pointer"
+            >
+              <div className="rounded-[22px] overflow-hidden relative bg-card dark:bg-card-dark min-h-full">
+                <div className="absolute inset-0 bg-gradient-to-tl from-brand-purple/20 via-brand-blue/20 to-brand-main/10 dark:from-brand-purple/10 dark:via-brand-blue/10 dark:to-brand-dark/10 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-tl from-brand-purple/40 via-brand-blue/40 to-brand-main/25 dark:from-brand-purple/30 dark:via-brand-blue/30 dark:to-brand-dark/25 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                <div className="relative z-10 p-8 lg:p-10 text-text dark:text-text-dark text-start">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-tl from-brand-purple/25 via-brand-blue/25 to-brand-main/20 dark:from-brand-purple/15 dark:via-brand-blue/15 dark:to-brand-dark/15 transition-all duration-300">
+                    <Icon name="heartBold" className="w-8 h-8 text-text dark:text-text-dark" />
+                  </div>
+                  <h3 className="text-xl  font-bold mb-3 text-text dark:text-text-dark">
+                    {t('featureSpreadTitle')}
+                  </h3>
+                  <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
+                    {t('featureSpreadDesc')}
+                  </p>
+                </div>
+              </div>
+            </button>
           </div>
         </div>
       </section>
@@ -456,13 +555,26 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-6xl mx-auto">
             {[
               { label: t('communityStreetSessions'), gradient: 'from-[#0D7377] to-[#14A3A8]' },
-              { label: t('communityProParks'), gradient: 'from-[#32CD32] to-[#2ECC71]' },
-              { label: t('communityLocalSpots'), gradient: 'from-[#14A3A8] to-[#32CD32]' },
-              { label: t('communityEvents'), gradient: 'from-[#2ECC71] to-[#39FF14]' },
+              {
+                label: t('communityProParks'),
+                gradient: 'from-[#32CD32] to-[#2ECC71]',
+                backgroundImage: 'https://res.cloudinary.com/dr0rvohz9/image/upload/w_1200,q_90,c_fill/v1743681941/e7yc36ybmw6yxsinuffv.webp',
+              },
+              {
+                label: t('communityGuides'),
+                gradient: 'from-[#14A3A8] to-[#32CD32]',
+                backgroundImage: 'https://placehold.co/800x800/333333/FFFFFF/png?text=What%20is%20a%20skate%20bearing%20beginner%20guide&w=828&q=100',
+              },
+              {
+                label: t('communityEvents'),
+                gradient: 'from-[#2ECC71] to-[#39FF14]',
+                backgroundImage: 'https://res.cloudinary.com/dr0rvohz9/image/upload/w_1200,q_90,c_fill/v1756030070/t4wjquwwrdmgb3it1x5x.jpg',
+              },
             ].map((item, index) => (
               <div
                 key={index}
-                className={`relative aspect-square rounded-2xl bg-gradient-to-br ${item.gradient} overflow-hidden border border-[rgba(13,115,119,0.15)] dark:border-[rgba(20,163,168,0.2)] transition-transform duration-300 hover:scale-105`}
+                className={`relative aspect-square rounded-2xl bg-gradient-to-br ${item.gradient} overflow-hidden transition-all duration-300 hover:bg-[length:170%] bg-[length:150%] bg-center saturate-150`}
+                style={item.backgroundImage ? { backgroundImage: `url(${item.backgroundImage})` } : undefined}
               >
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
                 <div className="absolute bottom-5 left-5 z-10 font-semibold text-white">
@@ -475,7 +587,7 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[#0D7377] to-[#32CD32] text-white">
+      <section className="hidden py-24 sm:py-32 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[#0D7377] to-[#32CD32] text-white">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-16">
             {[
