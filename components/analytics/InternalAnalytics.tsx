@@ -16,12 +16,15 @@ export default function InternalAnalytics() {
   const pathname = usePathname();
   const locale = useLocale();
   const { data: session } = useSession();
+  const userId = getUserId(session);
   const previousPathRef = useRef<string | null>(null);
   const enterTimeRef = useRef<number>(Date.now());
   const lastTrackedPathRef = useRef<string | null>(null);
   const lastTrackedAtRef = useRef<number>(0);
-  const userId = getUserId(session);
+  const userIdRef = useRef(userId);
+  userIdRef.current = userId;
 
+  // Only re-run on pathname/locale change so session loading doesn't trigger an extra page view
   useEffect(() => {
     if (!isAnalyticsEnabled() || !pathname) return;
     if (!hasConsent('analytics')) return;
@@ -29,7 +32,7 @@ export default function InternalAnalytics() {
     const now = Date.now();
     const previousPath = previousPathRef.current;
     const enterTime = enterTimeRef.current;
-    const payload = { locale, userId };
+    const payload = { locale, userId: userIdRef.current };
 
     // Send previous page with time on page (if we had one)
     if (previousPath != null && previousPath !== pathname) {
@@ -63,7 +66,7 @@ export default function InternalAnalytics() {
     lastTrackedAtRef.current = Date.now();
     previousPathRef.current = pathname;
     enterTimeRef.current = Date.now();
-  }, [pathname, locale, userId]);
+  }, [pathname, locale]);
 
   // On leave (tab close / navigate away), send current page time
   useEffect(() => {
@@ -76,7 +79,7 @@ export default function InternalAnalytics() {
         trackPageView({
           path: pathname,
           locale,
-          userId,
+          userId: userIdRef.current,
           timeOnPageMs,
         });
       }
@@ -87,7 +90,7 @@ export default function InternalAnalytics() {
       trackPageView({
         path: pathname,
         locale,
-        userId,
+        userId: userIdRef.current,
         timeOnPageMs,
       });
     };
@@ -99,7 +102,7 @@ export default function InternalAnalytics() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [pathname, locale, userId]);
+  }, [pathname, locale]);
 
   return null;
 }

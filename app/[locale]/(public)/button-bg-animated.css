@@ -1,0 +1,172 @@
+/* Animated blob background for CTA button */
+.animated-bg-button {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Create a wrapper for blobs with blur effect */
+.animated-bg-button .blob {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  opacity: 0.8;
+  animation: blob-float ease-in-out infinite;
+  filter: blur(40px);
+}
+
+/* Blue blob */
+.animated-bg-button .blob:nth-child(1) {
+  background: radial-gradient(circle, #1d4ed8, #1e40af);
+  animation-duration: 5s;
+  animation-delay: 0s;
+  top: -30%;
+  left: -20%;
+}
+
+/* Green blob */
+.animated-bg-button .blob:nth-child(2) {
+  background: radial-gradient(circle, hsl(123, 48%, 45%), hsl(123, 48%, 35%));
+  animation-duration: 6s;
+  animation-delay: -1.5s;
+  top: 20%;
+  right: -30%;
+}
+
+/* Pink blob */
+.animated-bg-button .blob:nth-child(3) {
+  background: radial-gradient(circle, hsl(314, 52%, 56%), hsl(314, 52%, 46%));
+  animation-duration: 5.5s;
+  animation-delay: -3s;
+  bottom: -30%;
+  left: 10%;
+}
+
+/* Orange blob */
+.animated-bg-button .blob:nth-child(4) {
+  background: radial-gradient(circle, #e49a43, #d68a33);
+  animation-duration: 4.5s;
+  animation-delay: -0.8s;
+  top: -20%;
+  right: 10%;
+}
+
+/* Red blob */
+.animated-bg-button .blob:nth-child(5) {
+  background: radial-gradient(circle, #cc2a2a, #b52424);
+  animation-duration: 6.5s;
+  animation-delay: -2.2s;
+  bottom: 5%;
+  right: -35%;
+}
+
+/* Purple blob - bonus for more depth */
+.animated-bg-button .blob:nth-child(6) {
+  background: radial-gradient(circle, #915bf5, #7d4dd8);
+  animation-duration: 5.8s;
+  animation-delay: -4s;
+  top: 40%;
+  left: -40%;
+}
+
+@keyframes blob-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+  }
+  25% {
+    transform: translate(30%, -20%) scale(1.15) rotate(90deg);
+  }
+  50% {
+    transform: translate(-20%, 25%) scale(0.9) rotate(180deg);
+  }
+  75% {
+    transform: translate(25%, 15%) scale(1.08) rotate(270deg);
+  }
+}
+
+/* Pop fade in animation */
+@keyframes popFadeIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animated rotating gradient border for feature cards – visible on hover, theme colors for light/dark */
+.feature-card-border {
+  --gradient-height: 10000px;
+  --gradient-width: 10000px;
+  /* Light mode: slightly deeper so border reads well on light bg */
+  --gc-purple: #6a00c7;
+  --gc-blue: #0056b3;
+  --gc-green: #00b32d;
+  --gc-bg: #ffffff;
+
+  --gc-pink: #cc00cc;
+  position: relative;
+  overflow: hidden;
+  padding: 1.5px;
+  border-radius: 1.5rem; /* rounded-3xl */
+  align-self: stretch;
+  display: block;
+}
+
+.dark .feature-card-border {
+  /* Dark mode: full theme colors from colors.ts */
+  --gc-purple: #8b00ff;
+  --gc-blue: #007bff;
+  --gc-green: #47b84d;
+  --gc-bg: #222222;
+
+  --gc-pink: #ff00ff;
+}
+
+.feature-card-border::after {
+  content: '';
+  position: absolute;
+  height: var(--gradient-height);
+  width: var(--gradient-width);
+  top: calc((100% - var(--gradient-height)) / 2);
+  left: calc((100% - var(--gradient-width)) / 2);
+  background: conic-gradient(
+    var(--gc-purple),
+    var(--gc-blue),
+    var(--gc-green),
+    var(--gc-bg),
+    var(--gc-purple)
+  );
+  background-size: cover;
+  background-position: center center;
+  animation: animateBorder 2s infinite linear;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.feature-card-border:hover::after {
+  opacity: 1;
+}
+
+@keyframes animateBorder {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.feature-card-inner {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  width: 100%;
+  border-radius: 1.375rem; /* rounded-[22px] */
+  min-height: 100%;
+}

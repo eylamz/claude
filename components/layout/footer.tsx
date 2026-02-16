@@ -9,6 +9,7 @@ import { Button, Input } from '@/components/ui';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { isEcommerceEnabled, isTrainersEnabled, isNewsletterEnabled } from '@/lib/utils/ecommerce';
+import '@/app/[locale]/(public)/button-bg-animated.css';
 
 export function Footer() {
   const locale = useLocale();
@@ -234,11 +235,18 @@ export function Footer() {
                 />
                 <Button
                   type="submit"
-                  variant="primary"
                   disabled={loading}
-                  className="min-h-full w-auto !rounded-xl"
+                  className="animated-bg-button min-h-full w-auto !rounded-xl !bg-transparent !border-none hover:!saturate-150 dark:text-white font-semibold transition-all duration-300"
                 >
-                  {loading ? t('footer.subscribing') : t('footer.subscribe')}
+                  <span className="blob" aria-hidden />
+                  <span className="blob" aria-hidden />
+                  <span className="blob" aria-hidden />
+                  <span className="blob" aria-hidden />
+                  <span className="blob" aria-hidden />
+                  <span className="blob" aria-hidden />
+                  <span className="relative z-10">
+                    {loading ? t('footer.subscribing') : t('footer.subscribe')}
+                  </span>
                 </Button>
                 {error && (
                   <p className="text-xs text-red dark:text-red-dark" role="alert">
