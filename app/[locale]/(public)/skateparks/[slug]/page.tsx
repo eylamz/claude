@@ -511,7 +511,7 @@ function FormattedHours({
         <div className="flex ltr:flex-col xsm:ltr:flex-row items-start gap-2">
           <div className="flex items-center gap-2">
             <Icon name="sunset" className="w-5 h-5 text-gray-500" />
-            <h4 className="text-base font-semibold">{t('lightingHours')}: </h4>
+            <h3 className="text-base font-semibold">{t('lightingHours')}: </h3>
           </div>
           <div>
             <p className="ps-7 xsm:ps-0 text-base sm:text-lg text-gray-500">{t('notApplicable')}</p>
@@ -530,7 +530,7 @@ function FormattedHours({
         {/* 24/7 Header */}
         <div className="flex items-center gap-2 text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5" />
-          <h3 className="text-base sm:text-xl font-semibold">{t('openingHours')}: </h3>
+          <h2 className="text-base sm:text-xl font-semibold">{t('openingHours')}: </h2>
           <Badge 
           variant="brandOutline" 
           className="inline-flex items-center px-2 py-1 !rounded !text-base sm:text-lg font-semibold"
@@ -543,7 +543,7 @@ function FormattedHours({
         <div className={`flex flex-col lg:flex-row items-start gap-2 ${locale === 'he' ? 'flex-col xsm:flex-row' : ''}`}>
           <div className="flex items-center gap-2">
             <Icon name="sunset" className={`w-5 h-5 ${lightingHours?.endTime ? 'text-yellow-500 dark:text-yellow-300' : 'text-gray-500'}`} />
-            <h4 className="text-base sm:text-lg font-semibold text-text dark:text-text-dark">{t('lightingHours')}: </h4>
+            <h3 className="text-base sm:text-lg font-semibold text-text dark:text-text-dark">{t('lightingHours')}: </h3>
           </div>
           <div>
             <p className={`ps-7 lg:ps-0 text-base sm:text-lg ${!lightingHours?.endTime ? 'text-gray-500' : 'text-text dark:text-text-dark'}`}>
@@ -584,7 +584,7 @@ function FormattedHours({
         {/* Header */}
         <div className="flex items-center gap-2 text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5 " />
-          <h3 className="text-base font-semibold">{t('openingHours')}</h3>
+          <h2 className="text-base font-semibold">{t('openingHours')}</h2>
         </div>
         
         {/* All week hours */}
@@ -617,7 +617,7 @@ function FormattedHours({
         {/* Header */}
         <div className="flex items-center gap-2  text-text dark:text-text-dark">
           <Icon name="clockBold" className="w-5 h-5 " />
-          <h3 className="text-base font-semibold">{t('openingHours')}</h3>
+          <h2 className="text-base font-semibold">{t('openingHours')}</h2>
         </div>
         
         {/* All week hours */}
@@ -656,7 +656,7 @@ function FormattedHours({
       {/* Header */}
       <div className="flex items-center gap-2 text-text dark:text-text-dark">
         <Icon name="clockBold" className="w-4 h-4" />
-        <h3 className="text-base sm:text-xl font-semibold">{t('openingHours')}</h3>
+        <h2 className="text-base sm:text-xl font-semibold">{t('openingHours')}</h2>
       </div>
       
       {/* Hours by group */}
@@ -1866,7 +1866,7 @@ export default function SkateparkPage() {
                 ) ? (
                   <div className="px-1 sm:px-0 md:p-4 space-y-6">
                     <div className="flex items-center justify-center mb-4 text-text dark:text-text-dark">
-                      <h2 className={`text-base sm:text-xl font-semibold flex items-center gap-1 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
+                      <h3 className={`text-base sm:text-xl font-semibold flex items-center gap-1 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
                         {tr('Rating', 'דירוג')}
                         <Icon 
                           name="logo" 
@@ -1877,7 +1877,7 @@ export default function SkateparkPage() {
                               : 'text-brand-main dark:text-brand-dark'
                           }`} 
                         />
-                      </h2>
+                      </h3>
                     </div>
                     
                     <div className="grid grid-cols-1 xsm:grid-cols-3 gap-4 h-fit">
@@ -1962,7 +1962,7 @@ export default function SkateparkPage() {
                   key={`map-links-${locale}`}
                   className="space-y-4 sm:px-0 md:p-4"
                 >
-                  <h2 id="directions-heading" className="sr-only">{t('getDirections')}</h2>
+                  <h3 id="directions-heading" className="sr-only">{t('getDirections')}</h3>
                   <div className="flex flex-col space-y-4 !mt-0">
                     <div className="flex items-center gap-2 justify-start md:justify-center">
                       <Icon name="mapBold" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
@@ -2152,7 +2152,7 @@ export default function SkateparkPage() {
           ) ? (
             <Card className="px-5 sm:px-4 md:p-4 shadow-none w-full max-w-6xl mx-auto mb-8">
               <div className="flex items-center md:justify-center mb-4 text-text dark:text-text-dark">
-                <h2 className={`text-base sm:text-xl font-semibold flex items-center gap-2 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
+                <h3 className={`text-base sm:text-xl font-semibold flex items-center gap-2 ${locale === 'he' ? '' : 'flex-row-reverse'}`}>
                 {tr('Rating', 'דירוג')}
                 <Icon 
                   name="logo" 
@@ -2163,7 +2163,7 @@ export default function SkateparkPage() {
                   }`} 
                 />
 
-                </h2>
+                </h3>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
