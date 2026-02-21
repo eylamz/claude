@@ -36,7 +36,7 @@ export function Footer() {
         const res = await fetch('/api/newsletter/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: trimmed }),
+          body: JSON.stringify({ email: trimmed, locale: locale === 'he' ? 'he' : 'en' }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok && res.status !== 200) {
@@ -52,7 +52,7 @@ export function Footer() {
         setLoading(false);
       }
     },
-    [email, t]
+    [email, locale, t]
   );
 
   const ecommerceEnabled = isEcommerceEnabled();

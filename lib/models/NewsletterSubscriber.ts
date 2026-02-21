@@ -1,9 +1,11 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export type NewsletterSource = 'footer';
+export type NewsletterLocale = 'he' | 'en';
 
 export interface INewsletterSubscriber extends Document {
   email: string;
+  locale: NewsletterLocale;
   source?: NewsletterSource;
   createdAt: Date;
   updatedAt: Date;
@@ -16,7 +18,13 @@ const NewsletterSubscriberSchema: Schema<INewsletterSubscriber> = new Schema<INe
       required: [true, 'Email is required'],
       lowercase: true,
       trim: true,
-      unique: true,
+      index: true,
+    },
+    locale: {
+      type: String,
+      enum: ['he', 'en'],
+      default: 'en',
+      required: true,
       index: true,
     },
     source: {
@@ -29,6 +37,8 @@ const NewsletterSubscriberSchema: Schema<INewsletterSubscriber> = new Schema<INe
     timestamps: true,
   }
 );
+
+NewsletterSubscriberSchema.index({ email: 1, locale: 1 }, { unique: true });
 
 export default mongoose.models.NewsletterSubscriber ||
   mongoose.model<INewsletterSubscriber>('NewsletterSubscriber', NewsletterSubscriberSchema);

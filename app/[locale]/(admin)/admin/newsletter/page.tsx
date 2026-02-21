@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useLocale } from 'next-intl';
 import { useTranslations } from 'next-intl';
 import { Button, Card, CardHeader, CardTitle, CardContent, Skeleton } from '@/components/ui';
 import {
@@ -14,9 +13,12 @@ import {
 } from '@/components/ui/table';
 import { SearchInput } from '@/components/common/SearchInput';
 
+type LocaleFilter = '' | 'he' | 'en';
+
 interface Subscriber {
   id: string;
   email: string;
+  locale: string;
   createdAt: string;
 }
 
@@ -28,7 +30,6 @@ interface Pagination {
 }
 
 export default function NewsletterPage() {
-  const locale = useLocale();
   const t = useTranslations('common.mobileNav');
   const tAdmin = useTranslations('admin');
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
@@ -42,6 +43,7 @@ export default function NewsletterPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [localeFilter, setLocaleFilter] = useState<LocaleFilter>('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [exportingCsv, setExportingCsv] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -54,6 +56,10 @@ export default function NewsletterPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
+  useEffect(() => {
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+  }, [localeFilter]);
+
   const fetchSubscribers = useCallback(async () => {
     try {
       setLoading(true);
@@ -62,6 +68,7 @@ export default function NewsletterPage() {
         page: String(pagination.currentPage),
         limit: String(pagination.limit),
         ...(debouncedSearch && { search: debouncedSearch }),
+        ...(localeFilter && { locale: localeFilter }),
       });
       const res = await fetch(`/api/admin/newsletter?${params}`);
       if (!res.ok) {
@@ -78,7 +85,7 @@ export default function NewsletterPage() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [pagination.currentPage, pagination.limit, debouncedSearch]);
+  }, [pagination.currentPage, pagination.limit, debouncedSearch, localeFilter]);
 
   useEffect(() => {
     fetchSubscribers();
@@ -106,6 +113,7 @@ export default function NewsletterPage() {
           page: String(page),
           limit: String(limit),
           ...(debouncedSearch && { search: debouncedSearch }),
+          ...(localeFilter && { locale: localeFilter }),
         });
         const res = await fetch(`/api/admin/newsletter?${params}`);
         if (!res.ok) throw new Error('Failed to fetch subscribers');
@@ -116,9 +124,13 @@ export default function NewsletterPage() {
         page += 1;
       } while (page <= totalPages);
 
-      const header = 'Email,Subscribed';
+      const header = 'Email,Locale,Subscribed';
       const rows = all.map((s) =>
-        [escapeCsvCell(s.email), escapeCsvCell(formatDate(s.createdAt))].join(',')
+        [
+          escapeCsvCell(s.email),
+          escapeCsvCell(s.locale || 'en'),
+          escapeCsvCell(formatDate(s.createdAt)),
+        ].join(',')
       );
       const csv = [header, ...rows].join('\r\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -154,11 +166,11 @@ export default function NewsletterPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    const d = new Date(dateString);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   if (error) {
@@ -229,7 +241,7 @@ export default function NewsletterPage() {
       </div>
 
       <Card className="!p-0 bg-card dark:bg-card-dark">
-        <CardContent className="p-4">
+        <CardContent className="p-4 flex flex-wrap items-center gap-4">
           <div className="flex-1 min-w-64 max-w-xs">
             <SearchInput
               value={search}
@@ -238,6 +250,18 @@ export default function NewsletterPage() {
               placeholder="Search by email..."
               className="!max-w-full"
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500 dark:text-gray-400">Locale:</span>
+            <select
+              value={localeFilter}
+              onChange={(e) => setLocaleFilter(e.target.value as LocaleFilter)}
+              className="rounded-md border border-border dark:border-border-dark bg-background dark:bg-background-dark px-3 py-2 text-sm text-text dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-brand-main"
+            >
+              <option value="">All</option>
+              <option value="he">Hebrew (he)</option>
+              <option value="en">English (en)</option>
+            </select>
           </div>
         </CardContent>
       </Card>
@@ -259,6 +283,7 @@ export default function NewsletterPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Email</TableHead>
+                    <TableHead className="hidden sm:table-cell">Locale</TableHead>
                     <TableHead className="hidden sm:table-cell">Subscribed</TableHead>
                     <TableHead className="w-[100px]">Actions</TableHead>
                   </TableRow>
@@ -267,7 +292,7 @@ export default function NewsletterPage() {
                   {subscribers.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={3}
+                        colSpan={4}
                         className="text-center text-gray-500 dark:text-gray-400 py-8"
                       >
                         No subscribers yet.
@@ -278,6 +303,9 @@ export default function NewsletterPage() {
                       <TableRow key={sub.id}>
                         <TableCell className="font-medium text-gray-900 dark:text-white">
                           {sub.email}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-gray-500 dark:text-gray-400">
+                          {sub.locale || 'en'}
                         </TableCell>
                         <TableCell className="hidden sm:table-cell text-gray-500 dark:text-gray-400">
                           {formatDate(sub.createdAt)}

@@ -44,6 +44,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const rawEmail = typeof body.email === 'string' ? body.email.trim() : '';
     const email = rawEmail.toLowerCase();
+    const rawLocale = typeof body.locale === 'string' ? body.locale.trim().toLowerCase() : '';
+    const locale = rawLocale === 'he' ? 'he' : 'en';
 
     if (!email || !emailRegex.test(email)) {
       return NextResponse.json(
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
-    const existing = await NewsletterSubscriber.findOne({ email });
+    const existing = await NewsletterSubscriber.findOne({ email, locale });
     if (existing) {
       return NextResponse.json(
         { success: true, message: 'You are already subscribed.', alreadySubscribed: true },
@@ -62,7 +64,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await NewsletterSubscriber.create({ email, source: 'footer' });
+    await NewsletterSubscriber.create({ email, locale, source: 'footer' });
 
     return NextResponse.json(
       { success: true, message: 'Successfully subscribed to the newsletter.' },
