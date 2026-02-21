@@ -104,6 +104,9 @@ export function Footer() {
               <div className="flex items-center gap-4 md:gap-2 md:mb-4 mt-6 overflow-visible">
                 <a
                   href="https://www.instagram.com/enboss_official"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
                   className="group relative flex items-center justify-center p-1 cursor-pointer touch-manipulation transition-all duration-200"
                 >
                   <svg
@@ -136,6 +139,9 @@ export function Footer() {
                 </a>
                 <a
                   href="https://www.tiktok.com/enboss_official"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="TikTok"
                   className="flex items-center justify-center cursor-pointer transition-all duration-200 text-white stroke-black stroke-[0.75px] [filter:drop-shadow(-1px_-0.7px_0_#25F4EEd9)_drop-shadow(1.25px_1.25px_0_#FE2C55d9)_drop-shadow(0_0_8px_rgba(37,244,238,0.25))_drop-shadow(0_0_8px_rgba(227,45,21,0.35))] md:text-text md:dark:text-text-dark md:stroke-transparent md:[filter:none] md:hover:text-white md:hover:stroke-black md:hover:scale-110 
                 md:hover:[filter:drop-shadow(-1px_-0.7px_0_#25F4EEd9)_drop-shadow(1.25px_1.25px_0_#FE2C55d9)_drop-shadow(0_0_8px_rgba(37,244,238,0.25))_drop-shadow(0_0_8px_rgba(227,45,21,0.35))]"
                 >
@@ -147,6 +153,7 @@ export function Footer() {
                 </a>
                 <a
                   href={`/${locale}/contact`}
+                  aria-label={t('contact')}
                   className="flex items-center justify-center group cursor-pointer p-1 transition-all duration-200 touch-manipulation"
                 >
                   <svg
@@ -166,6 +173,9 @@ export function Footer() {
                 </a>
                 <a
                   href="https://www.youtube.com/@enboss2136"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="YouTube"
                   className="flex items-center justify-center cursor-pointer transition-all duration-200 text-[#FF0000] scale-110 [filter:drop-shadow(0_0_8px_rgba(255,0,0,0.25))] md:text-text md:dark:text-text-dark md:scale-100 md:[filter:none] md:hover:text-[#FF0000] md:hover:scale-110 md:hover:[filter:drop-shadow(0_0_8px_rgba(255,0,0,0.25))]"
                 >
                   <Icon
@@ -266,7 +276,7 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-border dark:border-border-dark flex flex-col sm:flex-row justify-between items-center gap-6">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-600 dark:text-gray-400">
             {locale === 'he' ? (
               <>© {currentYear} אנבוס. כל הזכויות שמורות.</>
             ) : (

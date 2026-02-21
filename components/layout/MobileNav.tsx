@@ -115,6 +115,9 @@ export default function MobileNavMinimal() {
               aria-label={tCommon('search') || 'Open search'}
             >
               {/* Invisible input that Safari will allow to trigger the keyboard */}
+              <label htmlFor="safari-focus-trigger" className="sr-only">
+                {tCommon('search') || 'Search'}
+              </label>
               <input 
                 id="safari-focus-trigger" 
                 className="absolute opacity-0 pointer-events-none w-0 h-0" 

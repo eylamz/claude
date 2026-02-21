@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Poppins, Assistant } from 'next/font/google';
+import { headers } from 'next/headers';
+import { defaultLocale } from '@/i18n';
 import './globals.css';
 
 const poppins = Poppins({
@@ -21,13 +23,15 @@ export const metadata: Metadata = {
   description: 'Find the best skateparks near you',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = await headers();
+  const locale = headersList.get('x-next-intl-locale') || defaultLocale;
   return (
-    <html suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${poppins.variable} ${assistant.variable}`}>
         <script
           dangerouslySetInnerHTML={{

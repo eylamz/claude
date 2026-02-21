@@ -114,12 +114,10 @@ const isNewPark = (createdAt: string | null): boolean => {
 // Memoized thumbnail component
 const SkateparkThumbnail = memo(({ 
   photoUrl, 
-  parkName, 
   onLoad,
   alwaysSaturated = false
 }: { 
   photoUrl: string, 
-  parkName: string,
   onLoad?: () => void,
   alwaysSaturated?: boolean
 }) => {
@@ -202,7 +200,7 @@ const SkateparkThumbnail = memo(({
         <img
           ref={imgRef}
           src={optimizedUrl}
-          alt={parkName}
+          alt=""
           className={`absolute left-1/2 -translate-x-1/2 w-[110%] h-full object-cover rounded-2xl transition-all duration-200 select-none bg-card dark:bg-card-dark shadow-lg shadow-[rgba(0,0,0,0.05)] group-hover:shadow-lg dark:group-hover:!scale-[1.02] ${
             alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
           } ${
@@ -507,7 +505,6 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
 
         <SkateparkThumbnail
           photoUrl={photoUrl}
-          parkName={name}
         />
       </div>
 

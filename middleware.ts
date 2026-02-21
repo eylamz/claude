@@ -1,7 +1,6 @@
 import createMiddleware from 'next-intl/middleware';
 import { withAuth } from 'next-auth/middleware';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { locales, defaultLocale } from './i18n';
 
 // Create i18n middleware
@@ -122,8 +121,16 @@ export default withAuth(
       return NextResponse.redirect(url);
     }
 
+    // Pass locale from URL to the request so root layout can set html[lang]
+    const localeFromPath = pathname.split('/').filter(Boolean)[0];
+    const requestHeaders = new Headers(req.headers);
+    if (localeFromPath && locales.includes(localeFromPath as any)) {
+      requestHeaders.set('x-next-intl-locale', localeFromPath);
+    }
+    const modifiedRequest = new NextRequest(req.url, { headers: requestHeaders });
+
     // Continue with i18n middleware
-    return intlMiddleware(req);
+    return intlMiddleware(modifiedRequest);
   },
   {
     callbacks: {
