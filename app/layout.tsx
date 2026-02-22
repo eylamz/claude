@@ -1,38 +1,31 @@
 import type { Metadata } from 'next';
-import { Poppins, Assistant } from 'next/font/google';
 import { headers } from 'next/headers';
 import { defaultLocale } from '@/i18n';
 import './globals.css';
-
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-poppins',
-  display: 'swap',
-});
-
-const assistant = Assistant({
-  subsets: ['latin', 'hebrew'],
-  weight: ['200', '300', '400', '500', '600', '700', '800'],
-  variable: '--font-assistant',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: 'ENBOSS - No Rider Left Behind',
   description: 'Find the best skateparks near you',
 };
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const headersList = await headers();
   const locale = headersList.get('x-next-intl-locale') || defaultLocale;
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${poppins.variable} ${assistant.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Assistant:wght@200;300;400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body>
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -60,4 +53,3 @@ export default async function RootLayout({
     </html>
   );
 }
-

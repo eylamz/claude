@@ -245,7 +245,13 @@ export async function POST(request: Request) {
           he: body.timezone === 'Asia/Jerusalem' ? 'אסיה/ירושלים' : (body.timezone || 'אסיה/ירושלים'),
         },
       },
-      location: body.location || { name: { en: '', he: '' }, address: { en: '', he: '' } },
+      location: (() => {
+        const loc = body.location || { name: { en: '', he: '' }, address: { en: '', he: '' } };
+        if (loc.isSkatepark && loc.skateparkSlug) {
+          return { ...loc, url: `/skateparks/${loc.skateparkSlug}` };
+        }
+        return loc;
+      })(),
       content: {
         en: {
           title: body.title?.en ?? '',

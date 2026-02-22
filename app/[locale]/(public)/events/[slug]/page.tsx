@@ -52,6 +52,8 @@ interface IEvent {
       lat: number;
       lng: number;
     };
+    isSkatepark?: boolean;
+    skateparkSlug?: string;
   };
   
   // Engagement metrics
@@ -568,7 +570,15 @@ export default function EventPage() {
                   <Icon name="location" className="w-4 h-4 text-brand-main mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     <p className="text-sm text-gray-700 dark:text-gray-300">{getLocalizedAddress()}</p>
-                    {event.location.url && (
+                    {event.location?.isSkatepark && event.location?.skateparkSlug ? (
+                      <Link
+                        href={`/${locale}/skateparks/${event.location.skateparkSlug}`}
+                        className="inline-flex items-center gap-1 text-brand-main hover:text-brand-main/80 dark:text-brand-dark text-sm mt-1"
+                      >
+                        <Icon name="link" className="w-3 h-3" />
+                        <span>{locale === 'he' ? 'צפה בפרטי הפארק' : 'Show skatepark details'}</span>
+                      </Link>
+                    ) : event.location?.url ? (
                       <a 
                         href={event.location.url} 
                         target="_blank" 
@@ -578,7 +588,7 @@ export default function EventPage() {
                         <Icon name="link" className="w-3 h-3" />
                         <span>{locale === 'he' ? 'פתח במפה' : 'Open in Maps'}</span>
                       </a>
-                    )}
+                    ) : null}
                   </div>
                 </div>
                             <Button

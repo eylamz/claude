@@ -216,7 +216,13 @@ export async function PUT(
         ? new Date(body.registrationClosesAt)
         : undefined;
     }
-    if (body.location !== undefined) event.location = body.location;
+    if (body.location !== undefined) {
+      event.location = body.location;
+      // When location is a skatepark, set url to internal path (locale is added on the frontend)
+      if (event.location?.isSkatepark && event.location?.skateparkSlug) {
+        event.location.url = `/skateparks/${event.location.skateparkSlug}`;
+      }
+    }
     if (body.metaTitle !== undefined) event.metaTitle = { en: body.metaTitle.en ?? '', he: body.metaTitle.he ?? '' };
     if (body.metaDescription !== undefined) event.metaDescription = { en: body.metaDescription.en ?? '', he: body.metaDescription.he ?? '' };
     if (body.metaKeywords !== undefined) event.metaKeywords = { en: body.metaKeywords.en ?? '', he: body.metaKeywords.he ?? '' };

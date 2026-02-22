@@ -6,6 +6,7 @@ import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper,
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { useSkateparkSlugOptions } from '@/hooks/use-skatepark-slug-options';
 import { EventContentBuilder, ImageUploader, type EventSectionForm } from '@/components/admin';
 
 export interface EventMediaItem {
@@ -30,6 +31,10 @@ interface EventFormData {
   location: {
     name: { en: string; he: string };
     address: { en: string; he: string };
+    url?: string;
+    coordinates?: { lat: number; lng: number };
+    isSkatepark?: boolean;
+    skateparkSlug?: string;
   };
   featuredImage: {
     url: string;
@@ -94,6 +99,7 @@ export default function EditEventPage() {
   const lastSavedDataRef = useRef<string | null>(null);
   const [expandedMediaId, setExpandedMediaId] = useState<string | null>(null);
   const { toast } = useToast();
+  const skateparkSlugOptions = useSkateparkSlugOptions();
 
   const [formData, setFormData] = useState<EventFormData>({
     title: { en: '', he: '' },
@@ -107,6 +113,10 @@ export default function EditEventPage() {
     location: {
       name: { en: '', he: '' },
       address: { en: '', he: '' },
+      url: '',
+      coordinates: { lat: undefined as number | undefined, lng: undefined as number | undefined },
+      isSkatepark: false,
+      skateparkSlug: '',
     },
     featuredImage: {
       url: '',
@@ -179,9 +189,15 @@ export default function EditEventPage() {
           endDate: formatDateForInput(event.endDate),
           timezone: event.timezone || 'Asia/Jerusalem',
           isAllDay: event.isAllDay || false,
-          location: event.location || {
-            name: { en: '', he: '' },
-            address: { en: '', he: '' },
+          location: {
+            name: event.location?.name || { en: '', he: '' },
+            address: event.location?.address || { en: '', he: '' },
+            url: event.location?.url ?? '',
+            coordinates: event.location?.coordinates
+              ? { lat: event.location.coordinates.lat, lng: event.location.coordinates.lng }
+              : { lat: undefined as number | undefined, lng: undefined as number | undefined },
+            isSkatepark: event.location?.isSkatepark ?? false,
+            skateparkSlug: event.location?.skateparkSlug ?? '',
           },
           featuredImage: typeof event.featuredImage === 'object' && event.featuredImage
             ? {
@@ -955,11 +971,11 @@ export default function EditEventPage() {
             <div>
               <Textarea
                 label="Address (EN)"
-                value={formData.location.address.en}
+                value={formData.location.address?.en ?? ''}
                 onChange={(e) =>
                   setFormData(prev => ({
                     ...prev,
-                    location: { ...prev.location, address: { ...prev.location.address, en: e.target.value } },
+                    location: { ...prev.location, address: { ...(prev.location.address || { en: '', he: '' }), en: e.target.value } },
                   }))
                 }
                 rows={2}
@@ -968,16 +984,115 @@ export default function EditEventPage() {
             <div>
               <Textarea
                 label="Address (HE)"
-                value={formData.location.address.he}
+                value={formData.location.address?.he ?? ''}
                 onChange={(e) =>
                   setFormData(prev => ({
                     ...prev,
-                    location: { ...prev.location, address: { ...prev.location.address, he: e.target.value } },
+                    location: { ...prev.location, address: { ...(prev.location.address || { en: '', he: '' }), he: e.target.value } },
                   }))
                 }
                 rows={2}
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                type="number"
+                step="any"
+                label="Latitude"
+                value={formData.location.coordinates?.lat ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setFormData(prev => ({
+                    ...prev,
+                    location: {
+                      ...prev.location,
+                      coordinates: {
+                        ...(prev.location.coordinates || { lat: undefined, lng: undefined }),
+                        lat: v === '' ? undefined : Number(v),
+                      },
+                    },
+                  }));
+                }}
+                placeholder="e.g. 31.7683"
+              />
+              <Input
+                type="number"
+                step="any"
+                label="Longitude"
+                value={formData.location.coordinates?.lng ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setFormData(prev => ({
+                    ...prev,
+                    location: {
+                      ...prev.location,
+                      coordinates: {
+                        ...(prev.location.coordinates || { lat: undefined, lng: undefined }),
+                        lng: v === '' ? undefined : Number(v),
+                      },
+                    },
+                  }));
+                }}
+                placeholder="e.g. 35.2137"
+              />
+            </div>
+            <div className="pt-2">
+              <Checkbox
+                variant="brand"
+                id="locationIsSkatepark"
+                checked={formData.location.isSkatepark ?? false}
+                onChange={(checked) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    location: {
+                      ...prev.location,
+                      isSkatepark: checked,
+                      ...(checked ? {} : { skateparkSlug: '', url: prev.location.url?.startsWith('http') ? prev.location.url : '' }),
+                    },
+                  }))
+                }
+                label="Location is a skatepark (link to park page instead of Maps)"
+              />
+            </div>
+            {formData.location.isSkatepark ? (
+              <div>
+                <datalist id="skateparks-slug-datalist-edit">
+                  {skateparkSlugOptions.map((slug) => (
+                    <option key={slug} value={slug} />
+                  ))}
+                </datalist>
+                <Input
+                  list="skateparks-slug-datalist-edit"
+                  label="Skatepark slug"
+                  value={formData.location.skateparkSlug ?? ''}
+                  onChange={(e) =>
+                    setFormData(prev => ({
+                      ...prev,
+                      location: { ...prev.location, skateparkSlug: e.target.value.trim().toLowerCase().replace(/\s+/g, '-') },
+                    }))
+                  }
+                  placeholder="e.g. beer-sheva"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Event location link will be /[locale]/skateparks/[slug]. Public page will show &quot;Show skatepark details&quot; instead of &quot;Open in Maps&quot;. Suggestions from skateparks_cache (localStorage).
+                </p>
+              </div>
+            ) : (
+              <div>
+                <Input
+                  type="url"
+                  label="Location URL (e.g. Google Maps)"
+                  value={formData.location.url ?? ''}
+                  onChange={(e) =>
+                    setFormData(prev => ({
+                      ...prev,
+                      location: { ...prev.location, url: e.target.value },
+                    }))
+                  }
+                  placeholder="https://maps.google.com/?q=31.7683,35.2137"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 

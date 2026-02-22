@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { useLocale } from 'next-intl';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TrendingUp, CheckCircle2 } from 'lucide-react';
 import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, Skeleton, Toaster } from '@/components/ui';
@@ -52,7 +53,8 @@ const FormCard = memo(({
   const [isClicked, setIsClicked] = useState(false);
   const [showNameSection, setShowNameSection] = useState(false);
   const [showFormName, setShowFormName] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLAnchorElement>(null);
+  const router = useRouter();
 
   // Show name section after delay when card appears
   useEffect(() => {
@@ -69,10 +71,11 @@ const FormCard = memo(({
     e.preventDefault();
     setIsClicked(true);
     setTimeout(() => {
-      window.location.href = `/${locale}/growth-lab/${form.slug}`;
+      router.push(`/${locale}/growth-lab/${form.slug}`);
     }, 300);
-  }, [form.slug, locale]);
+  }, [form.slug, locale, router]);
 
+  const href = `/${locale}/growth-lab/${form.slug}`;
   const formTitle = getLocalizedText(form.title, locale);
   const formDescription = form.description ? getLocalizedText(form.description, locale) : '';
 
@@ -84,10 +87,11 @@ const FormCard = memo(({
   };
 
   return (
-    <div
+    <Link
       ref={cardRef}
+      href={href}
       onClick={handleCardClick}
-      className={`h-fit group rounded-xl cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''}`}
+      className={`block h-fit group rounded-xl cursor-pointer relative select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''}`}
       style={{ animationDelay: `${animationDelay}ms` }}
       aria-label={formTitle}
     >
@@ -149,7 +153,7 @@ const FormCard = memo(({
           {formTitle}
         </h3>
       </div>
-    </div>
+    </Link>
   );
 });
 FormCard.displayName = 'FormCard';

@@ -71,11 +71,16 @@ export interface IEventLocation {
     he: string;
     en: string;
   };
-  url?: string; // Optional link to location (Google Maps, venue website, etc.)
+  /** External link (e.g. Google Maps) or internal skatepark path when isSkatepark is true. */
+  url?: string;
   coordinates?: {
     lat: number;
     lng: number;
   };
+  /** When true, location is a skatepark; use skateparkSlug to link to park page. */
+  isSkatepark?: boolean;
+  /** Skatepark page slug (e.g. "beer-sheva"). Link becomes /[locale]/skateparks/[skateparkSlug]. */
+  skateparkSlug?: string;
 }
 
 // Event date/time interface with localization
@@ -276,11 +281,13 @@ const EventLocationSchema = new Schema<IEventLocation>({
     he: { type: String },
     en: { type: String }
   },
-  url: { type: String }, // Link to location
+  url: { type: String },
   coordinates: {
     lat: { type: Number },
     lng: { type: Number }
-  }
+  },
+  isSkatepark: { type: Boolean, default: false },
+  skateparkSlug: { type: String, trim: true }
 }, { _id: false });
 
 const EventDateTimeSchema = new Schema<IEventDateTime>({

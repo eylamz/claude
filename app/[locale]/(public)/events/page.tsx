@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback, memo, useRef, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { X, TrendingUp } from 'lucide-react';
 import { Button, TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui';
@@ -253,7 +254,8 @@ const EventCard = memo(
     const [isClicked, setIsClicked] = useState(false);
     const [showNameSection, setShowNameSection] = useState(false);
     const [showEventName, setShowEventName] = useState(false);
-    const cardRef = useRef<HTMLDivElement>(null);
+    const cardRef = useRef<HTMLAnchorElement>(null);
+    const router = useRouter();
     const tr = useCallback(
       (enText: string, heText: string) => (locale === 'he' ? heText : enText),
       [locale]
@@ -274,12 +276,13 @@ const EventCard = memo(
         e.preventDefault();
         setIsClicked(true);
         setTimeout(() => {
-          window.location.href = `/${locale}/events/${event.slug}`;
+          router.push(`/${locale}/events/${event.slug}`);
         }, 300);
       },
-      [event.slug, locale]
+      [event.slug, locale, router]
     );
 
+    const href = `/${locale}/events/${event.slug}`;
     const isPast = event.isPast;
     const isFull = event.maxParticipants && event.currentParticipants >= event.maxParticipants;
 
@@ -295,10 +298,11 @@ const EventCard = memo(
     };
 
     return (
-      <div
+      <Link
         ref={cardRef}
+        href={href}
         onClick={handleCardClick}
-        className={`h-fit group rounded-xl cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} ${isPast ? 'opacity-60' : ''}`}
+        className={`block h-fit group rounded-xl cursor-pointer relative select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} ${isPast ? 'opacity-60' : ''}`}
         style={{ animationDelay: `${animationDelay}ms` }}
         aria-label={event.title}
       >
@@ -385,7 +389,7 @@ const EventCard = memo(
             {highlightQuery ? highlightMatch(event.title, highlightQuery) : event.title}
           </h3>
         </div>
-      </div>
+      </Link>
     );
   }
 );

@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback, memo, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { X, TrendingUp } from 'lucide-react';
 import {
@@ -271,7 +272,8 @@ const GuideCard = memo(
     const [isClicked, setIsClicked] = useState(false);
     const [showNameSection, setShowNameSection] = useState(false);
     const [showGuideName, setShowGuideName] = useState(false);
-    const cardRef = useRef<HTMLDivElement>(null);
+    const cardRef = useRef<HTMLAnchorElement>(null);
+    const router = useRouter();
 
     // Show name section after 0.3s delay when card appears
     useEffect(() => {
@@ -290,19 +292,22 @@ const GuideCard = memo(
         e.preventDefault();
         setIsClicked(true);
         setTimeout(() => {
-          window.location.href = `/${locale}/guides/${guide.slug}`;
+          router.push(`/${locale}/guides/${guide.slug}`);
         }, 300);
       },
-      [guide.slug, locale]
+      [guide.slug, locale, router]
     );
 
     const guideTitle = getLocalizedText(guide.title, locale);
 
+    const href = `/${locale}/guides/${guide.slug}`;
+
     return (
-      <div
+      <Link
         ref={cardRef}
+        href={href}
         onClick={handleCardClick}
-        className={`h-fit group  rounded-xl  cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
+        className={`block h-fit group rounded-xl cursor-pointer relative select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''}`}
         style={{ animationDelay: `${animationDelay}ms` }}
         aria-label={guideTitle}
       >
@@ -371,7 +376,7 @@ const GuideCard = memo(
             {highlightQuery ? highlightMatch(guideTitle, highlightQuery) : guideTitle}
           </h3>
         </div>
-      </div>
+      </Link>
     );
   }
 );
