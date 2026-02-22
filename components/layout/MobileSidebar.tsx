@@ -32,12 +32,7 @@ interface NavCard {
   comingSoon?: boolean;
 }
 
-interface MiniCard {
-  href: string;
-  icon: IconName;
-  label: string;
-  comingSoon?: boolean;
-}
+
 
 interface SearchResult {
   id: string;
@@ -145,12 +140,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
     }] : []),
   ];
 
-  // 2. Secondary Links (Mini Cards)
-  const miniCards: MiniCard[] = [
-    { href: `/${locale}/terms`, icon: 'termsBold', label: tCommon('footer.termsAndPrivacy') },
-    { href: `/${locale}/accessibility`, icon: 'accessibilityBold', label: tMobileNav('accessibility') },
-    { href: `/${locale}/cookies`, icon: 'cookieBold', label: tCommon('footer.cookiePolicy') },
-];
+
 
   // Prevent body scroll when open
   useEffect(() => {
@@ -885,36 +875,6 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
 
 
           
-
-          {/* Separator between navCards and miniCards */}
-          <Separator className="my-6 !w-[60%]" />
-
-          {/* Mini Cards (Info & Support) - nav.body-4 structure */}
-          <nav className="text-base mt-12 px-6 transition-colors duration-200">
-            <ul className="flex flex-col items-start gap-4">
-              {miniCards.map((card) => {
-                const isActive = pathname === card.href || (card.href !== `/${locale}` && pathname.startsWith(card.href));
-                
-                return (
-                  <li key={card.href}>
-                    <Link
-                      href={card.comingSoon ? '#' : card.href}
-                      onClick={card.comingSoon ? (e) => e.preventDefault() : onClose}
-                      className={`block transition-colors duration-200 ${
-                        card.comingSoon 
-                          ? 'cursor-not-allowed opacity-50 text-sidebar-text dark:text-sidebar-text-dark' 
-                          : isActive
-                            ? 'text-[#16641a] dark:text-[#85ef8a] font-semibold'
-                            : 'text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark'
-                      }`}
-                    >
-                      {card.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
 
           {/* Admin Management Links */}
           {loginEnabled && isAdmin && (

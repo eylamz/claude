@@ -1,7 +1,6 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
-import { Instagram, Youtube } from 'lucide-react';
 import { Icon } from '@/components/icons/Icon';
 import { AboutPhotoCollage } from '@/components/home';
 
@@ -21,7 +20,7 @@ export default function AboutPage() {
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-text dark:text-text-dark leading-tight mb-3 text-center">
               {t('title')}
             </h1>
-            <Icon name="logo" className={` h-auto text-gray-900 dark:text-white ${locale === 'he' ? '-mt-[0.25rem] w-[7.5rem]' : '-mt-[0.45rem] w-[9.75rem]'}`} />
+            <Icon name="logo" className={` h-auto text-gray-900 dark:text-white ${locale === 'he' ? '-mt-[0.25rem] w-[7.5rem]' : '-mt-[7.3px] w-[9.75rem]'}`} />
             </div>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-center">
               {t('subtitle')}
@@ -89,59 +88,95 @@ export default function AboutPage() {
             </p>
           </section>
 
-          {/* Connect Section */}
-          <section className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 rounded-2xl p-8 sm:p-10 lg:p-12 border border-gray-200 dark:border-gray-700">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-8 text-center text-gray-900 dark:text-white">
+          {/* Connect Section - icons match footer social styling */}
+          <section className=" rounded-2xl p-8 sm:p-10 lg:p-12 border border-border dark:border-border-dark">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-10 text-center text-gray-900 dark:text-white">
               {t('connect.title')}
             </h2>
-            <div className="flex flex-wrap justify-center items-center gap-6 sm:gap-8">
-              {/* Instagram */}
+            <div className="flex flex-wrap justify-center items-start gap-6 sm:gap-8">
+              {/* Instagram - same SVG as footer */}
               <a
                 href="https://instagram.com/enboss"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col items-center gap-3 p-6 rounded-xl bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] dark:from-[#c49d2b] dark:via-[#b42063] dark:to-[#5e1e91] text-text-dark shadow-lg"
+                className="group flex flex-col items-center gap-3"
                 aria-label={t('connect.instagram')}
               >
-                <Instagram className="w-8 h-8 group-hover:scale-125 transition-transform duration-300" />
-                <span className="font-semibold text-sm sm:text-base">
+                <span className="flex items-center justify-center  transition-all duration-200 group-hover:scale-110">
+                <svg
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-12 h-12 transition-all duration-300 
+                stroke-black/0 dark:stroke-white/80 stroke-[1px]            
+               fill-[url(#insta-gradient)] 
+               /* צל שחור ב-Light Mode וצל לבן ב-Dark Mode על ה-SVG */
+               [filter:drop-shadow(0_0_3px_rgba(0,0,0,0.15))_drop-shadow(0_0_8px_rgba(238,42,123,0.4))] 
+               
+               
+              md:stroke-transparent md:fill-text md:dark:fill-text-dark md:drop-shadow-none 
+               md:group-hover:scale-110 md:group-hover:stroke-black md:group-hover:stroke-[1px] 
+               md:group-hover:fill-[url(#insta-gradient)] 
+               /* אפקט הובר משולב ב-Desktop */
+               md:group-hover:[filter:drop-shadow(0_0_1px_rgba(0,0,0,0.8))_drop-shadow(0_0_8px_rgba(238,42,123,0.4))]
+               md:dark:group-hover:[filter:drop-shadow(0_0_10px_rgba(255,255,255,0.1))_drop-shadow(0_0_8px_rgba(238,42,123,0.4))]"
+                    style={{ paintOrder: 'stroke' }}
+                  >
+                    <defs>
+                      <linearGradient id="insta-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                        <stop offset="0%" style={{ stopColor: '#f9ce34' }} />
+                        <stop offset="50%" style={{ stopColor: '#ee2a7b' }} />
+                        <stop offset="100%" style={{ stopColor: '#6228d7' }} />
+                      </linearGradient>
+                    </defs>
+                    <path d="M16.19 2H7.81C4.17 2 2 4.17 2 7.81V16.18C2 19.83 4.17 22 7.81 22H16.18C19.82 22 21.99 19.83 21.99 16.19V7.81C22 4.17 19.83 2 16.19 2ZM12 15.88C9.86 15.88 8.12 14.14 8.12 12C8.12 9.86 9.86 8.12 12 8.12C14.14 8.12 15.88 9.86 15.88 12C15.88 14.14 14.14 15.88 12 15.88ZM17.92 6.88C17.87 7 17.8 7.11 17.71 7.21C17.61 7.3 17.5 7.37 17.38 7.42C17.26 7.47 17.13 7.5 17 7.5C16.73 7.5 16.48 7.4 16.29 7.21C16.2 7.11 16.13 7 16.08 6.88C16.03 6.76 16 6.63 16 6.5C16 6.37 16.03 6.24 16.08 6.12C16.13 5.99 16.2 5.89 16.29 5.79C16.52 5.56 16.87 5.45 17.19 5.52C17.26 5.53 17.32 5.55 17.38 5.58C17.44 5.6 17.5 5.63 17.56 5.67C17.61 5.7 17.66 5.75 17.71 5.79C17.8 5.89 17.87 5.99 17.92 6.12C17.97 6.24 18 6.37 18 6.5C18 6.63 17.97 6.76 17.92 6.88Z" />
+                  </svg>
+                </span>
+                <span className="font-semibold text-base sm:text-lg">
                   {t('connect.instagram')}
                 </span>
               </a>
 
-              {/* YouTube */}
+               {/* TikTok - same Icon + styling as footer */}
+               <a
+                href="https://tiktok.com/@enboss"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col items-center gap-3"
+                aria-label={t('connect.tiktok')}
+              >
+                <span className="flex items-center justify-center cursor-pointer transition-all duration-200 text-white stroke-black stroke-[0.75px] [filter:drop-shadow(-1px_-0.7px_0_#25F4EEd9)_drop-shadow(1.25px_1.25px_0_#FE2C55d9)_drop-shadow(0_0_8px_rgba(37,244,238,0.25))_drop-shadow(0_0_8px_rgba(227,45,21,0.35))] md:text-text md:dark:text-text-dark md:stroke-transparent md:[filter:none] md:group-hover:text-white md:group-hover:stroke-black group-hover:scale-110 
+                md:group-hover:[filter:drop-shadow(-2px_-1.4px_0_#25F4EEd9)_drop-shadow(2.5px_2. 5px_0_#FE2C55d9)_drop-shadow(0_0_8px_rgba(37,244,238,0.25))_drop-shadow(0_0_8px_rgba(227,45,21,0.35))]"
+                >
+                  <Icon
+                    name="tiktok"
+                    className="w-12 h-12 transition-all duration-300"
+                  />
+                </span>
+                <span className="font-semibold text-base sm:text-lg">
+                  {t('connect.tiktok')}
+                </span>
+              </a>
+
+              {/* YouTube - same Icon + styling as footer */}
               <a
                 href="https://youtube.com/@enboss"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col items-center gap-3 p-6 rounded-xl bg-[#ff0033] text-white shadow-lg"
+                className="group flex flex-col items-center gap-3"
                 aria-label={t('connect.youtube')}
               >
-                <Youtube className="w-8 h-8 group-hover:scale-125 transition-transform duration-300" />
-                <span className="font-semibold text-sm sm:text-base">
+                <span className="flex items-center justify-center cursor-pointer transition-all duration-200 text-[#FF0000] [filter:drop-shadow(0_0_8px_rgba(255,0,0,0.25))] md:text-text md:dark:text-text-dark md:[filter:none] md:group-hover:text-[#FF0000] group-hover:scale-110 md:group-hover:[filter:drop-shadow(0_0_8px_rgba(255,0,0,0.25))]">
+                  <Icon
+                    name="youtube"
+                    className="w-12 h-12 transition-all duration-300"
+                  />
+                </span>
+                <span className="font-semibold text-base sm:text-lg">
                   {t('connect.youtube')}
                 </span>
               </a>
 
-              {/* TikTok */}
-              <a
-                href="https://tiktok.com/@enboss"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col items-center gap-3 p-6 rounded-xl text-white shadow-lg"
-                style={{
-                  background: 'linear-gradient(to bottom right, hsla(348, 68.20%, 17.30%, 0.50) 0%, rgb(161, 32, 58) 25%, hsl(333, 18.00%, 31.60%) 50%, rgb(43, 132, 131) 75%, rgb(13, 37, 37) 100%)',
-                }}
-                aria-label={t('connect.tiktok')}
-              >
-                <Icon 
-                  name="tiktok" 
-                  className="w-8 h-8 group-hover:scale-125 transition-transform duration-300" 
-                />
-                <span className="font-semibold text-sm sm:text-base">
-                  {t('connect.tiktok')}
-                </span>
-              </a>
+             
             </div>
           </section>
         </div>

@@ -51,7 +51,7 @@ interface UserLocation {
   lng: number;
 }
 
-type SortOption = 'nearest' | 'alphabetical' | 'newest' | 'rating';
+type SortOption = 'nearest' | 'alphabetical' | 'newest' | 'rating' | 'shuffle';
 
 // Utility function to optimize image URLs
 const getOptimizedImageUrl = (originalUrl: string): string | null => {

@@ -433,16 +433,16 @@ export default function HomePage() {
               className="group block feature-card-border bg-transparent transition-all duration-300 md:hover:-translate-y-2 hover:shadow-xl"
             >
               <div className="feature-card-inner rounded-[22px] overflow-hidden relative bg-card dark:bg-card-dark min-h-full">
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-purple/20 via-brand-main/10 to-brand-blue/20 dark:from-brand-purple/10 dark:via-brand-dark/10 dark:to-brand-blue/10 transition-all duration-300" />
-                <div className="absolute inset-0 bg-gradient-to-br from-brand-purple/40 via-brand-main/25 to-brand-blue/40 dark:from-brand-purple/30 dark:via-brand-dark/25 dark:to-brand-blue/30 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-br from-purple/20 via-brand-main/10 to-blue/20 dark:from-purple/10 dark:via-brand-dark/10 dark:to-blue/10 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-br from-purple/40 via-brand-main/25 to-blue/40 dark:from-purple/30 dark:via-brand-dark/25 dark:to-blue/30 opacity-0 group-hover:opacity-100 transition-all duration-300" />
                 <div className="relative z-10 p-8 lg:p-10 text-text dark:text-text-dark">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-br from-brand-purple/25 via-brand-main/15 to-brand-blue/25 dark:from-brand-purple/15 dark:via-brand-dark/15 dark:to-brand-blue/15 transition-all duration-300">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-br from-purple/25 via-brand-main/15 to-blue/25 dark:from-purple/15 dark:via-brand-dark/15 dark:to-blue/15 transition-all duration-300">
                     <Icon name="mapBold" className="w-8 h-8 text-text dark:text-text-dark" />
                   </div>
                   <h3 className="text-xl font-bold mb-3 text-text dark:text-text-dark">
                     {t('featureDiscoverTitle')}
                   </h3>
-                  <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
+                  <p className="text-gray dark:text-gray-dark leading-relaxed">
                     {t('featureDiscoverDesc')}
                   </p>
                 </div>
@@ -454,16 +454,16 @@ export default function HomePage() {
               className="group block feature-card-border bg-transparent transition-all duration-300 md:hover:-translate-y-2 hover:shadow-xl"
             >
               <div className="feature-card-inner rounded-[22px] overflow-hidden relative bg-card dark:bg-card-dark min-h-full">
-                <div className="absolute inset-0 bg-gradient-to-bl from-brand-blue/20 via-brand-main/10 to-brand-purple/20 dark:from-brand-blue/10 dark:via-brand-dark/10 dark:to-brand-purple/10 transition-all duration-300" />
-                <div className="absolute inset-0 bg-gradient-to-bl from-brand-blue/40 via-brand-main/25 to-brand-purple/40 dark:from-brand-blue/30 dark:via-brand-dark/25 dark:to-brand-purple/30 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-green/15 via-purple/20 to-blue/20 dark:from-brand-dark/10 dark:via-purple/10 dark:to-blue/10 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-brand-main/30 via-purple/40 to-blue/40 dark:from-brand-dark/25 dark:via-purple/30 dark:to-blue/30 opacity-0 group-hover:opacity-100 transition-all duration-300" />
                 <div className="relative z-10 p-8 lg:p-10 text-text dark:text-text-dark">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-bl from-brand-blue/25 via-brand-main/15 to-brand-purple/25 dark:from-brand-blue/15 dark:via-brand-dark/15 dark:to-brand-purple/15 transition-all duration-300">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-bl from-blue/25 via-brand-main/15 to-purple/25 dark:from-blue/15 dark:via-brand-dark/15 dark:to-purple/15 transition-all duration-300">
                     <Icon name="bookBold" className="w-8 h-8 text-text dark:text-text-dark" />
                   </div>
                   <h3 className="text-xl font-bold mb-3 text-text dark:text-text-dark">
                     {t('featureLearnTitle')}
                   </h3>
-                  <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
+                  <p className="text-gray dark:text-gray-dark leading-relaxed">
                     {t('featureLearnDesc')}
                   </p>
                 </div>
@@ -475,16 +475,19 @@ export default function HomePage() {
               className="group block feature-card-border bg-transparent transition-all duration-300 md:hover:-translate-y-2 hover:shadow-xl"
             >
               <div className="feature-card-inner rounded-[22px] overflow-hidden relative bg-card dark:bg-card-dark min-h-full">
-                <div className="absolute inset-0 bg-gradient-to-tr from-brand-main/15 via-brand-purple/20 to-brand-blue/20 dark:from-brand-dark/10 dark:via-brand-purple/10 dark:to-brand-blue/10 transition-all duration-300" />
-                <div className="absolute inset-0 bg-gradient-to-tr from-brand-main/30 via-brand-purple/40 to-brand-blue/40 dark:from-brand-dark/25 dark:via-brand-purple/30 dark:to-brand-blue/30 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+              
+              
+                <div className="absolute inset-0 bg-gradient-to-bl from-blue/20 via-brand-main/10 to-purple/20 dark:from-blue/10 dark:via-brand-dark/10 dark:to-purple/10 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-bl from-blue/40 via-brand-main/25 to-purple/40 dark:from-blue/30 dark:via-brand-dark/25 dark:to-purple/30 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+
                 <div className="relative z-10 p-8 lg:p-10 text-text dark:text-text-dark">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-tr from-brand-main/20 via-brand-purple/25 to-brand-blue/25 dark:from-brand-dark/15 dark:via-brand-purple/15 dark:to-brand-blue/15 transition-all duration-300">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-tr from-brand-main/20 via-purple/25 to-blue/25 dark:from-brand-dark/15 dark:via-purple/15 dark:to-blue/15 transition-all duration-300">
                     <Icon name="reviewBold" className="w-8 h-8 text-text dark:text-text-dark" />
                   </div>
                   <h3 className="text-xl font-bold mb-3 text-text dark:text-text-dark">
                     {t('featureRateTitle')}
                   </h3>
-                  <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
+                  <p className="text-gray dark:text-gray-dark leading-relaxed">
                     {t('featureRateDesc')}
                   </p>
                 </div>
@@ -518,16 +521,16 @@ export default function HomePage() {
               className="group block feature-card-border bg-transparent transition-all duration-300 md:hover:-translate-y-2 hover:shadow-xl text-left w-full cursor-pointer"
             >
               <div className="feature-card-inner rounded-[22px] overflow-hidden relative bg-card dark:bg-card-dark min-h-full">
-                <div className="absolute inset-0 bg-gradient-to-tl from-brand-purple/20 via-brand-blue/20 to-brand-main/10 dark:from-brand-purple/10 dark:via-brand-blue/10 dark:to-brand-dark/10 transition-all duration-300" />
-                <div className="absolute inset-0 bg-gradient-to-tl from-brand-purple/40 via-brand-blue/40 to-brand-main/25 dark:from-brand-purple/30 dark:via-brand-blue/30 dark:to-brand-dark/25 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-tl from-purple/20 via-blue/20 to-brand-main/10 dark:from-purple/10 dark:via-blue/10 dark:to-brand-dark/10 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-tl from-purple/40 via-blue/40 to-brand-main/25 dark:from-purple/30 dark:via-blue/30 dark:to-brand-dark/25 opacity-0 group-hover:opacity-100 transition-all duration-300" />
                 <div className="relative z-10 p-8 lg:p-10 text-text dark:text-text-dark text-start">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-tl from-brand-purple/25 via-brand-blue/25 to-brand-main/20 dark:from-brand-purple/15 dark:via-brand-blue/15 dark:to-brand-dark/15 transition-all duration-300">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-tl from-purple/25 via-blue/25 to-brand-main/20 dark:from-purple/15 dark:via-blue/15 dark:to-brand-dark/15 transition-all duration-300">
                     <Icon name="heartBold" className="w-8 h-8 text-text dark:text-text-dark" />
                   </div>
                   <h3 className="text-xl  font-bold mb-3 text-text dark:text-text-dark">
                     {t('featureSpreadTitle')}
                   </h3>
-                  <p className="text-text-secondary dark:text-text-secondary-dark leading-relaxed">
+                  <p className="text-gray dark:text-gray-dark leading-relaxed">
                     {t('featureSpreadDesc')}
                   </p>
                 </div>
@@ -639,7 +642,7 @@ export default function HomePage() {
       </section>
 
       {/* Built By Section */}
-      <footer className="relative pt-14 pb-16  px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5 border-t border-border dark:border-border-dark text-center">
+      <footer className="relative pt-14 pb-16  px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-purple/10 via-transparent to-brand-main/10 dark:from-purple/5 dark:to-brand-dark/5 border-t border-border dark:border-border-dark text-center">
         <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12 ">
           <div className="space-y-2">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">

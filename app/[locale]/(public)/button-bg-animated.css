@@ -1,3 +1,266 @@
+/* Gradient button (footer subscribe, etc.) */
+.button-gradient {
+  --bg: 18, 18, 18;
+  --color: 255, 255, 255;
+  align-items: center;
+  background: rgba(var(--bg), 1);
+  border: 0;
+  border-radius: 25px;
+  box-sizing: border-box;
+  color: rgba(var(--color), 1);
+  cursor: pointer;
+  display: flex;
+  font-size: 15px;
+  height: 40px;
+  justify-content: center;
+  min-height: 40px;
+  outline: none;
+  overflow: hidden;
+  padding: 10px 25px;
+  position: relative;
+  transition: all 0.3s ease;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  z-index: 10;
+  
+}
+
+.button-gradient.visible:hover .gradient-2 {
+  transform: scale(1.1) !important;
+}
+
+.button-gradient.visible:hover .gradient-0 {
+  filter: blur(0);
+  opacity: 1;
+  transform: scale(1);
+}
+
+.button-gradient.disabled {
+  pointer-events: none;
+}
+
+.button-gradient.disabled .color {
+  opacity: 0.15;
+}
+
+.button-gradient.loading {
+  border: 1px dashed var(--border, rgba(255, 255, 255, 0.3));
+  min-width: 46px;
+  opacity: 1 !important;
+  padding: 0;
+  width: 46px;
+}
+
+.button-gradient.visible .glass,
+.button-gradient.visible .gradient-1,
+.button-gradient:hover .glass,
+.button-gradient:hover .gradient-1 {
+  opacity: 1;
+}
+
+.button-gradient.visible .gradient-2,
+.button-gradient:hover .gradient-2 {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.button-gradient .btn-content {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  z-index: 20;
+}
+
+.button-gradient svg {
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5));
+  min-width: 30px;
+}
+
+.button-gradient .glass {
+  height: 130%;
+  opacity: 0;
+  position: absolute;
+  width: 130%;
+  z-index: 10;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  border-radius: 10px;
+  top: -15%;
+  left: -15%;
+  transition: opacity 0.4s ease;
+}
+
+.button-gradient .gradient-1 {
+  background: radial-gradient(
+    103.46% 134.6% at 64.66% 50%,
+    hsla(0, 0%, 85%, 0) 27.37%,
+    hsla(0, 0%, 85%, 0.3) 100%
+  );
+  border-radius: 10px;
+  height: 100%;
+  opacity: 0;
+  position: absolute;
+  transition: all 0.4s ease;
+  width: 100%;
+  z-index: 12;
+}
+
+.button-gradient .gradient-0 {
+  background: rgba(var(--bg), 1);
+  border-radius: 10px;
+  filter: blur(10px);
+  height: calc(100% - 4px);
+  opacity: 0;
+  position: absolute;
+  transform: scale(0.95);
+  transition: all 0.5s ease;
+  width: calc(100% - 4px);
+  z-index: 12;
+}
+
+.button-gradient .gradient-2 {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  opacity: 0;
+  position: absolute;
+  transform: scale(3);
+  transition: all 0.5s ease;
+  width: 100%;
+  z-index: 5;
+}
+
+.button-gradient .gradient-2 .color-1 {
+  background: theme('colors.brand.yellow');
+}
+
+.button-gradient .gradient-2 .color-1,
+.button-gradient .gradient-2 .color-2 {
+  border-radius: 50%;
+  filter: blur(12px);
+  height: 100px;
+  position: absolute;
+  transition: all 2s ease;
+  width: 100px;
+}
+
+.button-gradient .gradient-2 .color-2 {
+  background: theme('colors.brand.red');
+}
+
+.button-gradient .gradient-2 .color-3 {
+  background: theme('colors.brand.blue');
+}
+
+.button-gradient .gradient-2 .color-3,
+.button-gradient .gradient-2 .color-4 {
+  border-radius: 50%;
+  filter: blur(12px);
+  height: 100px;
+  position: absolute;
+  transition: all 2s ease;
+  width: 100px;
+}
+
+.button-gradient .gradient-2 .color-4 {
+  background: theme('colors.brand.orange');
+}
+
+.button-gradient .gradient-2 .color-5 {
+  background: theme('colors.brand.purple');
+}
+
+.button-gradient .gradient-2 .color-5,
+.button-gradient .gradient-2 .color-6 {
+  border-radius: 50%;
+  filter: blur(12px);
+  height: 100px;
+  position: absolute;
+  transition: all 2s ease;
+  width: 100px;
+}
+
+.button-gradient .gradient-2 .color-6 {
+  background: theme('colors.brand.main');
+}
+
+/* Floating animation for gradient-2 orbs – fast, random directions */
+@keyframes gradient-orb-float-1 {
+  0%, 100% { transform: translate(44%, 25%); }
+  25% { transform: translate(62%, 8%); }
+  50% { transform: translate(28%, 42%); }
+  75% { transform: translate(58%, 38%); }
+}
+@keyframes gradient-orb-float-2 {
+  0%, 100% { transform: translate(71%, -16%); }
+  25% { transform: translate(52%, -35%); }
+  50% { transform: translate(88%, 2%); }
+  75% { transform: translate(61%, -28%); }
+}
+@keyframes gradient-orb-float-3 {
+  0%, 100% { transform: translate(-32%, -42%); }
+  25% { transform: translate(-18%, -68%); }
+  50% { transform: translate(-48%, -38%); }
+  75% { transform: translate(-22%, -42%); }
+}
+@keyframes gradient-orb-float-4 {
+  0%, 100% { transform: translate(-37%, 81%); }
+  25% { transform: translate(-55%, 62%); }
+  50% { transform: translate(-20%, 95%); }
+  75% { transform: translate(-48%, 72%); }
+}
+@keyframes gradient-orb-float-5 {
+  0%, 100% { transform: translate(-22%, 47%); }
+  25% { transform: translate(58%, 78%); }
+  50% { transform: translate(95%, 8%); }
+  75% { transform: translate(66%, 42%); }
+}
+@keyframes gradient-orb-float-6 {
+  0%, 100% { transform: translate(54%, 10%); }
+  25% { transform: translate(67%, -12%); }
+  50% { transform: translate(80%, 28%); }
+  75% { transform: translate(38%, 22%); }
+}
+
+.button-gradient .gradient-2 .color-1 {
+  animation: gradient-orb-float-1 ease-in-out infinite;
+  animation-duration: 4.6s;
+  animation-delay: 0s;
+}
+.button-gradient .gradient-2 .color-2 {
+  animation: gradient-orb-float-2 ease-in-out infinite;
+  animation-duration: 4.9s;
+  animation-delay: -0.4s;
+}
+.button-gradient .gradient-2 .color-3 {
+  animation: gradient-orb-float-3 ease-in-out infinite;
+  animation-duration: 4.4s;
+  animation-delay: -0.8s;
+}
+.button-gradient .gradient-2 .color-4 {
+  animation: gradient-orb-float-4 ease-in-out infinite;
+  animation-duration: 4.7s;
+  animation-delay: -0.2s;
+}
+.button-gradient .gradient-2 .color-5 {
+  animation: gradient-orb-float-5 ease-in-out infinite;
+  animation-duration: 5s;
+  animation-delay: -0.6s;
+}
+.button-gradient .gradient-2 .color-6 {
+  animation: gradient-orb-float-6 ease-in-out infinite;
+  animation-duration: 4.5s;
+  animation-delay: -1s;
+}
+
 /* Animated blob background for CTA button */
 .animated-bg-button {
   position: relative;
@@ -8,45 +271,46 @@
 /* Create a wrapper for blobs with blur effect */
 .animated-bg-button .blob {
   position: absolute;
-  width: 200px;
-  height: 200px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  opacity: 0.8;
+  opacity: 1;
   animation: blob-float ease-in-out infinite;
-  filter: blur(40px);
+  filter: blur(14px);
 }
 
 /* Blue blob */
 .animated-bg-button .blob:nth-child(1) {
   background: radial-gradient(circle, #1d4ed8, #1e40af);
-  animation-duration: 5s;
+  animation-duration: 4s;
   animation-delay: 0s;
   top: -30%;
   left: -20%;
 }
 
-/* Green blob */
+/* Orange blob */
 .animated-bg-button .blob:nth-child(2) {
-  background: radial-gradient(circle, hsl(123, 48%, 45%), hsl(123, 48%, 35%));
-  animation-duration: 6s;
+  background: radial-gradient(circle, #e49a43, #d68a33);
+  animation-duration: 5s;
   animation-delay: -1.5s;
-  top: 20%;
-  right: -30%;
+  top: 10%;
+  right: -10%;
 }
 
 /* Pink blob */
 .animated-bg-button .blob:nth-child(3) {
   background: radial-gradient(circle, hsl(314, 52%, 56%), hsl(314, 52%, 46%));
-  animation-duration: 5.5s;
+  animation-duration: 4.5s;
   animation-delay: -3s;
-  bottom: -30%;
+  bottom: -70%;
   left: 10%;
 }
 
-/* Orange blob */
+/* Green blob */
 .animated-bg-button .blob:nth-child(4) {
-  background: radial-gradient(circle, #e49a43, #d68a33);
-  animation-duration: 4.5s;
+  background: radial-gradient(circle, #cc2a2a, #b52424);
+
+  animation-duration: 3.5s;
   animation-delay: -0.8s;
   top: -20%;
   right: 10%;
@@ -54,8 +318,9 @@
 
 /* Red blob */
 .animated-bg-button .blob:nth-child(5) {
-  background: radial-gradient(circle, #cc2a2a, #b52424);
-  animation-duration: 6.5s;
+  background: radial-gradient(circle, hsl(123, 48%, 45%), hsl(123, 48%, 35%));
+
+  animation-duration: 5.5s;
   animation-delay: -2.2s;
   bottom: 5%;
   right: -35%;
@@ -64,10 +329,10 @@
 /* Purple blob - bonus for more depth */
 .animated-bg-button .blob:nth-child(6) {
   background: radial-gradient(circle, #915bf5, #7d4dd8);
-  animation-duration: 5.8s;
+  animation-duration: 4.8s;
   animation-delay: -4s;
   top: 40%;
-  left: -40%;
+  left: -20%;
 }
 
 @keyframes blob-float {

@@ -1892,7 +1892,7 @@ export default function SkateparkPage() {
                           <div className="flex items-center gap-2">
                             <div className="flex-1 h-2 bg-orange-bg dark:bg-orange-bg-dark rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-orange dark:bg-orange-dark transition-all duration-300"
+                                className="h-full bg-orange dark:bg-orange-dark transition-all duration-300 rounded-full"
                                 style={{ width: `${(skatepark.qualityRating.elementDiversity / 5) * 100}%` }}
                               />
                             </div>
@@ -1914,7 +1914,7 @@ export default function SkateparkPage() {
                           <div className="flex items-center gap-2">
                             <div className="flex-1 h-2 bg-purple-bg dark:bg-purple-bg-dark rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-purple dark:bg-purple-dark transition-all duration-300"
+                                className="h-full bg-purple dark:bg-purple-dark transition-all duration-300 rounded-full"
                                 style={{ width: `${(skatepark.qualityRating.cleanliness / 5) * 100}%` }}
                               />
                             </div>
@@ -1936,7 +1936,7 @@ export default function SkateparkPage() {
                           <div className="flex items-center gap-2">
                             <div className="flex-1 h-2 bg-blue-bg dark:bg-blue-bg-dark rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-blue dark:bg-blue-dark transition-all duration-300"
+                                className="h-full bg-blue dark:bg-blue-dark transition-all duration-300 rounded-full"
                                 style={{ width: `${(skatepark.qualityRating.maintenance / 5) * 100}%` }}
                               />
                             </div>
@@ -2182,7 +2182,7 @@ export default function SkateparkPage() {
 
                     <div className="w-full bg-orange-bg dark:bg-orange-bg-dark rounded-full overflow-hidden">
                       <div
-                        className="h-2 bg-orange dark:bg-orange-dark transition-all duration-300"
+                        className="h-2 bg-orange dark:bg-orange-dark transition-all duration-300 rounded-full"
                         style={{ width: `${(skatepark.qualityRating.elementDiversity / 5) * 100}%` }}
                       />
                       </div>
@@ -2207,7 +2207,7 @@ export default function SkateparkPage() {
 
                     <div className="w-full bg-purple-bg dark:bg-purple-bg-dark rounded-full overflow-hidden">
                       <div
-                        className="h-2 bg-purple dark:bg-purple-dark transition-all duration-300"
+                        className="h-2 bg-purple dark:bg-purple-dark transition-all duration-300 rounded-full"
                         style={{ width: `${(skatepark.qualityRating.cleanliness / 5) * 100}%` }}
                       />
                       </div>
@@ -2232,7 +2232,7 @@ export default function SkateparkPage() {
 
                     <div className="w-full bg-blue-bg dark:bg-blue-bg-dark rounded-full overflow-hidden">
                       <div
-                        className="h-2 bg-blue dark:bg-blue-dark transition-all duration-300"
+                        className="h-2 bg-blue dark:bg-blue-dark transition-all duration-300 rounded-full"
                         style={{ width: `${(skatepark.qualityRating.maintenance / 5) * 100}%` }}
                       />
                       </div>
@@ -2254,7 +2254,7 @@ export default function SkateparkPage() {
             <CardHeader className="">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base sm:text-xl font-semibold flex items-center gap-2">
-                  <Icon name="messages" className="w-5 h-5" />
+                  <Icon name="messagesBold" className="w-5 h-5" />
                   {t('reviewsCount')}
                 </CardTitle>
                 {(() => {
@@ -2341,7 +2341,7 @@ export default function SkateparkPage() {
                           <p className="text-base font-medium w-15">{rating} {t('stars')}</p>
                           <div className="w-full flex-1 h-2 bg-card dark:bg-card-dark rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-brand-yellow"
+                              className="h-full bg-brand-yellow rounded-full"
                               style={{ width: `${percentage}%` }}
                             />
                           </div>
@@ -2463,7 +2463,7 @@ export default function SkateparkPage() {
           {nearbyParks.length > 0 && (
             <Card className="!overflow-visible !shadow-none w-full max-w-6xl mb-12 mx-auto transition-all duration-200 transform-gpu !px-4 ">
               <CardHeader className="flex flex-row items-center justify-start gap-2  text-text dark:text-text-dark">
-              <Icon name="trees" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
+              <Icon name="treesBold" className="w-5 h-5 text-gray-900 dark:text-[#f2f2f2]" />
                 <CardTitle className="!mt-0 text-base font-medium">{t('nearbySkateparks')}</CardTitle>
               </CardHeader>
               <CardContent>

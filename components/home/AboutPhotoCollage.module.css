@@ -12,7 +12,7 @@
 
 /* Gradient overlay at top and bottom */
 .wrapper::before {
-  background: linear-gradient(0deg, white, rgba(125, 125, 125, 0) 25%, rgba(203, 203, 203, 0) 75%, rgb(255, 255, 255));
+  background: linear-gradient(0deg, #f7f7f7, rgba(125, 125, 125, 0) 25%, rgba(203, 203, 203, 0) 75%, #f7f7f7);
   content: "";
   display: block;
   height: 100%;

@@ -246,17 +246,22 @@ export function Footer() {
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="animated-bg-button min-h-full w-auto !rounded-xl !bg-transparent !border-none hover:!saturate-150 dark:text-white font-semibold transition-all duration-300"
+                  className={`button-gradient btn-buy w-auto !rounded-xl !bg-transparent !border-0 !px-8 text-white font-semibold h-[40px] min-h-[40px] ${loading ? 'loading disabled' : 'visible'}`}
                 >
-                  <span className="blob" aria-hidden />
-                  <span className="blob" aria-hidden />
-                  <span className="blob" aria-hidden />
-                  <span className="blob" aria-hidden />
-                  <span className="blob" aria-hidden />
-                  <span className="blob" aria-hidden />
-                  <span className="relative z-10">
+                  <div className="btn-content">
                     {loading ? t('footer.subscribing') : t('footer.subscribe')}
-                  </span>
+                  </div>
+                  <div className="gradient-0" aria-hidden />
+                  <div className="gradient-1" aria-hidden />
+                  <div className="glass" aria-hidden />
+                  <div className="gradient-2" aria-hidden>
+                    <div className="color-1 color" />
+                    <div className="color-2 color" />
+                    <div className="color-3 color" />
+                    <div className="color-4 color" />
+                    <div className="color-5 color" />
+                    <div className="color-6 color" />
+                  </div>
                 </Button>
                 {error && (
                   <p className="text-xs text-red dark:text-red-dark" role="alert">

@@ -27,7 +27,7 @@ interface FilterBarProps {
   openNowOnly: boolean;
   userLocation: { lat: number; lng: number } | null;
   userCity: string | null;
-  sortBy: 'nearest' | 'alphabetical' | 'newest' | 'rating';
+  sortBy: 'nearest' | 'alphabetical' | 'newest' | 'rating' | 'shuffle';
   viewMode: 'map' | 'grid';
   setViewMode: (mode: 'map' | 'grid') => void;
 

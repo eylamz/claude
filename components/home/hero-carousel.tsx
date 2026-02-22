@@ -303,7 +303,7 @@ export default function HeroCarousel({ images, autoSlideInterval = 3000 }: HeroC
         )}
 
         {/* Gallery Wrapper */}
-        <div className="relative w-full h-full overflow-hidden px-2 sm:px-4 md:px-6">
+        <div className="relative max-w-[2000px] mx-auto w-full h-full overflow-hidden px-2 sm:px-4 md:px-6">
           <div className="relative w-full h-full">
             {slides.map((image, viewIndex) => {
               const isRealSlide = viewIndex > 0 && viewIndex < totalSlidesCount - 1;

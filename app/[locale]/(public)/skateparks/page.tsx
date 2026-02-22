@@ -66,7 +66,7 @@ interface UserLocation {
 }
 
 type ViewMode = 'map' | 'grid';
-type SortOption = 'nearest' | 'alphabetical' | 'newest' | 'rating';
+type SortOption = 'nearest' | 'alphabetical' | 'newest' | 'rating' | 'shuffle';
 
 /**
  * Main Skateparks Page
@@ -111,7 +111,7 @@ export default function SkateparksPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [openNowOnly, setOpenNowOnly] = useState(false);
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [sortBy, setSortBy] = useState<SortOption>('shuffle');
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [selectedPark, setSelectedPark] = useState<Skatepark | null>(null);
   const [userCity, setUserCity] = useState<string | null>(null);
@@ -122,6 +122,9 @@ export default function SkateparksPage() {
   const prevSelectedAmenitiesRef = useRef<string[]>([]);
   const prevUserLocationRef = useRef<UserLocation | null>(null);
   const isFetchingRef = useRef(false); // Prevent duplicate concurrent fetches
+  /** Stable shuffle order: park _id -> position. Restored when user clears sort instead of reshuffling. */
+  const shuffledOrderRef = useRef<Record<string, number>>({});
+  const allSkateparksSignatureRef = useRef<string>(''); // Detect when dataset changes so we can reshuffle once
 
 
   // Track newly added amenities for pop animation
@@ -230,7 +233,7 @@ export default function SkateparksPage() {
       setUserCity(null);
       // Only reset sort if it was set to nearest
       if (sortBy === 'nearest') {
-        setSortBy('newest');
+        setSortBy('shuffle');
       }
       return;
     }
@@ -662,11 +665,23 @@ export default function SkateparksPage() {
     ]
   );
 
+  // Fisher-Yates shuffle for random order
+  const shuffleArray = useCallback(<T,>(arr: T[]): T[] => {
+    const result = [...arr];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+  }, []);
+
   // Client-side sorting function
   const sortSkateparks = useCallback((parks: Skatepark[], sortOption: SortOption): Skatepark[] => {
     const sorted = [...parks];
 
     switch (sortOption) {
+      case 'shuffle':
+        return shuffleArray(sorted);
       case 'nearest':
         return sorted.sort((a, b) => {
           if (a.distance === null || a.distance === undefined) return 1;
@@ -692,7 +707,7 @@ export default function SkateparksPage() {
           return dateB - dateA;
         });
     }
-  }, []);
+  }, [shuffleArray]);
 
   // Filter, calculate distances, and sort skateparks when filters or sort changes
   useEffect(() => {
@@ -718,12 +733,35 @@ export default function SkateparksPage() {
       }));
     }
 
-    // Sort: area-matched parks last; within each group apply selected sort
     const nameMatched = filtered.filter((p) => !areaMatchedIds.has(p._id));
     const areaMatched = filtered.filter((p) => areaMatchedIds.has(p._id));
-    const sortedName = sortSkateparks(nameMatched, sortBy);
-    const sortedArea = sortSkateparks(areaMatched, sortBy);
-    setSkateparks([...sortedName, ...sortedArea]);
+
+    if (sortBy === 'shuffle') {
+      // Use stored shuffle order so returning from another sort restores the same order (no reshuffle)
+      const signature = allSkateparks.map((p) => p._id).sort().join(',');
+      const dataChanged = allSkateparksSignatureRef.current !== signature;
+      if (dataChanged || Object.keys(shuffledOrderRef.current).length === 0) {
+        allSkateparksSignatureRef.current = signature;
+        const ids = allSkateparks.map((p) => p._id);
+        const shuffledIds = shuffleArray(ids);
+        const order: Record<string, number> = {};
+        shuffledIds.forEach((id, i) => {
+          order[id] = i;
+        });
+        shuffledOrderRef.current = order;
+      }
+      const orderMap = shuffledOrderRef.current;
+      const byShuffleOrder = (a: Skatepark, b: Skatepark) =>
+        (orderMap[a._id] ?? 999999) - (orderMap[b._id] ?? 999999);
+      const sortedName = [...nameMatched].sort(byShuffleOrder);
+      const sortedArea = [...areaMatched].sort(byShuffleOrder);
+      setSkateparks([...sortedName, ...sortedArea]);
+    } else {
+      // Sort: area-matched parks last; within each group apply selected sort
+      const sortedName = sortSkateparks(nameMatched, sortBy);
+      const sortedArea = sortSkateparks(areaMatched, sortBy);
+      setSkateparks([...sortedName, ...sortedArea]);
+    }
   }, [
     allSkateparks,
     areaFilter,
@@ -734,6 +772,7 @@ export default function SkateparksPage() {
     userLocation,
     filterSkateparks,
     sortSkateparks,
+    shuffleArray,
     calculateDistance,
   ]);
 
@@ -749,7 +788,7 @@ export default function SkateparksPage() {
     setSearchQuery('');
     setSelectedAmenities([]);
     setOpenNowOnly(false);
-    setSortBy('newest');
+    setSortBy('shuffle');
     // Also disable location if it's enabled
     setUserLocation(null);
     setUserCity(null);
