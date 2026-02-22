@@ -806,7 +806,7 @@ function EventsPageContent() {
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
               <div className="flex items-center justify-end gap-2 text-sm w-1/2">
-                <div className="w-2 h-2 rounded-full bg-brand-main animate-pulse" />
+                <Icon name="bellBold" className="w-3 h-3 text-brand-main" />
                 <span className="text-gray-600 dark:text-gray-400">
                   {tr('Stay Tuned', 'הישארו מעודכנים')}
                 </span>

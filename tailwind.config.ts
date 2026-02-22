@@ -25,6 +25,7 @@ const config: Config = {
         'xl': '1150px',
         '2xl': '1280px',
         '3xl': '1440px',
+        '4xl': '1921px',
       },
       fontFamily: {
         sans: ['var(--font-poppins)', 'system-ui', 'sans-serif'],

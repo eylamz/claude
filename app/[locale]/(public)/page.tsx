@@ -1,6 +1,7 @@
 'use client';
 
 import '@/app/[locale]/(public)/button-bg-animated.css';
+import '@/app/[locale]/(public)/card-bg-animated.css';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
@@ -430,19 +431,45 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
             <Link
               href={`/${locale}/skateparks`}
-              className="group block feature-card-border bg-transparent transition-all duration-300 md:hover:-translate-y-2 hover:shadow-xl"
+              className="group block bg-transparent transition-all duration-300"
             >
-              <div className="feature-card-inner rounded-[22px] overflow-hidden relative bg-card dark:bg-card-dark min-h-full">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple/20 via-brand-main/10 to-blue/20 dark:from-purple/10 dark:via-brand-dark/10 dark:to-blue/10 transition-all duration-300" />
-                <div className="absolute inset-0 bg-gradient-to-br from-purple/40 via-brand-main/25 to-blue/40 dark:from-purple/30 dark:via-brand-dark/25 dark:to-blue/30 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                <div className="relative z-10 p-8 lg:p-10 text-text dark:text-text-dark">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-br from-purple/25 via-brand-main/15 to-blue/25 dark:from-purple/15 dark:via-brand-dark/15 dark:to-blue/15 transition-all duration-300">
-                    <Icon name="mapBold" className="w-8 h-8 text-text dark:text-text-dark" />
+              <div className=" card-gradient card-anim-1 rounded-[22px] overflow-hidden relative min-h-full">
+                <div className="gradient-0" aria-hidden />
+                <div className="gradient-1" aria-hidden />
+                <div className="glass" aria-hidden />
+                <div className="gradient-2" aria-hidden>
+                  <div className="color-1 color" />
+                  <div className="color-2 color" />
+                  <div className="color-3 color" />
+                  <div className="color-4 color" />
+                  <div className="color-5 color" />
+                  <div className="color-6 color" />
+                  <div className="color-7 color" />
+                  <div className="color-8 color" />
+                </div>
+                <div className="card-content relative z-10 p-8 lg:p-10 text-white">
+                  <div className="card-icon-gradient card-icon-anim-1 mb-6">
+                    <div className="gradient-0" aria-hidden />
+                    <div className="gradient-1" aria-hidden />
+                    <div className="glass" aria-hidden />
+                    <div className="gradient-2" aria-hidden>
+                      <div className="color-1 color" />
+                      <div className="color-2 color" />
+                      <div className="color-3 color" />
+                      <div className="color-4 color" />
+                      <div className="color-5 color" />
+                      <div className="color-6 color" />
+                      <div className="color-7 color" />
+                      <div className="color-8 color" />
+                    </div>
+                    <div className="card-content">
+                      <Icon name="mapBold" className="w-8 h-8 text-white" />
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3 text-text dark:text-text-dark">
+                  <h3 className="text-xl font-bold mb-3">
                     {t('featureDiscoverTitle')}
                   </h3>
-                  <p className="text-gray dark:text-gray-dark leading-relaxed">
+                  <p className="text-white/90 leading-relaxed">
                     {t('featureDiscoverDesc')}
                   </p>
                 </div>
@@ -451,19 +478,45 @@ export default function HomePage() {
 
             <Link
               href={`/${locale}/guides`}
-              className="group block feature-card-border bg-transparent transition-all duration-300 md:hover:-translate-y-2 hover:shadow-xl"
+              className="group block bg-transparent transition-all duration-300"
             >
-              <div className="feature-card-inner rounded-[22px] overflow-hidden relative bg-card dark:bg-card-dark min-h-full">
-              <div className="absolute inset-0 bg-gradient-to-tr from-green/15 via-purple/20 to-blue/20 dark:from-brand-dark/10 dark:via-purple/10 dark:to-blue/10 transition-all duration-300" />
-                <div className="absolute inset-0 bg-gradient-to-tr from-brand-main/30 via-purple/40 to-blue/40 dark:from-brand-dark/25 dark:via-purple/30 dark:to-blue/30 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                <div className="relative z-10 p-8 lg:p-10 text-text dark:text-text-dark">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-bl from-blue/25 via-brand-main/15 to-purple/25 dark:from-blue/15 dark:via-brand-dark/15 dark:to-purple/15 transition-all duration-300">
-                    <Icon name="bookBold" className="w-8 h-8 text-text dark:text-text-dark" />
+              <div className=" card-gradient card-anim-2 rounded-[22px] overflow-hidden relative min-h-full">
+                <div className="gradient-0" aria-hidden />
+                <div className="gradient-1" aria-hidden />
+                <div className="glass" aria-hidden />
+                <div className="gradient-2" aria-hidden>
+                  <div className="color-1 color" />
+                  <div className="color-2 color" />
+                  <div className="color-3 color" />
+                  <div className="color-4 color" />
+                  <div className="color-5 color" />
+                  <div className="color-6 color" />
+                  <div className="color-7 color" />
+                  <div className="color-8 color" />
+                </div>
+                <div className="card-content relative z-10 p-8 lg:p-10 text-white">
+                  <div className="card-icon-gradient card-icon-anim-2 mb-6">
+                    <div className="gradient-0" aria-hidden />
+                    <div className="gradient-1" aria-hidden />
+                    <div className="glass" aria-hidden />
+                    <div className="gradient-2" aria-hidden>
+                      <div className="color-1 color" />
+                      <div className="color-2 color" />
+                      <div className="color-3 color" />
+                      <div className="color-4 color" />
+                      <div className="color-5 color" />
+                      <div className="color-6 color" />
+                      <div className="color-7 color" />
+                      <div className="color-8 color" />
+                    </div>
+                    <div className="card-content">
+                      <Icon name="bookBold" className="w-8 h-8 text-white" />
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3 text-text dark:text-text-dark">
+                  <h3 className="text-xl font-bold mb-3">
                     {t('featureLearnTitle')}
                   </h3>
-                  <p className="text-gray dark:text-gray-dark leading-relaxed">
+                  <p className="text-white/90 leading-relaxed">
                     {t('featureLearnDesc')}
                   </p>
                 </div>
@@ -472,22 +525,45 @@ export default function HomePage() {
 
             <Link
               href={`/${locale}/skateparks`}
-              className="group block feature-card-border bg-transparent transition-all duration-300 md:hover:-translate-y-2 hover:shadow-xl"
+              className="group block  bg-transparent transition-all duration-300"
             >
-              <div className="feature-card-inner rounded-[22px] overflow-hidden relative bg-card dark:bg-card-dark min-h-full">
-              
-              
-                <div className="absolute inset-0 bg-gradient-to-bl from-blue/20 via-brand-main/10 to-purple/20 dark:from-blue/10 dark:via-brand-dark/10 dark:to-purple/10 transition-all duration-300" />
-                <div className="absolute inset-0 bg-gradient-to-bl from-blue/40 via-brand-main/25 to-purple/40 dark:from-blue/30 dark:via-brand-dark/25 dark:to-purple/30 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-
-                <div className="relative z-10 p-8 lg:p-10 text-text dark:text-text-dark">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-tr from-brand-main/20 via-purple/25 to-blue/25 dark:from-brand-dark/15 dark:via-purple/15 dark:to-blue/15 transition-all duration-300">
-                    <Icon name="reviewBold" className="w-8 h-8 text-text dark:text-text-dark" />
+              <div className=" card-gradient card-anim-3 rounded-[22px] overflow-hidden relative min-h-full">
+                <div className="gradient-0" aria-hidden />
+                <div className="gradient-1" aria-hidden />
+                <div className="glass" aria-hidden />
+                <div className="gradient-2" aria-hidden>
+                  <div className="color-1 color" />
+                  <div className="color-2 color" />
+                  <div className="color-3 color" />
+                  <div className="color-4 color" />
+                  <div className="color-5 color" />
+                  <div className="color-6 color" />
+                  <div className="color-7 color" />
+                  <div className="color-8 color" />
+                </div>
+                <div className="card-content relative z-10 p-8 lg:p-10 text-white">
+                  <div className="card-icon-gradient card-icon-anim-3 mb-6">
+                    <div className="gradient-0" aria-hidden />
+                    <div className="gradient-1" aria-hidden />
+                    <div className="glass" aria-hidden />
+                    <div className="gradient-2" aria-hidden>
+                      <div className="color-1 color" />
+                      <div className="color-2 color" />
+                      <div className="color-3 color" />
+                      <div className="color-4 color" />
+                      <div className="color-5 color" />
+                      <div className="color-6 color" />
+                      <div className="color-7 color" />
+                      <div className="color-8 color" />
+                    </div>
+                    <div className="card-content">
+                      <Icon name="reviewBold" className="w-8 h-8 text-white" />
+                    </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3 text-text dark:text-text-dark">
+                  <h3 className="text-xl font-bold mb-3">
                     {t('featureRateTitle')}
                   </h3>
-                  <p className="text-gray dark:text-gray-dark leading-relaxed">
+                  <p className="text-white/90 leading-relaxed">
                     {t('featureRateDesc')}
                   </p>
                 </div>
@@ -518,19 +594,45 @@ export default function HomePage() {
                   navigator.clipboard.writeText(url);
                 }
               }}
-              className="group block feature-card-border bg-transparent transition-all duration-300 md:hover:-translate-y-2 hover:shadow-xl text-left w-full cursor-pointer"
+              className="group block bg-transparent transition-all duration-300 text-left w-full cursor-pointer"
             >
-              <div className="feature-card-inner rounded-[22px] overflow-hidden relative bg-card dark:bg-card-dark min-h-full">
-                <div className="absolute inset-0 bg-gradient-to-tl from-purple/20 via-blue/20 to-brand-main/10 dark:from-purple/10 dark:via-blue/10 dark:to-brand-dark/10 transition-all duration-300" />
-                <div className="absolute inset-0 bg-gradient-to-tl from-purple/40 via-blue/40 to-brand-main/25 dark:from-purple/30 dark:via-blue/30 dark:to-brand-dark/25 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                <div className="relative z-10 p-8 lg:p-10 text-text dark:text-text-dark text-start">
-                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-text dark:text-text-dark mb-6 bg-gradient-to-tl from-purple/25 via-blue/25 to-brand-main/20 dark:from-purple/15 dark:via-blue/15 dark:to-brand-dark/15 transition-all duration-300">
-                    <Icon name="heartBold" className="w-8 h-8 text-text dark:text-text-dark" />
+              <div className="card-gradient card-anim-4 rounded-[22px] overflow-hidden relative min-h-full">
+                <div className="gradient-0" aria-hidden />
+                <div className="gradient-1" aria-hidden />
+                <div className="glass" aria-hidden />
+                <div className="gradient-2" aria-hidden>
+                  <div className="color-1 color" />
+                  <div className="color-2 color" />
+                  <div className="color-3 color" />
+                  <div className="color-4 color" />
+                  <div className="color-5 color" />
+                  <div className="color-6 color" />
+                  <div className="color-7 color" />
+                  <div className="color-8 color" />
+                </div>
+                <div className="card-content relative z-10 p-8 lg:p-10 text-white text-start">
+                  <div className="card-icon-gradient card-icon-anim-4 mb-6">
+                    <div className="gradient-0" aria-hidden />
+                    <div className="gradient-1" aria-hidden />
+                    <div className="glass" aria-hidden />
+                    <div className="gradient-2" aria-hidden>
+                      <div className="color-1 color" />
+                      <div className="color-2 color" />
+                      <div className="color-3 color" />
+                      <div className="color-4 color" />
+                      <div className="color-5 color" />
+                      <div className="color-6 color" />
+                      <div className="color-7 color" />
+                      <div className="color-8 color" />
+                    </div>
+                    <div className="card-content">
+                      <Icon name="heartBold" className="w-8 h-8 text-white" />
+                    </div>
                   </div>
-                  <h3 className="text-xl  font-bold mb-3 text-text dark:text-text-dark">
+                  <h3 className="text-xl font-bold mb-3">
                     {t('featureSpreadTitle')}
                   </h3>
-                  <p className="text-gray dark:text-gray-dark leading-relaxed">
+                  <p className="text-white/90 leading-relaxed">
                     {t('featureSpreadDesc')}
                   </p>
                 </div>
@@ -542,9 +644,15 @@ export default function HomePage() {
 
 
       {/* Final CTA Section */}
-      <section className="py-20 sm:py-30 px-4 sm:px-6 lg:px-8 bg-background dark:bg-background-dark text-center">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-8 leading-tight text-text dark:text-text-dark">
+      <section
+        className="relative 4xl:rounded-2xl h-[400px] md:h-[500px] lg:h-[900px] max-w-[2000px] mx-auto py-20 sm:py-16 px-4 sm:px-6 lg:px-8 text-center overflow-hidden bg-cover bg-bottom bg-no-repeat 4xl:shadow-lg "
+        style={{
+          backgroundImage: "url('https://res.cloudinary.com/dr0rvohz9/image/upload/v1771769672/wcjoumbnl57r6aqe9nae.webp')",
+        }}
+      >
+        <div className="absolute inset-0  dark:bg-background-dark/30 md:dark:bg-background-dark/20" aria-hidden="true" />
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-8  [text-shadow:_0px_0px_25px_rgba(0,0,0,1)] leading-tight text-white dark:text-text-dark lg:translate-x-[8rem]">
             {t('nextSessionAwaits')
               .split('<br/>')
               .map((line, i, arr) => (
@@ -554,10 +662,10 @@ export default function HomePage() {
                 </span>
               ))}
           </h2>
-          <Link href={`/${locale}/skateparks`}>
+          <Link href={`/${locale}/skateparks`} className="block">
+
             <Button
-              size="lg"
-              className="px-12 py-6 text-lg font-semibold text-[#212621] rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+              className="px-6 sm:px-12 py-4 sm:py-6 text-base sm:text-lg font-semibold text-text dark:text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 translate-x-10 md:translate-x-0"
             >
               {t('getStarted')}
             </Button>
