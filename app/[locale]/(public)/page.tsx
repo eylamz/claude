@@ -448,7 +448,7 @@ export default function HomePage() {
                   <div className="color-8 color" />
                 </div>
                 <div className="card-content relative z-10 p-8 lg:p-10 text-white">
-                  <div className="card-icon-gradient card-icon-anim-1 mb-6">
+                  <div className="card-icon-gradient card-icon-anim-1 mb-6 shadow-xl">
                     <div className="gradient-0" aria-hidden />
                     <div className="gradient-1" aria-hidden />
                     <div className="glass" aria-hidden />
@@ -494,7 +494,7 @@ export default function HomePage() {
                   <div className="color-7 color" />
                   <div className="color-8 color" />
                 </div>
-                <div className="card-content relative z-10 p-8 lg:p-10 text-white">
+                <div className="card-content relative z-10 p-8 lg:p-10 text-white shadow-xl">
                   <div className="card-icon-gradient card-icon-anim-2 mb-6">
                     <div className="gradient-0" aria-hidden />
                     <div className="gradient-1" aria-hidden />
@@ -542,7 +542,7 @@ export default function HomePage() {
                   <div className="color-8 color" />
                 </div>
                 <div className="card-content relative z-10 p-8 lg:p-10 text-white">
-                  <div className="card-icon-gradient card-icon-anim-3 mb-6">
+                  <div className="card-icon-gradient card-icon-anim-3 mb-6 shadow-xl">
                     <div className="gradient-0" aria-hidden />
                     <div className="gradient-1" aria-hidden />
                     <div className="glass" aria-hidden />

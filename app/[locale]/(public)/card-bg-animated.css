@@ -149,108 +149,108 @@
   width: 180px;
 }
 
-/* Card 1 order: pink, purple, green, yellow, orange, red, gray, blue */
+/* Card 1 (skateparks): hsl(123, 48%, 45%) – green, wider shade range */
 .card-gradient.card-anim-1 .gradient-2 .color-1 {
-  background: #ff00ff;
+  background: hsl(123, 52%, 18%);
 }
 .card-gradient.card-anim-1 .gradient-2 .color-2 {
-  background: #8b00ff;
+  background: hsl(123, 50%, 26%);
 }
 .card-gradient.card-anim-1 .gradient-2 .color-3 {
-  background: #47b84d;
+  background: hsl(123, 48%, 34%);
 }
 .card-gradient.card-anim-1 .gradient-2 .color-4 {
-  background: #ffb700;
+  background: hsl(123, 48%, 42%);
 }
 .card-gradient.card-anim-1 .gradient-2 .color-5 {
-  background: #ff5528;
+  background: hsl(123, 48%, 45%);
 }
 .card-gradient.card-anim-1 .gradient-2 .color-6 {
-  background: #ff006e;
+  background: hsl(123, 46%, 54%);
 }
 .card-gradient.card-anim-1 .gradient-2 .color-7 {
-  background: #6b7280;
+  background: hsl(123, 42%, 62%);
 }
 .card-gradient.card-anim-1 .gradient-2 .color-8 {
-  background: #007bff;
+  background: hsl(123, 36%, 74%);
 }
 
-/* Card 2 order: purple, green, yellow, orange, red, blue, pink, gray */
+/* Card 2 (guides): #1d4ed8 – blue, wider shade range */
 .card-gradient.card-anim-2 .gradient-2 .color-1 {
-  background: #8b00ff;
+  background: hsl(224, 78%, 20%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-2 {
-  background: #47b84d;
+  background: hsl(224, 76%, 28%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-3 {
-  background: #ffb700;
+  background: hsl(224, 75%, 36%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-4 {
-  background: #ff5528;
+  background: hsl(224, 75%, 44%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-5 {
-  background: #ff006e;
+  background: hsl(224, 75%, 48%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-6 {
-  background: #007bff;
+  background: hsl(224, 72%, 56%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-7 {
-  background: #ff00ff;
+  background: hsl(224, 68%, 64%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-8 {
-  background: #6b7280;
+  background: hsl(224, 60%, 76%);
 }
 
-/* Card 3 order: green, yellow, orange, red, pink, purple, blue, gray */
+/* Card 3 (review/skateparks): yellow-400 #facc15 – yellow, wider shade range */
 .card-gradient.card-anim-3 .gradient-2 .color-1 {
-  background: #47b84d;
+  background: hsl(48, 98%, 28%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-2 {
-  background: #ffb700;
+  background: hsl(48, 97%, 36%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-3 {
-  background: #ff5528;
+  background: hsl(48, 96%, 44%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-4 {
-  background: #ff006e;
+  background: hsl(48, 96%, 50%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-5 {
-  background: #ff00ff;
+  background: hsl(48, 96%, 53%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-6 {
-  background: #8b00ff;
+  background: hsl(48, 94%, 60%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-7 {
-  background: #007bff;
+  background: hsl(48, 90%, 68%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-8 {
-  background: #6b7280;
+  background: hsl(48, 85%, 78%);
 }
 
-/* Card 4 order: yellow, orange, red, pink, purple, green, blue, gray */
+/* Card 4 (share): #cc2a2a – red, wider shade range */
 .card-gradient.card-anim-4 .gradient-2 .color-1 {
-  background: #ffb700;
+  background: hsl(0, 70%, 22%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-2 {
-  background: #ff5528;
+  background: hsl(0, 69%, 30%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-3 {
-  background: #ff006e;
+  background: hsl(0, 68%, 38%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-4 {
-  background: #ff00ff;
+  background: hsl(0, 67%, 44%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-5 {
-  background: #8b00ff;
+  background: hsl(0, 67%, 48%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-6 {
-  background: #47b84d;
+  background: hsl(0, 65%, 55%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-7 {
-  background: #007bff;
+  background: hsl(0, 60%, 64%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-8 {
-  background: #6b7280;
+  background: hsl(0, 52%, 74%);
 }
 
 .card-gradient:hover > .gradient-2 {
@@ -540,8 +540,11 @@
   border-radius: 10px;
   filter: blur(6px);
   height: calc(100% - 2px);
-  opacity: 1;
+  opacity: 0.65;
   position: absolute;
+  top: 0%;
+  left: 0%;
+  transform: translate(-50%, -50%) scale(0.95);
   transform: scale(0.95);
   width: calc(100% - 2px);
   z-index: 12;
@@ -572,108 +575,108 @@
   width: 50px;
 }
 
-/* Icon card 1: pink, purple, green, yellow, orange, red, gray, blue */
+/* Icon card 1: green shades (skateparks), wider range */
 .card-icon-gradient.card-icon-anim-1 .gradient-2 .color-1 {
-  background: #ff00ff;
+  background: hsl(123, 52%, 18%);
 }
 .card-icon-gradient.card-icon-anim-1 .gradient-2 .color-2 {
-  background: #8b00ff;
+  background: hsl(123, 50%, 26%);
 }
 .card-icon-gradient.card-icon-anim-1 .gradient-2 .color-3 {
-  background: #47b84d;
+  background: hsl(123, 48%, 34%);
 }
 .card-icon-gradient.card-icon-anim-1 .gradient-2 .color-4 {
-  background: #ffb700;
+  background: hsl(123, 48%, 42%);
 }
 .card-icon-gradient.card-icon-anim-1 .gradient-2 .color-5 {
-  background: #ff5528;
+  background: hsl(123, 48%, 45%);
 }
 .card-icon-gradient.card-icon-anim-1 .gradient-2 .color-6 {
-  background: #ff006e;
+  background: hsl(123, 46%, 54%);
 }
 .card-icon-gradient.card-icon-anim-1 .gradient-2 .color-7 {
-  background: #6b7280;
+  background: hsl(123, 42%, 62%);
 }
 .card-icon-gradient.card-icon-anim-1 .gradient-2 .color-8 {
-  background: #007bff;
+  background: hsl(123, 36%, 74%);
 }
 
-/* Icon card 2: purple, green, yellow, orange, red, blue, pink, gray */
+/* Icon card 2: blue shades (guides), wider range */
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-1 {
-  background: #8b00ff;
+  background: hsl(224, 78%, 20%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-2 {
-  background: #47b84d;
+  background: hsl(224, 76%, 28%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-3 {
-  background: #ffb700;
+  background: hsl(224, 75%, 36%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-4 {
-  background: #ff5528;
+  background: hsl(224, 75%, 44%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-5 {
-  background: #ff006e;
+  background: hsl(224, 75%, 48%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-6 {
-  background: #007bff;
+  background: hsl(224, 72%, 56%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-7 {
-  background: #ff00ff;
+  background: hsl(224, 68%, 64%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-8 {
-  background: #6b7280;
+  background: hsl(224, 60%, 76%);
 }
 
-/* Icon card 3: green, yellow, orange, red, pink, purple, blue, gray */
+/* Icon card 3: yellow-400 shades (review), wider range */
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-1 {
-  background: #47b84d;
+  background: hsl(48, 98%, 28%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-2 {
-  background: #ffb700;
+  background: hsl(48, 97%, 36%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-3 {
-  background: #ff5528;
+  background: hsl(48, 96%, 44%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-4 {
-  background: #ff006e;
+  background: hsl(48, 96%, 50%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-5 {
-  background: #ff00ff;
+  background: hsl(48, 96%, 53%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-6 {
-  background: #8b00ff;
+  background: hsl(48, 94%, 60%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-7 {
-  background: #007bff;
+  background: hsl(48, 90%, 68%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-8 {
-  background: #6b7280;
+  background: hsl(48, 85%, 78%);
 }
 
-/* Icon card 4: yellow, orange, red, pink, purple, green, blue, gray */
+/* Icon card 4: red shades (share), wider range */
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-1 {
-  background: #ffb700;
+  background: hsl(0, 70%, 22%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-2 {
-  background: #ff5528;
+  background: hsl(0, 69%, 30%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-3 {
-  background: #ff006e;
+  background: hsl(0, 68%, 38%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-4 {
-  background: #ff00ff;
+  background: hsl(0, 67%, 44%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-5 {
-  background: #8b00ff;
+  background: hsl(0, 67%, 48%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-6 {
-  background: #47b84d;
+  background: hsl(0, 65%, 55%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-7 {
-  background: #007bff;
+  background: hsl(0, 60%, 64%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-8 {
-  background: #6b7280;
+  background: hsl(0, 52%, 74%);
 }
 
 .card-icon-gradient .gradient-2 .color-1 {
