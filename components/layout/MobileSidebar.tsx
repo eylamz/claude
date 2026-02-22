@@ -11,7 +11,7 @@ import { Icon, type IconName } from '@/components/icons/Icon';
 import { useTheme } from '@/context/ThemeProvider';
 import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
-import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled } from '@/lib/utils/ecommerce';
+import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled, isGrowthLabEnabled } from '@/lib/utils/ecommerce';
 import { flipLanguage } from '@/lib/utils/transliterate';
 import { searchFromCache, getAreaFromQuery, queryMatchesCategory, type SearchResultFromCache } from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
@@ -86,6 +86,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
   const ecommerceEnabled = isEcommerceEnabled();
   const trainersEnabled = isTrainersEnabled();
   const loginEnabled = isLoginEnabled();
+  const growthLabEnabled = isGrowthLabEnabled();
 
   // 1. Navigation Configuration (Grid Cards) - icons: Home, trees, guideBold, calendarBold, targetBold
   const navCards: NavCard[] = [
@@ -119,7 +120,12 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
       label: tMobileNav('shop'),
       description: tMobileNav('shopDesc'),
     }] : []),
-    
+    ...(growthLabEnabled ? [{
+      href: `/${locale}/growth-lab`,
+      icon: 'plantBold' as IconName,
+      label: tMobileNav('forms'),
+      description: tMobileNav('growthLabDesc'),
+    }] : []),
     {
       href: `/${locale}/about`,
       icon: 'targetBold',

@@ -14,10 +14,9 @@ export default function SkateparkSlugLoading() {
           <Skeleton className="h-10 w-64 sm:w-96" />
         </div>
 
-        {/* Image Gallery Skeleton - Matching ParkImageGallery layout */}
+        {/* Image Gallery Skeleton - can show skeleton while image loads */}
         <div className="w-full opacity-60">
           <div className="-overflow-hidden">
-            {/* Desktop Layout: Main image on left (2/3), 2 side images on right (1/3) */}
             <div className="hidden md:flex md:flex-row gap-2 p-2">
               <Skeleton className="w-2/3 aspect-[4/3] rounded-xl" />
               <div className="flex flex-col w-1/3 gap-2">
@@ -26,7 +25,6 @@ export default function SkateparkSlugLoading() {
               </div>
             </div>
 
-            {/* Mobile/Tablet Layout */}
             <div className="md:hidden relative">
               <div
                 className="relative w-full flex overflow-hidden"
@@ -43,7 +41,7 @@ export default function SkateparkSlugLoading() {
           </div>
         </div>
 
-        {/* Info Cards Skeleton */}
+        {/* Info Cards Skeleton - Hours + Amenities */}
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 opacity-50">
           <Card className="md:p-4 rounded-lg shadow-none">
             <div className="space-y-4">

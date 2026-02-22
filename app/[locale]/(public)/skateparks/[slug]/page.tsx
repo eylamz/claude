@@ -1373,26 +1373,21 @@ export default function SkateparkPage() {
             <Skeleton className="h-4 w-48" />
           </div>
 
-          {/* Header Skeleton - Highest opacity */}
+          {/* Header Skeleton */}
           <div className="flex justify-center -mb-5 mt-5 opacity-90">
             <Skeleton className="h-10 w-64 sm:w-96" />
           </div>
 
-          {/* Image Gallery Skeleton - High opacity - Matching ParkImageGallery layout */}
+          {/* Image Gallery Skeleton - skeleton while images load */}
           <div className="w-full opacity-60">
             <div className="-overflow-hidden">
-              {/* Desktop Layout: Main image on left (2/3), 2 side images on right (1/3) */}
               <div className="hidden md:flex md:flex-row gap-2 p-2">
-                {/* Main Image Skeleton - 2/3 width */}
                 <Skeleton className="w-2/3 aspect-[4/3] rounded-xl" />
-                {/* Side Images Column Skeleton - 1/3 width */}
                 <div className="flex flex-col w-1/3 gap-2">
                   <Skeleton className="flex-1 rounded-xl" />
                   <Skeleton className="flex-1 rounded-xl" />
                 </div>
               </div>
-
-              {/* Mobile/Tablet Layout: Horizontal carousel - single full-height slide + pagination dots */}
               <div className="md:hidden relative">
                 <div
                   className="relative w-full flex overflow-hidden"
@@ -1400,7 +1395,6 @@ export default function SkateparkPage() {
                 >
                   <Skeleton className="flex-shrink-0 w-full h-full rounded-none" />
                 </div>
-                {/* Pagination dots placeholder - matches Instagram-style fixed scrubbing */}
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
                   {[0, 1, 2].map((i) => (
                     <Skeleton key={i} className="w-1.5 h-1.5 rounded-full flex-shrink-0" />
@@ -1410,9 +1404,8 @@ export default function SkateparkPage() {
             </div>
           </div>
 
-          {/* Info Cards Skeleton - Medium opacity */}
+          {/* Info Cards Skeleton - Hours + Amenities */}
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 opacity-50">
-            {/* Hours Card Skeleton */}
             <Card className="md:p-4 rounded-lg shadow-none">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
@@ -1435,8 +1428,6 @@ export default function SkateparkPage() {
                 </div>
               </div>
             </Card>
-
-            {/* Amenities Card Skeleton */}
             <Card className="md:p-4 rounded-lg shadow-none">
               <div className="flex items-center md:justify-center gap-2 mb-3">
                 <Skeleton className="w-5 h-5 rounded" />
@@ -1617,73 +1608,66 @@ export default function SkateparkPage() {
         <div className="max-w-6xl mx-auto overflow-x-hidden">
           {/* Header */}
           <h1 className="my-5 text-3xl font-bold text-center text-text dark:text-text-dark z-10 hidden sm:block">
-                    {/* Mobile version - splits on hyphens */}
-                    <span className="hidden ">
-                      {parkName.includes('-') ? 
-                        parkName.split('-').map((part, index, array) => (
-                          <Fragment key={index}>
-                            {part.trim()}
-                            {index < array.length - 1 && <br />}
-                          </Fragment>
-                        ))
-                        : parkName
-                      }
-                    </span>
-                    {/* Desktop version - no splitting */}
-                    <span className="inline">
-                      {parkName}
-                    </span>
-                  </h1>
-
-          {/* Image Gallery */}
-        <div className="relative z-0">
-          <div className="max-w-5xl mx-auto overflow-visible">
-            <ParkImageGallery 
-              images={getImageSliderImages(skatepark.images, parkName)} 
-              parkName={parkName}
-              closingYear={skatepark.closingYear}
-              area={skatepark.area}
-              updatedAt={skatepark.updatedAt}
-              locale={locale}
-            />
-          </div>
-        </div>
-
-    
-        <div className="flex items-center justify-between px-4">
-          {/* Mobile-only H1 above operating hours */}
-          <h1 className="sm:hidden mb-1 text-xl font-semibold text-text dark:text-text-dark">
-            {parkName}
+            <span className="hidden ">
+              {parkName.includes('-') ? 
+                parkName.split('-').map((part, index, array) => (
+                  <Fragment key={index}>
+                    {part.trim()}
+                    {index < array.length - 1 && <br />}
+                  </Fragment>
+                ))
+                : parkName
+              }
+            </span>
+            <span className="inline">
+              {parkName}
+            </span>
           </h1>
-                                          {/* Mobile-only share button at top start, next to operating hours - same style as events */}
-                                <div className="sm:hidden shrink-0">
-                  <Button
-                    variant="green"
-                    onClick={() => {
-                      if (typeof navigator !== 'undefined' && navigator.share) {
-                        navigator.share({
-                          title: parkName,
-                          text: `${parkName} - Skatepark`,
-                          url: typeof window !== 'undefined' ? window.location.href : '',
-                        }).catch((error) => {
-                          console.error('Error sharing:', error);
-                        });
-                      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
-                          navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : '');
-                        }
-                    }}
-                    className="!h-8 px-2 py-1 rounded-lg font-medium flex-shrink-0"
-                    aria-label={locale === 'he' ? 'שתף סקייטפארק' : 'Share skatepark'}
-                  >
-                    <Icon name="shareBold" className="w-4 h-4" />
-                  </Button>
-                </div>
-                </div>
 
+          {/* Image Gallery - skeleton shown while images load inside ParkImageGallery */}
+          <div className="relative z-0">
+            <div className="max-w-5xl mx-auto overflow-visible">
+              <ParkImageGallery
+                images={getImageSliderImages(skatepark.images, parkName)}
+                parkName={parkName}
+                closingYear={skatepark.closingYear}
+                area={skatepark.area}
+                updatedAt={skatepark.updatedAt}
+                locale={locale}
+              />
+            </div>
+          </div>
 
-          {/* Info Cards */}
+          <div className="flex items-center justify-between px-4">
+            <h1 className="sm:hidden mb-1 text-xl font-semibold text-text dark:text-text-dark">
+              {parkName}
+            </h1>
+            <div className="sm:hidden shrink-0">
+              <Button
+                variant="green"
+                onClick={() => {
+                  if (typeof navigator !== 'undefined' && navigator.share) {
+                    navigator.share({
+                      title: parkName,
+                      text: `${parkName} - Skatepark`,
+                      url: typeof window !== 'undefined' ? window.location.href : '',
+                    }).catch((error) => {
+                      console.error('Error sharing:', error);
+                    });
+                  } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                    navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : '');
+                  }
+                }}
+                className="!h-8 px-2 py-1 rounded-lg font-medium flex-shrink-0"
+                aria-label={locale === 'he' ? 'שתף סקייטפארק' : 'Share skatepark'}
+              >
+                <Icon name="shareBold" className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Info Cards - Hours + Amenities */}
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 px-2 sm:px-0">
-            {/* Hours Card - Now using FormattedHours component */}
             <Card className="text-text/80 dark:text-text-dark/80 md:p-4 shadow-none">
               <div className="flex gap-4 mb-4 justify-between items-start">
                 <div className={locale === 'he' ? '-ml-10' : ''}>
@@ -1694,10 +1678,8 @@ export default function SkateparkPage() {
                     locale={locale}
                   />
                 </div>
-
               </div>
 
-              {/* Address Section */}
               <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
                 <div className="flex items-center mb-3">
                   <h3 className="text-base sm:text-xl font-semibold flex items-center gap-2 text-text dark:text-text-dark">
@@ -1705,13 +1687,11 @@ export default function SkateparkPage() {
                     {t('address')}
                   </h3>
                 </div>
-
                 <div className="flex flex-col gap-2 mb-2 text-text dark:text-text-dark">
                   <p className="text-base sm:text-lg" itemProp="address">{address}.</p>
                 </div>
               </div>
 
-              {/* Opening/Closing Year Section */}
               <div className="mt-6 pt-4 border-t border-border-dark/20 dark:border-text-dark/20">
                 <div className="flex flex-col flex-wrap gap-2 mb-2 text-text dark:text-text-dark">
                   {skatepark.openingYear && (
@@ -1736,7 +1716,6 @@ export default function SkateparkPage() {
               </div>
             </Card>
 
-            {/* Amenities Card */}
             <Card className="md:p-4 text-clip shadow-none">
               <div className="flex items-center md:justify-center mb-3 text-text dark:text-text-dark">
                 <h2 className="text-base sm:text-xl font-semibold flex items-center gap-2">
