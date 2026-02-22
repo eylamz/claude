@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, memo } from 'react';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import type { IMultilingualText } from '@/lib/models/Settings';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
 interface HeroCarouselImage {
   desktopImageUrl?: string;
@@ -31,6 +32,86 @@ const MAX_WIDTH_MAP = {
 
 const REM_TO_PX = 16;
 const GAP_REM = 1.5; // 24px
+
+const CarouselSlideImage = memo(function CarouselSlideImage({
+  imageUrl,
+  altText,
+  isEager,
+}: {
+  imageUrl: string;
+  altText: string;
+  isEager: boolean;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    setIsLoaded(false);
+    setHasError(false);
+  }, [imageUrl]);
+
+  useEffect(() => {
+    const check = () => {
+      if (!imgRef.current) return false;
+      const img = imgRef.current;
+      if (img.complete && img.naturalHeight !== 0) {
+        setIsLoaded(true);
+        setHasError(false);
+        return true;
+      }
+      if (img.complete && img.naturalHeight === 0) {
+        setIsLoaded(true);
+        setHasError(true);
+        return true;
+      }
+      return false;
+    };
+    if (check()) return;
+    const t1 = setTimeout(check, 100);
+    const t2 = setTimeout(() => {
+      if (!imgRef.current) return;
+      const img = imgRef.current;
+      if (!isLoaded && !hasError && (!img.complete || img.naturalHeight === 0)) {
+        setIsLoaded(true);
+        setHasError(true);
+      }
+    }, 3000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [imageUrl, isLoaded, hasError]);
+
+  const onLoad = () => {
+    setIsLoaded(true);
+    setHasError(false);
+  };
+  const onError = () => {
+    setIsLoaded(true);
+    setHasError(true);
+  };
+
+  return (
+    <div className="absolute inset-0 w-full h-full">
+      {!isLoaded && !hasError && (
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
+          <LoadingSpinner size={36} variant="default" />
+        </div>
+      )}
+      <img
+        ref={imgRef}
+        src={imageUrl}
+        alt={altText}
+        className={`w-full h-full object-cover object-top transition-opacity duration-200 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+        loading={isEager ? 'eager' : 'lazy'}
+        decoding="async"
+        onLoad={onLoad}
+        onError={onError}
+      />
+    </div>
+  );
+});
 
 // --- Define Animation Speeds in ms ---
 const NORMAL_SPEED = 600;
@@ -313,7 +394,7 @@ export default function HeroCarousel({ images, autoSlideInterval = 3000 }: HeroC
               return (
                 <div
                   key={viewIndex} 
-                  className={`absolute bottom-0  max-h-[500px] md:max-h-[370px] lg:max-h-[520px] max-w-[275px] md:max-w-[690px] lg:max-w-[980px] flex items-center justify-center overflow-hidden transition-none will-change-transform ${
+                  className={`absolute bottom-0 max-h-[500px] md:max-h-[370px] lg:max-h-[520px] max-w-[275px] md:max-w-[690px] lg:max-w-[980px] flex items-center justify-center overflow-hidden transition-none will-change-transform ${
                     isActive ? 'opacity-100 h-full' : 'opacity-20 h-[97%]'
                   }`}
                   style={{
@@ -326,12 +407,10 @@ export default function HeroCarousel({ images, autoSlideInterval = 3000 }: HeroC
                     const imageUrl = getImageUrl(image);
                     const altText = isRealSlide ? (getLocalizedText(image.title) || `Slide ${realIndex + 1}`) : "Carousel transition image";
                     return imageUrl ? (
-                      <img
-                        src={imageUrl}
-                        alt={altText}
-                        className="w-full h-full object-cover object-top"
-                        loading="eager" 
-                        decoding="async"
+                      <CarouselSlideImage
+                        imageUrl={imageUrl}
+                        altText={altText}
+                        isEager={viewIndex === currentViewIndex}
                       />
                     ) : null;
                   })()}

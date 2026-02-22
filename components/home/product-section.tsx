@@ -1,10 +1,11 @@
 'use client';
 
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, memo } from 'react';
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight } from './arrow-right';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
 interface Product {
   id: string;
@@ -25,6 +26,81 @@ interface ProductSectionProps {
 const formatPrice = (price: number): string => {
   return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
+
+const ProductCardImage = memo(function ProductCardImage({
+  src,
+  alt,
+}: {
+  src: string;
+  alt: string;
+}) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    setIsLoaded(false);
+    setHasError(false);
+  }, [src]);
+
+  useEffect(() => {
+    const check = () => {
+      if (!imgRef.current) return false;
+      const img = imgRef.current;
+      if (img.complete && img.naturalHeight !== 0) {
+        setIsLoaded(true);
+        setHasError(false);
+        return true;
+      }
+      if (img.complete && img.naturalHeight === 0) {
+        setIsLoaded(true);
+        setHasError(true);
+        return true;
+      }
+      return false;
+    };
+    if (check()) return;
+    const t1 = setTimeout(check, 100);
+    const t2 = setTimeout(() => {
+      if (!imgRef.current) return;
+      const img = imgRef.current;
+      if (!isLoaded && !hasError && (!img.complete || img.naturalHeight === 0)) {
+        setIsLoaded(true);
+        setHasError(true);
+      }
+    }, 3000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [src, isLoaded, hasError]);
+
+  return (
+    <div className="relative w-full h-36 md:h-40 flex items-center justify-center bg-card dark:bg-card-dark rounded-xl overflow-hidden">
+      {!isLoaded && !hasError && (
+        <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/20 dark:bg-background/20">
+          <LoadingSpinner size={32} variant="default" />
+        </div>
+      )}
+      <img
+        ref={imgRef}
+        src={src}
+        alt={alt}
+        className={`select-none w-full h-full object-cover saturate-[1.75] rounded-xl transition-opacity duration-200 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => {
+          setIsLoaded(true);
+          setHasError(false);
+        }}
+        onError={() => {
+          setIsLoaded(true);
+          setHasError(true);
+        }}
+      />
+    </div>
+  );
+});
 
 export const ProductSection = ({ products, t: _t }: ProductSectionProps) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -154,10 +230,9 @@ export const ProductSection = ({ products, t: _t }: ProductSectionProps) => {
                 className={`flex-none bg-card dark:bg-card-dark opacity-0 snap-center w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] shadow-lg shadow-[rgba(0,0,0,0.05)] hover:shadow-lg dark:hover:!scale-[1.02] border-[4px] border-card dark:border-card-dark rounded-3xl overflow-hidden cursor-pointer relative group select-none transform-gpu transition-all duration-200 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent before:z-[1] before:pointer-events-none ${clickedCardId === product.id ? 'before:animate-shimmer' : ''}`}
                 style={{ animationDelay: `${150 + (index * 125)}ms` }}
               >
-                <img
+                <ProductCardImage
                   src={product.image ?? '/placeholder.jpg'}
                   alt={product.name}
-                  className="select-none w-full h-36 md:h-40 object-cover saturate-[1.75] rounded-xl"
                 />
                 <CardContent className="p-2 w-full">
                   <div className="flex flex-col w-full text-text-secondary dark:text-text-secondary-dark">

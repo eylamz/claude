@@ -6,7 +6,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import {
   HeroCarousel,
   FixedBanner,
@@ -217,16 +216,6 @@ export default function HomePage() {
       setLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="w-full h-[95vh] flex items-center justify-center">
-        <div className="text-center">
-          <LoadingSpinner size={48} variant="default" />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <main className=" w-full bg-background dark:bg-background-dark">
