@@ -38,7 +38,7 @@ export function NavIcons({ name, className, style, ...props }: NavIconsProps) {
   if (!svg) return null;
   return (
     <span
-      className={cn('inline-flex items-center justify-center [&>svg]:size-full [&>svg]:shrink-0', className)}
+      className={cn('inline-flex items-center justify-center [&>svg]:size-full [&>svg]:shrink-0 [&>svg]:overflow-visible', className)}
       style={style}
       {...props}
       dangerouslySetInnerHTML={{ __html: svg }}

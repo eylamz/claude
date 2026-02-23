@@ -408,7 +408,7 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8 ">
+      <section className="mb-24 sm:mb-32 px-4 ">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-4 text-text dark:text-text-dark">
             {t('whyEnboss')}
@@ -634,14 +634,14 @@ export default function HomePage() {
 
       {/* Final CTA Section */}
       <section
-        className="relative 4xl:rounded-2xl h-[400px] md:h-[500px] lg:h-[900px] max-w-[2000px] mx-auto py-20 sm:py-16 px-4 sm:px-6 lg:px-8 text-center overflow-hidden bg-cover bg-bottom bg-no-repeat 4xl:shadow-lg "
+        className="relative 4xl:rounded-2xl h-[400px] md:h-[500px] lg:h-[900px] max-w-[2000px] mx-auto py-20 sm:py-8 md:py-20 lg:py-20 px-4 sm:px-6 lg:px-8 text-center overflow-hidden bg-cover bg-bottom bg-no-repeat 4xl:shadow-lg "
         style={{
           backgroundImage: "url('https://res.cloudinary.com/dr0rvohz9/image/upload/v1771769672/wcjoumbnl57r6aqe9nae.webp')",
         }}
       >
         <div className="absolute inset-0  dark:bg-background-dark/30 md:dark:bg-background-dark/20" aria-hidden="true" />
         <div className="relative z-10 max-w-4xl mx-auto">
-          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-8  [text-shadow:_0px_0px_25px_rgba(0,0,0,1)] leading-tight text-white dark:text-text-dark lg:translate-x-[8rem]">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-4 md:mb-8  [text-shadow:_0px_0px_25px_rgba(0,0,0,1)] leading-tight text-white dark:text-text-dark translate-x-8 lg:translate-x-0 xl:translate-x-[8rem]">
             {t('nextSessionAwaits')
               .split('<br/>')
               .map((line, i, arr) => (
@@ -654,7 +654,7 @@ export default function HomePage() {
           <Link href={`/${locale}/skateparks`} className="block">
 
             <Button
-              className="px-6 sm:px-12 py-4 sm:py-6 text-base sm:text-lg font-semibold text-text dark:text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 translate-x-10 md:translate-x-0"
+              className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-base lg:text-lg font-semibold text-text dark:text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 translate-x-5 sm:translate-x-2.5 lg:translate-x-0 xl:translate-x-20"
             >
               {t('getStarted')}
             </Button>

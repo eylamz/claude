@@ -4,11 +4,13 @@ import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { TrendingUp, CheckCircle2 } from 'lucide-react';
-import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, Skeleton, Toaster } from '@/components/ui';
+import { CheckCircle2 } from 'lucide-react';
+import { Button, Skeleton, Toaster } from '@/components/ui';
 import { SearchInput } from '@/components/common/SearchInput';
 import { useToast } from '@/hooks/use-toast';
 import { isGrowthLabEnabled } from '@/lib/utils/ecommerce';
+import { flipLanguage } from '@/lib/utils/transliterate';
+import { highlightMatch } from '@/lib/search-highlight';
 import { Icon } from '@/components/icons/Icon';
 
 
@@ -30,8 +32,6 @@ interface Form {
   createdAt: string | null;
 }
 
-type SortOption = 'newest' | 'submissions' | 'title';
-
 // Helper function to get localized text
 const getLocalizedText = (field: { en: string; he: string } | undefined, locale: string): string => {
   if (!field) return '';
@@ -43,12 +43,15 @@ const FormCard = memo(({
   form, 
   locale, 
   animationDelay = 0,
-  isSubmitted = false
+  isSubmitted = false,
+  highlightQuery
 }: { 
   form: Form; 
   locale: string; 
   animationDelay?: number;
   isSubmitted?: boolean;
+  /** When set, highlights matching substring in title/description (e.g. search query). */
+  highlightQuery?: string;
 }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [showNameSection, setShowNameSection] = useState(false);
@@ -132,7 +135,9 @@ const FormCard = memo(({
               </svg>
             </div>
             <p className="text-xs text-gray dark:text-gray-dark line-clamp-2 max-w-[200px]">
-              {truncateDescription(formDescription, 60)}
+              {highlightQuery
+                ? highlightMatch(truncateDescription(formDescription, 60), highlightQuery)
+                : truncateDescription(formDescription, 60)}
             </p>
           </div>
         </div>
@@ -150,7 +155,7 @@ const FormCard = memo(({
         <h3 
           className={`text-lg font-medium opacity-0 ${showFormName ? 'animate-fadeInDown animation-delay-[1s]' : ''}`}
         >
-          {formTitle}
+          {highlightQuery ? highlightMatch(formTitle, highlightQuery) : formTitle}
         </h3>
       </div>
     </Link>
@@ -165,7 +170,6 @@ export default function GrowingTogetherPage() {
   const [forms, setForms] = useState<Form[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [isScrolled, setIsScrolled] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevScrollYRef = useRef(0);
@@ -173,6 +177,19 @@ export default function GrowingTogetherPage() {
   const growthLabEnabled = isGrowthLabEnabled();
 
   const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
+
+  // Normalize text for search (handles apostrophes, diacritics, and whitespace) — same as skateparks
+  const normalizeSearchText = useCallback((text: string): string => {
+    return (
+      text
+        .toLowerCase()
+        .trim()
+        .replace(/[''']/g, '')
+        .replace(/\s+/g, ' ')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+    );
+  }, []);
 
   // Redirect if Growth Lab is disabled
   useEffect(() => {
@@ -267,40 +284,42 @@ export default function GrowingTogetherPage() {
     fetchForms();
   }, [toast]);
 
-  // Filter and sort forms
+  // Filter and sort forms (search supports Hebrew/English transliteration like skateparks)
   useEffect(() => {
     let filtered = [...allForms];
 
-    // Apply search filter
     if (searchQuery.trim()) {
-      const searchLower = searchQuery.toLowerCase();
+      const normalizedQuery = normalizeSearchText(searchQuery);
+      const flipped = flipLanguage(searchQuery);
+      const normalizedFlipped = flipped ? normalizeSearchText(flipped) : '';
+
+      const matchesQuery = (text: string) =>
+        text.includes(normalizedQuery) || (normalizedFlipped !== '' && text.includes(normalizedFlipped));
+
       filtered = filtered.filter((form) => {
-        const title = getLocalizedText(form.title, locale);
-        const description = getLocalizedText(form.description, locale);
-        return title.toLowerCase().includes(searchLower) || 
-               description.toLowerCase().includes(searchLower);
+        const normTitleEn = normalizeSearchText(form.title?.en ?? '');
+        const normTitleHe = normalizeSearchText(form.title?.he ?? '');
+        const normDescEn = normalizeSearchText(form.description?.en ?? '');
+        const normDescHe = normalizeSearchText(form.description?.he ?? '');
+
+        return (
+          matchesQuery(normTitleEn) ||
+          matchesQuery(normTitleHe) ||
+          matchesQuery(normDescEn) ||
+          matchesQuery(normDescHe)
+        );
       });
     }
 
-    // Apply sorting
+    // Apply sorting (newest first)
     filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'submissions':
-          return (b.submissionsCount || 0) - (a.submissionsCount || 0);
-        case 'title':
-          const titleA = getLocalizedText(a.title, locale);
-          const titleB = getLocalizedText(b.title, locale);
-          return titleA.localeCompare(titleB);
-        case 'newest':
-        default:
-          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-          return dateB - dateA;
-      }
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
     });
 
     setForms(filtered);
-  }, [allForms, searchQuery, sortBy, locale]);
+  }, [allForms, searchQuery, locale, normalizeSearchText]);
 
   const filteredCount = forms.length;
 
@@ -367,19 +386,6 @@ export default function GrowingTogetherPage() {
               </div>
             </div>
 
-            {/* Sort */}
-            <div className="flex items-center gap-2">
-              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-                <SelectTrigger className="w-[140px] md:w-[160px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">{tr('Newest', 'החדש ביותר')}</SelectItem>
-                  <SelectItem value="submissions">{tr('Most Submissions', 'הכי הרבה הגשות')}</SelectItem>
-                  <SelectItem value="title">{tr('Title', 'כותרת')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </div>
       </div>
@@ -450,6 +456,7 @@ export default function GrowingTogetherPage() {
                     locale={locale}
                     animationDelay={index * 50}
                     isSubmitted={isSubmitted}
+                    highlightQuery={searchQuery || undefined}
                   />
                 );
               })}

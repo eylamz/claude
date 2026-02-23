@@ -24,14 +24,13 @@ import {
   Settings as SettingsIcon,
   Search as SearchIcon,
   X,
-  Clock,
-  ShoppingBag,
-  Sparkles,
   BarChart2,
+  ChevronRight,
 } from 'lucide-react';
 import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
 import { NavIcons } from '@/components/layout/NavIcons';
+import { SearchInput } from '@/components/common/SearchInput';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
@@ -44,12 +43,10 @@ import {
   useCartTotals,
   type CartItem 
 } from '@/stores/cartStore';
-import { Card, CardContent, Skeleton } from '@/components/ui';
-import { ProductCard, SkateparkCard, TrainerCard, GuideCard } from '@/components/shop';
 import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled, isGrowthLabEnabled, isCommunityEnabled } from '@/lib/utils/ecommerce';
-import { cn } from '@/lib/utils/cn';
-import { searchFromCache, type SearchResultFromCache } from '@/lib/search-from-cache';
+import { searchFromCache, getAreaFromQuery, queryMatchesCategory, type SearchResultFromCache } from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
+import { flipLanguage } from '@/lib/utils/transliterate';
 
 // Search result types (match API / search page)
 type SearchResultType = 'products' | 'skateparks' | 'events' | 'guides' | 'trainers';
@@ -74,6 +71,8 @@ interface SkateparkResult extends SearchResultBase {
   imageUrl: string;
   area: 'north' | 'center' | 'south';
   rating?: number;
+  /** When set to 'area', result matched by area only; show last. */
+  matchBy?: 'name' | 'area';
 }
 interface EventResult extends SearchResultBase {
   type: 'events';
@@ -116,6 +115,7 @@ export default function HeaderNav() {
   const tAdmin = useTranslations('admin');
   const tMobileNav = useTranslations('common.mobileNav');
   const tSearch = useTranslations('search');
+  const tSkateparks = useTranslations('skateparks');
   const { theme, toggleTheme } = useTheme();
   
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -123,8 +123,8 @@ export default function HeaderNav() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [searchFilterTab, setSearchFilterTab] = useState<SearchResultType | 'all'>('all');
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   
   const ecommerceEnabled = isEcommerceEnabled();
   const trainersEnabled = isTrainersEnabled();
@@ -150,6 +150,14 @@ export default function HeaderNav() {
       setRecentSearches(JSON.parse(stored));
     }
   }, []);
+
+  // Focus search input when popup opens
+  useEffect(() => {
+    if (isSearchOpen) {
+      const t = setTimeout(() => searchInputRef.current?.focus(), 100);
+      return () => clearTimeout(t);
+    }
+  }, [isSearchOpen]);
 
   // Scroll detection for header visibility and skateparks page
   useEffect(() => {
@@ -213,44 +221,69 @@ export default function HeaderNav() {
     setSearchQuery(query);
   }, [saveSearch]);
 
-  // Filter tabs for popup (respect .env: products only if ecommerce, trainers only if trainers)
-  const searchFilterTabs = useMemo(() => {
-    const tabs: { key: SearchResultType | 'all'; label: string; icon: typeof MapPin }[] = [
-      { key: 'all', label: tSearch('tabs.all') || 'All', icon: Sparkles },
-      { key: 'skateparks', label: tSearch('tabs.skateparks') || 'Parks', icon: MapPin },
-      { key: 'events', label: tSearch('tabs.events') || 'Events', icon: Calendar },
-      { key: 'guides', label: tSearch('tabs.guides') || 'Guides', icon: BookOpen },
-    ];
-    if (ecommerceEnabled) {
-      tabs.splice(1, 0, { key: 'products', label: tSearch('tabs.products') || 'Products', icon: ShoppingBag });
-    }
-    if (trainersEnabled) {
-      tabs.push({ key: 'trainers', label: tSearch('tabs.trainers') || 'Trainers', icon: Users });
-    }
-    return tabs;
-  }, [ecommerceEnabled, trainersEnabled, tSearch]);
-
-  // Cache-backed categories: search localStorage first; if missing, fetch and cache then search
+  // Search only from localStorage cache (no server fetch) - same data source as MobileSidebar cache
   const cacheCategories = useMemo((): ('skateparks' | 'events' | 'guides')[] => {
-    if (searchFilterTab === 'all') return ['skateparks', 'events', 'guides'];
-    if (searchFilterTab === 'skateparks' || searchFilterTab === 'events' || searchFilterTab === 'guides') {
-      return [searchFilterTab];
-    }
-    return [];
-  }, [searchFilterTab]);
+    return ['skateparks', 'events', 'guides'];
+  }, []);
 
-  // API-only categories (no localStorage cache in app)
-  const apiCategories = useMemo((): ('products' | 'trainers')[] => {
-    if (searchFilterTab === 'all') {
-      const list: ('products' | 'trainers')[] = [];
-      if (ecommerceEnabled) list.push('products');
-      if (trainersEnabled) list.push('trainers');
-      return list;
+  // Resolve display name for a result (locale-aware)
+  const getResultDisplayName = useCallback((item: SearchResult): string => {
+    const raw = 'name' in item && item.name != null
+      ? item.name
+      : 'title' in item && item.title != null
+        ? item.title
+        : '';
+    if (typeof raw === 'string') return raw;
+    if (raw && typeof raw === 'object' && 'en' in raw && 'he' in raw) {
+      const loc = locale as 'en' | 'he';
+      return (raw as { en?: string; he?: string })[loc] ?? (raw as { en?: string; he?: string }).en ?? (raw as { en?: string; he?: string }).he ?? '';
     }
-    if (searchFilterTab === 'products' && ecommerceEnabled) return ['products'];
-    if (searchFilterTab === 'trainers' && trainersEnabled) return ['trainers'];
-    return [];
-  }, [searchFilterTab, ecommerceEnabled, trainersEnabled]);
+    return String(raw);
+  }, [locale]);
+
+  // Weighted search scoring (like MobileSidebar): original query ranks higher than flipped
+  const calculateSearchScore = useCallback((
+    result: SearchResult,
+    query: string,
+    flippedQuery: string | null
+  ): number => {
+    const q = query.toLowerCase().trim();
+    if (!q) return 0;
+    const flippedLower = flippedQuery ? flippedQuery.toLowerCase().trim() : null;
+    const WEIGHTS = { name: 1.0, title: 1.0, category: 0.7, area: 0.5, description: 0.5, tags: 0.5 };
+    const FLIPPED_DISCOUNT = 0.9;
+    const FLIPPED_MIDDLE_DISCOUNT = 0.8;
+    let score = 0;
+    const displayName = getResultDisplayName(result).toLowerCase();
+    if (displayName.includes(q)) {
+      score += displayName.startsWith(q) ? WEIGHTS.name * 2 : WEIGHTS.name;
+    } else if (flippedLower && displayName.includes(flippedLower)) {
+      const base = displayName.startsWith(flippedLower) ? WEIGHTS.name * 2 : WEIGHTS.name;
+      const discount = displayName.startsWith(flippedLower) ? FLIPPED_DISCOUNT : FLIPPED_MIDDLE_DISCOUNT;
+      score += base * discount;
+    }
+    const categoryMap: Record<string, string> = {
+      skateparks: 'skatepark', products: 'product', events: 'event', guides: 'guide', trainers: 'trainer',
+    };
+    const categoryName = categoryMap[result.type] || '';
+    if (categoryName && (q.includes(categoryName) || (flippedLower?.includes(categoryName)))) score += WEIGHTS.category;
+    if ('area' in result && result.area) {
+      const areaName = String(result.area).toLowerCase();
+      if (areaName && (q.includes(areaName) || (flippedLower?.includes(areaName)))) score += WEIGHTS.area;
+    }
+    if ('description' in result && result.description) {
+      const descLower = String(result.description).toLowerCase();
+      if (descLower.includes(q)) score += WEIGHTS.description;
+      else if (flippedLower && descLower.includes(flippedLower)) score += WEIGHTS.description * FLIPPED_DISCOUNT;
+    }
+    if ('relatedSports' in result && Array.isArray(result.relatedSports)) {
+      const hasMatch = result.relatedSports.some((s) =>
+        s.toLowerCase().includes(q) || (flippedLower != null && s.toLowerCase().includes(flippedLower))
+      );
+      if (hasMatch) score += WEIGHTS.tags;
+    }
+    return score;
+  }, [getResultDisplayName]);
 
   // Map SearchResultFromCache to SearchResult (same shape for skateparks/events/guides)
   const mapCacheResultToSearchResult = useCallback((r: SearchResultFromCache): SearchResult => {
@@ -263,6 +296,7 @@ export default function HeaderNav() {
         imageUrl: r.imageUrl ?? '',
         area: r.area ?? 'center',
         rating: r.rating,
+        matchBy: r.matchBy,
       };
     }
     if (r.type === 'events') {
@@ -289,7 +323,7 @@ export default function HeaderNav() {
     };
   }, []);
 
-  // Fetch search results: cache-first for skateparks/events/guides, then API for products/trainers
+  // Fetch search results from localStorage cache only (no server fetch - like MobileSidebar cache usage)
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -298,39 +332,62 @@ export default function HeaderNav() {
     }
     setSearchLoading(true);
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    const controller = new AbortController();
+
     searchDebounceRef.current = setTimeout(async () => {
       try {
-        const results: SearchResult[] = [];
+        const flippedQuery = flipLanguage(searchQuery);
+        const q = searchQuery.toLowerCase().trim();
+        const flippedLower = flippedQuery ? flippedQuery.toLowerCase().trim() : null;
+        const queryContainsHebrew = /\p{Script=Hebrew}/u.test(searchQuery.trim());
 
-        // 1) Search localStorage caches (skateparks_cache, events_cache, guides_cache); fill cache if missing
-        if (cacheCategories.length > 0) {
-          const cacheResults = await searchFromCache(searchQuery, locale, cacheCategories);
-          results.push(...cacheResults.map(mapCacheResultToSearchResult));
-        }
+        const rawResults: SearchResult[] = [];
+        const cacheResults = await searchFromCache(searchQuery, locale, cacheCategories);
+        rawResults.push(...cacheResults.map(mapCacheResultToSearchResult));
 
-        // 2) Fetch from API for products/trainers (no app cache for these)
-        if (apiCategories.length > 0) {
-          const params = new URLSearchParams();
-          params.set('q', searchQuery);
-          params.set('locale', locale);
-          params.set('types', apiCategories.join(','));
-          const res = await fetch(`/api/search?${params.toString()}`, { signal: controller.signal });
-          if (res.ok) {
-            const data = await res.json();
-            const apiResults = (data.results || []) as SearchResult[];
-            results.push(...apiResults);
+        const matchesQueryOrFlipped = (result: SearchResult): boolean => {
+          const name = getResultDisplayName(result).toLowerCase();
+          if ('matchBy' in result && result.matchBy === 'area') return true;
+          if (result.type === 'events' && queryMatchesCategory(searchQuery, 'events')) return true;
+          if (result.type === 'skateparks' && queryMatchesCategory(searchQuery, 'skateparks')) return true;
+          if (result.type === 'guides' && queryMatchesCategory(searchQuery, 'guides')) return true;
+          if (!name) return false;
+          if (name.includes(q) || (flippedLower != null && flippedLower !== '' && name.includes(flippedLower))) return true;
+          if (queryContainsHebrew) return true;
+          return false;
+        };
+        const filtered = rawResults.filter((r) => matchesQueryOrFlipped(r));
+
+        type ScoredResult = SearchResult & { _score: number };
+        const scored: ScoredResult[] = filtered.map((result) => ({
+          ...result,
+          _score: calculateSearchScore(result, searchQuery, flippedQuery),
+        }));
+        const sorted = scored.sort((a, b) => {
+          const aAreaLast = 'matchBy' in a && a.matchBy === 'area' ? 1 : 0;
+          const bAreaLast = 'matchBy' in b && b.matchBy === 'area' ? 1 : 0;
+          if (aAreaLast !== bAreaLast) return aAreaLast - bAreaLast;
+          if (b._score !== a._score) return b._score - a._score;
+          const aName = getResultDisplayName(a).toLowerCase();
+          const bName = getResultDisplayName(b).toLowerCase();
+          const aStartsQ = aName.startsWith(q);
+          const bStartsQ = bName.startsWith(q);
+          if (aStartsQ && !bStartsQ) return -1;
+          if (!aStartsQ && bStartsQ) return 1;
+          if (flippedLower) {
+            const aStartsF = aName.startsWith(flippedLower);
+            const bStartsF = bName.startsWith(flippedLower);
+            if (aStartsF && !bStartsF) return -1;
+            if (!aStartsF && bStartsF) return 1;
           }
-        }
+          return aName.localeCompare(bName);
+        });
+        const final = sorted
+          .map(({ _score, ...r }) => r)
+          .filter((r) => (r.type === 'products' && !ecommerceEnabled ? false : true));
 
-        if (!ecommerceEnabled) {
-          const filtered = results.filter((r) => r.type !== 'products');
-          setSearchResults(filtered);
-        } else {
-          setSearchResults(results);
-        }
+        setSearchResults(final);
       } catch (e) {
-        if ((e as Error).name !== 'AbortError') console.error(e);
+        console.error(e);
         setSearchResults([]);
       } finally {
         setSearchLoading(false);
@@ -338,111 +395,37 @@ export default function HeaderNav() {
     }, 300);
     return () => {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-      controller.abort();
     };
-  }, [searchQuery, searchFilterTab, locale, ecommerceEnabled, cacheCategories, apiCategories, mapCacheResultToSearchResult]);
+  }, [searchQuery, locale, ecommerceEnabled, cacheCategories, mapCacheResultToSearchResult, getResultDisplayName, calculateSearchScore]);
 
-  // Render a single search result card (matches search page)
-  const renderSearchCard = useCallback((item: SearchResult) => {
-    switch (item.type) {
-      case 'products': {
-        const p = item as ProductResult;
-        return (
-          <ProductCard
-            key={p.id}
-            product={{
-              id: p.id,
-              slug: p.slug,
-              name: p.name as { en: string; he: string },
-              price: p.price,
-              discountPrice: p.discountPrice,
-              images: p.images,
-              variants: p.variants,
-              totalStock: p.totalStock,
-            }}
-            view="grid"
-            highlightQuery={searchQuery}
-          />
-        );
-      }
-      case 'skateparks': {
-        const s = item as SkateparkResult;
-        const nameStr = typeof s.name === 'string' ? s.name : (s.name[locale as 'en' | 'he'] || s.name.en || s.name.he);
-        return (
-          <SkateparkCard
-            key={s.id}
-            slug={s.slug}
-            name={nameStr}
-            image={s.imageUrl}
-            area={s.area}
-            highlightQuery={searchQuery}
-          />
-        );
-      }
-      case 'guides': {
-        const g = item as GuideResult;
-        return (
-          <GuideCard
-            key={g.id}
-            slug={g.slug}
-            title={g.title}
-            description={g.description}
-            image={g.coverImage}
-            rating={g.rating}
-            ratingCount={g.ratingCount}
-            readTime={g.readTime}
-            sports={g.relatedSports}
-            highlightQuery={searchQuery}
-          />
-        );
-      }
-      case 'trainers': {
-        const tr = item as TrainerResult;
-        return (
-          <TrainerCard
-            key={tr.id}
-            slug={tr.slug}
-            name={tr.name}
-            image={tr.profileImage}
-            area={tr.area}
-            sports={tr.relatedSports}
-            rating={tr.rating}
-            reviewCount={tr.totalReviews}
-            highlightQuery={searchQuery}
-          />
-        );
-      }
-      case 'events': {
-        const ev = item as EventResult;
-        return (
-          <Card key={ev.id} className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center text-white">
-                  <Calendar className="w-8 h-8" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <Link
-                    href={`/${locale}/events/${ev.slug}`}
-                    onClick={() => setIsSearchOpen(false)}
-                    className="font-semibold text-gray-900 dark:text-white hover:text-brand-main dark:hover:text-brand-main transition-colors line-clamp-2"
-                  >
-                    {highlightMatch(ev.title, searchQuery)}
-                  </Link>
-                  <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Clock className="w-4 h-4" />
-                    <span>{new Date(ev.startDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      }
-      default:
-        return null;
-    }
-  }, [locale, searchQuery]);
+  // Group results by category (like MobileSidebar)
+  const groupedResults = useMemo(() => {
+    return searchResults
+      .filter((r) => (r.type === 'products' && !ecommerceEnabled ? false : true))
+      .reduce((acc, result) => {
+        if (!acc[result.type]) acc[result.type] = [];
+        acc[result.type].push(result);
+        return acc;
+      }, {} as Record<string, SearchResult[]>);
+  }, [searchResults, ecommerceEnabled]);
+
+  const maxResultsPerGroup = useMemo(() => {
+    const groupCount = Object.keys(groupedResults).length;
+    return groupCount > 1 ? 6 : Infinity;
+  }, [groupedResults]);
+
+  const categoryLabels: Record<string, string> = useMemo(() => ({
+    skateparks: tMobileNav('findParks') || 'Skateparks',
+    products: tMobileNav('shop') || 'Products',
+    events: tMobileNav('events') || 'Events',
+    guides: tMobileNav('guides') || 'Guides',
+    trainers: tMobileNav('findCoaches') || 'Trainers',
+  }), [tMobileNav]);
+
+  const searchArea = useMemo(() => getAreaFromQuery(searchQuery), [searchQuery]);
+  const categoryOrder = ecommerceEnabled
+    ? ['skateparks', 'products', 'events', 'guides', 'trainers']
+    : ['skateparks', 'events', 'guides', 'trainers'];
 
   // Handle logout - works like next-auth's internal signOut
   const handleLogout = async () => {
@@ -1113,99 +1096,66 @@ export default function HeaderNav() {
         </div>
       </header>
 
-      {/* Search Modal - gradient + results in popup (like search page) */}
+      {/* Search Modal - colors match MobileSidebar; height never exceeds viewport */}
       {isSearchOpen && (
         <div 
-          className="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 flex items-start justify-center pt-20 md:pt-32 transition-colors duration-200"
+          className="fixed inset-0 z-50 bg-black/40 dark:bg-black/50 backdrop-blur-sm flex items-start justify-center pt-16 md:pt-24 transition-colors duration-200"
+          style={{ height: '100dvh' }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setIsSearchOpen(false);
               setSearchQuery('');
-              setSearchFilterTab('all');
             }
           }}
         >
           <div 
-            className="w-full max-w-2xl mx-4 rounded-2xl shadow-xl overflow-hidden transition-colors duration-200 flex flex-col max-h-[85vh] bg-white dark:bg-gray-900"
+            className="w-full max-w-2xl m-4 rounded-2xl shadow-2xl overflow-hidden transition-colors duration-200 flex flex-col bg-sidebar dark:bg-sidebar-dark border border-border dark:border-border-dark"
+            style={{ maxHeight: 'calc(95dvh - 6rem)' }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Gradient header + search bar (like search page hero) */}
-            <div className="relative bg-gradient-to-br from-purple-500/10 via-transparent to-brand-main/10 dark:from-purple-500/5 dark:to-brand-main/5 border-b border-gray-200 dark:border-gray-800 flex-shrink-0">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]" />
+            {/* Header: same as MobileSidebar header area */}
+            <div className="flex-shrink-0 border-b border-border dark:border-border-dark bg-header dark:bg-header-dark">
               <div className="relative flex items-center gap-3 p-4">
                 <button
                   onClick={() => {
                     setIsSearchOpen(false);
                     setSearchQuery('');
-                    setSearchFilterTab('all');
                   }}
-                  className="flex-shrink-0 p-2 text-sidebar-text dark:text-sidebar-text-dark hover:text-black/80 dark:hover:text-white/80 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200"
+                  className="flex-shrink-0 p-2 text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200"
                   aria-label="Close search"
                 >
                   <X className="w-5 h-5" />
                 </button>
-                <div className="flex-1 relative">
-                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                    <SearchIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-                  </div>
-                  <input
-                    type="text"
+                <div className="flex-1 min-w-0">
+                  <SearchInput
+                    ref={searchInputRef}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={tSearch('popup.placeholder')}
-                    className="w-full pl-12 pr-12 py-3.5 text-base bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl focus:border-brand-main dark:focus:border-brand-main focus:ring-4 focus:ring-brand-main/20 dark:focus:ring-brand-main/30 outline-none transition-all shadow-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                    autoFocus
+                    onClear={() => setSearchQuery('')}
+                    placeholder={tSearch('popup.placeholder') || tCommon('search') || 'Search...'}
+                    className="w-full !max-w-full"
+                    variant="default"
                   />
-                  {searchQuery && (
-                    <button
-                      type="button"
-                      onClick={() => setSearchQuery('')}
-                      className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
 
-            {/* Filter tabs (when user has typed) - respect env flags */}
-            {searchQuery.trim() !== '' && (
-              <div className="flex-shrink-0 px-4 pb-3 pt-1 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <div className="flex flex-wrap gap-2">
-                  {searchFilterTabs.map((tab) => {
-                    const isActive = searchFilterTab === tab.key;
-                    const IconComponent = tab.icon;
-                    return (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        onClick={() => setSearchFilterTab(tab.key)}
-                        className={cn(
-                          'inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm font-medium transition-all',
-                          isActive
-                            ? 'bg-brand-main dark:bg-brand-main text-white shadow-sm'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
-                        )}
-                      >
-                        <IconComponent className="w-4 h-4" />
-                        <span>{tab.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Loading bar (same as MobileSidebar) */}
+            {searchLoading && (
+              <div className="w-full h-[1px] -mt-px bg-sidebar-hover dark:bg-sidebar-hover-dark overflow-hidden relative flex-shrink-0">
+                <div className="bg-sidebar-text-brand dark:bg-sidebar-text-brand-dark loading-bar w-full h-full" />
               </div>
             )}
 
             {/* Content: recent/quick when empty, results when query */}
-            <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="flex-1 overflow-y-auto min-h-0 bg-sidebar dark:bg-sidebar-dark">
               {searchQuery.trim() === '' ? (
                 <>
                   {/* Recent Searches */}
                   {recentSearches.length > 0 && (
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+                    <div className="p-4 border-b border-border dark:border-border-dark">
                       <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        <h3 className="text-sm font-semibold text-text dark:text-text-dark">
                           {tSearch('popup.recentSearches')}
                         </h3>
                         <button
@@ -1213,7 +1163,7 @@ export default function HeaderNav() {
                             setRecentSearches([]);
                             localStorage.removeItem('recentSearches');
                           }}
-                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                          className="text-xs text-sidebar-text-brand dark:text-sidebar-text-brand-dark hover:underline"
                         >
                           {tSearch('popup.clear')}
                         </button>
@@ -1223,10 +1173,10 @@ export default function HeaderNav() {
                           <button
                             key={index}
                             onClick={() => handleSearchQuery(search)}
-                            className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            className="w-full flex items-center justify-between px-4 py-3 bg-sidebar-hover dark:bg-sidebar-hover-dark rounded-xl text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200"
                           >
-                            <span className="text-gray-900 dark:text-white">{search}</span>
-                            <SearchIcon className="w-4 h-4 text-gray-400" />
+                            <span className="text-sidebar-text dark:text-sidebar-text-dark">{search}</span>
+                            <SearchIcon className="w-4 h-4 text-sidebar-text dark:text-sidebar-text-dark" />
                           </button>
                         ))}
                       </div>
@@ -1235,7 +1185,7 @@ export default function HeaderNav() {
 
                   {/* Quick actions */}
                   <div className="p-4">
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                    <h3 className="text-sm font-semibold text-text dark:text-text-dark mb-3">
                       {tSearch('popup.quickSearch')}
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
@@ -1243,9 +1193,9 @@ export default function HeaderNav() {
                         <button
                           key={term}
                           onClick={() => handleSearchQuery(term)}
-                          className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border border-transparent hover:border-brand-main/30 dark:hover:border-brand-main/30"
+                          className="p-4 bg-sidebar-hover dark:bg-sidebar-hover-dark rounded-xl text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200 border border-transparent hover:border-sidebar-text-brand/30 dark:hover:border-sidebar-text-brand-dark/30"
                         >
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">{term}</span>
+                          <span className="text-sm font-medium text-sidebar-text dark:text-sidebar-text-dark">{term}</span>
                         </button>
                       ))}
                     </div>
@@ -1255,30 +1205,110 @@ export default function HeaderNav() {
                 <>
                   {/* Loading */}
                   {searchLoading && (
-                    <div className="p-4 grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {[...Array(6)].map((_, i) => (
-                        <Skeleton key={i} className="h-48 rounded-2xl" />
-                      ))}
+                    <div className="p-4 text-center text-sm text-sidebar-text dark:text-sidebar-text-dark transition-colors duration-200">
+                      {tCommon('loading') || 'Loading...'}
                     </div>
                   )}
 
-                  {/* Results */}
-                  {!searchLoading && searchResults.length > 0 && (
-                    <div className="p-4 space-y-4">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {searchResults.length} {tSearch('popup.results')}
-                      </p>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {searchResults.slice(0, 12).map((item) => (
-                          <div key={item.id} onClickCapture={() => setIsSearchOpen(false)}>
-                            {renderSearchCard(item)}
-                          </div>
-                        ))}
-                      </div>
+                  {/* Grouped results (like MobileSidebar) */}
+                  {!searchLoading && Object.keys(groupedResults).length > 0 && (
+                    <div className="p-4 space-y-6">
+                      {Object.entries(groupedResults)
+                        .sort(([a], [b]) => {
+                          const indexA = categoryOrder.indexOf(a);
+                          const indexB = categoryOrder.indexOf(b);
+                          if (indexA === -1 && indexB === -1) return 0;
+                          if (indexA === -1) return 1;
+                          if (indexB === -1) return -1;
+                          return indexA - indexB;
+                        })
+                        .map(([category, results]) => {
+                          const displayResults = results.slice(0, maxResultsPerGroup);
+                          return (
+                            <div key={category} className="space-y-2">
+                              <h3 className="text-sm font-bold text-text dark:text-text-dark uppercase tracking-wider transition-colors duration-200">
+                                {category === 'skateparks' && searchArea
+                                  ? tSearch('skateparksInArea', { area: tSkateparks(`search.area.${searchArea}`) })
+                                  : (categoryLabels[category] || category)}
+                              </h3>
+                              <div className="space-y-0.5">
+                                {displayResults.map((result) => {
+                                  let imageUrl = '';
+                                  let name = '';
+                                  let href = '';
+                                  if (result.type === 'skateparks') {
+                                    const s = result as SkateparkResult;
+                                    imageUrl = s.imageUrl || '';
+                                    name = typeof s.name === 'string' ? s.name : (s.name?.[locale as 'en' | 'he'] ?? s.name?.en ?? s.name?.he ?? '');
+                                    href = `/${locale}/skateparks/${s.slug}`;
+                                  } else if (result.type === 'products') {
+                                    const p = result as ProductResult;
+                                    imageUrl = p.images?.[0]?.url || '';
+                                    name = typeof p.name === 'string' ? p.name : (p.name?.[locale as 'en' | 'he'] ?? p.name?.en ?? p.name?.he ?? '');
+                                    href = `/${locale}/shop/${p.slug}`;
+                                  } else if (result.type === 'guides') {
+                                    const g = result as GuideResult;
+                                    imageUrl = g.coverImage || '';
+                                    name = g.title || '';
+                                    href = `/${locale}/guides/${g.slug}`;
+                                  } else if (result.type === 'trainers') {
+                                    const tr = result as TrainerResult;
+                                    imageUrl = tr.profileImage || '';
+                                    name = tr.name || '';
+                                    href = `/${locale}/trainers/${tr.slug}`;
+                                  } else if (result.type === 'events') {
+                                    const ev = result as EventResult;
+                                    imageUrl = ev.image || '';
+                                    name = ev.title || '';
+                                    href = `/${locale}/events/${ev.slug}`;
+                                  }
+                                  return (
+                                    <Link
+                                      key={result.id}
+                                      href={href}
+                                      onClick={() => setIsSearchOpen(false)}
+                                      className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-bg dark:hover:bg-white/[2.5%] transition-colors duration-200 group"
+                                    >
+                                      <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-card dark:bg-card-dark flex items-center justify-center transition-colors duration-200">
+                                        {imageUrl ? (
+                                          <Image
+                                            src={imageUrl}
+                                            alt={name}
+                                            width={48}
+                                            height={48}
+                                            className="w-full h-full object-cover"
+                                            loading="lazy"
+                                          />
+                                        ) : (
+                                          <Icon
+                                            name={
+                                              result.type === 'skateparks' ? 'treesBold' :
+                                              result.type === 'products' ? 'shopBold' :
+                                              result.type === 'guides' ? 'bookBold' :
+                                              result.type === 'trainers' ? 'trainersBold' :
+                                              'calendarBold'
+                                            }
+                                            className="w-6 h-6 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-text dark:group-hover:text-text-dark transition-colors duration-200"
+                                          />
+                                        )}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-sidebar-text dark:text-sidebar-text-dark line-clamp-2 group-hover:text-text dark:group-hover:text-text-dark transition-colors duration-200">
+                                          {highlightMatch(name, searchQuery)}
+                                        </p>
+                                      </div>
+                                      <ChevronRight className="w-4 h-4 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-text dark:group-hover:text-text-dark flex-shrink-0 rtl:rotate-180 transition-colors duration-200" />
+                                    </Link>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
                       <Link
-                        href={`/${locale}/search?q=${encodeURIComponent(searchQuery)}${searchFilterTab !== 'all' ? `&tab=${searchFilterTab}` : ''}`}
+                        href={`/${locale}/search?q=${encodeURIComponent(searchQuery)}`}
                         onClick={() => setIsSearchOpen(false)}
-                        className="block w-full text-center py-3 text-sm font-medium text-brand-main dark:text-brand-main hover:underline"
+                        className="block w-full text-center py-3 text-sm font-medium text-sidebar-text-brand dark:text-sidebar-text-brand-dark hover:underline"
                       >
                         {tSearch('popup.viewAllResults')}
                       </Link>
@@ -1288,19 +1318,19 @@ export default function HeaderNav() {
                   {/* No results */}
                   {!searchLoading && searchQuery.trim() !== '' && searchResults.length === 0 && (
                     <div className="p-8 text-center">
-                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-500/10 to-brand-main/10 dark:from-purple-500/20 dark:to-brand-main/20 mb-4">
-                        <SearchIcon className="w-7 h-7 text-purple-600 dark:text-purple-400" />
+                      <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-sidebar-hover dark:bg-sidebar-hover-dark mb-4">
+                        <SearchIcon className="w-7 h-7 text-sidebar-text-brand dark:text-sidebar-text-brand-dark" />
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      <h3 className="text-lg font-semibold text-text dark:text-text-dark mb-2">
                         {tSearch('popup.noResultsFound')}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      <p className="text-sm text-sidebar-text dark:text-sidebar-text-dark mb-4">
                         {tSearch('popup.noResultsHint')}
                       </p>
                       <Link
                         href={`/${locale}/search`}
                         onClick={() => setIsSearchOpen(false)}
-                        className="text-sm font-medium text-brand-main dark:text-brand-main hover:underline"
+                        className="text-sm font-medium text-sidebar-text-brand dark:text-sidebar-text-brand-dark hover:underline"
                       >
                         {tSearch('popup.goToFullSearch')}
                       </Link>

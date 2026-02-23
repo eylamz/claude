@@ -20,7 +20,7 @@ export default function AboutPage() {
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-text dark:text-text-dark leading-tight mb-3 text-center">
               {t('title')}
             </h1>
-            <Icon name="logo" className={` h-auto text-gray-900 dark:text-white ${locale === 'he' ? '-mt-[0.25rem] w-[7.5rem]' : '-mt-[7.3px] w-[9.75rem]'}`} />
+            <Icon name="logo" className={` h-auto text-gray-900 dark:text-white ${locale === 'he' ? '-mt-[0.25rem] md:-mt-[2px] w-[6.25rem] md:w-[10rem]' : '-mt-[7.3px] w-[9.75rem] md:w-[12rem]'}`} />
             </div>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto text-center">
               {t('subtitle')}
@@ -144,8 +144,8 @@ export default function AboutPage() {
                 className="group flex flex-col items-center gap-3"
                 aria-label={t('connect.tiktok')}
               >
-                <span className="flex items-center justify-center cursor-pointer transition-all duration-200 text-white stroke-black stroke-[0.75px] [filter:drop-shadow(-1px_-0.7px_0_#25F4EEd9)_drop-shadow(1.25px_1.25px_0_#FE2C55d9)_drop-shadow(0_0_8px_rgba(37,244,238,0.25))_drop-shadow(0_0_8px_rgba(227,45,21,0.35))] md:text-text md:dark:text-text-dark md:stroke-transparent md:[filter:none] md:group-hover:text-white md:group-hover:stroke-black group-hover:scale-110 
-                md:group-hover:[filter:drop-shadow(-2px_-1.4px_0_#25F4EEd9)_drop-shadow(2.5px_2. 5px_0_#FE2C55d9)_drop-shadow(0_0_8px_rgba(37,244,238,0.25))_drop-shadow(0_0_8px_rgba(227,45,21,0.35))]"
+                <span className="flex items-center justify-center cursor-pointer transition-all duration-200 text-white stroke-black stroke-[0.75px] [filter:drop-shadow(-1px_-0.7px_0_#25F4EEd9)_drop-shadow(1.25px_1.25px_0_#FE2C55d9)_drop-shadow(0_0_8px_rgba(37,244,238,0.25))_drop-shadow(0_0_8px_rgba(227,45,21,0.35))] md:text-text md:dark:text-text-dark stroke-transparent [filter:none] group-hover:text-white group-hover:stroke-black group-hover:scale-110 
+                group-hover:[filter:drop-shadow(-2px_-1.4px_0_#25F4EEd9)_drop-shadow(2.5px_2. 5px_0_#FE2C55d9)_drop-shadow(0_0_8px_rgba(37,244,238,0.25))_drop-shadow(0_0_8px_rgba(227,45,21,0.35))]"
                 >
                   <Icon
                     name="tiktok"

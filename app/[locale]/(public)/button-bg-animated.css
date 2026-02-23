@@ -194,14 +194,14 @@
 
 /* Floating animation for gradient-2 orbs – fast, random directions */
 @keyframes gradient-orb-float-1 {
-  0%, 100% { transform: translate(44%, 25%); }
-  25% { transform: translate(62%, 8%); }
-  50% { transform: translate(28%, 42%); }
+  0%, 100% { transform: translate(-84%, 25%); }
+  25% { transform: translate(62%, 80%); }
+  50% { transform: translate(148%, -32%); }
   75% { transform: translate(58%, 38%); }
 }
 @keyframes gradient-orb-float-2 {
   0%, 100% { transform: translate(71%, -16%); }
-  25% { transform: translate(52%, -35%); }
+  25% { transform: translate(-152%, -15%); }
   50% { transform: translate(88%, 2%); }
   75% { transform: translate(61%, -28%); }
 }
@@ -212,22 +212,22 @@
   75% { transform: translate(-22%, -42%); }
 }
 @keyframes gradient-orb-float-4 {
-  0%, 100% { transform: translate(-37%, 81%); }
-  25% { transform: translate(-55%, 62%); }
-  50% { transform: translate(-20%, 95%); }
+  0%, 100% { transform: translate(-60%, 41%); }
+  25% { transform: translate(-85%, 22%); }
+  50% { transform: translate(-150%, 35%); }
   75% { transform: translate(-48%, 72%); }
 }
 @keyframes gradient-orb-float-5 {
-  0%, 100% { transform: translate(-22%, 47%); }
-  25% { transform: translate(58%, 78%); }
+  0%, 100% { transform: translate(134%, 47%); }
+  25% { transform: translate(152%, 48%); }
   50% { transform: translate(95%, 8%); }
   75% { transform: translate(66%, 42%); }
 }
 @keyframes gradient-orb-float-6 {
-  0%, 100% { transform: translate(54%, 10%); }
-  25% { transform: translate(67%, -12%); }
-  50% { transform: translate(80%, 28%); }
-  75% { transform: translate(38%, 22%); }
+  0%, 100% { transform: translate(34%, 10%); }
+  25% { transform: translate(67%, 52%); }
+  50% { transform: translate(80%, -28%); }
+  75% { transform: translate(-28%, 82%); }
 }
 
 .button-gradient .gradient-2 .color-1 {
