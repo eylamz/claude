@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { Menu } from 'lucide-react';
-import { Icon } from '@/components/icons/Icon';
+import { NavIcons } from '@/components/layout/NavIcons';
 import { useTranslations } from 'next-intl';
 import { useCartItemCount } from '@/stores/cartStore';
 import MobileSidebar from './MobileSidebar';
@@ -123,16 +123,16 @@ export default function MobileNavMinimal() {
                 className="absolute opacity-0 pointer-events-none w-0 h-0" 
                 readOnly
               />
-            <Icon name="search" className="w-[1.2rem] h-[1.2rem]" />
+            <NavIcons name="search" className="w-[1.2rem] h-[1.2rem]" />
             </button>
 
           </div>
 
-          {/* Center: Logo */}
+          {/* Center: Logo – inline SVG, loads instantly */}
           <Link href={`/${locale}`} className="flex flex-col items-center group">
-            <Icon 
-              name="logo" 
-              className="w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] text-brand-main dark:text-brand-dark overflow-visible group-hover:stroke-[7px] group-hover:stroke-[#003f03] dark:group-hover:stroke-[#011c02] group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.35))] dark:group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.15))] transition-all duration-200" 
+            <NavIcons
+              name="logo"
+              className="w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] text-brand-main dark:text-brand-dark overflow-visible group-hover:stroke-[7px] group-hover:stroke-[#003f03] dark:group-hover:stroke-[#011c02] group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.35))] dark:group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.15))] transition-all duration-200"
               style={{ paintOrder: 'stroke' }}
             />
           </Link>
@@ -144,7 +144,7 @@ export default function MobileNavMinimal() {
               className="relative h-11 p-2.5 -me-2 text-header-icon dark:text-header-icon-dark hover:text-brand-main dark:hover:text-brand-main hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 active:scale-95 group overflow-visible"              
               aria-label={`Cart with ${itemCount} items`}
             >
-              <Icon name="backpack" className=" overflow-visible w-6 h-6" />
+              <NavIcons name="backpack" className="overflow-visible w-6 h-6" />
               {itemCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-brand-main rounded-full shadow-lg ring-2 ring-white dark:ring-gray-900">
                   {itemCount > 9 ? '9+' : itemCount}

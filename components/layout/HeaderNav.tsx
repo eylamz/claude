@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import { Icon } from '@/components/icons/Icon';
+import { NavIcons } from '@/components/layout/NavIcons';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
@@ -529,14 +530,14 @@ export default function HeaderNav() {
       >
         <div className={`mx-auto  border-header-border dark:border-header-border-dark w-full max-w-6xl px-2 overflow-visible text-header-text-dark dark:text-header-text transition-colors duration-200`}>
           <div className="flex items-center justify-between h-16">
-            {/* LEFT: Logo*/}
+            {/* LEFT: Logo – first to paint (inline SVG, no fetch) */}
             <div className="flex items-center gap-4">
               <Link href={`/${locale}`} className="flex flex-col items-start gap-0.5 group overflow-visible">
-                {/* Logo */}
-                <Icon name="logo" className="text-brand-main dark:text-brand-dark overflow-visible w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] group-hover:stroke-[7px] group-hover:stroke-[#003f03] dark:group-hover:stroke-[#011c02] group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.35))] dark:group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.15))] transition-all duration-200"
-                style={{ paintOrder: 'stroke' }}
+                <NavIcons
+                  name="logo"
+                  className="text-brand-main dark:text-brand-dark overflow-visible w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] group-hover:stroke-[7px] group-hover:stroke-[#003f03] dark:group-hover:stroke-[#011c02] group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.35))] dark:group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.15))] transition-all duration-200"
+                  style={{ paintOrder: 'stroke' }}
                 />
-
               </Link>
             </div>
 
@@ -648,9 +649,8 @@ export default function HeaderNav() {
                 aria-label={locale === 'he' ? 'חיפוש פארקים' : 'Search parks'}
               >
                 <span className="inline-flex items-center justify-center w-4 h-4">
-                  <Icon name="searchBold" className="w-4 h-4" />
+                  <NavIcons name="searchBold" className="w-4 h-4" />
                 </span>
-              
               </button>
 
               {/* Cart with badge - only show if ecommerce is enabled */}
@@ -664,8 +664,7 @@ export default function HeaderNav() {
                       type="button"
                     >
                       <span className="inline-flex items-center justify-center w-5 h-5">
-                      
-                        <Icon name="backpackBold" className="w-5 h-5" />
+                        <NavIcons name="backpackBold" className="w-5 h-5" />
                       </span>
                       {/* Cart badge (show when items > 0) */}
                       {itemCount > 0 && (
