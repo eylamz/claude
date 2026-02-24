@@ -244,6 +244,24 @@ export function getCachedVersion(category: SearchResultType): number | undefined
   }
 }
 
+/** True if category cache was fetched less than 1 hour ago (use to skip versionOnly request). */
+function isCategoryCacheFresh(category: SearchResultType, versionRaw: string | null): boolean {
+  if (!versionRaw) return false;
+  if (category === 'skateparks') {
+    const { fetchedAt } = parseSkateparksVersion(versionRaw);
+    return isSkateparksCacheFresh(fetchedAt);
+  }
+  if (category === 'events') {
+    const { fetchedAt } = parseEventsVersion(versionRaw);
+    return isEventsCacheFresh(fetchedAt);
+  }
+  if (category === 'guides') {
+    const { fetchedAt } = parseGuidesVersion(versionRaw);
+    return isGuidesCacheFresh(fetchedAt);
+  }
+  return false;
+}
+
 /** Fetch current version from the server (lightweight ?versionOnly=true request). */
 export async function fetchServerVersion(category: SearchResultType): Promise<number | null> {
   const config = CACHE_CONFIG[category];
@@ -277,7 +295,8 @@ function matchesQueryOrFlipped(text: string, query: string): boolean {
 }
 
 /** Ensure cache is populated; return parsed array or null if fetch failed.
- * When cache exists, checks server version (?versionOnly=true); only refetches when DB version !== cached version. */
+ * When cache exists and was fetched less than 1 hour ago (fetchedAt in localStorage), returns it without a versionOnly request.
+ * Only when cache is missing or older than 1 hour do we call ?versionOnly=true and refetch if DB version changed. */
 async function getOrFillCache(
   category: keyof typeof CACHE_CONFIG
 ): Promise<any[] | null> {
@@ -285,16 +304,33 @@ async function getOrFillCache(
   if (typeof window === 'undefined') return null;
 
   const raw = localStorage.getItem(config.key);
+  const versionRaw = localStorage.getItem(config.versionKey);
   if (raw) {
     try {
       const arr = JSON.parse(raw);
       if (Array.isArray(arr) && arr.length > 0) {
+        // If cache was fetched less than 1 hour ago, use it without any versionOnly request
+        if (isCategoryCacheFresh(category as SearchResultType, versionRaw)) {
+          return arr;
+        }
         const cachedVersion = getCachedVersion(category as SearchResultType);
         const serverVersion = await fetchServerVersion(category as SearchResultType);
         if (serverVersion === null) {
           return arr;
         }
         if (cachedVersion !== undefined && serverVersion === cachedVersion) {
+          // Update fetchedAt so next search skips versionOnly until 1 hour from now
+          const version = cachedVersion;
+          const fetchedAt =
+            category === 'skateparks'
+              ? getSkateparksFetchedAtReadable()
+              : category === 'events'
+                ? getEventsFetchedAtReadable()
+                : getGuidesFetchedAtReadable();
+          localStorage.setItem(
+            config.versionKey,
+            JSON.stringify({ version, fetchedAt })
+          );
           return arr;
         }
       }

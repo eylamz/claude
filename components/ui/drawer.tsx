@@ -105,7 +105,7 @@ export const Drawer: FC<DrawerProps> = ({ isOpen, onClose, children, title }) =>
       >
         {/* Header */}
         <div className="flex items-start justify-between pb-2 mx-2 border-b border-border dark:border-border-dark pt-6">
-          <h2 className="text-2xl font-semibold text-header-text-dark dark:text-header-text">{title}</h2>
+          <h2 className="text-2xl font-semibold text-header-text-dark dark:text-header-text ">{title}</h2>
           <button
             onClick={onClose}
             className="h-14 p-2 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"

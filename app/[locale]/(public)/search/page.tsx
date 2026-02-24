@@ -606,13 +606,6 @@ function SearchPageContent() {
     setPage(1);
   }, []);
 
-  const clearSelectedTabs = useCallback(() => {
-    setSelectedTabs([]);
-    setSelectedSports([]);
-    setSelectedAmenities([]);
-    setPage(1);
-  }, []);
-
   // Track scroll (match skateparks FilterBar threshold for sticky bar)
   useEffect(() => {
     const handleScroll = () => {
@@ -1009,6 +1002,25 @@ function SearchPageContent() {
 
   const tr = (en: string, he: string) => (isHebrew ? he : en);
 
+  // Applied filters bar (FilterBar / events page style)
+  const hasSearchQuery = !!query.trim();
+  const hasAnyFilter =
+    hasSearchQuery ||
+    selectedTabs.length > 0 ||
+    selectedSports.length > 0 ||
+    selectedAmenities.length > 0;
+  const activeFiltersCount =
+    (hasSearchQuery ? 1 : 0) + selectedTabs.length + selectedSports.length + selectedAmenities.length;
+  const hasMultipleFilters = activeFiltersCount > 1;
+
+  const clearAllFilters = useCallback(() => {
+    setQuery('');
+    setSelectedTabs([]);
+    setSelectedSports([]);
+    setSelectedAmenities([]);
+    setPage(1);
+  }, []);
+
   return (
     <div
       className="min-h-screen bg-background dark:bg-background-dark"
@@ -1072,10 +1084,11 @@ function SearchPageContent() {
                 onChange={handleQueryChange}
                 onClear={handleClearSearch}
                 placeholder={tr('Search for anything...', 'חפש כל דבר...')}
-                className="w-full !max-w-full"
+                className="w-full sm:max-w-[250px]"
               />
             </div>
-            {/* Tabs (multi-select) */}
+            {/* Tabs (multi-select) - only visible when there is a search query */}
+            {query.trim() && (
             <div className="flex overflow-x-auto scrollbar-hide gap-2 min-w-0 items-center">
               {tabs.map((tab) => {
                 const isSelected = selectedTabs.includes(tab.key);
@@ -1084,37 +1097,23 @@ function SearchPageContent() {
                     key={tab.key}
                     type="button"
                     variant={isSelected ? getTabButtonVariant(tab.color) : 'gray'}
-                    size="sm"
+                    size="md"
                     className="!rounded-md gap-2 flex-shrink-0 whitespace-nowrap font-semibold shadow-none"
                     onClick={() => toggleTab(tab.key)}
                   >
                     <Icon name={(isSelected ? tab.iconBold : tab.icon) as any} className="w-4 h-4" />
-                    <span>{tab.label}</span>
+                    <span className="hidden md:inline">{tab.label}</span>
                   </Button>
                 );
               })}
-              <button
-                type="button"
-                onClick={clearSelectedTabs}
-                className={cn(
-                  'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-md transition-colors duration-200 flex-shrink-0',
-                  selectedTabs.length >= 2 ? 'visible opacity-100 animate-fadeIn' : 'invisible opacity-0 pointer-events-none'
-                )}
-                style={selectedTabs.length >= 2 ? { animationDelay: '400ms' } : undefined}
-                aria-hidden={selectedTabs.length < 2}
-              >
-                <Icon name="X" className="w-3.5 h-3.5" />
-                {tr('Clear All', 'נקה הכל')}
-              </button>
-            </div>
-            {/* Sports filter (guides + events only) - FilterBar-style icon button */}
+            {/* Sports filter (guides + events only) - same container as tabs */}
             {(selectedTabs.includes('events') || selectedTabs.includes('guides')) && (
               <div className="flex-shrink-0">
                 {isMobile ? (
                   <>
                     <Button
                       variant={selectedSports.length > 0 ? 'teal' : 'gray'}
-                      size="sm"
+                      size="md"
                       className="relative"
                       aria-label={tr('Filter by sport', 'סנן לפי ספורט')}
                       onClick={() => setSportsFilterOpen(true)}
@@ -1164,28 +1163,29 @@ function SearchPageContent() {
                     <PopoverTrigger asChild>
                       <Button
                         variant={selectedSports.length > 0 ? 'teal' : 'gray'}
-                        size="sm"
+                        size="md"
                         className="relative"
                         aria-label={tr('Filter by sport', 'סנן לפי ספורט')}
                       >
                         <Icon name={selectedSports.length > 0 ? 'filterBold' : 'filter'} className="w-5 h-5" />
                         {selectedSports.length > 0 && (
-                          <Badge variant="teal" className="rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
+                          <Badge variant="teal" className="shadow-sm rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
                             {selectedSports.length}
                           </Badge>
                         )}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent align="end" className="w-56 p-2">
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between px-2 py-1">
+                      <div className="space-y-1 w-full">
+                        <div className={cn('flex items-center justify-between py-1', isHebrew ? 'flex-row-reverse' : 'flex-row')}>
                           <span className="text-sm font-medium">{tr('Filter by sport', 'סנן לפי ספורט')}</span>
                           {selectedSports.length > 0 && (
                             <Button variant="red" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => setSelectedSports([])}>
-                              <Icon name="trash" className="h-3 w-3" /> {tr('Clear', 'נקה')}
+                              <Icon name="trashBold" className="h-3 w-3" /> {tr('Clear', 'נקה')}
                             </Button>
                           )}
                         </div>
+                        <div className="w-full flex flex-col items-end gap-1">
                         {SPORT_FILTER_CONFIG.map((sport) => {
                           const checked = selectedSports.includes(sport.value);
                           return (
@@ -1199,7 +1199,8 @@ function SearchPageContent() {
                               }}
                               className={cn(
                                 'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm font-medium transition-colors',
-                                checked ? 'bg-teal-bg text-teal dark:bg-teal-bg-dark dark:text-teal-dark' : 'hover:bg-muted dark:hover:bg-muted-dark'
+                                isHebrew ? 'flex-row-reverse' : 'flex-row',
+                                checked ? 'bg-teal-bg text-teal dark:bg-teal-bg-dark dark:text-teal-dark border border-teal-border dark:border-teal-border-dark' : 'hover:bg-gray-bg dark:hover:bg-gray-bg-dark'
                               )}
                             >
                               <Icon name={sport.iconName as any} className="w-4 h-4" />
@@ -1207,6 +1208,7 @@ function SearchPageContent() {
                             </button>
                           );
                         })}
+                        </div>
                       </div>
                     </PopoverContent>
                   </Popover>
@@ -1220,14 +1222,14 @@ function SearchPageContent() {
                   <>
                     <Button
                       variant={selectedAmenities.length > 0 ? 'blue' : 'gray'}
-                      size="sm"
+                      size="md"
                       className="relative"
                       aria-label={tr('Filter by amenities', 'סנן לפי שירותים')}
                       onClick={() => setAmenitiesFilterOpen(true)}
                     >
                       <Icon name={selectedAmenities.length > 0 ? 'notesBold' : 'notes'} className="w-5 h-5" />
                       {selectedAmenities.length > 0 && (
-                        <Badge variant="blue" className="rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
+                        <Badge variant="blue" className="shadow-sm rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
                           {selectedAmenities.length}
                         </Badge>
                       )}
@@ -1244,7 +1246,7 @@ function SearchPageContent() {
                                 className="h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
                               >
                                 {tr('Clear', 'נקה')}
-                                <Icon name="trash" className="h-3 w-3" />
+                                <Icon name="trashBold" className="h-3 w-3" />
                               </Button>
                             </div>
                             <Separator className="bg-popover-border dark:bg-popover-border-dark" />
@@ -1288,7 +1290,7 @@ function SearchPageContent() {
                       >
                         <Icon name={selectedAmenities.length > 0 ? 'notesBold' : 'notes'} className="w-5 h-5" />
                         {selectedAmenities.length > 0 && (
-                          <Badge variant="blue" className="rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
+                          <Badge variant="blue" className="shadow-sm rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
                             {selectedAmenities.length}
                           </Badge>
                         )}
@@ -1297,7 +1299,7 @@ function SearchPageContent() {
                     <PopoverContent className="w-fit p-2">
                       <div className="space-y-2">
                         <div className={cn('flex gap-4', isHebrew ? 'flex-row-reverse' : 'flex-row', 'items-center justify-between h-[32px]')}>
-                          <h4 className="text-sm font-medium">{tr('Filter by amenities', 'סנן לפי שירותים')}</h4>
+                          <h4 className="mx-2.5 text-sm font-medium">{tr('Filter by amenities', 'סנן לפי שירותים')}</h4>
                           <div className={cn('flex gap-1.5 items-center', isHebrew ? 'flex-row-reverse' : 'flex-row')}>
                             {selectedAmenities.length > 0 && (
                               <Button
@@ -1334,13 +1336,13 @@ function SearchPageContent() {
                                     className="w-1/2 px-1 py-0.5 border-r border-popover-border dark:border-popover-border-dark"
                                     style={{ textAlign: isHebrew ? 'right' : 'left' }}
                                   >
-                                    <div className={cn('inline-flex', isHebrew ? 'flex-row-reverse' : 'flex-row')}>
+                                    <div className={cn('w-full inline-flex', isHebrew ? 'flex-row-reverse' : 'flex-row')}>
                                       {leftAmenity && (
                                         <Button
                                           variant={selectedAmenities.includes(leftAmenity.key) ? 'blue' : 'none'}
                                           size="sm"
                                           className={cn(
-                                            'flex gap-2 font-medium w-fit text-nowrap',
+                                            'flex gap-2 !justify-start font-medium w-full text-nowrap',
                                             selectedAmenities.includes(leftAmenity.key) ? '' : 'text-gray dark:text-gray-dark',
                                             isHebrew ? 'flex-row-reverse' : 'flex-row'
                                           )}
@@ -1397,6 +1399,8 @@ function SearchPageContent() {
                 )}
               </div>
             )}
+            </div>
+            )}
             {/* View toggle */}
             <div className="hidden md:flex items-center flex-shrink-0">
               <SegmentedControls
@@ -1419,6 +1423,146 @@ function SearchPageContent() {
               />
             </div>
           </div>
+
+          {/* Active / Applied Filters Status - FilterBar & events page style */}
+          {hasAnyFilter && (
+            <div className="mt-3 pt-3 border-t border-border dark:border-border-dark">
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Results count badge - how many results are showing */}
+                {!loading && (query.trim() || selectedTabs.length > 0) && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-bg dark:bg-gray-bg-dark rounded-full border border-gray-border dark:border-gray-border-dark animate-pop">
+                    <Icon name="searchBold" className="w-4 h-4 text-gray dark:text-gray-dark" />
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {filteredResults.length}
+                    </span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {filteredResults.length === 1 ? tr('result', 'תוצאה') : tr('results', 'תוצאות')}
+                    </span>
+                  </div>
+                )}
+
+                {/* Search query badge */}
+                {hasSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-bg dark:bg-orange-bg-dark rounded-full border border-orange-border dark:border-orange-border-dark hover:bg-orange-bg/80 dark:hover:bg-orange-bg-dark/80 transition-colors cursor-pointer animate-pop"
+                  >
+                    <span className="text-sm text-gray-700 dark:text-gray-300">"{query.trim()}"</span>
+                    <Icon name="X" className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                  </button>
+                )}
+
+                {/* Category tab badges */}
+                {selectedTabs.map((tabKey) => {
+                  const tab = tabs.find((t) => t.key === tabKey);
+                  if (!tab) return null;
+                  const colorClasses =
+                    tab.color === 'orange'
+                      ? 'bg-orange-bg dark:bg-orange-bg-dark border-orange-border dark:border-orange-border-dark hover:bg-orange-bg/80 dark:hover:bg-orange-bg-dark/80'
+                      : tab.color === 'green'
+                        ? 'bg-green-bg dark:bg-green-bg-dark border-green-border dark:border-green-border-dark hover:bg-green-bg/80 dark:hover:bg-green-bg-dark/80'
+                        : tab.color === 'purple'
+                          ? 'bg-purple-bg dark:bg-purple-bg-dark border-purple-border dark:border-purple-border-dark hover:bg-purple-bg/80 dark:hover:bg-purple-bg-dark/80'
+                          : tab.color === 'blue'
+                            ? 'bg-blue-bg dark:bg-blue-bg-dark border-blue-border dark:border-blue-border-dark hover:bg-blue-bg/80 dark:hover:bg-blue-bg-dark/80'
+                            : tab.color === 'pink'
+                              ? 'bg-pink-bg dark:bg-pink-bg-dark border-pink-border dark:border-pink-border-dark hover:bg-pink-bg/80 dark:hover:bg-pink-bg-dark/80'
+                              : 'bg-gray-bg dark:bg-gray-bg-dark border-gray-border dark:border-gray-border-dark hover:bg-gray-bg/80 dark:hover:bg-gray-bg-dark/80';
+                  return (
+                    <button
+                      key={tabKey}
+                      type="button"
+                      onClick={() => toggleTab(tabKey)}
+                      className={cn(
+                        'inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-colors cursor-pointer animate-pop',
+                        colorClasses
+                      )}
+                    >
+                      <Icon name={(tab.iconBold ?? tab.icon) as any} className="w-3.5 h-3.5" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {tab.label}
+                      </span>
+                      <Icon name="X" className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                    </button>
+                  );
+                })}
+
+                {/* Sports badges (relatedSports filter) */}
+                {selectedSports.map((sport) => {
+                  const sportConfig = SPORT_FILTER_CONFIG.find((s) => s.value === sport);
+                  const label = sportConfig
+                    ? isHebrew
+                      ? sportConfig.displayNameHe
+                      : sportConfig.displayNameEn
+                    : getSportTranslation(sport);
+                  return (
+                    <button
+                      key={sport}
+                      type="button"
+                      onClick={() =>
+                        setSelectedSports((prev) => prev.filter((s) => s !== sport))
+                      }
+                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-bg dark:bg-teal-bg-dark rounded-full border border-teal-border dark:border-teal-border-dark hover:bg-teal-bg/80 dark:hover:bg-teal-bg-dark/80 transition-colors cursor-pointer animate-pop"
+                    >
+                      {sportConfig ? (
+                        <Icon
+                          name={sportConfig.iconName as any}
+                          className="w-3.5 h-3.5 text-teal dark:text-teal-dark"
+                        />
+                      ) : null}
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {label}
+                      </span>
+                      <Icon name="X" className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                    </button>
+                  );
+                })}
+
+                {/* Amenities badges */}
+                {selectedAmenities.map((amenityKey) => {
+                  const amenityOption = AMENITY_POPOVER_OPTIONS.find((a) => a.key === amenityKey);
+                  const label =
+                    tSkateparks(`amenities.${amenityKey}` as any) || amenityKey;
+                  return (
+                    <button
+                      key={amenityKey}
+                      type="button"
+                      onClick={() =>
+                        setSelectedAmenities((prev) => prev.filter((a) => a !== amenityKey))
+                      }
+                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-bg/80 dark:hover:bg-blue-bg-dark/80 transition-colors cursor-pointer animate-pop"
+                    >
+                      {amenityOption && (
+                        <Icon
+                          name={amenityOption.iconName as any}
+                          className="w-3.5 h-3.5 text-blue dark:text-blue-dark"
+                        />
+                      )}
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {label}
+                      </span>
+                      <Icon name="X" className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                    </button>
+                  );
+                })}
+
+                {/* Clear All */}
+                {hasMultipleFilters && (
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-full transition-colors duration-200 animate-fadeIn"
+                    style={{ animationDelay: '400ms' }}
+                  >
+                    <Icon name="X" className="w-3.5 h-3.5" />
+                    {tr('Clear All', 'נקה הכל')}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Loading bar - MobileSidebar style */}
           {loading && (
             <div className="w-full h-[2px] mt-2 bg-gray-200 dark:bg-gray-700 overflow-hidden relative">

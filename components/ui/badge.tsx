@@ -27,7 +27,7 @@ export function Badge({ children, variant = 'default', className = '' }: BadgePr
     red: 'bg-red-bg dark:bg-red-bg-dark text-red dark:text-red-dark',
     purple: 'bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark',
     pink: 'bg-pink-bg dark:bg-pink-bg-dark text-pink dark:text-pink-dark',
-    teal: 'bg-teal-bg dark:bg-teal-bg-dark text-teal dark:text-teal-dark',
+    teal: 'bg-teal-border dark:bg-teal-border-dark text-teal dark:text-teal-dark',
   };
 
   return (

@@ -44,7 +44,7 @@ import {
   type CartItem 
 } from '@/stores/cartStore';
 import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled, isGrowthLabEnabled, isCommunityEnabled } from '@/lib/utils/ecommerce';
-import { searchFromCache, getAreaFromQuery, queryMatchesCategory, type SearchResultFromCache } from '@/lib/search-from-cache';
+import { searchFromCache, readFromCacheSync, getAreaFromQuery, queryMatchesCategory, type SearchResultFromCache } from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 import { flipLanguage } from '@/lib/utils/transliterate';
 
@@ -323,7 +323,21 @@ export default function HeaderNav() {
     };
   }, []);
 
-  // Fetch search results from localStorage cache only (no server fetch - like MobileSidebar cache usage)
+  const categoryOrder = useMemo(
+    () =>
+      ecommerceEnabled
+        ? ['skateparks', 'products', 'events', 'guides', 'trainers']
+        : ['skateparks', 'events', 'guides', 'trainers'],
+    [ecommerceEnabled]
+  );
+  const apiCategories = useMemo((): ('products' | 'trainers')[] => {
+    const list: ('products' | 'trainers')[] = [];
+    if (ecommerceEnabled) list.push('products');
+    if (trainersEnabled) list.push('trainers');
+    return list;
+  }, [ecommerceEnabled, trainersEnabled]);
+
+  // Fetch search results: cache (skateparks, events, guides) + API (products, trainers) — same as search page
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -331,7 +345,12 @@ export default function HeaderNav() {
       return;
     }
     setSearchLoading(true);
+    // Instant first paint from sync cache (same as search page)
+    const syncResults = readFromCacheSync(searchQuery, locale, cacheCategories).map(mapCacheResultToSearchResult);
+    setSearchResults(syncResults);
+
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    const controller = new AbortController();
 
     searchDebounceRef.current = setTimeout(async () => {
       try {
@@ -381,22 +400,46 @@ export default function HeaderNav() {
           }
           return aName.localeCompare(bName);
         });
-        const final = sorted
+        let cacheFinal = sorted
           .map(({ _score, ...r }) => r)
           .filter((r) => (r.type === 'products' && !ecommerceEnabled ? false : true));
 
-        setSearchResults(final);
+        // Fetch products/trainers from API (same as search page)
+        let apiResults: SearchResult[] = [];
+        if (apiCategories.length > 0) {
+          const params = new URLSearchParams();
+          if (searchQuery.trim()) params.set('q', searchQuery.trim());
+          params.set('types', apiCategories.join(','));
+          params.set('page', '1');
+          params.set('locale', String(locale));
+          const res = await fetch(`/api/search?${params.toString()}`, { signal: controller.signal });
+          if (res.ok) {
+            const data = await res.json();
+            apiResults = (data.results || []) as SearchResult[];
+          }
+        }
+
+        const merged = [...cacheFinal, ...apiResults];
+        const order = categoryOrder;
+        const sortedMerged = merged.sort((a, b) => {
+          const i = order.indexOf(a.type);
+          const j = order.indexOf(b.type);
+          if (i !== j) return i - j;
+          return getResultDisplayName(a).localeCompare(getResultDisplayName(b));
+        });
+        setSearchResults(sortedMerged);
       } catch (e) {
-        console.error(e);
-        setSearchResults([]);
+        if ((e as { name?: string }).name !== 'AbortError') console.error(e);
+        setSearchResults(syncResults);
       } finally {
         setSearchLoading(false);
       }
     }, 300);
     return () => {
+      controller.abort();
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     };
-  }, [searchQuery, locale, ecommerceEnabled, cacheCategories, mapCacheResultToSearchResult, getResultDisplayName, calculateSearchScore]);
+  }, [searchQuery, locale, ecommerceEnabled, cacheCategories, apiCategories, categoryOrder, mapCacheResultToSearchResult, getResultDisplayName, calculateSearchScore]);
 
   // Group results by category (like MobileSidebar)
   const groupedResults = useMemo(() => {
@@ -423,9 +466,6 @@ export default function HeaderNav() {
   }), [tMobileNav]);
 
   const searchArea = useMemo(() => getAreaFromQuery(searchQuery), [searchQuery]);
-  const categoryOrder = ecommerceEnabled
-    ? ['skateparks', 'products', 'events', 'guides', 'trainers']
-    : ['skateparks', 'events', 'guides', 'trainers'];
 
   // Handle logout - works like next-auth's internal signOut
   const handleLogout = async () => {

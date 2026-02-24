@@ -117,7 +117,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
       {!isMobile && (
         <>
           <div className={`flex gap-4 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'} items-center justify-between h-[32px]`}>
-            <h4 className={`text-sm font-medium`}>{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
+            <h4 className={`mx-2.5 text-sm font-medium`}>{tSkateparks('amenities.filterBy') || 'Filter by amenities'}</h4>
             <div className={`flex gap-1.5 items-center ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
               {selectedAmenities.length > 0 && (
                 <Button
@@ -201,12 +201,12 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                     className="w-1/2 px-1 py-0.5 border-r border-popover-border dark:border-popover-border-dark"
                     style={{ textAlign: locale === 'he' ? 'right' : 'left' }}
                   >
-                    <div className={`inline-flex ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className={`w-full inline-flex ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
                       {leftAmenity && (
                         <Button
                           variant={selectedAmenities.includes(leftAmenity.key) ? "blue" : "none"}
                           size="sm"
-                          className={`flex gap-2 font-medium w-fit text-nowrap overflow-visible ${
+                          className={`flex gap-2 !justify-start font-medium w-fit text-nowrap overflow-visible ${
                             selectedAmenities.includes(leftAmenity.key) ? '' : 'text-gray dark:text-gray-dark'
                           } ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           onClick={() => toggleAmenity(leftAmenity.key)}
