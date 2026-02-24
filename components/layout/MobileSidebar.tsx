@@ -26,6 +26,7 @@ import {
 } from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 import { Separator } from '@/components/ui/separator';
+import { trackSearchQuery, trackSearchClick } from '@/lib/analytics/internal';
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -92,6 +93,7 @@ export default function MobileSidebar({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [shouldAnimate, setShouldAnimate] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchAnalyticsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const isAdmin = session?.user?.role === 'admin';
@@ -530,6 +532,28 @@ export default function MobileSidebar({
     };
   }, [searchQuery, locale, cacheCategories, apiCategories]);
 
+  // Debounced search query analytics (1.5s after user stops typing)
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      if (searchAnalyticsDebounceRef.current) {
+        clearTimeout(searchAnalyticsDebounceRef.current);
+        searchAnalyticsDebounceRef.current = null;
+      }
+      return;
+    }
+    if (searchAnalyticsDebounceRef.current) clearTimeout(searchAnalyticsDebounceRef.current);
+    searchAnalyticsDebounceRef.current = setTimeout(() => {
+      trackSearchQuery({ query: searchQuery.trim(), source: 'sidebar', locale });
+      searchAnalyticsDebounceRef.current = null;
+    }, 1500);
+    return () => {
+      if (searchAnalyticsDebounceRef.current) {
+        clearTimeout(searchAnalyticsDebounceRef.current);
+        searchAnalyticsDebounceRef.current = null;
+      }
+    };
+  }, [searchQuery, locale]);
+
   // Group results by category (now consumes the sorted results)
   const groupedResults = useMemo(() => {
     return searchResults
@@ -847,7 +871,18 @@ export default function MobileSidebar({
                               <Link
                                 key={result.id}
                                 href={href}
-                                onClick={onClose}
+                                onClick={() => {
+                                  trackSearchClick({
+                                    query: searchQuery,
+                                    resultType: result.type,
+                                    resultId: result.id,
+                                    resultSlug: result.slug,
+                                    href,
+                                    source: 'sidebar',
+                                    locale,
+                                  });
+                                  onClose();
+                                }}
                                 className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-bg dark:hover:bg-white/[2.5%] transition-colors duration-200 group"
                               >
                                 {/* Thumbnail */}

@@ -94,7 +94,16 @@
     "ilCookieConsent": "הסכמת עוגיות IL",
     "usersByCountry": "משתמשים לפי מדינה (IP)",
     "country": "מדינה",
-    "noCountryData": "אין עדיין נתוני מדינה."
+    "noCountryData": "אין עדיין נתוני מדינה.",
+    "searchQueries": "שאילתות חיפוש",
+    "searchQuery": "שאילתה",
+    "searchClicks": "לחיצות על תוצאות חיפוש",
+    "resultType": "סוג",
+    "noSearchData": "אין עדיין נתוני חיפוש.",
+    "searchByDevice": "חיפוש לפי מכשיר",
+    "device": "מכשיר",
+    "searchQueryCount": "שאילתות",
+    "searchClickCount": "לחיצות"
   },
   "eventSignups": {
     "title": "הרשמות לאירועים",

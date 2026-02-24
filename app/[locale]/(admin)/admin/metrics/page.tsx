@@ -36,6 +36,8 @@ interface MetricsData {
   referrerBreakdown: Array<{ referrerCategory: string; count: number }>;
   countryBreakdown: Array<{ country: string; count: number }>;
   topPages: Array<{ path: string; count: number }>;
+  searchQueries?: Array<{ query: string; deviceCategory: string; count: number }>;
+  searchClicks?: Array<{ resultType: string; resultSlug: string; deviceCategory: string; count: number }>;
 }
 
 const DEVICE_COLORS = ['#3caa41', '#1d4ed8', '#e49a43', '#8B5CF6', '#EC4899'];
@@ -452,6 +454,74 @@ export default function AdminMetricsPage() {
                   </ResponsiveContainer>
                 ) : (
                   <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noReferrerData')}</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Search results */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="bg-card dark:bg-card-dark">
+              <CardHeader>
+                <CardTitle className="text-gray-900 dark:text-white">{t('metrics.searchQueries')}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                {data?.searchQueries?.length ? (
+                  <div className="overflow-x-auto max-h-80 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t('metrics.searchQuery')}</TableHead>
+                          <TableHead>{t('metrics.device')}</TableHead>
+                          <TableHead className="text-right">{t('metrics.views')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.searchQueries.slice(0, 25).map((row, i) => (
+                          <TableRow key={`${row.query}-${row.deviceCategory}-${i}`}>
+                            <TableCell className="font-mono text-xs text-gray-900 dark:text-white truncate max-w-[200px]" title={row.query}>{row.query || '—'}</TableCell>
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{t(`metrics.os.${row.deviceCategory}` as const)}</TableCell>
+                            <TableCell className="text-right text-gray-700 dark:text-gray-300">{row.count}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noSearchData')}</p>
+                )}
+              </CardContent>
+            </Card>
+            <Card className="bg-card dark:bg-card-dark">
+              <CardHeader>
+                <CardTitle className="text-gray-900 dark:text-white">{t('metrics.searchClicks')}</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                {data?.searchClicks?.length ? (
+                  <div className="overflow-x-auto max-h-80 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t('metrics.resultType')}</TableHead>
+                          <TableHead>{t('metrics.path')}</TableHead>
+                          <TableHead>{t('metrics.device')}</TableHead>
+                          <TableHead className="text-right">{t('metrics.views')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {data.searchClicks.slice(0, 25).map((row, i) => (
+                          <TableRow key={`${row.resultType}-${row.resultSlug}-${row.deviceCategory}-${i}`}>
+                            <TableCell className="text-xs text-gray-900 dark:text-white">{row.resultType}</TableCell>
+                            <TableCell className="font-mono text-xs text-gray-900 dark:text-white truncate max-w-[180px]" title={row.resultSlug}>{row.resultSlug || '—'}</TableCell>
+                            <TableCell className="text-xs text-gray-700 dark:text-gray-300">{t(`metrics.os.${row.deviceCategory}` as const)}</TableCell>
+                            <TableCell className="text-right text-gray-700 dark:text-gray-300">{row.count}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noSearchData')}</p>
                 )}
               </CardContent>
             </Card>

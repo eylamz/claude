@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import AnalyticsEvent from '@/lib/models/AnalyticsEvent';
-import type { ConsentChoice, DeviceCategory, ReferrerCategory } from '@/lib/models/AnalyticsEvent';
+import type { ConsentChoice, DeviceCategory, ReferrerCategory, SearchEventSource } from '@/lib/models/AnalyticsEvent';
 
 const ENABLE_ANALYTICS = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true';
 
@@ -14,6 +14,8 @@ const CONSENT_CHOICES: ConsentChoice[] = [
 ];
 const DEVICE_CATEGORIES: DeviceCategory[] = ['mobile', 'tablet', 'desktop'];
 const REFERRER_CATEGORIES: ReferrerCategory[] = ['direct', 'internal', 'google', 'social', 'other'];
+const SEARCH_SOURCES: SearchEventSource[] = ['header', 'sidebar', 'search_page'];
+const SEARCH_RESULT_TYPES = ['skateparks', 'products', 'events', 'guides', 'trainers'];
 
 /** ISO 3166-1 alpha-2 country code from request IP. Vercel: x-vercel-ip-country, Cloudflare: cf-ipcountry. */
 function getCountryFromRequest(request: NextRequest): string | undefined {
@@ -98,6 +100,76 @@ export async function POST(request: NextRequest) {
         ...(referrerCategory && { referrerCategory }),
         ...(userId && { userId }),
         ...(country && { country }),
+      });
+      return new NextResponse(null, { status: 204 });
+    }
+
+    if (type === 'search_query') {
+      const query = body.query;
+      if (!isValidString(query, 512)) {
+        return NextResponse.json({ error: 'Invalid or missing query' }, { status: 400 });
+      }
+      const sessionId = body.sessionId != null && isValidString(body.sessionId, 128) ? body.sessionId : undefined;
+      const locale = body.locale != null && isValidString(body.locale, 16) ? body.locale : undefined;
+      const source =
+        body.source != null && SEARCH_SOURCES.includes(body.source as SearchEventSource)
+          ? (body.source as SearchEventSource)
+          : undefined;
+      const deviceCategory =
+        body.deviceCategory != null && DEVICE_CATEGORIES.includes(body.deviceCategory) ? body.deviceCategory : undefined;
+      const deviceType = body.deviceType != null && isValidString(body.deviceType, 64) ? body.deviceType : undefined;
+
+      await connectDB();
+      await AnalyticsEvent.create({
+        type: 'search_query',
+        timestamp: new Date(),
+        query: query.trim(),
+        ...(sessionId && { sessionId }),
+        ...(locale && { locale }),
+        ...(source && { source }),
+        ...(deviceCategory && { deviceCategory }),
+        ...(deviceType && { deviceType }),
+      });
+      return new NextResponse(null, { status: 204 });
+    }
+
+    if (type === 'search_click') {
+      const resultType = body.resultType;
+      if (
+        typeof resultType !== 'string' ||
+        !SEARCH_RESULT_TYPES.includes(resultType) ||
+        !isValidString(body.resultSlug, 256)
+      ) {
+        return NextResponse.json({ error: 'Invalid resultType or resultSlug' }, { status: 400 });
+      }
+      const resultSlug = body.resultSlug.trim();
+      const query = body.query != null && isValidString(body.query, 512) ? body.query.trim() : undefined;
+      const resultId = body.resultId != null && isValidString(body.resultId, 128) ? body.resultId : undefined;
+      const href = body.href != null && isValidString(body.href, 1024) ? body.href : undefined;
+      const sessionId = body.sessionId != null && isValidString(body.sessionId, 128) ? body.sessionId : undefined;
+      const locale = body.locale != null && isValidString(body.locale, 16) ? body.locale : undefined;
+      const source =
+        body.source != null && SEARCH_SOURCES.includes(body.source as SearchEventSource)
+          ? (body.source as SearchEventSource)
+          : undefined;
+      const deviceCategory =
+        body.deviceCategory != null && DEVICE_CATEGORIES.includes(body.deviceCategory) ? body.deviceCategory : undefined;
+      const deviceType = body.deviceType != null && isValidString(body.deviceType, 64) ? body.deviceType : undefined;
+
+      await connectDB();
+      await AnalyticsEvent.create({
+        type: 'search_click',
+        timestamp: new Date(),
+        resultType,
+        resultSlug,
+        ...(query !== undefined && { query }),
+        ...(resultId && { resultId }),
+        ...(href && { href }),
+        ...(sessionId && { sessionId }),
+        ...(locale && { locale }),
+        ...(source && { source }),
+        ...(deviceCategory && { deviceCategory }),
+        ...(deviceType && { deviceType }),
       });
       return new NextResponse(null, { status: 204 });
     }

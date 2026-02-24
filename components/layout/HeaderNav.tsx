@@ -47,6 +47,7 @@ import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled, isGrowthLabEnabl
 import { searchFromCache, readFromCacheSync, getAreaFromQuery, queryMatchesCategory, type SearchResultFromCache } from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 import { flipLanguage } from '@/lib/utils/transliterate';
+import { trackSearchQuery, trackSearchClick } from '@/lib/analytics/internal';
 
 // Search result types (match API / search page)
 type SearchResultType = 'products' | 'skateparks' | 'events' | 'guides' | 'trainers';
@@ -124,6 +125,7 @@ export default function HeaderNav() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchAnalyticsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   
   const ecommerceEnabled = isEcommerceEnabled();
@@ -440,6 +442,28 @@ export default function HeaderNav() {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     };
   }, [searchQuery, locale, ecommerceEnabled, cacheCategories, apiCategories, categoryOrder, mapCacheResultToSearchResult, getResultDisplayName, calculateSearchScore]);
+
+  // Debounced search query analytics (1.5s after user stops typing)
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      if (searchAnalyticsDebounceRef.current) {
+        clearTimeout(searchAnalyticsDebounceRef.current);
+        searchAnalyticsDebounceRef.current = null;
+      }
+      return;
+    }
+    if (searchAnalyticsDebounceRef.current) clearTimeout(searchAnalyticsDebounceRef.current);
+    searchAnalyticsDebounceRef.current = setTimeout(() => {
+      trackSearchQuery({ query: searchQuery.trim(), source: 'header', locale });
+      searchAnalyticsDebounceRef.current = null;
+    }, 1500);
+    return () => {
+      if (searchAnalyticsDebounceRef.current) {
+        clearTimeout(searchAnalyticsDebounceRef.current);
+        searchAnalyticsDebounceRef.current = null;
+      }
+    };
+  }, [searchQuery, locale]);
 
   // Group results by category (like MobileSidebar)
   const groupedResults = useMemo(() => {
@@ -1306,7 +1330,18 @@ export default function HeaderNav() {
                                     <Link
                                       key={result.id}
                                       href={href}
-                                      onClick={() => setIsSearchOpen(false)}
+                                      onClick={() => {
+                                        trackSearchClick({
+                                          query: searchQuery,
+                                          resultType: result.type,
+                                          resultId: result.id,
+                                          resultSlug: result.slug,
+                                          href,
+                                          source: 'header',
+                                          locale,
+                                        });
+                                        setIsSearchOpen(false);
+                                      }}
                                       className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-bg dark:hover:bg-white/[2.5%] transition-colors duration-200 group"
                                     >
                                       <div className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-card dark:bg-card-dark flex items-center justify-center transition-colors duration-200">

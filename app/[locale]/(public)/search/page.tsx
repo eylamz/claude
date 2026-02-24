@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils/cn';
 import { searchFromCache, readFromCacheSync, type SearchResultFromCache } from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 import { isEcommerceEnabled, isTrainersEnabled } from '@/lib/utils/ecommerce';
+import { trackSearchQuery, trackSearchClick } from '@/lib/analytics/internal';
 
 // Optimize image URLs for event/guide thumbnails (match events + guides pages)
 function getOptimizedImageUrl(originalUrl: string): string | null {
@@ -222,12 +223,14 @@ const SearchEventCard = memo(
     highlightQuery,
     animationDelay = 0,
     getSportTranslation,
+    onResultClick,
   }: {
     event: EventResult;
     locale: string;
     highlightQuery?: string;
     animationDelay?: number;
     getSportTranslation: (sport: string) => string;
+    onResultClick?: () => void;
   }) => {
     const [isClicked, setIsClicked] = useState(false);
     const [showNameSection, setShowNameSection] = useState(false);
@@ -243,10 +246,11 @@ const SearchEventCard = memo(
     const handleClick = useCallback(
       (e: React.MouseEvent) => {
         e.preventDefault();
+        onResultClick?.();
         setIsClicked(true);
         setTimeout(() => router.push(`/${locale}/events/${event.slug}`), 300);
       },
-      [event.slug, locale, router]
+      [event.slug, locale, router, onResultClick]
     );
     const formatDate = (dateStr: string) => {
       const d = new Date(dateStr);
@@ -413,6 +417,7 @@ const SearchGuideCard = memo(
     animationDelay = 0,
     getSportTranslation,
     getDifficultyTranslation,
+    onResultClick,
   }: {
     guide: GuideResult;
     locale: string;
@@ -420,6 +425,7 @@ const SearchGuideCard = memo(
     animationDelay?: number;
     getSportTranslation: (sport: string) => string;
     getDifficultyTranslation: (difficulty: string) => string;
+    onResultClick?: () => void;
   }) => {
     const [isClicked, setIsClicked] = useState(false);
     const [showNameSection, setShowNameSection] = useState(false);
@@ -435,10 +441,11 @@ const SearchGuideCard = memo(
     const handleClick = useCallback(
       (e: React.MouseEvent) => {
         e.preventDefault();
+        onResultClick?.();
         setIsClicked(true);
         setTimeout(() => router.push(`/${locale}/guides/${guide.slug}`), 300);
       },
-      [guide.slug, locale, router]
+      [guide.slug, locale, router, onResultClick]
     );
     const href = `/${locale}/guides/${guide.slug}`;
     return (
@@ -592,6 +599,7 @@ function SearchPageContent() {
 
   // Debounce
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchAnalyticsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   // Version check (versionOnly + refetch) only on first load; later searches use localStorage only
   const versionCheckDoneRef = useRef(false);
@@ -626,6 +634,28 @@ function SearchPageContent() {
     params.set('locale', String(locale));
     router.replace(`/${locale}/search?${params.toString()}`);
   }, [selectedTabs, selectedSports, selectedAmenities, page, query, locale, router]);
+
+  // Debounced search query analytics (1.5s after user stops typing)
+  useEffect(() => {
+    if (!query.trim()) {
+      if (searchAnalyticsDebounceRef.current) {
+        clearTimeout(searchAnalyticsDebounceRef.current);
+        searchAnalyticsDebounceRef.current = null;
+      }
+      return;
+    }
+    if (searchAnalyticsDebounceRef.current) clearTimeout(searchAnalyticsDebounceRef.current);
+    searchAnalyticsDebounceRef.current = setTimeout(() => {
+      trackSearchQuery({ query: query.trim(), source: 'search_page', locale });
+      searchAnalyticsDebounceRef.current = null;
+    }, 1500);
+    return () => {
+      if (searchAnalyticsDebounceRef.current) {
+        clearTimeout(searchAnalyticsDebounceRef.current);
+        searchAnalyticsDebounceRef.current = null;
+      }
+    };
+  }, [query, locale]);
 
   // Cache-backed categories (localStorage first; fill cache if missing)
   const cacheCategories = useMemo((): ('skateparks' | 'events' | 'guides')[] => {
@@ -849,6 +879,19 @@ function SearchPageContent() {
     );
   }, [t, ecommerceEnabled, trainersEnabled]);
 
+  // Tabs and filter buttons only for categories that have results; hide tab bar when only one category has results
+  const { visibleTabs, showTabBar, hasSkateparkResults, hasGuideOrEventResults } = useMemo(() => {
+    const typeSet = new Set(results.map((r) => r.type));
+    const visible = tabs.filter((tab) => typeSet.has(tab.key));
+    const showBar = visible.length >= 2;
+    return {
+      visibleTabs: visible,
+      showTabBar: showBar,
+      hasSkateparkResults: typeSet.has('skateparks'),
+      hasGuideOrEventResults: typeSet.has('guides') || typeSet.has('events'),
+    };
+  }, [results, tabs]);
+
   // Group results by type for section separation (order matches tabs)
   const resultsByType = useMemo(() => {
     const order: Exclude<CategoryTab, 'all'>[] = ['products', 'skateparks', 'events', 'guides', 'trainers'];
@@ -921,39 +964,70 @@ function SearchPageContent() {
     switch (item.type) {
       case 'products': {
         const p = item as ProductResult;
+        const href = `/${locale}/shop/${p.slug}`;
         return (
-          <ProductCard
+          <div
             key={p.id}
-            product={{
-              id: p.id,
-              slug: p.slug,
-              name: p.name as any,
-              price: p.price,
-              discountPrice: p.discountPrice,
-              images: p.images,
-              variants: p.variants,
-              totalStock: p.totalStock,
-            }}
-            view={viewMode}
-            highlightQuery={query}
-          />
+            onClick={() =>
+              trackSearchClick({
+                query,
+                resultType: 'products',
+                resultId: p.id,
+                resultSlug: p.slug,
+                href,
+                source: 'search_page',
+                locale,
+              })
+            }
+          >
+            <ProductCard
+              product={{
+                id: p.id,
+                slug: p.slug,
+                name: p.name as any,
+                price: p.price,
+                discountPrice: p.discountPrice,
+                images: p.images,
+                variants: p.variants,
+                totalStock: p.totalStock,
+              }}
+              view={viewMode}
+              highlightQuery={query}
+            />
+          </div>
         );
       }
       case 'skateparks': {
         const s = item as SkateparkResult;
         const park = skateparkResultToPark(s, locale);
+        const href = `/${locale}/skateparks/${s.slug}`;
         return (
-          <ParkCard
+          <div
             key={s.id}
-            park={park}
-            locale={locale}
-            animationDelay={(filteredResults.indexOf(item) ?? 0) * 50}
-            highlightQuery={query}
-          />
+            onClick={() =>
+              trackSearchClick({
+                query,
+                resultType: 'skateparks',
+                resultId: s.id,
+                resultSlug: s.slug,
+                href,
+                source: 'search_page',
+                locale,
+              })
+            }
+          >
+            <ParkCard
+              park={park}
+              locale={locale}
+              animationDelay={(filteredResults.indexOf(item) ?? 0) * 50}
+              highlightQuery={query}
+            />
+          </div>
         );
       }
       case 'guides': {
         const g = item as GuideResult;
+        const href = `/${locale}/guides/${g.slug}`;
         return (
           <SearchGuideCard
             key={g.id}
@@ -963,27 +1037,54 @@ function SearchPageContent() {
             animationDelay={(filteredResults.indexOf(item) ?? 0) * 50}
             getSportTranslation={getSportTranslation}
             getDifficultyTranslation={getDifficultyTranslation}
+            onResultClick={() =>
+              trackSearchClick({
+                query,
+                resultType: 'guides',
+                resultId: g.id,
+                resultSlug: g.slug,
+                href,
+                source: 'search_page',
+                locale,
+              })
+            }
           />
         );
       }
       case 'trainers': {
         const tr = item as TrainerResult;
+        const href = `/${locale}/trainers/${tr.slug}`;
         return (
-          <TrainerCard
+          <div
             key={tr.id}
-            slug={tr.slug}
-            name={tr.name}
-            image={tr.profileImage}
-            area={tr.area}
-            sports={tr.relatedSports}
-            rating={tr.rating}
-            reviewCount={tr.totalReviews}
-            highlightQuery={query}
-          />
+            onClick={() =>
+              trackSearchClick({
+                query,
+                resultType: 'trainers',
+                resultId: tr.id,
+                resultSlug: tr.slug,
+                href,
+                source: 'search_page',
+                locale,
+              })
+            }
+          >
+            <TrainerCard
+              slug={tr.slug}
+              name={tr.name}
+              image={tr.profileImage}
+              area={tr.area}
+              sports={tr.relatedSports}
+              rating={tr.rating}
+              reviewCount={tr.totalReviews}
+              highlightQuery={query}
+            />
+          </div>
         );
       }
       case 'events': {
         const ev = item as EventResult;
+        const href = `/${locale}/events/${ev.slug}`;
         return (
           <SearchEventCard
             key={ev.id}
@@ -992,6 +1093,17 @@ function SearchPageContent() {
             highlightQuery={query}
             animationDelay={(filteredResults.indexOf(item) ?? 0) * 50}
             getSportTranslation={getSportTranslation}
+            onResultClick={() =>
+              trackSearchClick({
+                query,
+                resultType: 'events',
+                resultId: ev.id,
+                resultSlug: ev.slug,
+                href,
+                source: 'search_page',
+                locale,
+              })
+            }
           />
         );
       }
@@ -1087,10 +1199,10 @@ function SearchPageContent() {
                 className="w-full sm:max-w-[250px]"
               />
             </div>
-            {/* Tabs (multi-select) - only visible when there is a search query */}
-            {query.trim() && (
+            {/* Tabs (multi-select) - only when query and 2+ categories have results */}
+            {query.trim() && showTabBar && (
             <div className="flex overflow-x-auto scrollbar-hide gap-2 min-w-0 items-center">
-              {tabs.map((tab) => {
+              {visibleTabs.map((tab) => {
                 const isSelected = selectedTabs.includes(tab.key);
                 return (
                   <Button
@@ -1106,8 +1218,8 @@ function SearchPageContent() {
                   </Button>
                 );
               })}
-            {/* Sports filter (guides + events only) - same container as tabs */}
-            {(selectedTabs.includes('events') || selectedTabs.includes('guides')) && (
+            {/* Sports filter - show when there are guides or events results */}
+            {hasGuideOrEventResults && (
               <div className="flex-shrink-0">
                 {isMobile ? (
                   <>
@@ -1215,8 +1327,8 @@ function SearchPageContent() {
                 )}
               </div>
             )}
-            {/* Amenities filter (parks only) - does not affect guides or events */}
-            {selectedTabs.includes('skateparks') && (
+            {/* Amenities filter - show when there are skatepark results */}
+            {hasSkateparkResults && (
               <div className="flex-shrink-0">
                 {isMobile ? (
                   <>

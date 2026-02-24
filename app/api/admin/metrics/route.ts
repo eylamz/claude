@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
         referrerBreakdown: [],
         countryBreakdown: [],
         topPages: [],
+        searchQueries: [],
+        searchClicks: [],
       });
     }
 
@@ -72,6 +74,8 @@ export async function GET(request: NextRequest) {
       ];
     }
     const matchConsent: Record<string, unknown> = { type: 'consent', timestamp: { $gte: from } };
+    const matchSearchQuery: Record<string, unknown> = { type: 'search_query', timestamp: { $gte: from } };
+    const matchSearchClick: Record<string, unknown> = { type: 'search_click', timestamp: { $gte: from } };
     // Only count sessions that have an id (so we can dedupe by session, not by page view)
     const matchPageViewWithSession = {
       ...matchPageView,
@@ -87,6 +91,8 @@ export async function GET(request: NextRequest) {
       consentBreakdown,
       referrerBreakdown,
       countryBreakdown,
+      searchQueries,
+      searchClicks,
     ] = await Promise.all([
       AnalyticsEvent.aggregate<{ _id: string; count: number }>([
         { $match: matchPageView },
@@ -148,6 +154,32 @@ export async function GET(request: NextRequest) {
         { $sort: { count: -1 } },
         { $project: { country: '$_id', count: 1, _id: 0 } },
       ]),
+      // Search queries: group by query (trimmed) + deviceCategory, count, top 50
+      AnalyticsEvent.aggregate<{ _id: { query: string; deviceCategory: string }; count: number }>([
+        { $match: matchSearchQuery },
+        { $addFields: { queryTrimmed: { $trim: { input: { $ifNull: ['$query', ''] } } } } },
+        { $match: { queryTrimmed: { $ne: '' } } },
+        { $group: { _id: { query: '$queryTrimmed', deviceCategory: { $ifNull: ['$deviceCategory', 'unknown'] } }, count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 50 },
+        { $project: { query: '$_id.query', deviceCategory: '$_id.deviceCategory', count: 1, _id: 0 } },
+      ]),
+      // Search clicks: group by resultType + resultSlug + deviceCategory, count, top 50
+      AnalyticsEvent.aggregate<{ _id: { resultType: string; resultSlug: string; deviceCategory: string }; count: number }>([
+        { $match: matchSearchClick },
+        { $group: { _id: { resultType: '$resultType', resultSlug: '$resultSlug', deviceCategory: { $ifNull: ['$deviceCategory', 'unknown'] } }, count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 50 },
+        {
+          $project: {
+            resultType: '$_id.resultType',
+            resultSlug: '$_id.resultSlug',
+            deviceCategory: '$_id.deviceCategory',
+            count: 1,
+            _id: 0,
+          },
+        },
+      ]),
     ]);
 
     const sessionsSummary = sessionDurations[0]
@@ -171,6 +203,8 @@ export async function GET(request: NextRequest) {
       referrerBreakdown,
       countryBreakdown,
       topPages,
+      searchQueries,
+      searchClicks,
     });
   } catch (error) {
     console.error('[admin/metrics]', error);

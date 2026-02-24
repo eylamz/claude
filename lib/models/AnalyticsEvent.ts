@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export type AnalyticsEventType = 'page_view' | 'consent';
+export type AnalyticsEventType = 'page_view' | 'consent' | 'search_query' | 'search_click';
+
+export type SearchEventSource = 'header' | 'sidebar' | 'search_page';
 
 export type DeviceCategory = 'mobile' | 'tablet' | 'desktop';
 export type ReferrerCategory = 'direct' | 'internal' | 'google' | 'social' | 'other';
@@ -38,14 +40,34 @@ export interface IConsentEvent extends IAnalyticsEventBase {
   sessionId?: string;
 }
 
-export type IAnalyticsEvent = IPageViewEvent | IConsentEvent;
+export interface ISearchQueryEvent extends IAnalyticsEventBase {
+  type: 'search_query';
+  query: string;
+  sessionId?: string;
+  locale?: string;
+  source?: SearchEventSource;
+}
+
+export interface ISearchClickEvent extends IAnalyticsEventBase {
+  type: 'search_click';
+  query?: string;
+  resultType: string;
+  resultId?: string;
+  resultSlug: string;
+  href?: string;
+  sessionId?: string;
+  locale?: string;
+  source?: SearchEventSource;
+}
+
+export type IAnalyticsEvent = IPageViewEvent | IConsentEvent | ISearchQueryEvent | ISearchClickEvent;
 
 const AnalyticsEventSchema = new Schema<IAnalyticsEvent>(
   {
     type: {
       type: String,
       required: true,
-      enum: ['page_view', 'consent'],
+      enum: ['page_view', 'consent', 'search_query', 'search_click'],
     },
     timestamp: {
       type: Date,
@@ -68,6 +90,14 @@ const AnalyticsEventSchema = new Schema<IAnalyticsEvent>(
       type: String,
       enum: ['accept_all', 'reject_non_essential', 'save_preferences', 'il_consent_x', 'il_consent_confirm'],
     },
+    // search_query fields
+    query: { type: String },
+    source: { type: String, enum: ['header', 'sidebar', 'search_page'] },
+    // search_click fields
+    resultType: { type: String },
+    resultId: { type: String },
+    resultSlug: { type: String },
+    href: { type: String },
   },
   {
     timestamps: true,
@@ -86,9 +116,14 @@ AnalyticsEventSchema.index({ type: 1, deviceType: 1 });
 AnalyticsEventSchema.index({ type: 1, userId: 1 });
 AnalyticsEventSchema.index({ type: 1, userId: 1, timestamp: -1 });
 AnalyticsEventSchema.index({ type: 1, country: 1 });
+AnalyticsEventSchema.index({ type: 1, query: 1 });
+AnalyticsEventSchema.index({ type: 1, resultType: 1 });
 
+// In dev, Next.js may cache the model with an old schema; ensure we use the latest enum (e.g. search_query, search_click)
+if (mongoose.models?.AnalyticsEvent) {
+  delete (mongoose.models as Record<string, Model<unknown>>).AnalyticsEvent;
+}
 const AnalyticsEvent: Model<IAnalyticsEvent> =
-  (mongoose.models?.AnalyticsEvent as Model<IAnalyticsEvent>) ??
   mongoose.model<IAnalyticsEvent>('AnalyticsEvent', AnalyticsEventSchema);
 
 export default AnalyticsEvent;

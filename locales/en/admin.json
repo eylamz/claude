@@ -94,7 +94,16 @@
     "ilCookieConsent": "IL Cookie consent",
     "usersByCountry": "Users by country (IP)",
     "country": "Country",
-    "noCountryData": "No country data yet."
+    "noCountryData": "No country data yet.",
+    "searchQueries": "Search queries",
+    "searchQuery": "Query",
+    "searchClicks": "Search result clicks",
+    "resultType": "Type",
+    "noSearchData": "No search data yet.",
+    "searchByDevice": "Search by device",
+    "device": "Device",
+    "searchQueryCount": "Queries",
+    "searchClickCount": "Clicks"
   },
   "eventSignups": {
     "title": "Event Signups",

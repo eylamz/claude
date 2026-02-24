@@ -3,6 +3,8 @@
  */
 
 import type { ConsentChoice, DeviceCategory, ReferrerCategory } from '@/lib/models/AnalyticsEvent';
+import type { SearchEventSource } from '@/lib/models/AnalyticsEvent';
+import { hasConsent } from '@/lib/utils/cookie-consent';
 
 const ENABLE_ANALYTICS = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true';
 const SESSION_STORAGE_KEY = 'analytics_session_id';
@@ -152,4 +154,56 @@ export function trackPageView(payload: PageViewPayload): void {
 
 export function isAnalyticsEnabled(): boolean {
   return ENABLE_ANALYTICS;
+}
+
+export interface SearchQueryPayload {
+  query: string;
+  source: SearchEventSource;
+  locale?: string;
+}
+
+export function trackSearchQuery(payload: SearchQueryPayload): void {
+  if (!ENABLE_ANALYTICS) return;
+  if (typeof window !== 'undefined' && !hasConsent('analytics')) return;
+  const sessionId = typeof sessionStorage !== 'undefined' ? getSessionId() : undefined;
+  const { deviceType, deviceCategory } = getDeviceInfo();
+  sendToTrack({
+    type: 'search_query',
+    query: payload.query.trim(),
+    source: payload.source,
+    ...(sessionId && { sessionId }),
+    ...(payload.locale && { locale: payload.locale }),
+    deviceType,
+    deviceCategory,
+  });
+}
+
+export interface SearchClickPayload {
+  query: string;
+  resultType: string;
+  resultId: string;
+  resultSlug: string;
+  href: string;
+  source: SearchEventSource;
+  locale?: string;
+}
+
+export function trackSearchClick(payload: SearchClickPayload): void {
+  if (!ENABLE_ANALYTICS) return;
+  if (typeof window !== 'undefined' && !hasConsent('analytics')) return;
+  const sessionId = typeof sessionStorage !== 'undefined' ? getSessionId() : undefined;
+  const { deviceType, deviceCategory } = getDeviceInfo();
+  sendToTrack({
+    type: 'search_click',
+    query: payload.query,
+    resultType: payload.resultType,
+    resultId: payload.resultId,
+    resultSlug: payload.resultSlug,
+    href: payload.href,
+    source: payload.source,
+    ...(sessionId && { sessionId }),
+    ...(payload.locale && { locale: payload.locale }),
+    deviceType,
+    deviceCategory,
+  });
 }
