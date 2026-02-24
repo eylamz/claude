@@ -1,30 +1,57 @@
 // nextjs-app/app/[locale]/(public)/search/page.tsx
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState, memo, useCallback } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { ProductCard, SkateparkCard, TrainerCard, GuideCard } from '@/components/shop';
-import { Button, Card, CardContent, Input, Drawer, Slider, Skeleton } from '@/components/ui';
-import { 
-  Search as SearchIcon, 
-  X,
-  Filter,
-  TrendingUp,
-  Grid3x3,
-  List,
-  Calendar,
-  MapPin,
-  ShoppingBag,
-  Users,
-  BookOpen,
-  Sparkles,
-  Clock,
-} from 'lucide-react';
+import { ProductCard, TrainerCard } from '@/components/shop';
+import { ParkCard } from '@/components/skateparks/ParkCard';
+import { SearchInput } from '@/components/common/SearchInput';
+import { Icon } from '@/components/icons';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { Button, SegmentedControls, Skeleton } from '@/components/ui';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Drawer } from '@/components/ui/drawer';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils/cn';
-import { searchFromCache, type SearchResultFromCache } from '@/lib/search-from-cache';
+import { searchFromCache, readFromCacheSync, type SearchResultFromCache } from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 import { isEcommerceEnabled, isTrainersEnabled } from '@/lib/utils/ecommerce';
+
+// Optimize image URLs for event/guide thumbnails (match events + guides pages)
+function getOptimizedImageUrl(originalUrl: string): string | null {
+  if (!originalUrl?.trim()) return null;
+  if (originalUrl.includes('cloudinary.com')) {
+    const parts = originalUrl.split('/upload/');
+    if (parts.length === 2)
+      return `${parts[0]}/upload/w_800,c_fill,q_auto:good,f_auto/${parts[1]}`;
+  }
+  return originalUrl;
+}
+
+// Sport config for guide cards (match guides-page-client)
+const SPORT_CONFIG_GUIDES = [
+  { value: 'roller', iconName: 'Roller' as const },
+  { value: 'skate', iconName: 'Skate' as const },
+  { value: 'scoot', iconName: 'scooter' as const },
+  { value: 'bmx', iconName: 'bmx-icon' as const },
+  { value: 'longboard', iconName: 'Longboard' as const },
+] as const;
+
+// Sport config for filter panel (guides + events; displayName for labels)
+const SPORT_FILTER_CONFIG = [
+  { value: 'roller', iconName: 'Roller' as const, displayNameEn: 'Rollerblading', displayNameHe: 'רולר' },
+  { value: 'skate', iconName: 'Skate' as const, displayNameEn: 'Skating', displayNameHe: 'סקייט' },
+  { value: 'scoot', iconName: 'scooter' as const, displayNameEn: 'Scootering', displayNameHe: 'קורקינט' },
+  { value: 'bmx', iconName: 'bmx-icon' as const, displayNameEn: 'BMX', displayNameHe: 'אופניים' },
+  { value: 'longboard', iconName: 'Longboard' as const, displayNameEn: 'Longboarding', displayNameHe: 'לונגבורד' },
+] as const;
 
 type CategoryTab = 'all' | 'products' | 'skateparks' | 'events' | 'guides' | 'trainers';
 
@@ -51,6 +78,7 @@ interface SkateparkResult extends SearchResultBase {
   imageUrl: string;
   area: 'north' | 'center' | 'south';
   rating?: number;
+  amenities?: Record<string, boolean>;
 }
 
 interface EventResult extends SearchResultBase {
@@ -59,6 +87,7 @@ interface EventResult extends SearchResultBase {
   title: string;
   image?: string;
   startDate: string;
+  relatedSports?: string[];
 }
 
 interface GuideResult extends SearchResultBase {
@@ -68,6 +97,7 @@ interface GuideResult extends SearchResultBase {
   description?: string;
   coverImage?: string;
   relatedSports?: string[];
+  difficulty?: string;
   rating?: number;
   ratingCount?: number;
   readTime?: number;
@@ -86,82 +116,547 @@ interface TrainerResult extends SearchResultBase {
 
 type SearchResult = ProductResult | SkateparkResult | EventResult | GuideResult | TrainerResult;
 
+// Minimal Skatepark shape for ParkCard from search result (no badges/amenities)
+function skateparkResultToPark(s: SkateparkResult, locale: string): Parameters<typeof ParkCard>[0]['park'] {
+  const name = typeof s.name === 'string' ? s.name : (s.name[locale as 'en' | 'he'] ?? s.name.en ?? s.name.he ?? '');
+  return {
+    _id: s.id,
+    slug: s.slug,
+    name,
+    address: { en: '', he: '' },
+    area: s.area,
+    location: { lat: 0, lng: 0 },
+    imageUrl: s.imageUrl ?? '',
+    amenities: {
+      entryFee: s.amenities?.entryFee ?? false,
+      parking: s.amenities?.parking ?? false,
+      shade: s.amenities?.shade ?? false,
+      bathroom: s.amenities?.bathroom ?? false,
+      helmetRequired: s.amenities?.helmetRequired ?? false,
+      guard: s.amenities?.guard ?? false,
+      seating: s.amenities?.seating ?? false,
+      bombShelter: s.amenities?.bombShelter ?? false,
+      scootersAllowed: s.amenities?.scootersAllowed ?? false,
+      bikesAllowed: s.amenities?.bikesAllowed ?? false,
+      noWax: s.amenities?.noWax ?? false,
+      nearbyRestaurants: s.amenities?.nearbyRestaurants ?? false,
+    },
+    rating: s.rating ?? 0,
+    totalReviews: 0,
+    is24Hours: false,
+  };
+}
+
+// Event card thumbnail (match events page EventThumbnail)
+const SearchEventThumbnail = memo(
+  ({ photoUrl, title }: { photoUrl: string; title: string }) => {
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [hasError, setHasError] = useState(false);
+    const imgRef = useRef<HTMLImageElement>(null);
+    useEffect(() => {
+      setIsLoaded(false);
+      setHasError(false);
+    }, [photoUrl]);
+    useEffect(() => {
+      const check = () => {
+        if (!imgRef.current) return false;
+        const img = imgRef.current;
+        if (img.complete && img.naturalHeight !== 0) {
+          setIsLoaded(true);
+          return true;
+        }
+        if (img.complete && img.naturalHeight === 0) {
+          setIsLoaded(true);
+          setHasError(true);
+          return true;
+        }
+        return false;
+      };
+      if (check()) return;
+      const t = setTimeout(() => {
+        if (!isLoaded && !hasError && imgRef.current?.complete) {
+          setIsLoaded(true);
+          if (imgRef.current?.naturalHeight === 0) setHasError(true);
+        }
+      }, 3000);
+      return () => clearTimeout(t);
+    }, [photoUrl, isLoaded, hasError]);
+    const url = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
+    return (
+      <>
+        {!isLoaded && !hasError && (
+          <div className="absolute inset-0 bg-card dark:bg-card-dark flex items-center justify-center z-10">
+            <LoadingSpinner />
+          </div>
+        )}
+        {url ? (
+          <img
+            ref={imgRef}
+            src={url}
+            alt={title}
+            className={cn(
+              'w-full h-full rounded-xl object-cover transition-all duration-300 select-none saturate-150 group-hover:saturate-[1.75] group-hover:scale-105',
+              isLoaded ? 'opacity-100' : 'opacity-0'
+            )}
+            loading="lazy"
+            decoding="async"
+            onLoad={() => { setIsLoaded(true); setHasError(false); }}
+            onError={() => { setIsLoaded(true); setHasError(true); }}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <div className="w-16 h-16 opacity-50" />
+          </div>
+        )}
+      </>
+    );
+  }
+);
+SearchEventThumbnail.displayName = 'SearchEventThumbnail';
+
+// Event card matching events page EventCard design
+const SearchEventCard = memo(
+  ({
+    event,
+    locale,
+    highlightQuery,
+    animationDelay = 0,
+    getSportTranslation,
+  }: {
+    event: EventResult;
+    locale: string;
+    highlightQuery?: string;
+    animationDelay?: number;
+    getSportTranslation: (sport: string) => string;
+  }) => {
+    const [isClicked, setIsClicked] = useState(false);
+    const [showNameSection, setShowNameSection] = useState(false);
+    const [showEventName, setShowEventName] = useState(false);
+    const router = useRouter();
+    useEffect(() => {
+      const t = setTimeout(() => {
+        setShowNameSection(true);
+        setShowEventName(true);
+      }, 300 + animationDelay);
+      return () => clearTimeout(t);
+    }, [animationDelay]);
+    const handleClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsClicked(true);
+        setTimeout(() => router.push(`/${locale}/events/${event.slug}`), 300);
+      },
+      [event.slug, locale, router]
+    );
+    const formatDate = (dateStr: string) => {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).replace(/\./g, '/');
+    };
+    const href = `/${locale}/events/${event.slug}`;
+    return (
+      <Link
+        href={href}
+        onClick={handleClick}
+        className={cn(
+          'block h-fit group rounded-xl cursor-pointer relative select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn',
+          'before:content-[\'\'] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300',
+          isClicked && 'before:animate-shimmerInfinite'
+        )}
+        style={{ animationDelay: `${animationDelay}ms` }}
+        aria-label={event.title}
+      >
+        <div
+          className="bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden"
+          style={{
+            filter:
+              'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)',
+          }}
+        >
+          {event.relatedSports && event.relatedSports.length > 0 && (
+            <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
+              {event.relatedSports.slice(0, 4).map((sport, idx) => {
+                const sc = SPORT_CONFIG_GUIDES.find(
+                  (s) => s.value === sport.toLowerCase() || sport.toLowerCase().includes(s.value)
+                );
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg"
+                    title={sc ? sport : getSportTranslation(sport)}
+                  >
+                    {sc ? (
+                      <Icon name={sc.iconName as any} className="w-4 h-4 text-white" />
+                    ) : (
+                      <span className="text-xs font-medium text-white">
+                        {getSportTranslation(sport)}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              {event.relatedSports.length > 4 && (
+                <div className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg">
+                  <span className="text-xs font-medium text-white">
+                    +{event.relatedSports.length - 4}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+          <div className="absolute bottom-2 left-0 z-10">
+            <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold px-2 md:px-3 py-1 rounded-r-full shadow-lg">
+              {formatDate(event.startDate)}
+            </div>
+          </div>
+          <SearchEventThumbnail photoUrl={event.image ?? ''} title={event.title} />
+        </div>
+        <div
+          className="space-y-1 overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            maxHeight: showNameSection ? '200px' : '0',
+            paddingTop: showNameSection ? '0.5rem' : '0',
+            paddingBottom: showNameSection ? '0.5rem' : '0',
+          }}
+        >
+          <h3
+            className={cn(
+              'text-lg font-medium',
+              showEventName && 'animate-fadeInDown animation-delay-[1s]'
+            )}
+          >
+            {highlightQuery ? highlightMatch(event.title, highlightQuery) : event.title}
+          </h3>
+        </div>
+      </Link>
+    );
+  }
+);
+SearchEventCard.displayName = 'SearchEventCard';
+
+// Guide card thumbnail (match guides page)
+const SearchGuideThumbnail = memo(
+  ({ photoUrl, title }: { photoUrl: string; title: string }) => {
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [hasError, setHasError] = useState(false);
+    const imgRef = useRef<HTMLImageElement>(null);
+    useEffect(() => {
+      setIsLoaded(false);
+      setHasError(false);
+    }, [photoUrl]);
+    useEffect(() => {
+      const check = () => {
+        if (!imgRef.current) return false;
+        const img = imgRef.current;
+        if (img.complete && img.naturalHeight !== 0) {
+          setIsLoaded(true);
+          return true;
+        }
+        if (img.complete && img.naturalHeight === 0) {
+          setIsLoaded(true);
+          setHasError(true);
+          return true;
+        }
+        return false;
+      };
+      if (check()) return;
+      const t = setTimeout(() => {
+        if (!isLoaded && !hasError && imgRef.current?.complete) {
+          setIsLoaded(true);
+          if (imgRef.current?.naturalHeight === 0) setHasError(true);
+        }
+      }, 3000);
+      return () => clearTimeout(t);
+    }, [photoUrl, isLoaded, hasError]);
+    const url = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
+    return (
+      <>
+        {!isLoaded && !hasError && (
+          <div className="absolute inset-0 bg-background/20 dark:bg-background/20 flex items-center justify-center z-10">
+            <LoadingSpinner />
+          </div>
+        )}
+        {url ? (
+          <img
+            ref={imgRef}
+            src={url}
+            alt={title}
+            className={cn(
+              'w-full h-full rounded-xl object-cover transition-all duration-300 select-none saturate-150 group-hover:saturate-[1.75] group-hover:scale-105',
+              isLoaded ? 'opacity-100' : 'opacity-0'
+            )}
+            loading="lazy"
+            decoding="async"
+            onLoad={() => { setIsLoaded(true); setHasError(false); }}
+            onError={() => { setIsLoaded(true); setHasError(true); }}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <div className="w-16 h-16" />
+          </div>
+        )}
+      </>
+    );
+  }
+);
+SearchGuideThumbnail.displayName = 'SearchGuideThumbnail';
+
+// Guide card matching guides-page-client GuideCard design
+const SearchGuideCard = memo(
+  ({
+    guide,
+    locale,
+    highlightQuery,
+    animationDelay = 0,
+    getSportTranslation,
+    getDifficultyTranslation,
+  }: {
+    guide: GuideResult;
+    locale: string;
+    highlightQuery?: string;
+    animationDelay?: number;
+    getSportTranslation: (sport: string) => string;
+    getDifficultyTranslation: (difficulty: string) => string;
+  }) => {
+    const [isClicked, setIsClicked] = useState(false);
+    const [showNameSection, setShowNameSection] = useState(false);
+    const [showGuideName, setShowGuideName] = useState(false);
+    const router = useRouter();
+    useEffect(() => {
+      const t = setTimeout(() => {
+        setShowNameSection(true);
+        setShowGuideName(true);
+      }, 300 + animationDelay);
+      return () => clearTimeout(t);
+    }, [animationDelay]);
+    const handleClick = useCallback(
+      (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsClicked(true);
+        setTimeout(() => router.push(`/${locale}/guides/${guide.slug}`), 300);
+      },
+      [guide.slug, locale, router]
+    );
+    const href = `/${locale}/guides/${guide.slug}`;
+    return (
+      <Link
+        href={href}
+        onClick={handleClick}
+        className={cn(
+          'block h-fit group rounded-xl cursor-pointer relative select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn',
+          'before:content-[\'\'] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300',
+          isClicked && 'before:animate-shimmerInfinite'
+        )}
+        style={{ animationDelay: `${animationDelay}ms` }}
+        aria-label={guide.title}
+      >
+        <div
+          className="bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden"
+          style={{
+            filter:
+              'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)',
+          }}
+        >
+          {guide.relatedSports && guide.relatedSports.length > 0 && (
+            <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
+              {guide.relatedSports.slice(0, 4).map((sport, idx) => {
+                const sc = SPORT_CONFIG_GUIDES.find(
+                  (s) => s.value === sport.toLowerCase() || sport.toLowerCase().includes(s.value)
+                );
+                return (
+                  <div
+                    key={idx}
+                    className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg"
+                    title={sc ? sport : getSportTranslation(sport)}
+                  >
+                    {sc ? (
+                      <Icon name={sc.iconName as any} className="w-4 h-4 text-white" />
+                    ) : (
+                      <span className="text-xs font-medium text-white">
+                        {getSportTranslation(sport)}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              {guide.relatedSports.length > 4 && (
+                <div className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg">
+                  <span className="text-xs font-medium text-white">
+                    +{guide.relatedSports.length - 4}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+          {guide.difficulty && (
+            <div className="absolute bottom-2 left-0 z-10">
+              <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-500 dark:bg-purple-600 text-white text-xs md:text-sm font-semibold ps-1 md:ps-3 pe-1 md:pe-2 py-1 rounded-r-full shadow-lg">
+                {getDifficultyTranslation(guide.difficulty)}
+              </div>
+            </div>
+          )}
+          <SearchGuideThumbnail photoUrl={guide.coverImage ?? ''} title={guide.title} />
+        </div>
+        <div
+          className="space-y-1 overflow-hidden transition-all duration-300 ease-out"
+          style={{
+            maxHeight: showNameSection ? '200px' : '0',
+            paddingTop: showNameSection ? '0.5rem' : '0',
+            paddingBottom: showNameSection ? '0.5rem' : '0',
+          }}
+        >
+          <h3
+            className={cn(
+              'text-lg font-medium opacity-0',
+              showGuideName && 'animate-fadeInDown animation-delay-[1s]'
+            )}
+          >
+            {highlightQuery ? highlightMatch(guide.title, highlightQuery) : guide.title}
+          </h3>
+        </div>
+      </Link>
+    );
+  }
+);
+SearchGuideCard.displayName = 'SearchGuideCard';
+
 function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const locale = useLocale();
   const t = useTranslations('search');
+  const tGuides = useTranslations('guides');
+  const tSkateparks = useTranslations('skateparks');
   const isHebrew = locale === 'he';
+
+  const getSportTranslation = useCallback(
+    (sport: string): string => {
+      if (!sport) return sport;
+      const key = `sports.${sport.toLowerCase()}`;
+      const translated = tGuides(key as any);
+      if (translated && translated !== key && !translated.startsWith('sports.'))
+        return translated;
+      return sport.charAt(0).toUpperCase() + sport.slice(1);
+    },
+    [tGuides]
+  );
+  const getDifficultyTranslation = useCallback(
+    (difficulty: string): string => {
+      if (!difficulty) return difficulty;
+      const key = `difficulty.${difficulty.toLowerCase()}`;
+      const translated = tGuides(key as any);
+      if (translated && translated !== key && !translated.startsWith('difficulty.'))
+        return translated;
+      return difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+    },
+    [tGuides]
+  );
 
   // Query and UI state
   const [query, setQuery] = useState(searchParams.get('q') || '');
-  const [activeTab, setActiveTab] = useState<CategoryTab>((searchParams.get('tab') as CategoryTab) || 'all');
+  const [selectedTabs, setSelectedTabs] = useState<Exclude<CategoryTab, 'all'>[]>(() => {
+    const types = searchParams.get('types') || searchParams.get('tab') || '';
+    return types.split(',').filter(Boolean) as Exclude<CategoryTab, 'all'>[];
+  });
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(Number(searchParams.get('page') || 1));
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
-  // Filters
-  const [filterTypes, setFilterTypes] = useState<CategoryTab[]>(
-    (searchParams.get('types')?.split(',').filter(Boolean) as CategoryTab[]) || []
-  );
-  const [eventDateRange, setEventDateRange] = useState<{ start: string; end: string }>(
-    { start: searchParams.get('startDate') || '', end: searchParams.get('endDate') || '' }
-  );
-  const [productPriceRange, setProductPriceRange] = useState<[number, number]>([0, 1000]);
-
-  // Mobile drawer
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [selectedSports, setSelectedSports] = useState<string[]>(() => {
+    const s = searchParams.get('sports') || '';
+    return s.split(',').filter(Boolean);
+  });
+  const [sportsFilterOpen, setSportsFilterOpen] = useState(false);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(() => {
+    const a = searchParams.get('amenities') || '';
+    return a.split(',').filter(Boolean);
+  });
+  const [amenitiesFilterOpen, setAmenitiesFilterOpen] = useState(false);
 
   // Scroll state
   const [isScrolled, setIsScrolled] = useState(false);
 
+  // Mobile detection for sports filter (Popover vs Drawer)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = () => setIsMobile(mq.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   // Debounce
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  // Version check (versionOnly + refetch) only on first load; later searches use localStorage only
+  const versionCheckDoneRef = useRef(false);
 
-  // Track scroll
+  const toggleTab = useCallback((tab: Exclude<CategoryTab, 'all'>) => {
+    setSelectedTabs((prev) => {
+      const next = prev.includes(tab) ? prev.filter((t) => t !== tab) : [...prev, tab];
+      if (prev.includes(tab) && tab === 'skateparks') setSelectedAmenities([]);
+      if (!next.includes('events') && !next.includes('guides')) setSelectedSports([]);
+      return next;
+    });
+    setPage(1);
+  }, []);
+
+  const clearSelectedTabs = useCallback(() => {
+    setSelectedTabs([]);
+    setSelectedSports([]);
+    setSelectedAmenities([]);
+    setPage(1);
+  }, []);
+
+  // Track scroll (match skateparks FilterBar threshold for sticky bar)
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > 260);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Update URL when tab/page/filters change (not when typing — don't sync URL with query)
+  // Update URL when tab/page change (not when typing — don't sync URL with query)
   useEffect(() => {
     const params = new URLSearchParams();
     if (query) params.set('q', query);
-    if (activeTab && activeTab !== 'all') params.set('tab', activeTab);
+    if (selectedTabs.length > 0) params.set('types', selectedTabs.join(','));
+    if (selectedSports.length > 0) params.set('sports', selectedSports.join(','));
+    if (selectedAmenities.length > 0) params.set('amenities', selectedAmenities.join(','));
     if (page > 1) params.set('page', String(page));
-    if (filterTypes.length > 0) params.set('types', filterTypes.join(','));
-    if (eventDateRange.start) params.set('startDate', eventDateRange.start);
-    if (eventDateRange.end) params.set('endDate', eventDateRange.end);
     params.set('locale', String(locale));
     router.replace(`/${locale}/search?${params.toString()}`);
-  }, [activeTab, page, filterTypes, eventDateRange, locale, router]);
+  }, [selectedTabs, selectedSports, selectedAmenities, page, query, locale, router]);
 
   // Cache-backed categories (localStorage first; fill cache if missing)
   const cacheCategories = useMemo((): ('skateparks' | 'events' | 'guides')[] => {
-    if (activeTab === 'all') return ['skateparks', 'events', 'guides'];
-    if (activeTab === 'skateparks' || activeTab === 'events' || activeTab === 'guides') return [activeTab];
-    return [];
-  }, [activeTab]);
+    if (selectedTabs.length === 0) return ['skateparks', 'events', 'guides'];
+    return selectedTabs.filter(
+      (t): t is 'skateparks' | 'events' | 'guides' =>
+        t === 'skateparks' || t === 'events' || t === 'guides'
+    );
+  }, [selectedTabs]);
 
   // API-only categories (no localStorage cache; always fetch)
   const apiCategories = useMemo((): ('products' | 'trainers')[] => {
-    if (activeTab === 'all') {
+    if (selectedTabs.length === 0) {
       const list: ('products' | 'trainers')[] = [];
       if (isEcommerceEnabled()) list.push('products');
       if (isTrainersEnabled()) list.push('trainers');
       return list;
     }
-    if (activeTab === 'products' && isEcommerceEnabled()) return ['products'];
-    if (activeTab === 'trainers' && isTrainersEnabled()) return ['trainers'];
-    return [];
-  }, [activeTab]);
+    return selectedTabs.filter((t): t is 'products' | 'trainers' => {
+      if (t === 'products') return isEcommerceEnabled();
+      if (t === 'trainers') return isTrainersEnabled();
+      return false;
+    });
+  }, [selectedTabs]);
 
   // Map SearchResultFromCache to SearchResult (same shape as API)
   const mapCacheResultToSearchResult = (r: SearchResultFromCache): SearchResult => {
@@ -174,6 +669,7 @@ function SearchPageContent() {
         imageUrl: r.imageUrl ?? '',
         area: r.area ?? 'center',
         rating: r.rating,
+        amenities: r.amenities,
       };
     }
     if (r.type === 'events') {
@@ -184,6 +680,7 @@ function SearchPageContent() {
         title: r.title ?? '',
         image: r.image,
         startDate: r.startDate ?? new Date().toISOString(),
+        relatedSports: r.relatedSports ?? [],
       };
     }
     return {
@@ -194,42 +691,64 @@ function SearchPageContent() {
       description: r.description,
       coverImage: r.coverImage,
       relatedSports: r.relatedSports,
+      difficulty: (r as { difficulty?: string }).difficulty,
       rating: r.rating,
       ratingCount: r.ratingCount,
       readTime: r.readTime,
     };
   };
 
-  // Fetch results: always search cache first (localStorage); only then call API for products/trainers.
-  // We never call /api/search for skateparks, events, or guides — those come from cache only.
+  // Load from localStorage first; fetch only when cache is missing or DB version !== cache version.
   useEffect(() => {
-    if (!query) {
+    const shouldFetch = query.trim() || selectedTabs.length > 0;
+    if (!shouldFetch) {
       setResults([]);
       setTotal(0);
       return;
     }
-    setLoading(true);
+    const searchQuery = query.trim() || '';
+
+    // 1) Always show cached data first and fast (no network) when we have events/guides/skateparks in localStorage
+    let cacheMapped: SearchResult[] = [];
+    if (cacheCategories.length > 0) {
+      const syncCacheResults = readFromCacheSync(searchQuery, locale, cacheCategories);
+      cacheMapped = syncCacheResults.map(mapCacheResultToSearchResult);
+      setResults(cacheMapped);
+      setTotal(cacheMapped.length);
+      setLoading(false);
+    }
+
+    // 2) Version check + refetch only on first load. After that, searches use localStorage only (no versionOnly or refetch).
+    const needCacheCheckOrFetch = cacheCategories.length > 0;
+    const needApiFetch = apiCategories.length > 0;
+
+    if (!needCacheCheckOrFetch && !needApiFetch) {
+      return;
+    }
+
+    const hasCacheToShow = cacheMapped.length > 0;
+    const doVersionCheck = !versionCheckDoneRef.current;
+
+    if (!hasCacheToShow || needApiFetch) setLoading(true);
     const controller = new AbortController();
     const run = async () => {
       try {
         const allResults: SearchResult[] = [];
 
-        // 1) Always run cache first: localStorage (skateparks_cache, events_cache, guides_cache)
         if (cacheCategories.length > 0) {
-          const cacheResults = await searchFromCache(query, locale, cacheCategories);
-          allResults.push(...cacheResults.map(mapCacheResultToSearchResult));
+          if (doVersionCheck) {
+            const cacheResults = await searchFromCache(searchQuery, locale, cacheCategories);
+            allResults.push(...cacheResults.map(mapCacheResultToSearchResult));
+          } else {
+            allResults.push(...cacheMapped);
+          }
         }
 
-        // 2) Only then: fetch from API for products/trainers (no cache for these)
         const cacheCount = allResults.length;
         if (apiCategories.length > 0) {
           const params = new URLSearchParams();
-          params.set('q', query);
+          if (searchQuery) params.set('q', searchQuery);
           params.set('types', apiCategories.join(','));
-          if (eventDateRange.start) params.set('startDate', eventDateRange.start);
-          if (eventDateRange.end) params.set('endDate', eventDateRange.end);
-          params.set('minPrice', String(productPriceRange[0]));
-          params.set('maxPrice', String(productPriceRange[1]));
           params.set('page', String(page));
           params.set('locale', String(locale));
           const res = await fetch(`/api/search?${params.toString()}`, { signal: controller.signal });
@@ -237,8 +756,7 @@ function SearchPageContent() {
           const data = await res.json();
           const apiResults = (data.results || []) as SearchResult[];
           allResults.push(...apiResults);
-          const apiTotal = data.total ?? 0;
-          setTotal(cacheCount + apiTotal);
+          setTotal(cacheCount + (data.total ?? 0));
         } else {
           setTotal(allResults.length);
         }
@@ -246,15 +764,60 @@ function SearchPageContent() {
         setResults(allResults);
       } catch (e) {
         if ((e as any).name !== 'AbortError') console.error(e);
-        setResults([]);
-        setTotal(0);
+        setResults(cacheMapped);
+        setTotal(cacheMapped.length);
       } finally {
+        if (doVersionCheck) versionCheckDoneRef.current = true;
         setLoading(false);
       }
     };
     run();
     return () => controller.abort();
-  }, [query, activeTab, cacheCategories, apiCategories, filterTypes, eventDateRange, productPriceRange, page, locale]);
+  }, [query, selectedTabs, cacheCategories, apiCategories, page, locale]);
+
+  // Amenity options: same order and icon map as AmenitiesButton for identical popover layout
+  const AMENITY_POPOVER_OPTIONS = useMemo(
+    () => [
+      { key: 'parking', iconName: 'parking' as const },
+      { key: 'entryFee', iconName: 'moneyBold' as const },
+      { key: 'bathroom', iconName: 'toilet' as const },
+      { key: 'shade', iconName: 'shadeBold' as const },
+      { key: 'seating', iconName: 'seatBold' as const },
+      { key: 'noWax', iconName: 'Wax' as const },
+      { key: 'nearbyRestaurants', iconName: 'foodBold' as const },
+      { key: 'guard', iconName: 'securityGuard' as const },
+      { key: 'helmetRequired', iconName: 'helmet' as const },
+      { key: 'scootersAllowed', iconName: 'scooter' as const },
+      { key: 'bikesAllowed', iconName: 'bmx-icon' as const },
+      { key: 'bombShelter', iconName: 'safe-house' as const },
+    ],
+    []
+  );
+
+  // Client-side filter: sports for guides/events only; amenities for skateparks only
+  const filteredResults = useMemo(() => {
+    let list = results;
+    if (selectedSports.length > 0) {
+      list = list.filter((item) => {
+        if (item.type === 'guides' || item.type === 'events') {
+          const sports = (item as GuideResult | EventResult).relatedSports ?? [];
+          return sports.some((s) => selectedSports.includes(s));
+        }
+        return true;
+      });
+    }
+    if (selectedAmenities.length > 0) {
+      list = list.filter((item) => {
+        if (item.type === 'skateparks') {
+          const park = item as SkateparkResult;
+          const amenities = park.amenities ?? {};
+          return selectedAmenities.every((amenity) => amenities[amenity] === true);
+        }
+        return true;
+      });
+    }
+    return list;
+  }, [results, selectedSports, selectedAmenities]);
 
   // Debounced input handler
   const handleQueryChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
@@ -269,76 +832,96 @@ function SearchPageContent() {
   const handleClearSearch = () => {
     setQuery('');
     setPage(1);
-    inputRef.current?.focus();
+    searchInputRef.current?.focus();
   };
 
-  const tabs: { key: CategoryTab; label: string; icon: any; color: string }[] = useMemo(
-    () => [
-      { key: 'all', label: t('tabs.all') || 'All', icon: Sparkles, color: 'purple' },
-      { key: 'products', label: t('tabs.products') || 'Products', icon: ShoppingBag, color: 'green' },
-      { key: 'skateparks', label: t('tabs.skateparks') || 'Parks', icon: MapPin, color: 'blue' },
-      { key: 'events', label: t('tabs.events') || 'Events', icon: Calendar, color: 'orange' },
-      { key: 'guides', label: t('tabs.guides') || 'Guides', icon: BookOpen, color: 'teal' },
-      { key: 'trainers', label: t('tabs.trainers') || 'Trainers', icon: Users, color: 'pink' },
-    ],
-    [t]
-  );
+  const ecommerceEnabled = isEcommerceEnabled();
+  const trainersEnabled = isTrainersEnabled();
 
-  const toggleType = (type: CategoryTab) => {
-    setFilterTypes((prev) =>
-      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+  const tabs: { key: Exclude<CategoryTab, 'all'>; label: string; icon: string; iconBold: string; color: string }[] = useMemo(() => {
+    const allTabs: { key: Exclude<CategoryTab, 'all'>; label: string; icon: string; iconBold: string; color: string }[] = [
+      { key: 'products', label: t('tabs.products') || 'Products', icon: 'shop', iconBold: 'shopBold', color: 'orange' },
+      { key: 'skateparks', label: t('tabs.skateparks') || 'Parks', icon: 'trees', iconBold: 'treesBold', color: 'green' },
+      { key: 'events', label: t('tabs.events') || 'Events', icon: 'calendar', iconBold: 'calendarBold', color: 'purple' },
+      { key: 'guides', label: t('tabs.guides') || 'Guides', icon: 'book', iconBold: 'bookBold', color: 'blue' },
+      { key: 'trainers', label: t('tabs.trainers') || 'Trainers', icon: 'trainers', iconBold: 'trainersBold', color: 'pink' },
+    ];
+    return allTabs.filter(
+      (tab) =>
+        tab.key === 'skateparks' ||
+        tab.key === 'events' ||
+        tab.key === 'guides' ||
+        (tab.key === 'products' && ecommerceEnabled) ||
+        (tab.key === 'trainers' && trainersEnabled)
     );
-    setPage(1);
-  };
+  }, [t, ecommerceEnabled, trainersEnabled]);
 
-  const handleClearFilters = () => {
-    setFilterTypes([]);
-    setEventDateRange({ start: '', end: '' });
-    setProductPriceRange([0, 1000]);
-    setPage(1);
-  };
-
-  const hasActiveFilters = 
-    filterTypes.length > 0 || 
-    eventDateRange.start || 
-    eventDateRange.end ||
-    (productPriceRange[0] !== 0 || productPriceRange[1] !== 1000);
+  // Group results by type for section separation (order matches tabs)
+  const resultsByType = useMemo(() => {
+    const order: Exclude<CategoryTab, 'all'>[] = ['products', 'skateparks', 'events', 'guides', 'trainers'];
+    const typeToTab = Object.fromEntries(tabs.map((tab) => [tab.key, tab]));
+    const groups: { type: Exclude<CategoryTab, 'all'>; label: string; icon: string; items: SearchResult[] }[] = [];
+    for (const type of order) {
+      const items = filteredResults.filter((r) => r.type === type);
+      if (items.length > 0) {
+        const tab = typeToTab[type];
+        groups.push({
+          type,
+          label: tab?.label ?? type,
+          icon: tab?.iconBold ?? tab?.icon ?? 'categoryBold',
+          items,
+        });
+      }
+    }
+    return groups;
+  }, [filteredResults, tabs]);
 
   // Get color classes for tab
   const getTabColorClasses = (color: string) => {
-    const colors: Record<string, { bg: string; text: string; border: string }> = {
-      purple: { 
-        bg: 'bg-brand-purple dark:bg-brand-purple', 
-        text: 'text-brand-purple dark:text-brand-purple', 
-        border: 'border-brand-purple dark:border-brand-purple' 
+    const colors: Record<string, { bg: string; text: string; border: string; hoverBorder: string }> = {
+      purple: {
+        bg: 'bg-purple dark:bg-purple-dark',
+        text: 'text-purple-bg dark:text-purple-bg-dark',
+        border: 'border-brand-purple dark:border-brand-purple',
+        hoverBorder: 'hover:border-brand-purple dark:hover:border-brand-purple',
       },
-      green: { 
-        bg: 'bg-brand-green dark:bg-brand-green', 
-        text: 'text-brand-green dark:text-brand-green', 
-        border: 'border-brand-green dark:border-brand-green' 
+      green: {
+        bg: 'bg-green dark:bg-green-dark',
+        text: 'text-green-bg dark:text-green-bg-dark',
+        border: 'border-green-border dark:border-green-border-dark',
+        hoverBorder: 'hover:border-green-border dark:hover:border-green-border-dark',
       },
-      blue: { 
-        bg: 'bg-brand-blue dark:bg-brand-blue', 
-        text: 'text-brand-blue dark:text-brand-blue', 
-        border: 'border-brand-blue dark:border-blue' 
+      blue: {
+        bg: 'bg-blue dark:bg-blue-dark',
+        text: 'text-blue-bg dark:text-blue-bg-dark',
+        border: 'border-brand-blue dark:border-blue',
+        hoverBorder: 'hover:border-brand-blue dark:hover:border-blue',
       },
-      orange: { 
-        bg: 'bg-brand-yellow dark:bg-brand-yellow', 
-        text: 'text-brand-yellow dark:text-brand-yellow', 
-        border: 'border-brand-yellow dark:border-brand-yellow' 
+      orange: {
+        bg: 'bg-orange dark:bg-orange-dark',
+        text: 'text-orange-bg dark:text-orange-bg-dark',
+        border: 'border-orange-border dark:border-orange-border-dark',
+        hoverBorder: 'hover:border-orange-border dark:hover:border-orange-border-dark',
       },
-      teal: { 
-        bg: 'bg-brand-main dark:bg-brand-main', 
-        text: 'text-brand-main', 
-        border: 'border-brand-main' 
+      teal: {
+        bg: 'bg-teal dark:bg-teal-dark',
+        text: 'text-teal-bg dark:text-teal-bg-dark',
+        border: 'border-teal-border dark:border-teal-border-dark',
+        hoverBorder: 'hover:border-teal-border dark:hover:border-teal-border-dark',
       },
-      pink: { 
-        bg: 'bg-brand-pink dark:bg-brand-pink', 
-        text: 'text-brand-pink dark:text-brand-pink', 
-        border: 'border-brand-pink dark:border-brand-pink' 
+      pink: {
+        bg: 'bg-pink dark:bg-pink-dark',
+        text: 'text-pink-bg dark:text-pink-bg-dark',
+        border: 'border-brand-pink dark:border-brand-pink',
+        hoverBorder: 'hover:border-brand-pink dark:hover:border-brand-pink',
       },
     };
     return colors[color] || colors.purple;
+  };
+
+  /** Map tab color to Button variant (teal → brand; others match Button variant names). */
+  const getTabButtonVariant = (color: string): 'purple' | 'green' | 'blue' | 'orange' | 'brand' | 'pink' | 'gray' | 'teal' => {
+    return color as 'purple' | 'green' | 'blue' | 'orange' | 'pink' | 'gray' | 'teal';
   };
 
   const renderCard = (item: SearchResult) => {
@@ -365,14 +948,13 @@ function SearchPageContent() {
       }
       case 'skateparks': {
         const s = item as SkateparkResult;
-        const nameStr = typeof s.name === 'string' ? s.name : (s.name[locale as 'en' | 'he'] || s.name.en || s.name.he);
+        const park = skateparkResultToPark(s, locale);
         return (
-          <SkateparkCard
+          <ParkCard
             key={s.id}
-            slug={s.slug}
-            name={nameStr}
-            image={s.imageUrl}
-            area={s.area}
+            park={park}
+            locale={locale}
+            animationDelay={(filteredResults.indexOf(item) ?? 0) * 50}
             highlightQuery={query}
           />
         );
@@ -380,16 +962,14 @@ function SearchPageContent() {
       case 'guides': {
         const g = item as GuideResult;
         return (
-          <GuideCard
+          <SearchGuideCard
             key={g.id}
-            slug={g.slug}
-            title={g.title}
-            description={g.description}
-            image={g.coverImage}
-            rating={g.rating}
-            ratingCount={g.ratingCount}
-            readTime={g.readTime}
+            guide={g}
+            locale={locale}
             highlightQuery={query}
+            animationDelay={(filteredResults.indexOf(item) ?? 0) * 50}
+            getSportTranslation={getSportTranslation}
+            getDifficultyTranslation={getDifficultyTranslation}
           />
         );
       }
@@ -412,27 +992,14 @@ function SearchPageContent() {
       case 'events': {
         const ev = item as EventResult;
         return (
-          <Card key={ev.id} className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-16 h-16 rounded-lg bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center text-white">
-                  <Calendar className="w-8 h-8" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <a 
-                    href={`/${locale}/events/${ev.slug}`} 
-                    className="font-semibold text-gray-900 dark:text-white hover:text-brand-main dark:hover:text-brand-main transition-colors line-clamp-2"
-                  >
-                    {highlightMatch(ev.title, query)}
-                  </a>
-                  <div className="flex items-center gap-2 mt-2 text-sm text-gray-600 dark:text-gray-400">
-                    <Clock className="w-4 h-4" />
-                    <span>{new Date(ev.startDate).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <SearchEventCard
+            key={ev.id}
+            event={ev}
+            locale={locale}
+            highlightQuery={query}
+            animationDelay={(filteredResults.indexOf(item) ?? 0) * 50}
+            getSportTranslation={getSportTranslation}
+          />
         );
       }
       default:
@@ -440,405 +1007,560 @@ function SearchPageContent() {
     }
   };
 
-  const sidebarContent = (
-    <div className="space-y-6">
-      {/* Filter Types */}
-      <div>
-        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-3">
-          {t('filters.types') || 'Content Type'}
-        </h3>
-        <div className="space-y-2">
-          {(['products','skateparks','events','guides','trainers'] as CategoryTab[]).map((ct) => {
-            const tab = tabs.find(t => t.key === ct);
-            const IconComponent = tab?.icon || Sparkles;
-            return (
-              <label
-                key={ct}
-                className={cn(
-                  'flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all',
-                  filterTypes.includes(ct)
-                    ? 'bg-brand-main/10 dark:bg-brand-main/20 border-2 border-brand-main'
-                    : 'bg-gray-50 dark:bg-gray-800 border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-700'
-                )}
-              >
-                <input
-                  type="checkbox"
-                  checked={filterTypes.includes(ct)}
-                  onChange={() => toggleType(ct)}
-                  className="w-4 h-4 rounded border-gray-300 text-brand-main focus:ring-brand-main"
-                />
-                <IconComponent className={cn(
-                  'w-4 h-4',
-                  filterTypes.includes(ct) ? 'text-brand-main' : 'text-gray-600 dark:text-gray-400'
-                )} />
-                <span className={cn(
-                  'text-sm font-medium',
-                  filterTypes.includes(ct) 
-                    ? 'text-brand-main' 
-                    : 'text-gray-700 dark:text-gray-300'
-                )}>
-                  {t(`tabs.${ct}` as any)}
-                </span>
-              </label>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Events Date Range */}
-      <div>
-        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-3">
-          {t('filters.dateRange') || 'Date Range'}
-        </h3>
-        <div className="space-y-2">
-          <Input
-            type="date"
-            value={eventDateRange.start}
-            onChange={(e) => { setEventDateRange({ ...eventDateRange, start: e.target.value }); setPage(1); }}
-            placeholder="Start date"
-            className="w-full"
-          />
-          <Input
-            type="date"
-            value={eventDateRange.end}
-            onChange={(e) => { setEventDateRange({ ...eventDateRange, end: e.target.value }); setPage(1); }}
-            placeholder="End date"
-            className="w-full"
-          />
-        </div>
-      </div>
-
-      {/* Products Price Range */}
-      <div>
-        <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-3">
-          {t('filters.priceRange') || 'Price Range'}
-        </h3>
-        <Slider
-          min={0}
-          max={1000}
-          values={productPriceRange}
-          onChange={(vals) => { setProductPriceRange(vals as [number, number]); setPage(1); }}
-          step={10}
-        />
-        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mt-3">
-          <span className="font-medium">₪{productPriceRange[0]}</span>
-          <span className="font-medium">₪{productPriceRange[1]}</span>
-        </div>
-      </div>
-
-      {/* Clear Filters */}
-      {hasActiveFilters && (
-        <Button onClick={handleClearFilters} variant="outline" className="w-full">
-          <X className="w-4 h-4 mr-2" />
-          {isHebrew ? 'נקה פילטרים' : 'Clear Filters'}
-        </Button>
-      )}
-    </div>
-  );
-
   const tr = (en: string, he: string) => (isHebrew ? he : en);
 
   return (
-    <div 
-      className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950"
+    <div
+      className="min-h-screen bg-background dark:bg-background-dark"
       dir={isHebrew ? 'rtl' : 'ltr'}
     >
-      
       {/* ========================================
-          HERO SECTION - Search Bar
+          HERO SECTION - Match skateparks page
       ======================================== */}
-      <div className="relative bg-gradient-to-br from-purple-500/10 via-transparent to-brand-main/10 dark:from-purple-500/5 dark:to-brand-main/5 border-b border-gray-200 dark:border-gray-800">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]" />
-        
-        <div className="relative max-w-6xl mx-auto px-4 py-12 lg:py-16">
-          <div className="text-center space-y-6">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full border border-gray-200 dark:border-gray-700 shadow-sm">
-              <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-              <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                {tr('Powered by Smart Search', 'מופעל על ידי חיפוש חכם')}
-              </span>
-            </div>
-
-            {/* Title */}
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white">
+      <div className="relative pt-14 md:pt-14 bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5 z-10">
+        <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
               {tr('Find Anything', 'מצא כל דבר')}
             </h1>
-
-            {/* Subtitle */}
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            <h2 className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               {tr(
-                'Search parks, products, events, guides, and trainers all in one place',
-                'חפש פארקים, מוצרים, אירועים, מדריכים ומאמנים במקום אחד'
+                'Search parks, products, events, guides, and trainers in one place.',
+                'חפש פארקים, מוצרים, אירועים, מדריכים ומאמנים במקום אחד.'
               )}
-            </p>
+            </h2>
 
-            {/* Search Bar */}
-            <div className="max-w-3xl mx-auto">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                  <SearchIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-                </div>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={query}
-                  onChange={handleQueryChange}
-                  placeholder={tr('Search for anything...', 'חפש כל דבר...')}
-                  className="w-full pl-12 pr-20 py-4 text-lg bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl focus:border-brand-main dark:focus:border-brand-main focus:ring-4 focus:ring-brand-main/20 dark:focus:ring-brand-main/30 outline-none transition-all shadow-lg text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                />
-                {query && (
+            {/* Popular searches - tap to search (main search is in sticky bar below) */}
+            {!query && (
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {tr('Popular:', 'פופולרי:')}
+                </span>
+                {['skateboard', 't-shirt', 'bmx', 'helmet'].map((term) => (
                   <button
-                    onClick={handleClearSearch}
-                    className="absolute inset-y-0 right-4 flex items-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                    key={term}
+                    onClick={() => setQuery(term)}
+                    className="px-3 py-1.5 text-sm bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full transition-colors text-gray-700 dark:text-gray-300"
                   >
-                    <X className="w-5 h-5" />
+                    {term}
                   </button>
-                )}
-              </div>
-
-              {/* Popular Searches */}
-              {!query && (
-                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {tr('Popular:', 'פופולרי:')}
-                  </span>
-                  {['skateboard', 't-shirt', 'bmx', 'helmet'].map((term) => (
-                    <button
-                      key={term}
-                      onClick={() => setQuery(term)}
-                      className="px-3 py-1 text-sm bg-white/60 dark:bg-gray-800/60 hover:bg-white dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full transition-colors text-gray-700 dark:text-gray-300"
-                    >
-                      {term}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ========================================
-          CATEGORY TABS
-      ======================================== */}
-      {query && (
-        <div className={cn(
-          'sticky top-16 md:top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-all duration-300',
-          isScrolled ? 'shadow-md py-3' : 'py-4'
-        )}>
-          <div className="max-w-6xl mx-auto px-4">
-            <div className="flex items-center justify-between gap-4">
-              
-              {/* Tabs */}
-              <div className="flex-1 overflow-x-auto scrollbar-hide">
-                <div className="flex items-center gap-2 min-w-max">
-                  {tabs.map((tab) => {
-                    const isActive = activeTab === tab.key;
-                    const colorClasses = getTabColorClasses(tab.color);
-                    const IconComponent = tab.icon;
-                    
-                    return (
-                      <button
-                        key={tab.key}
-                        onClick={() => { setActiveTab(tab.key); setPage(1); }}
-                        className={cn(
-                          'inline-flex items-center gap-2 px-4 py-2.5 rounded-full font-semibold text-sm transition-all',
-                          isActive
-                            ? `${colorClasses.bg} text-white shadow-lg`
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                        )}
-                      >
-                        <IconComponent className="w-4 h-4" />
-                        <span>{tab.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Right Controls */}
-              <div className="flex items-center gap-2">
-                {/* Mobile Filter Button */}
-                <Button
-                  onClick={() => setIsDrawerOpen(true)}
-                  variant="outline"
-                  size="xl"
-                  className="md:hidden rounded-full"
-                >
-                  <Filter className="w-5 h-5" />
-                  {filterTypes.length > 0 && (
-                    <span className="ml-2 px-2 py-0.5 bg-brand-main text-white text-xs font-bold rounded-full">
-                      {filterTypes.length}
-                    </span>
-                  )}
-                </Button>
-
-                {/* View Toggle (Desktop) */}
-                <div className="hidden md:flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-full">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={cn(
-                      'p-2 rounded-full transition-colors',
-                      viewMode === 'grid'
-                        ? 'bg-white dark:bg-gray-700 shadow-sm'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    )}
-                  >
-                    <Grid3x3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={cn(
-                      'p-2 rounded-full transition-colors',
-                      viewMode === 'list'
-                        ? 'bg-white dark:bg-gray-700 shadow-sm'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                    )}
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Results Count */}
-            {!loading && query && (
-              <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-                {total > 0 ? (
-                  <span>
-                    {tr('Found', 'נמצאו')} <strong className="text-gray-900 dark:text-white">{total}</strong> {tr('results', 'תוצאות')}
-                  </span>
-                ) : null}
+                ))}
               </div>
             )}
           </div>
         </div>
-      )}
+      </div>
 
       {/* ========================================
-          MAIN CONTENT
+          STICKY BAR - Search + Tabs (FilterBar / MobileSidebar style)
       ======================================== */}
-      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
-        {query ? (
-          <div className="flex gap-8">
-            {/* Desktop Sidebar */}
-            <aside className="hidden md:block w-64 shrink-0">
-              <div className="sticky top-32">
-                {sidebarContent}
+      <div
+        className={cn(
+          'sticky z-40 bg-background dark:bg-background-dark transition-all duration-200 border-b-2 border-transparent',
+          isScrolled
+            ? 'top-16 shadow-xl border-header-border dark:border-header-border-dark py-3'
+            : 'top-0 py-4'
+        )}
+      >
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* Search - full width on mobile, inline on desktop */}
+            <div className="flex-1 min-w-0">
+              <SearchInput
+                ref={searchInputRef}
+                value={query}
+                onChange={handleQueryChange}
+                onClear={handleClearSearch}
+                placeholder={tr('Search for anything...', 'חפש כל דבר...')}
+                className="w-full !max-w-full"
+              />
+            </div>
+            {/* Tabs (multi-select) */}
+            <div className="flex overflow-x-auto scrollbar-hide gap-2 min-w-0 items-center">
+              {tabs.map((tab) => {
+                const isSelected = selectedTabs.includes(tab.key);
+                return (
+                  <Button
+                    key={tab.key}
+                    type="button"
+                    variant={isSelected ? getTabButtonVariant(tab.color) : 'gray'}
+                    size="sm"
+                    className="!rounded-md gap-2 flex-shrink-0 whitespace-nowrap font-semibold shadow-none"
+                    onClick={() => toggleTab(tab.key)}
+                  >
+                    <Icon name={(isSelected ? tab.iconBold : tab.icon) as any} className="w-4 h-4" />
+                    <span>{tab.label}</span>
+                  </Button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={clearSelectedTabs}
+                className={cn(
+                  'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-md transition-colors duration-200 flex-shrink-0',
+                  selectedTabs.length >= 2 ? 'visible opacity-100 animate-fadeIn' : 'invisible opacity-0 pointer-events-none'
+                )}
+                style={selectedTabs.length >= 2 ? { animationDelay: '400ms' } : undefined}
+                aria-hidden={selectedTabs.length < 2}
+              >
+                <Icon name="X" className="w-3.5 h-3.5" />
+                {tr('Clear All', 'נקה הכל')}
+              </button>
+            </div>
+            {/* Sports filter (guides + events only) - FilterBar-style icon button */}
+            {(selectedTabs.includes('events') || selectedTabs.includes('guides')) && (
+              <div className="flex-shrink-0">
+                {isMobile ? (
+                  <>
+                    <Button
+                      variant={selectedSports.length > 0 ? 'teal' : 'gray'}
+                      size="sm"
+                      className="relative"
+                      aria-label={tr('Filter by sport', 'סנן לפי ספורט')}
+                      onClick={() => setSportsFilterOpen(true)}
+                    >
+                      <Icon name={selectedSports.length > 0 ? 'filterBold' : 'filter'} className="w-5 h-5" />
+                      {selectedSports.length > 0 && (
+                        <Badge variant="teal" className="rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
+                          {selectedSports.length}
+                        </Badge>
+                      )}
+                    </Button>
+                    <Drawer isOpen={sportsFilterOpen} onClose={() => setSportsFilterOpen(false)} title={tr('Filter by sport', 'סנן לפי ספורט')}>
+                      <div className="space-y-3">
+                        {selectedSports.length > 0 && (
+                          <Button variant="red" size="sm" onClick={() => { setSelectedSports([]); setSportsFilterOpen(false); }} className="gap-1">
+                            <Icon name="trashBold" className="h-3 w-3" /> {tr('Clear', 'נקה')}
+                          </Button>
+                        )}
+                        <div className="flex flex-col gap-1">
+                          {SPORT_FILTER_CONFIG.map((sport) => {
+                            const checked = selectedSports.includes(sport.value);
+                            return (
+                              <button
+                                key={sport.value}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedSports((prev) =>
+                                    prev.includes(sport.value) ? prev.filter((s) => s !== sport.value) : [...prev, sport.value]
+                                  );
+                                }}
+                                className={cn(
+                                  'flex items-center gap-2 w-full px-3 py-2 rounded-lg text-left font-medium transition-colors',
+                                  checked ? 'bg-teal-bg dark:bg-teal-bg-dark text-teal dark:text-teal-dark' : 'bg-muted dark:bg-muted-dark hover:bg-muted/80'
+                                )}
+                              >
+                                <Icon name={sport.iconName as any} className="w-4 h-4" />
+                                <span>{isHebrew ? sport.displayNameHe : sport.displayNameEn}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </Drawer>
+                  </>
+                ) : (
+                  <Popover open={sportsFilterOpen} onOpenChange={setSportsFilterOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={selectedSports.length > 0 ? 'teal' : 'gray'}
+                        size="sm"
+                        className="relative"
+                        aria-label={tr('Filter by sport', 'סנן לפי ספורט')}
+                      >
+                        <Icon name={selectedSports.length > 0 ? 'filterBold' : 'filter'} className="w-5 h-5" />
+                        {selectedSports.length > 0 && (
+                          <Badge variant="teal" className="rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
+                            {selectedSports.length}
+                          </Badge>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-56 p-2">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between px-2 py-1">
+                          <span className="text-sm font-medium">{tr('Filter by sport', 'סנן לפי ספורט')}</span>
+                          {selectedSports.length > 0 && (
+                            <Button variant="red" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => setSelectedSports([])}>
+                              <Icon name="trash" className="h-3 w-3" /> {tr('Clear', 'נקה')}
+                            </Button>
+                          )}
+                        </div>
+                        {SPORT_FILTER_CONFIG.map((sport) => {
+                          const checked = selectedSports.includes(sport.value);
+                          return (
+                            <button
+                              key={sport.value}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSports((prev) =>
+                                  prev.includes(sport.value) ? prev.filter((s) => s !== sport.value) : [...prev, sport.value]
+                                );
+                              }}
+                              className={cn(
+                                'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm font-medium transition-colors',
+                                checked ? 'bg-teal-bg text-teal dark:bg-teal-bg-dark dark:text-teal-dark' : 'hover:bg-muted dark:hover:bg-muted-dark'
+                              )}
+                            >
+                              <Icon name={sport.iconName as any} className="w-4 h-4" />
+                              <span>{isHebrew ? sport.displayNameHe : sport.displayNameEn}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
               </div>
-            </aside>
+            )}
+            {/* Amenities filter (parks only) - does not affect guides or events */}
+            {selectedTabs.includes('skateparks') && (
+              <div className="flex-shrink-0">
+                {isMobile ? (
+                  <>
+                    <Button
+                      variant={selectedAmenities.length > 0 ? 'blue' : 'gray'}
+                      size="sm"
+                      className="relative"
+                      aria-label={tr('Filter by amenities', 'סנן לפי שירותים')}
+                      onClick={() => setAmenitiesFilterOpen(true)}
+                    >
+                      <Icon name={selectedAmenities.length > 0 ? 'notesBold' : 'notes'} className="w-5 h-5" />
+                      {selectedAmenities.length > 0 && (
+                        <Badge variant="blue" className="rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
+                          {selectedAmenities.length}
+                        </Badge>
+                      )}
+                    </Button>
+                    <Drawer isOpen={amenitiesFilterOpen} onClose={() => setAmenitiesFilterOpen(false)} title={tr('Filter by amenities', 'סנן לפי שירותים')}>
+                      <div className="space-y-2">
+                        {selectedAmenities.length > 0 && (
+                          <>
+                            <div className={cn('flex', isHebrew ? 'flex-row-reverse' : 'flex-row', 'justify-end')}>
+                              <Button
+                                variant="red"
+                                size="sm"
+                                onClick={() => { setSelectedAmenities([]); setAmenitiesFilterOpen(false); }}
+                                className="h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
+                              >
+                                {tr('Clear', 'נקה')}
+                                <Icon name="trash" className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                          </>
+                        )}
+                        <div className={cn('flex flex-col gap-1', isHebrew ? 'items-end' : 'items-start')}>
+                          {AMENITY_POPOVER_OPTIONS.map((amenity) => (
+                            <Button
+                              key={amenity.key}
+                              variant={selectedAmenities.includes(amenity.key) ? 'blue' : 'none'}
+                              size="sm"
+                              className={cn(
+                                'flex gap-2 font-medium w-full justify-start min-w-0',
+                                selectedAmenities.includes(amenity.key) ? '' : 'text-gray dark:text-gray-dark',
+                                isHebrew ? 'flex-row-reverse' : 'flex-row'
+                              )}
+                              onClick={() => setSelectedAmenities((prev) => prev.includes(amenity.key) ? prev.filter((a) => a !== amenity.key) : [...prev, amenity.key])}
+                            >
+                              <Icon
+                                name={amenity.iconName as any}
+                                className={cn(
+                                  'w-4 h-4 shrink-0 transition-all duration-200',
+                                  selectedAmenities.includes(amenity.key) ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'
+                                )}
+                              />
+                              {tSkateparks(`amenities.${amenity.key}` as any) || amenity.key}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </Drawer>
+                  </>
+                ) : (
+                  <Popover open={amenitiesFilterOpen} onOpenChange={setAmenitiesFilterOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={selectedAmenities.length > 0 ? 'blue' : 'gray'}
+                        size="sm"
+                        className="relative"
+                        aria-label={tr('Filter by amenities', 'סנן לפי שירותים')}
+                      >
+                        <Icon name={selectedAmenities.length > 0 ? 'notesBold' : 'notes'} className="w-5 h-5" />
+                        {selectedAmenities.length > 0 && (
+                          <Badge variant="blue" className="rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
+                            {selectedAmenities.length}
+                          </Badge>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-fit p-2">
+                      <div className="space-y-2">
+                        <div className={cn('flex gap-4', isHebrew ? 'flex-row-reverse' : 'flex-row', 'items-center justify-between h-[32px]')}>
+                          <h4 className="text-sm font-medium">{tr('Filter by amenities', 'סנן לפי שירותים')}</h4>
+                          <div className={cn('flex gap-1.5 items-center', isHebrew ? 'flex-row-reverse' : 'flex-row')}>
+                            {selectedAmenities.length > 0 && (
+                              <Button
+                                variant="red"
+                                size="sm"
+                                onClick={() => setSelectedAmenities([])}
+                                className="opacity-0 animate-popFadeIn h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
+                                style={{ animationDelay: '300ms' }}
+                              >
+                                {tr('Clear', 'נקה')}
+                                <Icon name="trashBold" className="h-3 w-3" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="gray"
+                              size="sm"
+                              onClick={() => setAmenitiesFilterOpen(false)}
+                              className="h-8 w-8 p-0 shrink-0"
+                              aria-label={tr('Close', 'סגור')}
+                            >
+                              <Icon name="X" className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                        <table className="w-full border-collapse">
+                          <tbody>
+                            {Array.from({ length: Math.ceil(AMENITY_POPOVER_OPTIONS.length / 2) }).map((_, rowIndex) => {
+                              const leftAmenity = AMENITY_POPOVER_OPTIONS[rowIndex * 2];
+                              const rightAmenity = AMENITY_POPOVER_OPTIONS[rowIndex * 2 + 1];
+                              return (
+                                <tr key={rowIndex}>
+                                  <td
+                                    className="w-1/2 px-1 py-0.5 border-r border-popover-border dark:border-popover-border-dark"
+                                    style={{ textAlign: isHebrew ? 'right' : 'left' }}
+                                  >
+                                    <div className={cn('inline-flex', isHebrew ? 'flex-row-reverse' : 'flex-row')}>
+                                      {leftAmenity && (
+                                        <Button
+                                          variant={selectedAmenities.includes(leftAmenity.key) ? 'blue' : 'none'}
+                                          size="sm"
+                                          className={cn(
+                                            'flex gap-2 font-medium w-fit text-nowrap',
+                                            selectedAmenities.includes(leftAmenity.key) ? '' : 'text-gray dark:text-gray-dark',
+                                            isHebrew ? 'flex-row-reverse' : 'flex-row'
+                                          )}
+                                          onClick={() => setSelectedAmenities((prev) => prev.includes(leftAmenity.key) ? prev.filter((a) => a !== leftAmenity.key) : [...prev, leftAmenity.key])}
+                                        >
+                                          <Icon
+                                            name={leftAmenity.iconName as any}
+                                            className={cn(
+                                              'w-4 h-4 transition-all duration-200',
+                                              selectedAmenities.includes(leftAmenity.key) ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'
+                                            )}
+                                          />
+                                          {tSkateparks(`amenities.${leftAmenity.key}` as any) || leftAmenity.key}
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td
+                                    className="w-1/2 px-1 py-0.5"
+                                    style={{ textAlign: isHebrew ? 'right' : 'left' }}
+                                  >
+                                    <div className={cn('inline-flex', isHebrew ? 'flex-row-reverse' : 'flex-row')}>
+                                      {rightAmenity && (
+                                        <Button
+                                          variant={selectedAmenities.includes(rightAmenity.key) ? 'blue' : 'none'}
+                                          size="sm"
+                                          className={cn(
+                                            'flex gap-2 w-fit text-nowrap',
+                                            selectedAmenities.includes(rightAmenity.key) ? '' : 'text-text dark:text-text-dark/90',
+                                            isHebrew ? 'flex-row-reverse' : 'flex-row'
+                                          )}
+                                          onClick={() => setSelectedAmenities((prev) => prev.includes(rightAmenity.key) ? prev.filter((a) => a !== rightAmenity.key) : [...prev, rightAmenity.key])}
+                                        >
+                                          <Icon
+                                            name={rightAmenity.iconName as any}
+                                            className={cn(
+                                              'w-4 h-4 transition-all duration-200',
+                                              selectedAmenities.includes(rightAmenity.key) ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'
+                                            )}
+                                          />
+                                          {tSkateparks(`amenities.${rightAmenity.key}` as any) || rightAmenity.key}
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
+            )}
+            {/* View toggle */}
+            <div className="hidden md:flex items-center flex-shrink-0">
+              <SegmentedControls
+                name="search-view-mode"
+                value={viewMode}
+                onValueChange={(v) => setViewMode(v as 'grid' | 'list')}
+                options={[
+                  {
+                    value: 'grid',
+                    icon: <Icon name={viewMode === 'grid' ? 'categoryBold' : 'category'} className="w-4 h-4" />,
+                    variant: 'orange',
+                  },
+                  {
+                    value: 'list',
+                    icon: <Icon name={viewMode === 'list' ? 'taskBold' : 'task'} className="w-4 h-4" />,
+                    variant: 'pink',
+                  },
+                ]}
+                className="h-9"
+              />
+            </div>
+          </div>
+          {/* Loading bar - MobileSidebar style */}
+          {loading && (
+            <div className="w-full h-[2px] mt-2 bg-gray-200 dark:bg-gray-700 overflow-hidden relative">
+              <div className="bg-brand-main dark:bg-brand-dark loading-bar w-full h-full" />
+            </div>
+          )}
+          {!loading && query && filteredResults.length > 0 && (
+            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              {selectedSports.length > 0 && total !== filteredResults.length ? (
+                <>
+                  {tr('Showing', 'מציג')} <strong className="text-gray-900 dark:text-white">{filteredResults.length}</strong> {tr('of', 'מתוך')} <strong>{total}</strong> {tr('results', 'תוצאות')}
+                </>
+              ) : (
+                <>
+                  {tr('Found', 'נמצאו')} <strong className="text-gray-900 dark:text-white">{filteredResults.length}</strong> {tr('results', 'תוצאות')}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
-            {/* Mobile Drawer */}
-            <Drawer 
-              isOpen={isDrawerOpen} 
-              onClose={() => setIsDrawerOpen(false)} 
-              title={tr('Filters', 'פילטרים')}
-            >
-              {sidebarContent}
-            </Drawer>
-
-            {/* Results */}
-            <main className="flex-1">
+      {/* ========================================
+          MAIN CONTENT - Grid like skateparks page
+      ======================================== */}
+      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8 overflow-x-hidden md:overflow-x-visible">
+        {(query || selectedTabs.length > 0) ? (
+          <>
+            {/* Results - same grid as skateparks: grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 */}
+            <main className="min-w-0">
               {loading ? (
-                <div className={cn(
-                  'grid gap-6',
-                  viewMode === 'grid'
-                    ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-3'
-                    : 'grid-cols-1'
-                )}>
-                  {[...Array(9)].map((_, i) => (
+                <div
+                  className={cn(
+                    'grid gap-4 md:gap-6',
+                    viewMode === 'grid'
+                      ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
+                      : 'grid-cols-1 sm:grid-cols-2'
+                  )}
+                >
+                  {[...Array(8)].map((_, i) => (
                     <Skeleton key={i} className="h-64 rounded-2xl" />
                   ))}
                 </div>
-              ) : results.length > 0 ? (
-                <>
-                  <div className={cn(
-                    'grid gap-6',
-                    viewMode === 'grid'
-                      ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-3'
-                      : 'grid-cols-1'
-                  )}>
-                    {results.map((item) => renderCard(item))}
-                  </div>
-                  
-                  {/* Load More */}
-                  <div className="mt-8 flex justify-center">
-                    <Button 
-                      variant="outline" 
-                      size="lg"
-                      onClick={() => setPage((p) => p + 1)} 
-                      disabled={results.length === 0}
-                    >
-                      {tr('Load More', 'טען עוד')}
-                    </Button>
-                  </div>
-                </>
+              ) : filteredResults.length > 0 ? (
+                <div className="space-y-10" role="region" aria-label={tr('Search results', 'תוצאות חיפוש')}>
+                  {resultsByType.map((group) => {
+                    const showHeading = resultsByType.length > 1;
+                    return (
+                      <section
+                        key={group.type}
+                        aria-labelledby={showHeading ? `search-section-${group.type}` : undefined}
+                        className={showHeading ? 'border-b border-gray-200 dark:border-gray-700 pb-10 last:border-b-0 last:pb-0' : ''}
+                      >
+                        {showHeading && (
+                          <h2
+                            id={`search-section-${group.type}`}
+                            className="text-lg font-semibold text-text dark:text-text-dark mb-4 flex items-center gap-2"
+                          >
+                            <Icon name={group.icon as any} className="w-5 h-5 flex-shrink-0" />
+                            {group.label}
+                            <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                              ({group.items.length})
+                            </span>
+                          </h2>
+                        )}
+                        <div
+                          className={cn(
+                            'grid gap-4 md:gap-6',
+                            viewMode === 'grid'
+                              ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
+                              : 'grid-cols-1 sm:grid-cols-2'
+                          )}
+                        >
+                          {group.items.map((item) => renderCard(item))}
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
               ) : (
-                /* Empty State */
+                /* Empty State - match skateparks page */
                 <div className="text-center py-16">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-purple-500/10 to-brand-main/10 dark:from-purple-500/20 dark:to-brand-main/20 mb-6">
-                    <SearchIcon className="w-10 h-10 text-purple-600 dark:text-purple-400" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-bg dark:bg-gray-bg-dark mb-4">
+                    <Icon name="searchQuest" className="w-8 h-8 text-gray dark:text-gray-dark" />
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                     {tr('No Results Found', 'לא נמצאו תוצאות')}
                   </h2>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                  <p className="text-gray-600 dark:text-gray-400 mb-6">
                     {tr(
-                      'Try adjusting your search or filters to find what you\'re looking for',
-                      'נסה לשנות את החיפוש או הפילטרים כדי למצוא את מה שאתה מחפש'
+                      "Try adjusting your search or tabs to find what you're looking for",
+                      'נסה לשנות את החיפוש או הלשוניות כדי למצוא את מה שאתה מחפש'
                     )}
                   </p>
-                  {hasActiveFilters && (
-                    <Button variant="brand" onClick={handleClearFilters}>
-                      <X className="w-4 h-4 mr-2" />
-                      {tr('Clear All Filters', 'נקה את כל הפילטרים')}
-                    </Button>
-                  )}
                 </div>
               )}
             </main>
-          </div>
+          </>
         ) : (
-          /* Initial State - Before Search */
+          /* Initial State - Before Search (skateparks-style cards) */
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                 {tr('Start Your Search', 'התחל לחפש')}
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                {tr('Explore our collection of parks, products, events, and more', 'גלה את האוסף שלנו של פארקים, מוצרים, אירועים ועוד')}
+                {tr(
+                  'Explore parks, products, events, guides, and trainers.',
+                  'גלה פארקים, מוצרים, אירועים, מדריכים ומאמנים.'
+                )}
               </p>
             </div>
 
-            {/* Category Cards */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {tabs.slice(1).map((tab) => {
-                const IconComponent = tab.icon;
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+              {tabs.map((tab) => {
                 const colorClasses = getTabColorClasses(tab.color);
-                
+                const isSelected = selectedTabs.includes(tab.key);
                 return (
                   <button
                     key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
-                    className="p-6 text-center bg-white dark:bg-gray-900 rounded-2xl border-2 border-gray-200 dark:border-gray-800 hover:border-brand-main dark:hover:border-brand-main hover:shadow-xl transition-all group"
+                    onClick={() => toggleTab(tab.key)}
+                    className={cn(
+                      'p-6 text-center bg-card dark:bg-card-dark rounded-2xl border transition-all group',
+                      isSelected
+                        ? colorClasses.border
+                        : cn('border-gray-border dark:border-gray-border-dark', colorClasses.hoverBorder, 'hover:shadow-lg')
+                    )}
                   >
-                    <div className={cn(
-                      'inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 transition-colors',
-                      `bg-${tab.color}-500/10 dark:bg-${tab.color}-500/20 group-hover:bg-${tab.color}-500 dark:group-hover:bg-${tab.color}-600`
-                    )}>
-                      <IconComponent className={cn(
-                        'w-8 h-8 transition-colors',
-                        colorClasses.text,
-                        'group-hover:text-white'
-                      )} />
+                    <div
+                      className={cn(
+                        'inline-flex items-center justify-center w-14 h-14 rounded-full mb-3 transition-colors',
+                        colorClasses.bg,
+                        'group-hover:opacity-90'
+                      )}
+                    >
+                      <Icon name={tab.icon as any} className={cn("w-7 h-7", colorClasses.text)}/>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                    <h3 className="text-lg font-bold text-text dark:text-text-dark mb-1">
                       {tab.label}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {tr('Browse all', 'עיין בכל')} {tab.label.toLowerCase()}
+                      {isHebrew ? `צפייה בכל ה${tab.label}` : `Browse all ${tab.label.toLowerCase()}`}
                     </p>
                   </button>
                 );
@@ -847,7 +1569,6 @@ function SearchPageContent() {
           </div>
         )}
       </div>
-
     </div>
   );
 }

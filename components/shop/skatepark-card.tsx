@@ -10,6 +10,8 @@ interface SkateparkCardProps {
   openingYear?: number;
   /** When set, highlights matching substring in name (e.g. search query). */
   highlightQuery?: string;
+  /** Locale for link (e.g. "en" | "he"). When set, link uses /[locale]/skateparks/... */
+  locale?: string;
 }
 
 const areaLabels = {
@@ -18,17 +20,26 @@ const areaLabels = {
   south: 'South',
 };
 
-export const SkateparkCard: FC<SkateparkCardProps> = ({ slug, name, image, area, openingYear, highlightQuery }) => {
+export const SkateparkCard: FC<SkateparkCardProps> = ({
+  slug,
+  name,
+  image,
+  area,
+  openingYear,
+  highlightQuery,
+  locale,
+}) => {
+  const href = locale ? `/${locale}/skateparks/${slug}` : `/skateparks/${slug}`;
   return (
-    <Link href={`/skateparks/${slug}`} className="group">
-      <div className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white dark:bg-gray-800 dark:border-gray-700">
+    <Link href={href} className="group">
+      <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 bg-white dark:bg-gray-800 shadow-[0_1px_1px_rgba(0,0,0,0.04)]">
         {/* Image */}
         <div className="aspect-[4/3] relative overflow-hidden bg-gray-100 dark:bg-gray-900">
           {image ? (
-            <img 
-              src={image} 
-              alt={name} 
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+            <img
+              src={image}
+              alt={name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -36,7 +47,7 @@ export const SkateparkCard: FC<SkateparkCardProps> = ({ slug, name, image, area,
             </div>
           )}
         </div>
-        
+
         {/* Content */}
         <div className="p-4">
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">
@@ -46,13 +57,10 @@ export const SkateparkCard: FC<SkateparkCardProps> = ({ slug, name, image, area,
             {highlightQuery ? highlightMatch(name, highlightQuery) : name}
           </h3>
           {openingYear && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Opened: {openingYear}
-            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Opened: {openingYear}</p>
           )}
         </div>
       </div>
     </Link>
   );
 };
-

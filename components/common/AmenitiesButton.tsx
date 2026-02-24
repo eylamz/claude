@@ -98,7 +98,7 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
       onClick={isMobile ? () => setIsOpen(true) : undefined}
     >
       <Icon 
-        name={isActive ? "filterBold" : "filter"} 
+        name={isActive ? "notesBold" : "notes"} 
         className="w-5 h-5"
       />
       {isActive && (
@@ -206,14 +206,14 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                         <Button
                           variant={selectedAmenities.includes(leftAmenity.key) ? "blue" : "none"}
                           size="sm"
-                          className={`flex gap-2 font-medium w-fit text-nowrap ${
+                          className={`flex gap-2 font-medium w-fit text-nowrap overflow-visible ${
                             selectedAmenities.includes(leftAmenity.key) ? '' : 'text-gray dark:text-gray-dark'
                           } ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           onClick={() => toggleAmenity(leftAmenity.key)}
                         >
                           <Icon 
                             name={AMENITY_ICON_MAP[leftAmenity.key] as any || 'filter'}
-                            className={`w-4 h-4 transition-all duration-200 ${
+                            className={`w-4 h-4 transition-all duration-200 overflow-visible ${
                               selectedAmenities.includes(leftAmenity.key) ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'
                             }`}
                           />

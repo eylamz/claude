@@ -287,6 +287,27 @@ export const colors = {
       } 
    },
 
+   
+
+   teal: {
+    light: 'hsl(178, 48%, 37%)',
+    dark: 'hsl(176, 45%, 66%)',
+    bg: {
+      light: 'hsl(178, 43%, 93%)',
+      dark: 'hsl(176, 61%, 15%)',
+    },
+    border: {
+      light: 'hsl(178, 62%, 73%)',
+      dark: 'hsl(176, 64%, 27%)',
+    },
+    hover: {
+      bg: {
+        light: 'hsl(178, 43%, 92%)',
+        dark: 'hsl(176, 61%, 14%)',
+      },
+    },
+  },
+
    blue: {
     light: '#1d4ed8',
     dark: '#93c5fd',

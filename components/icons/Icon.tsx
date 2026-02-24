@@ -23,7 +23,8 @@ import UmbrellaBold from './umbrellaBold.svg';
 import Thunderstorm from './thunderstorm.svg';
 import MapPinBold from './locationBold.svg';
 import MapPin from './location.svg';
-import AmenitiesBold from './notesBold.svg';
+import NotesBold from './notesBold.svg';
+import Notes from './notes.svg';
 import Info from './info.svg';
 import InfoBold from './infoBold.svg';
 import Target from './target.svg';
@@ -330,7 +331,8 @@ const iconMap: Record<string, SvgComponent> = {
   clockBold: ClockBold,
   cookie: Cookie,
   cookieBold: CookieBold,
-  notesBold: AmenitiesBold,
+  notesBold: NotesBold,
+  notes: Notes,
   info: Info,
   infoBold: InfoBold,
   target: Target,
@@ -540,7 +542,7 @@ export type IconName =
   | 'hours24'
   | 'lightbulbBold'
   | 'lockBold'
-  | 'notesBold'
+  | 'notesBold' | 'notes'
   | 'ranking'  | 'rankingBold'
   | 'starWand'  | 'starWandBold'
   | 'monitor'  | 'monitorBold'
@@ -717,7 +719,7 @@ export const Icon = React.forwardRef<HTMLSpanElement, IconProps>(
         {...props}
       >
         <svg
-          className="w-full h-full"
+          className="w-full h-full overflow-visible"
           width={size || 24}
           height={size || 24}
           viewBox="0 0 24 24"
@@ -758,7 +760,7 @@ export const Icon = React.forwardRef<HTMLSpanElement, IconProps>(
         {...props}
       >
         <svg
-          className="w-full h-full"
+          className="w-full h-full overflow-visible"
           width={size || 24}
           height={size || 24}
           viewBox="0 0 24 24"
@@ -806,6 +808,11 @@ export const Icon = React.forwardRef<HTMLSpanElement, IconProps>(
   if (!newSvgAttrs.includes('fill=')) {
     newSvgAttrs = newSvgAttrs.replace('<svg ', '<svg fill="none" ');
   }
+
+  // Always make the SVG overflow visible so strokes/shapes aren't clipped
+  newSvgAttrs = newSvgAttrs
+    .replace(/\s+overflow=["'][^"']*["']/gi, '')
+    .replace('<svg ', '<svg overflow="visible" ');
 
   const finalSvg = `${newSvgAttrs}${svgInner}</svg>`;
 

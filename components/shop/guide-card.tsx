@@ -19,13 +19,15 @@ interface GuideCardProps {
   difficulty?: string;
   /** When set, highlights matching substring in title (e.g. search query). */
   highlightQuery?: string;
+  /** Locale for link (e.g. "en" | "he"). When set, link uses /[locale]/guides/... */
+  locale?: string;
 }
 
-export const GuideCard: FC<GuideCardProps> = ({ 
-  slug, 
-  title, 
-  description, 
-  image, 
+export const GuideCard: FC<GuideCardProps> = ({
+  slug,
+  title,
+  description,
+  image,
   views,
   rating,
   ratingCount,
@@ -33,12 +35,14 @@ export const GuideCard: FC<GuideCardProps> = ({
   sports,
   difficulty,
   highlightQuery,
+  locale,
 }) => {
   const [imageError, setImageError] = useState(false);
+  const href = locale ? `/${locale}/guides/${slug}` : `/guides/${slug}`;
 
   return (
-    <Link href={`/guides/${slug}`} className="group">
-      <div className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white dark:bg-gray-800 dark:border-gray-700 h-full flex flex-col">
+    <Link href={href} className="group">
+      <div className="border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 bg-white dark:bg-gray-800 h-full flex flex-col shadow-[0_1px_1px_rgba(0,0,0,0.04)]">
         {/* Image */}
         <div className="aspect-[4/3] relative overflow-hidden bg-gray-100 dark:bg-gray-900">
           {image && !imageError ? (
@@ -57,7 +61,7 @@ export const GuideCard: FC<GuideCardProps> = ({
             </div>
           )}
         </div>
-        
+
         {/* Content */}
         <div className="p-4 flex flex-col flex-1">
           {/* Sports Tags */}
@@ -131,4 +135,3 @@ export const GuideCard: FC<GuideCardProps> = ({
     </Link>
   );
 };
-

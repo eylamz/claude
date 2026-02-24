@@ -11,9 +11,19 @@ import { Icon, type IconName } from '@/components/icons/Icon';
 import { useTheme } from '@/context/ThemeProvider';
 import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
-import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled, isGrowthLabEnabled } from '@/lib/utils/ecommerce';
+import {
+  isEcommerceEnabled,
+  isTrainersEnabled,
+  isLoginEnabled,
+  isGrowthLabEnabled,
+} from '@/lib/utils/ecommerce';
 import { flipLanguage } from '@/lib/utils/transliterate';
-import { searchFromCache, getAreaFromQuery, queryMatchesCategory, type SearchResultFromCache } from '@/lib/search-from-cache';
+import {
+  searchFromCache,
+  getAreaFromQuery,
+  queryMatchesCategory,
+  type SearchResultFromCache,
+} from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 import { Separator } from '@/components/ui/separator';
 
@@ -31,8 +41,6 @@ interface NavCard {
   description: string;
   comingSoon?: boolean;
 }
-
-
 
 interface SearchResult {
   id: string;
@@ -61,7 +69,11 @@ interface SearchResult {
   relatedSports?: string[];
 }
 
-export default function MobileSidebar({ isOpen, onClose, openWithSearch = false }: MobileSidebarProps) {
+export default function MobileSidebar({
+  isOpen,
+  onClose,
+  openWithSearch = false,
+}: MobileSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const locale = useLocale();
@@ -114,39 +126,49 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
       label: tMobileNav('events'),
       description: tMobileNav('eventsDesc'),
     },
-    ...(ecommerceEnabled ? [{
-      href: `/${locale}/shop`,
-      icon: 'shop' as IconName,
-      label: tMobileNav('shop'),
-      description: tMobileNav('shopDesc'),
-    }] : []),
-    ...(growthLabEnabled ? [{
-      href: `/${locale}/growth-lab`,
-      icon: 'plantBold' as IconName,
-      label: tMobileNav('forms'),
-      description: tMobileNav('growthLabDesc'),
-    }] : []),
+    ...(ecommerceEnabled
+      ? [
+          {
+            href: `/${locale}/shop`,
+            icon: 'shop' as IconName,
+            label: tMobileNav('shop'),
+            description: tMobileNav('shopDesc'),
+          },
+        ]
+      : []),
+    ...(growthLabEnabled
+      ? [
+          {
+            href: `/${locale}/growth-lab`,
+            icon: 'plantBold' as IconName,
+            label: tMobileNav('forms'),
+            description: tMobileNav('growthLabDesc'),
+          },
+        ]
+      : []),
     {
       href: `/${locale}/about`,
       icon: 'targetBold',
       label: tCommon('about'),
       description: tCommon('aboutDesc'),
     },
-    { 
-      href: `/${locale}/contact`, 
-      icon: 'messages', 
-      label: tCommon('contact'), 
+    {
+      href: `/${locale}/contact`,
+      icon: 'messages',
+      label: tCommon('contact'),
       description: tMobileNav('findCoaches') || '',
     },
-    ...(trainersEnabled ? [{
-      href: `/${locale}/trainers`,
-      icon: 'trainersBold' as IconName,
-      label: tMobileNav('findCoaches'),
-      description: tMobileNav('findCoaches') || '',
-    }] : []),
+    ...(trainersEnabled
+      ? [
+          {
+            href: `/${locale}/trainers`,
+            icon: 'trainersBold' as IconName,
+            label: tMobileNav('findCoaches'),
+            description: tMobileNav('findCoaches') || '',
+          },
+        ]
+      : []),
   ];
-
-
 
   // Prevent body scroll when open
   useEffect(() => {
@@ -207,12 +229,12 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
         if (searchInputRef.current) {
           // Hand off the focus from the trigger input to the actual input
           searchInputRef.current.focus();
-          
+
           // Optional: on some versions of iOS, a second click helps
           searchInputRef.current.click();
         }
-      }, 150); 
-      
+      }, 150);
+
       return () => clearTimeout(timer);
     }
   }, [isSearchOpen, isOpen]);
@@ -223,7 +245,12 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
     if (typeof raw === 'string') return raw;
     if (raw && typeof raw === 'object' && 'en' in raw && 'he' in raw) {
       const loc = locale === 'he' ? 'he' : 'en';
-      return (raw as { en?: string; he?: string })[loc] ?? (raw as { en?: string; he?: string }).en ?? (raw as { en?: string; he?: string }).he ?? '';
+      return (
+        (raw as { en?: string; he?: string })[loc] ??
+        (raw as { en?: string; he?: string }).en ??
+        (raw as { en?: string; he?: string }).he ??
+        ''
+      );
     }
     return String(raw);
   };
@@ -262,7 +289,9 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
     } else if (flippedLower && displayName.includes(flippedLower)) {
       // Flipped match: start = higher score, middle/end = slightly lower but still in results
       const base = displayName.startsWith(flippedLower) ? WEIGHTS.name * 2 : WEIGHTS.name;
-      const discount = displayName.startsWith(flippedLower) ? FLIPPED_DISCOUNT : FLIPPED_MIDDLE_DISCOUNT;
+      const discount = displayName.startsWith(flippedLower)
+        ? FLIPPED_DISCOUNT
+        : FLIPPED_MIDDLE_DISCOUNT;
       score += base * discount;
     }
 
@@ -275,7 +304,10 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
       trainers: 'trainer',
     };
     const categoryName = categoryMap[result.type] || '';
-    if (categoryName && (queryLower.includes(categoryName) || (flippedLower?.includes(categoryName)))) {
+    if (
+      categoryName &&
+      (queryLower.includes(categoryName) || flippedLower?.includes(categoryName))
+    ) {
       score += WEIGHTS.category;
     }
 
@@ -287,7 +319,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
         south: 'south',
       };
       const areaName = areaMap[result.area] || '';
-      if (areaName && (queryLower.includes(areaName) || (flippedLower?.includes(areaName)))) {
+      if (areaName && (queryLower.includes(areaName) || flippedLower?.includes(areaName))) {
         score += WEIGHTS.area;
       }
     }
@@ -377,7 +409,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
 
     setIsSearching(true);
     setSearchLoading(true);
-    
+
     if (searchDebounceRef.current) {
       clearTimeout(searchDebounceRef.current);
     }
@@ -418,10 +450,15 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
           if (result.matchBy === 'area') return true;
           // Category trigger: e.g. "אירועים", "events", "thrugho" → show all events; same for skateparks/guides (≥3 chars)
           if (result.type === 'events' && queryMatchesCategory(searchQuery, 'events')) return true;
-          if (result.type === 'skateparks' && queryMatchesCategory(searchQuery, 'skateparks')) return true;
+          if (result.type === 'skateparks' && queryMatchesCategory(searchQuery, 'skateparks'))
+            return true;
           if (result.type === 'guides' && queryMatchesCategory(searchQuery, 'guides')) return true;
           if (!name) return false;
-          if (name.includes(q) || (flippedLower != null && flippedLower !== '' && name.includes(flippedLower))) return true;
+          if (
+            name.includes(q) ||
+            (flippedLower != null && flippedLower !== '' && name.includes(flippedLower))
+          )
+            return true;
           if (queryContainsHebrew) return true; // matched on name.he in cache/API; display name is locale (e.g. en)
           return false;
         };
@@ -503,13 +540,16 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
         }
         return true;
       })
-      .reduce((acc, result) => {
-        if (!acc[result.type]) {
-          acc[result.type] = [];
-        }
-        acc[result.type].push(result);
-        return acc;
-      }, {} as Record<string, SearchResult[]>);
+      .reduce(
+        (acc, result) => {
+          if (!acc[result.type]) {
+            acc[result.type] = [];
+          }
+          acc[result.type].push(result);
+          return acc;
+        },
+        {} as Record<string, SearchResult[]>
+      );
   }, [searchResults, ecommerceEnabled]);
 
   // Calculate max results per group: 6 if multiple groups, unlimited if single group
@@ -531,7 +571,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
 
   // Define category display order (skateparks before guides)
   // Only include products if ecommerce is enabled
-  const categoryOrder = ecommerceEnabled 
+  const categoryOrder = ecommerceEnabled
     ? ['skateparks', 'products', 'events', 'guides', 'trainers']
     : ['skateparks', 'events', 'guides', 'trainers'];
 
@@ -555,11 +595,10 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
     signOut();
   };
 
-  
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         className={`fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-colors duration-200 ${
           isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
@@ -569,18 +608,17 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
       />
 
       {/* Sidebar Drawer */}
-      <div 
+      <div
         className={`sidebar h-full fixed ${locale === 'he' ? 'right-0' : 'left-0'} top-0 bottom-0 z-[61] w-full max-w-[500px] bg-sidebar dark:bg-sidebar-dark shadow-2xl  ease-out transition-all duration-300 flex flex-col`}
-        style={{ 
+        style={{
           height: '100dvh',
-          transform: isOpen 
-            ? 'translateX(0)' 
-            : locale === 'he' 
-              ? 'translateX(100%)' 
-              : 'translateX(-100%)'
+          transform: isOpen
+            ? 'translateX(0)'
+            : locale === 'he'
+              ? 'translateX(100%)'
+              : 'translateX(-100%)',
         }}
       >
-        
         {/* === HEADER === */}
         <div className="flex-none border-b border-border dark:border-border-dark bg-header dark:bg-header-dark transition-colors duration-200">
           {/* Header */}
@@ -598,13 +636,13 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                     // Open search and focus input
                     setIsSearchOpen(true);
                     // Immediately attempt to focus for mobile keyboard
-                     searchInputRef.current?.focus();
+                    searchInputRef.current?.focus();
                   }
                 }}
                 className={`p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200 w-full ${locale === 'he' ? 'max-w-[58px]' : 'max-w-[65px]'}`}
-                aria-label={isSearchOpen ? "Close Search" : "Open Search"}
+                aria-label={isSearchOpen ? 'Close Search' : 'Open Search'}
               >
-                <Icon name={isSearchOpen ? "searchClose" : "search"} className="w-4 h-4" />
+                <Icon name={isSearchOpen ? 'searchClose' : 'search'} className="w-4 h-4" />
                 <span>{tCommon('search') || 'Search'}</span>
               </button>
 
@@ -632,7 +670,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                 </Link>
               )}
 
-          {loginEnabled && session && isAdmin && (
+              {loginEnabled && session && isAdmin && (
                 <Link
                   href={`/${locale}/account`}
                   className={`p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200 w-full ${locale === 'he' ? 'max-w-[58px]' : 'max-w-[65px]'}`}
@@ -654,7 +692,11 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                 ) : (
                   <Icon name="moon" className={`w-4 h-4 ${shouldAnimate ? 'animate-pop' : ''}`} />
                 )}
-                <span>{theme === 'dark' ? tCommon('light_mode') || 'Light Mode' : tCommon('dark_mode') || 'Dark Mode'}</span>
+                <span>
+                  {theme === 'dark'
+                    ? tCommon('light_mode') || 'Light Mode'
+                    : tCommon('dark_mode') || 'Dark Mode'}
+                </span>
               </button>
 
               {/* Language Switcher Button */}
@@ -695,11 +737,9 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
           </div>
 
           {/* Search Bar - shown when search icon is clicked */}
-          <div 
+          <div
             className={`w-full overflow-hidden transition-all duration-300 ease-in-out ${
-              isSearchOpen 
-                ? 'max-h-20 opacity-100 pb-4' 
-                : 'max-h-0 opacity-0 pb-0'
+              isSearchOpen ? 'max-h-20 opacity-100 pb-4' : 'max-h-0 opacity-0 pb-0'
             }`}
           >
             <div className="px-4">
@@ -712,7 +752,7 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                   setSearchResults([]);
                   setIsSearching(false);
                 }}
-                placeholder={tMobileNav('searchPlaceholder') || "Search..."}
+                placeholder={tMobileNav('searchPlaceholder') || 'Search...'}
                 className="w-full !max-w-full focus-within:!outline-transparent focus-visible:!outline-red-500"
                 variant="default"
               />
@@ -754,13 +794,15 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                   .map(([category, results]) => {
                     // Limit results if there are multiple groups
                     const displayResults = results.slice(0, maxResultsPerGroup);
-                    
+
                     return (
                       <div key={category} className="space-y-3">
                         <h3 className="text-sm font-bold text-text dark:text-text-dark uppercase tracking-wider transition-colors duration-200">
                           {category === 'skateparks' && searchArea
-                            ? tSearch('skateparksInArea', { area: tSkateparks(`search.area.${searchArea}`) })
-                            : (categoryLabels[category] || category)}
+                            ? tSearch('skateparksInArea', {
+                                area: tSkateparks(`search.area.${searchArea}`),
+                              })
+                            : categoryLabels[category] || category}
                         </h3>
                         <div className="space-y-1">
                           {displayResults.map((result) => {
@@ -771,14 +813,18 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
 
                             if (result.type === 'skateparks') {
                               imageUrl = result.imageUrl || '';
-                              name = typeof result.name === 'string' ? result.name : (result.name || '');
+                              name =
+                                typeof result.name === 'string' ? result.name : result.name || '';
                               href = `/${locale}/skateparks/${result.slug}`;
                             } else if (result.type === 'products') {
                               imageUrl = result.images?.[0]?.url || '';
                               if (typeof result.name === 'string') {
                                 name = result.name;
                               } else if (result.name && typeof result.name === 'object') {
-                                name = (result.name as { en?: string; he?: string }).en || (result.name as { en?: string; he?: string }).he || '';
+                                name =
+                                  (result.name as { en?: string; he?: string }).en ||
+                                  (result.name as { en?: string; he?: string }).he ||
+                                  '';
                               } else {
                                 name = '';
                               }
@@ -819,11 +865,15 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
                                   ) : (
                                     <Icon
                                       name={
-                                        result.type === 'skateparks' ? 'treesBold' :
-                                        result.type === 'products' ? 'shopBold' :
-                                        result.type === 'guides' ? 'bookBold' :
-                                        result.type === 'trainers' ? 'trainersBold' :
-                                        'calendarBold'
+                                        result.type === 'skateparks'
+                                          ? 'treesBold'
+                                          : result.type === 'products'
+                                            ? 'shopBold'
+                                            : result.type === 'guides'
+                                              ? 'bookBold'
+                                              : result.type === 'trainers'
+                                                ? 'trainersBold'
+                                                : 'calendarBold'
                                       }
                                       className="w-6 h-6 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-text dark:group-hover:text-text-dark transition-colors duration-200"
                                     />
@@ -849,180 +899,152 @@ export default function MobileSidebar({ isOpen, onClose, openWithSearch = false 
           ) : (
             // Regular Navigation Content
             <>
-          
-          {/* Navigation Links */}
-          <nav className="flex-1 overflow-y-auto pt-4 min-h-0">
-            {navCards.map((card) => {
-              const isActive = pathname === card.href || 
-                (card.href !== `/${locale}` && pathname.startsWith(card.href));
+              {/* Navigation Links */}
+              <nav className="flex-1 overflow-y-auto pt-4 min-h-0">
+                {navCards.map((card) => {
+                  const isActive =
+                    pathname === card.href ||
+                    (card.href !== `/${locale}` && pathname.startsWith(card.href));
 
-              return (
-                <div key={card.href} className={`overflow-hidden min-w-fit w-3/4 ${locale === 'he' ? 'rounded-l-full' : 'rounded-r-full'}`}>
-                <Link
-                  href={card.href}
-                  onClick={onClose}
-                  className={`flex items-center gap-5 px-2 py-3 text-3xl ${
-                    isActive
-                      ? 'ps-4 pe-6 bg-brand-main/20 dark:bg-brand-main/5 text-brand-main dark:text-brand-main'
-                      : 'ms-2 text-black/80 dark:text-white/90'
-                  }`}
-                >
-                  <Icon
-                    name={card.icon}
-                    className={`flex-shrink-0 w-4 h-4 -mb-0.5 overflow-visible ${isActive ? 'text-brand-main dark:text-brand-main' : 'text-black/80 dark:text-white/90'}`}
-                  />
-                  <span className="font-medium">{card.label}</span>
-                </Link>
-                </div>
-              );
-            })}
-          </nav>
-
-
-
-          
-
-          {/* Admin Management Links */}
-          {loginEnabled && isAdmin && (
-            <nav className="text-base mt-12 px-6 transition-colors duration-200">
-            <Separator className="my-6 !w-[80%]" />
-              <ul className="grid grid-cols-2 gap-4">
-                {[
-                  {
-                    href: `/${locale}/admin`,
-                    labelKey: 'dashboard',
-                    icon: (
-                      <Icon name="adminBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/products`,
-                    labelKey: 'products',
-                    icon: (
-                      <Icon name="objectsBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/orders`,
-                    labelKey: 'orders',
-                    icon: (
-                      <Icon name="shopBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/users`,
-                    labelKey: 'users',
-                    icon: (
-                      <Icon name="accountBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/forms`,
-                    labelKey: 'forms',
-                    icon: (
-                      <Icon name="plantBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/skateparks`,
-                    labelKey: 'findParks',
-                    icon: (
-                      <Icon name="treesBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/reviews`,
-                    labelKey: 'reviews',
-                    icon: (
-                      <Icon name="starWandBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/events`,
-                    labelKey: 'events',
-                    icon: (
-                      <Icon name="calendarBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/event-signups`,
-                    labelKey: 'eventSignups',
-                    icon: (
-                      <Icon name="taskBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/trainers`,
-                    labelKey: 'findCoaches',
-                    icon: (
-                      <Icon name="trainersBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/guides`,
-                    labelKey: 'guides',
-                    icon: (
-                      <Icon name="bookBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/metrics`,
-                    labelKey: 'metrics',
-                    icon: (
-                      <Icon name="chartBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/newsletter`,
-                    labelKey: 'newsletter',
-                    icon: (
-                      <Icon name="clipboardBold" className="w-4 h-4" />
-                    ),
-                  },
-                  {
-                    href: `/${locale}/admin/settings`,
-                    labelKey: 'settings',
-                    icon: (
-                      <Icon name="settingsBold" className="w-4 h-4" />
-                    ),
-                  },
-                ].map((item) => {
-                  const isActive = pathname === item.href || (item.href !== `/${locale}/admin` && pathname.startsWith(item.href));
-                  
-                  
                   return (
-                    <li key={item.href}>
+                    <div
+                      key={card.href}
+                      className={`overflow-hidden min-w-fit w-3/4 ${locale === 'he' ? 'rounded-l-full' : 'rounded-r-full'}`}
+                    >
                       <Link
-                        href={item.href}
+                        href={card.href}
                         onClick={onClose}
-                        className={`block transition-colors duration-200 ${
+                        className={`flex items-center gap-5 px-2 py-3 text-3xl ${
                           isActive
-                            ? 'text-[#16641a] dark:text-[#85ef8a] font-semibold'
-                            : 'text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark'
+                            ? 'ps-4 pe-6 bg-brand-main/20 dark:bg-brand-main/5 text-brand-main dark:text-brand-main'
+                            : 'ms-2 text-black/80 dark:text-white/90'
                         }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className={`transition-colors duration-200 -mb-1 ${
-                            isActive
-                              ? 'text-[#16641a] dark:text-[#85ef8a]'
-                              : 'text-sidebar-text dark:text-sidebar-text-dark'
-                          }`}>
-                            {item.icon}
-                          </span>
-                          <span>{tMobileNav(item.labelKey)}</span>
-                        </div>
+                        <Icon
+                          name={card.icon}
+                          className={`flex-shrink-0 w-4 h-4 -mb-0.5 overflow-visible ${isActive ? 'text-brand-main dark:text-brand-main' : 'text-black/80 dark:text-white/90'}`}
+                        />
+                        <span className="font-medium">{card.label}</span>
                       </Link>
-                    </li>
+                    </div>
                   );
                 })}
-              </ul>
-            </nav>
-          )}
+              </nav>
+
+              {/* Admin Management Links */}
+              {loginEnabled && isAdmin && (
+                <nav className="text-base mt-12 px-6 transition-colors duration-200">
+                  <Separator className="my-6 !w-[80%]" />
+                  <ul className="grid grid-cols-2 gap-4">
+                    {[
+                      {
+                        href: `/${locale}/admin`,
+                        labelKey: 'dashboard',
+                        icon: <Icon name="adminBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/products`,
+                        labelKey: 'products',
+                        icon: <Icon name="objectsBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/orders`,
+                        labelKey: 'orders',
+                        icon: <Icon name="shopBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/users`,
+                        labelKey: 'users',
+                        icon: <Icon name="accountBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/forms`,
+                        labelKey: 'forms',
+                        icon: <Icon name="plantBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/skateparks`,
+                        labelKey: 'findParks',
+                        icon: <Icon name="treesBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/reviews`,
+                        labelKey: 'reviews',
+                        icon: <Icon name="starWandBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/events`,
+                        labelKey: 'events',
+                        icon: <Icon name="calendarBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/event-signups`,
+                        labelKey: 'eventSignups',
+                        icon: <Icon name="taskBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/trainers`,
+                        labelKey: 'findCoaches',
+                        icon: <Icon name="trainersBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/guides`,
+                        labelKey: 'guides',
+                        icon: <Icon name="bookBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/metrics`,
+                        labelKey: 'metrics',
+                        icon: <Icon name="chartBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/newsletter`,
+                        labelKey: 'newsletter',
+                        icon: <Icon name="clipboardBold" className="w-4 h-4" />,
+                      },
+                      {
+                        href: `/${locale}/admin/settings`,
+                        labelKey: 'settings',
+                        icon: <Icon name="settingsBold" className="w-4 h-4" />,
+                      },
+                    ].map((item) => {
+                      const isActive =
+                        pathname === item.href ||
+                        (item.href !== `/${locale}/admin` && pathname.startsWith(item.href));
+
+                      return (
+                        <li key={item.href}>
+                          <Link
+                            href={item.href}
+                            onClick={onClose}
+                            className={`block transition-colors duration-200 ${
+                              isActive
+                                ? 'text-[#16641a] dark:text-[#85ef8a] font-semibold'
+                                : 'text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`transition-colors duration-200 -mb-1 ${
+                                  isActive
+                                    ? 'text-[#16641a] dark:text-[#85ef8a]'
+                                    : 'text-sidebar-text dark:text-sidebar-text-dark'
+                                }`}
+                              >
+                                {item.icon}
+                              </span>
+                              <span>{tMobileNav(item.labelKey)}</span>
+                            </div>
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </nav>
+              )}
             </>
           )}
         </div>
-
-       
       </div>
     </>
   );

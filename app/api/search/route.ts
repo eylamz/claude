@@ -40,7 +40,8 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = 20;
 
-    if (!query) {
+    // Empty query: only return results when types (or category) are specified (browse-by-category).
+    if (!query && types.length === 0 && !category) {
       return NextResponse.json({ results: [], total: 0 });
     }
 

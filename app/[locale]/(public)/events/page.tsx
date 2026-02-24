@@ -76,7 +76,7 @@ const SPORT_CONFIG = [
     value: 'roller',
     iconName: 'Roller' as const,
     displayName: 'Rollerblading',
-    variant: 'blue' as const,
+    variant: 'teal' as const,
     tooltipEn: 'Filter by Rollerblading events',
     tooltipHe: 'סנן לפי אירועי רולר',
   },
@@ -84,7 +84,7 @@ const SPORT_CONFIG = [
     value: 'skate',
     iconName: 'Skate' as const,
     displayName: 'Skating',
-    variant: 'blue' as const,
+    variant: 'teal' as const,
     tooltipEn: 'Filter by Skating events',
     tooltipHe: 'סנן לפי אירועי סקייט',
   },
@@ -93,14 +93,14 @@ const SPORT_CONFIG = [
     iconName: 'scooter' as const,
     displayName: 'Scootering',
     variant: 'blue' as const,
-    tooltipEn: 'Filter by Scootering events',
+    tooltipEn: 'Filter   by Scootering events',
     tooltipHe: 'סנן לפי אירועי קורקינט',
   },
   {
     value: 'bmx',
     iconName: 'bmx-icon' as const,
     displayName: 'BMXing',
-    variant: 'blue' as const,
+    variant: 'teal' as const,
     tooltipEn: 'Filter by BMX events',
     tooltipHe: 'סנן לפי אירועי BMX',
   },
@@ -108,7 +108,7 @@ const SPORT_CONFIG = [
     value: 'longboard',
     iconName: 'Longboard' as const,
     displayName: 'Longboarding',
-    variant: 'blue' as const,
+    variant: 'teal' as const,
     tooltipEn: 'Filter by Longboarding events',
     tooltipHe: 'סנן לפי אירועי לונגבורד',
   },
@@ -937,7 +937,7 @@ function EventsPageContent() {
                     <button
                       key={sport}
                       onClick={() => setSelectedSports((prev) => prev.filter((s) => s !== sport))}
-                      className="inline-flex items-center gap-2 px-3 py-2 bg-blue-bg dark:bg-blue-bg-dark rounded-full border border-blue-border dark:border-blue-border-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
+                      className="inline-flex items-center gap-2 px-3 py-2 bg-teal-bg dark:bg-teal-bg-dark rounded-full border border-teal-border dark:border-teal-border-dark hover:bg-teal-hover-bg dark:hover:bg-teal-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
                       title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
                     >
                       {sportConfig ? (

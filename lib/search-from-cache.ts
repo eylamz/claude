@@ -27,6 +27,8 @@ export interface SearchResultFromCache {
   readTime?: number;
   /** 'name' = matched by name; 'area' = matched only by area (shown last) */
   matchBy?: 'name' | 'area';
+  /** Only for type 'skateparks': used for amenities filter on search page */
+  amenities?: Record<string, boolean>;
 }
 
 /** Area search terms: English and Hebrew (מרכז, דרום, צפון). */
@@ -203,6 +205,7 @@ const CACHE_CONFIG = {
     key: 'skateparks_cache',
     versionKey: 'skateparks_version',
     fetchUrl: '/api/skateparks',
+    versionOnlyUrl: '/api/skateparks?versionOnly=true',
     parseResponse: (data: any) => data.skateparks || [],
     getVersion: (data: any) => data.version ?? 1,
   },
@@ -210,6 +213,7 @@ const CACHE_CONFIG = {
     key: 'events_cache',
     versionKey: 'events_version',
     fetchUrl: '/api/events?full=true',
+    versionOnlyUrl: '/api/events?versionOnly=true',
     parseResponse: (data: any) => data.events || [],
     getVersion: (data: any) => data.version ?? 1,
   },
@@ -217,10 +221,43 @@ const CACHE_CONFIG = {
     key: 'guides_cache',
     versionKey: 'guides_version',
     fetchUrl: '/api/guides?limit=100',
+    versionOnlyUrl: '/api/guides?versionOnly=true',
     parseResponse: (data: any) => data.guides || [],
     getVersion: (data: any) => data.version ?? 1,
   },
 } as const;
+
+/** Read cached version number from localStorage for a category. */
+export function getCachedVersion(category: SearchResultType): number | undefined {
+  const config = CACHE_CONFIG[category];
+  if (typeof window === 'undefined') return undefined;
+  const raw = localStorage.getItem(config.versionKey);
+  if (!raw) return undefined;
+  if (category === 'skateparks') return parseSkateparksVersion(raw).version;
+  if (category === 'events') return parseEventsVersion(raw).version;
+  if (category === 'guides') return parseGuidesVersion(raw).version;
+  try {
+    const v = Number(JSON.parse(raw));
+    return Number.isFinite(v) ? v : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Fetch current version from the server (lightweight ?versionOnly=true request). */
+export async function fetchServerVersion(category: SearchResultType): Promise<number | null> {
+  const config = CACHE_CONFIG[category];
+  const url = 'versionOnlyUrl' in config ? (config as { versionOnlyUrl: string }).versionOnlyUrl : `${config.fetchUrl}${config.fetchUrl.includes('?') ? '&' : '?'}versionOnly=true`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const v = data?.version;
+    return typeof v === 'number' && Number.isFinite(v) ? v : v != null ? Number(v) || null : null;
+  } catch {
+    return null;
+  }
+}
 
 function getLocalizedText(value: string | { en?: string; he?: string } | undefined, locale: string): string {
   if (!value) return '';
@@ -239,7 +276,8 @@ function matchesQueryOrFlipped(text: string, query: string): boolean {
   return textLower.includes(q) || (flippedLower !== '' && textLower.includes(flippedLower));
 }
 
-/** Ensure cache is populated; return parsed array or null if fetch failed. */
+/** Ensure cache is populated; return parsed array or null if fetch failed.
+ * When cache exists, checks server version (?versionOnly=true); only refetches when DB version !== cached version. */
 async function getOrFillCache(
   category: keyof typeof CACHE_CONFIG
 ): Promise<any[] | null> {
@@ -251,20 +289,12 @@ async function getOrFillCache(
     try {
       const arr = JSON.parse(raw);
       if (Array.isArray(arr) && arr.length > 0) {
-        // For skateparks/events: skip refetch if cache was fetched less than 1 hour ago
-        if (category === 'skateparks') {
-          const versionRaw = localStorage.getItem(config.versionKey);
-          const { fetchedAt } = parseSkateparksVersion(versionRaw);
-          if (isSkateparksCacheFresh(fetchedAt)) return arr;
-        } else if (category === 'events') {
-          const versionRaw = localStorage.getItem(config.versionKey);
-          const { fetchedAt } = parseEventsVersion(versionRaw);
-          if (isEventsCacheFresh(fetchedAt)) return arr;
-        } else if (category === 'guides') {
-          const versionRaw = localStorage.getItem(config.versionKey);
-          const { fetchedAt } = parseGuidesVersion(versionRaw);
-          if (isGuidesCacheFresh(fetchedAt)) return arr;
-        } else {
+        const cachedVersion = getCachedVersion(category as SearchResultType);
+        const serverVersion = await fetchServerVersion(category as SearchResultType);
+        if (serverVersion === null) {
+          return arr;
+        }
+        if (cachedVersion !== undefined && serverVersion === cachedVersion) {
           return arr;
         }
       }
@@ -328,6 +358,7 @@ function searchSkateparks(
         area: park.area,
         rating: park.rating,
         matchBy: 'name',
+        amenities: park.amenities,
       });
     }
     return results;
@@ -356,6 +387,7 @@ function searchSkateparks(
         area: park.area,
         rating: park.rating,
         matchBy: 'name',
+        amenities: park.amenities,
       });
       if (nameResults.length >= limit) break;
     }
@@ -381,6 +413,7 @@ function searchSkateparks(
           area: park.area,
           rating: park.rating,
           matchBy: 'area',
+          amenities: park.amenities,
         });
       }
     }
@@ -418,6 +451,7 @@ function searchEvents(
             ? event.featuredImage
             : event.featuredImage?.url ?? event.images?.[0]?.url ?? '',
         startDate: startStr,
+        relatedSports: event.relatedSports ?? event.sports ?? [],
       });
     }
     return results;
@@ -459,6 +493,7 @@ function searchEvents(
             ? event.featuredImage
             : event.featuredImage?.url ?? event.images?.[0]?.url ?? '',
         startDate: startStr,
+        relatedSports: event.relatedSports ?? event.sports ?? [],
       });
       if (results.length >= limit) break;
     }
@@ -521,6 +556,121 @@ function searchGuides(
 }
 
 const SEARCH_LIMIT = 20;
+
+/** Sync read: return cache array for category or null if missing. No freshness check. */
+export function getCacheSync(category: SearchResultType): any[] | null {
+  const config = CACHE_CONFIG[category];
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem(config.key);
+  if (!raw) return null;
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    return arr;
+  } catch {
+    return null;
+  }
+}
+
+/** True if category has no cache or stored version/fetchedAt indicates we should refetch. */
+export function cacheNeedsRefresh(category: SearchResultType): boolean {
+  const items = getCacheSync(category);
+  if (!items) return true;
+  const config = CACHE_CONFIG[category];
+  const versionRaw = typeof window !== 'undefined' ? localStorage.getItem(config.versionKey) : null;
+  if (!versionRaw) return true;
+  if (category === 'skateparks') {
+    const { fetchedAt } = parseSkateparksVersion(versionRaw);
+    return !isSkateparksCacheFresh(fetchedAt);
+  }
+  if (category === 'events') {
+    const { fetchedAt } = parseEventsVersion(versionRaw);
+    return !isEventsCacheFresh(fetchedAt);
+  }
+  if (category === 'guides') {
+    const { fetchedAt } = parseGuidesVersion(versionRaw);
+    return !isGuidesCacheFresh(fetchedAt);
+  }
+  return true;
+}
+
+/** Sync read: return cache array for category or null if missing/stale. No fetch. */
+function getCacheIfFreshSync(category: SearchResultType): any[] | null {
+  const config = CACHE_CONFIG[category];
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem(config.key);
+  if (!raw) return null;
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || arr.length === 0) return null;
+    const versionRaw = localStorage.getItem(config.versionKey);
+    if (category === 'skateparks') {
+      const { fetchedAt } = parseSkateparksVersion(versionRaw);
+      if (!isSkateparksCacheFresh(fetchedAt)) return null;
+    } else if (category === 'events') {
+      const { fetchedAt } = parseEventsVersion(versionRaw);
+      if (!isEventsCacheFresh(fetchedAt)) return null;
+    } else if (category === 'guides') {
+      const { fetchedAt } = parseGuidesVersion(versionRaw);
+      if (!isGuidesCacheFresh(fetchedAt)) return null;
+    }
+    return arr;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Sync read from localStorage only. Returns results from whatever cache exists.
+ * Use for immediate display; call searchFromCache to ensure data exists and
+ * cache version matches DB (refetches when missing or version mismatch).
+ */
+export function readFromCacheSync(
+  query: string,
+  locale: string,
+  categories: SearchResultType[]
+): SearchResultFromCache[] {
+  const all: SearchResultFromCache[] = [];
+  const limitPerCategory = Math.ceil(SEARCH_LIMIT / Math.max(1, categories.length));
+  for (const category of categories) {
+    const items = getCacheSync(category);
+    if (!items) continue;
+    if (category === 'skateparks') {
+      all.push(...searchSkateparks(items, query, locale, limitPerCategory));
+    } else if (category === 'events') {
+      all.push(...searchEvents(items, query, locale, limitPerCategory));
+    } else if (category === 'guides') {
+      all.push(...searchGuides(items, query, locale, limitPerCategory));
+    }
+  }
+  return all.slice(0, SEARCH_LIMIT);
+}
+
+/**
+ * If all requested categories have fresh cache in localStorage, return results
+ * without fetching. Otherwise return null (caller should use searchFromCache).
+ * Same semantics as homepage: don't fetch when cache is fresh.
+ */
+export function readFromCacheIfFreshSync(
+  query: string,
+  locale: string,
+  categories: SearchResultType[]
+): SearchResultFromCache[] | null {
+  const all: SearchResultFromCache[] = [];
+  const limitPerCategory = Math.ceil(SEARCH_LIMIT / Math.max(1, categories.length));
+  for (const category of categories) {
+    const items = getCacheIfFreshSync(category);
+    if (!items) return null;
+    if (category === 'skateparks') {
+      all.push(...searchSkateparks(items, query, locale, limitPerCategory));
+    } else if (category === 'events') {
+      all.push(...searchEvents(items, query, locale, limitPerCategory));
+    } else if (category === 'guides') {
+      all.push(...searchGuides(items, query, locale, limitPerCategory));
+    }
+  }
+  return all.slice(0, SEARCH_LIMIT);
+}
 
 /**
  * Search cached data (skateparks, events, guides). Uses localStorage first;

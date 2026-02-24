@@ -370,6 +370,25 @@ const config: Config = {
               },
             },
 
+            teal: {
+              DEFAULT: colors.teal.light,
+              dark: colors.teal.dark,
+              bg: {
+                DEFAULT: colors.teal.bg.light,
+                dark: colors.teal.bg.dark,
+              },
+              border: {
+                DEFAULT: colors.teal.border.light,
+                dark: colors.teal.border.dark,
+              },
+              hover: {
+                bg: {
+                  DEFAULT: colors.teal.hover.bg.light,
+                  dark: colors.teal.hover.bg.dark,
+                },
+              },
+            },
+
             gray: {
               DEFAULT: colors.gray.light,
               dark: colors.gray.dark,

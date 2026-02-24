@@ -498,13 +498,13 @@ export default function EventPage() {
           {/* Badges */}
           <div className="flex flex-wrap items-center gap-2 mb-4">
             {event.isFeatured && (
-              <span className="px-2 py-1 rounded-lg text-sm font-semibold bg-green-bg dark:bg-green-dark text-green dark:text-green-bg-dark flex items-center gap-1">
+              <span className="px-2 py-1 rounded-lg text-sm font-semibold bg-green dark:bg-green-dark text-green-bg dark:text-green-bg-dark flex items-center gap-1">
                 <Icon name="star" className="w-4 h-4 fill-green dark:fill-green-bg-dark" />
                 <span>{locale === 'he' ? 'אירוע מומלץ' : 'Featured Event'}</span>
               </span>
             )}
             {(event.relatedSports && event.relatedSports.length > 0 ? event.relatedSports : []).map((sport: string) => (
-              <span key={sport} className="px-2 py-1 rounded-lg text-sm font-semibold bg-blue-bg dark:bg-blue-dark text-blue dark:text-blue-bg-dark flex items-center gap-1.5">
+              <span key={sport} className="px-2 py-1 rounded-lg text-sm font-semibold bg-teal dark:bg-teal-dark text-teal-bg dark:text-teal-bg-dark flex items-center gap-1.5">
                 <Icon name={getSportIcon(sport) as any} className="w-4 h-4" />
                 {t(`sports.${sport}` as any) || sport}
               </span>
