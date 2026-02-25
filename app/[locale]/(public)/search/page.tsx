@@ -1352,7 +1352,7 @@ function SearchPageContent() {
             <div
               className={cn(
                 'min-w-0',
-                showTabsAndFilters ? 'flex-1 max-w-[250px]' : 'w-full max-w-2xl sm:max-w-xl'
+                showTabsAndFilters ? 'flex-1 md:max-w-[250px]' : 'w-full max-w-2xl sm:max-w-xl'
               )}
             >
               <SearchInput
@@ -1366,7 +1366,8 @@ function SearchPageContent() {
             </div>
             {/* Tabs (multi-select) - show when there are results and user has searched or selected at least one tab */}
             {(query.trim() || selectedTabs.length > 0) && showTabBar && (
-              <div className="flex gap-2 min-w-0 items-center">
+              <div className="flex gap-2 min-w-0 items-center justify-between flex-wrap">
+                <div className="flex items-center gap-2">
                 {visibleTabs.map((tab) => {
                   const isSelected = selectedTabs.includes(tab.key);
                   return (
@@ -1386,6 +1387,8 @@ function SearchPageContent() {
                     </Button>
                   );
                 })}
+                </div>
+                <div className="flex items-center gap-2">
                 {/* Sports filter - show when there are guides or events results */}
                 {hasGuideOrEventResults && (
                   <div className="flex-shrink-0">
@@ -1853,6 +1856,7 @@ function SearchPageContent() {
                     ]}
                     className="h-[2.88rem] sm:h-[2.5rem]"
                   />
+                </div>
                 </div>
               </div>
             )}

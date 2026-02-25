@@ -937,7 +937,7 @@ export default function GuidePage() {
                   <Link
                     key={sport}
                     href={`/${locale}/guides?sports=${encodeURIComponent(sport)}`}
-                    className="capitalize px-2 py-1 rounded-lg text-sm font-semibold bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark transition-colors border border-blue-border dark:border-blue-border-dark focus:outline-none focus:ring-2 focus:ring-blue focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                    className="capitalize px-2 py-1 rounded-lg text-sm font-semibold bg-teal-bg dark:bg-teal-bg-dark text-teal dark:text-teal-dark hover:bg-teal-hover-bg dark:hover:bg-teal-hover-bg-dark transition-colors border border-teal-border dark:border-teal-border-dark focus:outline-none focus:ring-2 focus:ring-teal focus:ring-offset-2 dark:focus:ring-offset-gray-900"
                   >
                     {getSportTranslation(sport)}
                   </Link>

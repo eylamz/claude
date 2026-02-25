@@ -139,6 +139,8 @@ export default function HeaderNav() {
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchAnalyticsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  /** Only run cache version check / searchFromCache once per session; after that use sync cache only (same as search page). */
+  const versionCheckDoneRef = useRef(false);
 
   // Top 5 most clicked search results (from analytics), cached per locale (1 week TTL)
   const [popularClicks, setPopularClicks] = useState<
@@ -413,8 +415,19 @@ export default function HeaderNav() {
         const queryContainsHebrew = /\p{Script=Hebrew}/u.test(searchQuery.trim());
 
         const rawResults: SearchResult[] = [];
-        const cacheResults = await searchFromCache(searchQuery, locale, cacheCategories);
-        rawResults.push(...cacheResults.map(mapCacheResultToSearchResult));
+        // Same as search page: only call searchFromCache (may hit DB) once per session; after that use sync cache only
+        if (cacheCategories.length > 0) {
+          if (!versionCheckDoneRef.current) {
+            const cacheResults = await searchFromCache(searchQuery, locale, cacheCategories);
+            rawResults.push(...cacheResults.map(mapCacheResultToSearchResult));
+            versionCheckDoneRef.current = true;
+          } else {
+            const fromSync = readFromCacheSync(searchQuery, locale, cacheCategories).map(
+              mapCacheResultToSearchResult
+            );
+            rawResults.push(...fromSync);
+          }
+        }
 
         const matchesQueryOrFlipped = (result: SearchResult): boolean => {
           const name = getResultDisplayName(result).toLowerCase();
@@ -1461,15 +1474,15 @@ export default function HeaderNav() {
                         <Link
                           href={`/${locale}/search`}
                           onClick={() => setIsSearchOpen(false)}
-                          className="flex items-center gap-1 py-1 px-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200"
+                          className="flex items-center gap-1 py-1 px-2 rounded-md text-sidebar-text-brand dark:text-sidebar-text-brand-dark hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200"
                         >
-                          <Icon
-                            name="sparksBold"
-                            className="w-3 h-3 text-brand-main dark:text-brand-dark"
-                          />
-                          <h3 className="text-sm font-semibold text-brand-main dark:text-brand-dark">
+                          <h3 className="text-sm font-semibold">
                             {locale === 'he' ? 'חיפוש מתקדם' : 'Advanced Search'}
                           </h3>
+                          <Icon
+                            name="sparksBold"
+                            className="w-3 h-3"
+                          />
                         </Link>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -1658,12 +1671,14 @@ export default function HeaderNav() {
                       <p className="text-sm text-sidebar-text dark:text-sidebar-text-dark mb-4">
                         {tSearch('popup.noResultsHint')}
                       </p>
+                      
                       <Link
                         href={`/${locale}/search`}
                         onClick={() => setIsSearchOpen(false)}
-                        className="text-sm font-medium text-sidebar-text-brand dark:text-sidebar-text-brand-dark hover:underline"
+                        className="w-fit mx-auto flex items-center gap-1 text-sm font-medium text-sidebar-text-brand dark:text-sidebar-text-brand-dark py-1 px-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200"
                       >
                         {tSearch('popup.goToFullSearch')}
+                        <Icon name="sparksBold" className="w-3 h-3" />
                       </Link>
                     </div>
                   )}
