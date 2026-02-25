@@ -641,7 +641,7 @@ export default function HomePage() {
       >
         <div className="absolute inset-0  dark:bg-background-dark/30 md:dark:bg-background-dark/20" aria-hidden="true" />
         <div className="relative z-10 max-w-4xl mx-auto">
-          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-4 md:mb-8  [text-shadow:_0px_0px_25px_rgba(0,0,0,1)] leading-tight text-white dark:text-text-dark translate-x-8 lg:translate-x-0 xl:translate-x-[8rem]">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-4 md:mb-8  [text-shadow:_0px_0px_25px_rgba(0,0,0,1)] leading-tight text-white dark:text-text-dark sm:translate-x-8 lg:translate-x-0 xl:translate-x-[8rem]">
             {t('nextSessionAwaits')
               .split('<br/>')
               .map((line, i, arr) => (
@@ -654,6 +654,7 @@ export default function HomePage() {
           <Link href={`/${locale}/skateparks`} className="block">
 
             <Button
+              variant="primary"
               className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-base lg:text-lg font-semibold text-text dark:text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 translate-x-5 sm:translate-x-2.5 lg:translate-x-0 xl:translate-x-20"
             >
               {t('getStarted')}

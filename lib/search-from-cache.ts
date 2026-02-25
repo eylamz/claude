@@ -591,7 +591,7 @@ function searchGuides(
   return results;
 }
 
-const SEARCH_LIMIT = 20;
+const SEARCH_LIMIT = 10000; // No practical limit: show all matching results from cache (parks, events, guides).
 
 /** Sync read: return cache array for category or null if missing. No freshness check. */
 export function getCacheSync(category: SearchResultType): any[] | null {

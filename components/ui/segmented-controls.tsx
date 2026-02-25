@@ -110,7 +110,7 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
       },
       pink: {
         bg: { light: '#fde6f2', dark: 'hsl(314, 27%, 15%)' },
-        border: { light: 'hsl(314, 96%, 89%)', dark: 'hsl(314, 46%, 25%)' },
+        border: { light: 'hsl(314, 96%, 89%)', dark: 'hsl(314, 56%, 32%)' },
       },
     };
 

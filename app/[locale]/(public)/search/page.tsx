@@ -1335,7 +1335,7 @@ function SearchPageContent() {
       ======================================== */}
       <div
         className={cn(
-          'sticky z-40 bg-background dark:bg-background-dark transition-all duration-200 border-b-2 border-transparent',
+          'sticky z-40 bg-background dark:bg-background-dark transition-all duration-100 border-b-2 border-transparent',
           isScrolled
             ? 'top-16 shadow-xl border-header-border dark:border-header-border-dark py-3'
             : 'top-0 py-4'
@@ -2008,27 +2008,7 @@ function SearchPageContent() {
               <div className="bg-brand-main dark:bg-brand-dark loading-bar w-full h-full" />
             </div>
           )}
-          {!loading && query && filteredResults.length > 0 && (
-            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              {selectedSports.length > 0 && total !== filteredResults.length ? (
-                <>
-                  {tr('Showing', 'מציג')}{' '}
-                  <strong className="text-gray-900 dark:text-white">
-                    {filteredResults.length}
-                  </strong>{' '}
-                  {tr('of', 'מתוך')} <strong>{total}</strong> {tr('results', 'תוצאות')}
-                </>
-              ) : (
-                <>
-                  {tr('Found', 'נמצאו')}{' '}
-                  <strong className="text-gray-900 dark:text-white">
-                    {filteredResults.length}
-                  </strong>{' '}
-                  {tr('results', 'תוצאות')}
-                </>
-              )}
-            </div>
-          )}
+         
         </div>
       </div>
 
@@ -2119,17 +2099,6 @@ function SearchPageContent() {
         ) : (
           /* Initial State - Before Search (skateparks-style cards) */
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                {tr('Start Your Search', 'התחל לחפש')}
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                {tr(
-                  'Explore parks, products, events, guides, and trainers.',
-                  'גלה פארקים, אירועים ומדריכים.'
-                )}
-              </p>
-            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {tabs.map((tab) => {

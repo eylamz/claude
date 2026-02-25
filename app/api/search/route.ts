@@ -38,7 +38,8 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category');
     const types = searchParams.get('types')?.split(',').filter(Boolean) || [];
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = 20;
+    const limitParam = searchParams.get('limit');
+    const limit = limitParam ? Math.min(parseInt(limitParam, 10) || 20, 10000) : 10000;
 
     // Empty query: only return results when types (or category) are specified (browse-by-category).
     if (!query && types.length === 0 && !category) {
