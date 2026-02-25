@@ -795,14 +795,14 @@ export default function MobileSidebar({
         <div className="flex-1 overflow-y-auto me-4 py-6 bg-sidebar dark:bg-sidebar-dark transition-colors duration-200">
           {isSearching ? (
             // Search Results
-            <div className="space-y-6 px-3">
+            <div className="flex flex-col gap-6 -mt-3 px-3">
               <Link
                 href={`/${locale}/search`}
                 onClick={onClose}
-                className="flex items-center gap-1 hover:opacity-80 transition-opacity w-fit"
+                className={`w-fit absolute top-[143px] ${locale === 'he' ? 'left-2' : 'right-2'} flex items-center gap-1 py-1 px-2 rounded-md text-sidebar-text-brand dark:text-sidebar-text-brand-dark hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200`}
               >
-                <Icon name="sparksBold" className="w-3 h-3 text-brand-main dark:text-brand-dark" />
-                <h3 className="text-sm font-semibold text-brand-main dark:text-brand-dark">
+                <Icon name="sparksBold" className="w-3 h-3" />
+                <h3 className="text-sm font-semibold">
                   {locale === 'he' ? 'חיפוש מתקדם' : 'Advanced Search'}
                 </h3>
               </Link>
@@ -830,7 +830,7 @@ export default function MobileSidebar({
                     const displayResults = results.slice(0, maxResultsPerGroup);
 
                     return (
-                      <div key={category} className="space-y-3">
+                      <div key={category} className="flex flex-col gap-3">
                         <h3 className="text-sm font-bold text-text dark:text-text-dark uppercase tracking-wider transition-colors duration-200">
                           {category === 'skateparks' && searchArea
                             ? tSearch('skateparksInArea', {
@@ -940,15 +940,7 @@ export default function MobileSidebar({
                     );
                   })
               )}
-              {/* Advanced search link - whole container clickable, with search icon */}
-              <Link
-                href={`/${locale}/search${searchQuery.trim() ? `?q=${encodeURIComponent(searchQuery.trim())}` : ''}`}
-                onClick={onClose}
-                className="flex items-center justify-center gap-2 w-full pt-4 pb-2 px-3 py-3 text-sm font-medium text-sidebar-text-brand dark:text-sidebar-text-brand-dark hover:underline rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-              >
-                <Icon name="search" className="w-4 h-4 flex-shrink-0" />
-                <span>{tSearch('popup.advancedSearch') || 'Advanced search'}</span>
-              </Link>
+              
             </div>
           ) : (
             // Regular Navigation Content

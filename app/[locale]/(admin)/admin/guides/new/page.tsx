@@ -8,6 +8,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { ImageUploader } from '@/components/admin/image-uploader';
 
 interface ContentBlock {
   id: string;
@@ -87,6 +88,9 @@ const CODE_LANGUAGES = [
   'bash',
   'other',
 ];
+
+/** Cloudinary folder for guide assets (Home > guideAssets) */
+const GUIDE_CLOUDINARY_FOLDER = 'guideAssets';
 
 export default function NewGuidePage() {
   const locale = useLocale();
@@ -694,6 +698,19 @@ export default function NewGuidePage() {
                   error={errors.coverImage}
                   required
                 />
+                <div className="mt-3 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-text dark:text-text-dark mb-2">Upload to Cloudinary (Home &gt; guideAssets)</h4>
+                  <ImageUploader
+                    images={formData.coverImage ? [{ url: formData.coverImage, publicId: '' }] : []}
+                    onUpload={(uploadedImages) => {
+                      if (uploadedImages.length > 0) {
+                        handleInputChange('coverImage', uploadedImages[0].url);
+                      }
+                    }}
+                    maxImages={1}
+                    folder={GUIDE_CLOUDINARY_FOLDER}
+                  />
+                </div>
                 {formData.coverImage && (
                   <div className="mt-3">
                     <img
@@ -1150,6 +1167,19 @@ export default function NewGuidePage() {
                                   }
                                   placeholder="https://..."
                                 />
+                                <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                                  <h4 className="text-xs font-medium text-text-secondary dark:text-text-secondary-dark mb-2">Upload to Cloudinary (guideAssets)</h4>
+                                  <ImageUploader
+                                    images={block.imageUrl ? [{ url: block.imageUrl, publicId: '' }] : []}
+                                    onUpload={(uploadedImages) => {
+                                      if (uploadedImages.length > 0) {
+                                        handleUpdateContentBlock(block.id, { imageUrl: uploadedImages[0].url });
+                                      }
+                                    }}
+                                    maxImages={1}
+                                    folder={GUIDE_CLOUDINARY_FOLDER}
+                                  />
+                                </div>
                                 <div>
                                   <div className="flex items-center justify-between mb-1">
                                     <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
