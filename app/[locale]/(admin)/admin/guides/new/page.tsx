@@ -3,7 +3,17 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, SegmentedControls, Toaster } from '@/components/ui';
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Input,
+  SelectWrapper,
+  SegmentedControls,
+  Toaster,
+} from '@/components/ui';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -61,13 +71,7 @@ const CONTENT_BLOCK_TYPES: { value: ContentBlockType; label: string; icon: strin
   { value: 'divider', label: 'Divider', icon: '─' },
 ];
 
-const SPORTS = [
-  'Roller',
-  'Skate',
-  'Scoot',
-  'BMX',
-  'Longboard',
-];
+const SPORTS = ['Roller', 'Skate', 'Scoot', 'BMX', 'Longboard'];
 
 const CODE_LANGUAGES = [
   'javascript',
@@ -96,13 +100,13 @@ export default function NewGuidePage() {
   const locale = useLocale();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'en' | 'he'>('en');
-  
+
   // Reset selected block when switching languages to ensure clean separation
   const handleTabChange = (tab: 'en' | 'he') => {
     setActiveTab(tab);
     setSelectedBlock(null); // Clear selection when switching languages
   };
-  
+
   const [previewMode, setPreviewMode] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,7 +114,7 @@ export default function NewGuidePage() {
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const draggedBlockRef = useRef<ContentBlock | null>(null);
-  
+
   // Toast hook
   const { toast } = useToast();
   const [draggedOverId, setDraggedOverId] = useState<string | null>(null);
@@ -139,7 +143,7 @@ export default function NewGuidePage() {
   };
 
   const handleTitleChange = (lang: 'en' | 'he', value: string) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const newData = { ...prev, title: { ...prev.title, [lang]: value } };
       if (lang === 'en' && (!prev.slug || prev.slug === generateSlug(prev.title.en))) {
         newData.slug = generateSlug(value);
@@ -149,13 +153,13 @@ export default function NewGuidePage() {
   };
 
   const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    setErrors(prev => ({ ...prev, [field]: '' }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
   const handleAddSport = (sport: string) => {
     if (!formData.relatedSports.includes(sport)) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         relatedSports: [...prev.relatedSports, sport],
       }));
@@ -163,9 +167,9 @@ export default function NewGuidePage() {
   };
 
   const handleRemoveSport = (sport: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      relatedSports: prev.relatedSports.filter(s => s !== sport),
+      relatedSports: prev.relatedSports.filter((s) => s !== sport),
     }));
   };
 
@@ -173,7 +177,7 @@ export default function NewGuidePage() {
     const lang = activeTab;
     const trimmedTag = tag.trim();
     if (trimmedTag && !formData.tags[lang].includes(trimmedTag)) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         tags: {
           ...prev.tags,
@@ -185,11 +189,11 @@ export default function NewGuidePage() {
 
   const handleRemoveTag = (tag: string) => {
     const lang = activeTab;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       tags: {
         ...prev.tags,
-        [lang]: prev.tags[lang].filter(t => t !== tag),
+        [lang]: prev.tags[lang].filter((t) => t !== tag),
       },
     }));
   };
@@ -218,7 +222,7 @@ export default function NewGuidePage() {
       language: type === 'code' ? 'javascript' : undefined,
     };
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       contentBlocks: {
         ...prev.contentBlocks,
@@ -230,11 +234,11 @@ export default function NewGuidePage() {
 
   const handleUpdateContentBlock = (id: string, updates: Partial<ContentBlock>) => {
     const lang = activeTab;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       contentBlocks: {
         ...prev.contentBlocks,
-        [lang]: prev.contentBlocks[lang].map(block =>
+        [lang]: prev.contentBlocks[lang].map((block) =>
           block.id === id ? { ...block, ...updates } : block
         ),
       },
@@ -243,12 +247,12 @@ export default function NewGuidePage() {
 
   const handleRemoveContentBlock = (id: string) => {
     const lang = activeTab;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       contentBlocks: {
         ...prev.contentBlocks,
         [lang]: prev.contentBlocks[lang]
-          .filter(block => block.id !== id)
+          .filter((block) => block.id !== id)
           .map((block, index) => ({ ...block, order: index })),
       },
     }));
@@ -256,14 +260,17 @@ export default function NewGuidePage() {
 
   const handleMoveBlockUp = (blockId: string) => {
     const lang = activeTab;
-    setFormData(prev => {
+    setFormData((prev) => {
       const blocks = [...prev.contentBlocks[lang]];
-      const currentIndex = blocks.findIndex(b => b.id === blockId);
+      const currentIndex = blocks.findIndex((b) => b.id === blockId);
       if (currentIndex > 0) {
-        [blocks[currentIndex - 1], blocks[currentIndex]] = [blocks[currentIndex], blocks[currentIndex - 1]];
-        blocks.forEach((b, i) => b.order = i);
-        return { 
-          ...prev, 
+        [blocks[currentIndex - 1], blocks[currentIndex]] = [
+          blocks[currentIndex],
+          blocks[currentIndex - 1],
+        ];
+        blocks.forEach((b, i) => (b.order = i));
+        return {
+          ...prev,
           contentBlocks: {
             ...prev.contentBlocks,
             [lang]: blocks,
@@ -276,14 +283,17 @@ export default function NewGuidePage() {
 
   const handleMoveBlockDown = (blockId: string) => {
     const lang = activeTab;
-    setFormData(prev => {
+    setFormData((prev) => {
       const blocks = [...prev.contentBlocks[lang]];
-      const currentIndex = blocks.findIndex(b => b.id === blockId);
+      const currentIndex = blocks.findIndex((b) => b.id === blockId);
       if (currentIndex < blocks.length - 1) {
-        [blocks[currentIndex], blocks[currentIndex + 1]] = [blocks[currentIndex + 1], blocks[currentIndex]];
-        blocks.forEach((b, i) => b.order = i);
-        return { 
-          ...prev, 
+        [blocks[currentIndex], blocks[currentIndex + 1]] = [
+          blocks[currentIndex + 1],
+          blocks[currentIndex],
+        ];
+        blocks.forEach((b, i) => (b.order = i));
+        return {
+          ...prev,
           contentBlocks: {
             ...prev.contentBlocks,
             [lang]: blocks,
@@ -296,11 +306,11 @@ export default function NewGuidePage() {
 
   const handleAddListItem = (blockId: string) => {
     const lang = activeTab;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       contentBlocks: {
         ...prev.contentBlocks,
-        [lang]: prev.contentBlocks[lang].map(block => {
+        [lang]: prev.contentBlocks[lang].map((block) => {
           if (block.id === blockId && block.listItems) {
             return {
               ...block,
@@ -313,17 +323,22 @@ export default function NewGuidePage() {
     }));
   };
 
-  const handleUpdateListItem = (blockId: string, index: number, field: 'title' | 'content', value: string) => {
+  const handleUpdateListItem = (
+    blockId: string,
+    index: number,
+    field: 'title' | 'content',
+    value: string
+  ) => {
     const lang = activeTab;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       contentBlocks: {
         ...prev.contentBlocks,
-        [lang]: prev.contentBlocks[lang].map(block => {
+        [lang]: prev.contentBlocks[lang].map((block) => {
           if (block.id === blockId && block.listItems) {
             return {
               ...block,
-              listItems: block.listItems.map((item, i) => 
+              listItems: block.listItems.map((item, i) =>
                 i === index ? { ...item, [field]: value } : item
               ),
             };
@@ -336,11 +351,11 @@ export default function NewGuidePage() {
 
   const handleRemoveListItem = (blockId: string, index: number) => {
     const lang = activeTab;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       contentBlocks: {
         ...prev.contentBlocks,
-        [lang]: prev.contentBlocks[lang].map(block => {
+        [lang]: prev.contentBlocks[lang].map((block) => {
           if (block.id === blockId && block.listItems) {
             return {
               ...block,
@@ -376,18 +391,18 @@ export default function NewGuidePage() {
   const saveDraft = useCallback(async () => {
     // Don't auto-save if form is empty or invalid
     if (!formData.slug || !formData.title.en) return;
-    
+
     try {
       // Clean contentBlocks for draft save too
       const cleanedContentBlocksForDraft = {
         en: (formData.contentBlocks.en || [])
-          .filter(block => block && block.type)
+          .filter((block) => block && block.type)
           .map((block, index) => {
             const { id, ...blockWithoutId } = block;
             return { ...blockWithoutId, order: index };
           }),
         he: (formData.contentBlocks.he || [])
-          .filter(block => block && block.type)
+          .filter((block) => block && block.type)
           .map((block, index) => {
             const { id, ...blockWithoutId } = block;
             return { ...blockWithoutId, order: index };
@@ -425,22 +440,21 @@ export default function NewGuidePage() {
     return () => clearInterval(interval);
   }, [saveDraft]);
 
-
   const handleSubmit = async (e?: React.FormEvent, saveAsDraft: boolean = false) => {
     if (e) e.preventDefault();
-    
+
     // Only validate if not saving as draft
     if (!saveAsDraft && !validate()) {
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       // Ensure contentBlocks are properly formatted - remove id field and ensure type exists
       const cleanedContentBlocks = {
         en: (formData.contentBlocks.en || [])
-          .filter(block => {
+          .filter((block) => {
             if (!block) return false;
             if (!block.type) {
               console.warn('Block missing type field:', block);
@@ -461,7 +475,7 @@ export default function NewGuidePage() {
             };
           }),
         he: (formData.contentBlocks.he || [])
-          .filter(block => {
+          .filter((block) => {
             if (!block) return false;
             if (!block.type) {
               console.warn('Block missing type field:', block);
@@ -482,11 +496,11 @@ export default function NewGuidePage() {
             };
           }),
       };
-      
+
       // Validate all blocks have type before sending
       const invalidBlocks = [
-        ...cleanedContentBlocks.en.filter(b => !b.type),
-        ...cleanedContentBlocks.he.filter(b => !b.type),
+        ...cleanedContentBlocks.en.filter((b) => !b.type),
+        ...cleanedContentBlocks.he.filter((b) => !b.type),
       ];
       if (invalidBlocks.length > 0) {
         console.error('Found blocks without type:', invalidBlocks);
@@ -519,7 +533,7 @@ export default function NewGuidePage() {
       const data = await response.json();
       console.log('Guide created successfully:', data);
       setLastSaved(new Date());
-      
+
       if (saveAsDraft) {
         // Show success toast for draft
         toast({
@@ -570,18 +584,28 @@ export default function NewGuidePage() {
           <Button type="button" variant="blue" onClick={() => setPreviewMode(!previewMode)}>
             {previewMode ? 'Edit' : 'Preview'}
           </Button>
-          <Button type="button" variant="orange" onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleSubmit(undefined, true);
-          }} disabled={isSubmitting}>
+          <Button
+            type="button"
+            variant="orange"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSubmit(undefined, true);
+            }}
+            disabled={isSubmitting}
+          >
             {isSubmitting ? 'Saving...' : 'Save Draft'}
           </Button>
-          <Button type="button" variant="green" onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleSubmit();
-          }} disabled={isSubmitting}>
+          <Button
+            type="button"
+            variant="green"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSubmit();
+            }}
+            disabled={isSubmitting}
+          >
             {isSubmitting ? 'Publishing...' : 'Publish Guide'}
           </Button>
         </div>
@@ -674,7 +698,7 @@ export default function NewGuidePage() {
                   label="Description"
                   value={formData.description[activeTab]}
                   onChange={(e) =>
-                    setFormData(prev => ({
+                    setFormData((prev) => ({
                       ...prev,
                       description: { ...prev.description, [activeTab]: e.target.value },
                     }))
@@ -699,7 +723,9 @@ export default function NewGuidePage() {
                   required
                 />
                 <div className="mt-3 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-text dark:text-text-dark mb-2">Upload to Cloudinary (Home &gt; guideAssets)</h4>
+                  <h4 className="text-sm font-medium text-text dark:text-text-dark mb-2">
+                    Upload to Cloudinary (Home &gt; guideAssets)
+                  </h4>
                   <ImageUploader
                     images={formData.coverImage ? [{ url: formData.coverImage, publicId: '' }] : []}
                     onUpload={(uploadedImages) => {
@@ -739,7 +765,9 @@ export default function NewGuidePage() {
                 <div className="flex flex-wrap gap-2 mb-3">
                   {SPORTS.map((sport) => (
                     <Button
-                      variant={formData.relatedSports.includes(sport.toLowerCase()) ? 'blue' : 'gray'}
+                      variant={
+                        formData.relatedSports.includes(sport.toLowerCase()) ? 'blue' : 'gray'
+                      }
                       key={sport}
                       type="button"
                       onClick={() =>
@@ -804,16 +832,14 @@ export default function NewGuidePage() {
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm"
                     >
                       {tag}
-                      <p
-                        className="ms-2"
-                      >
-                        ×
-                      </p>
+                      <p className="ms-2">×</p>
                     </Button>
                   ))}
                 </div>
                 <Input
-                  placeholder={activeTab === 'en' ? 'Add a tag and press Enter' : 'הוסף תגית ולחץ Enter'}
+                  placeholder={
+                    activeTab === 'en' ? 'Add a tag and press Enter' : 'הוסף תגית ולחץ Enter'
+                  }
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -833,25 +859,27 @@ export default function NewGuidePage() {
                 <div className="flex items-center gap-3">
                   <CardTitle>Content Builder</CardTitle>
                   <div className="flex items-center gap-2 bg-gray-bg dark:bg-gray-bg-dark px-3 py-1.5 rounded-lg border border-gray-border dark:border-gray-border-dark">
-                    <span className="text-xs font-semibold text-gray dark:text-gray-dark">Editing:</span>
+                    <span className="text-xs font-semibold text-gray dark:text-gray-dark">
+                      Editing:
+                    </span>
                     <div className="flex items-center gap-2">
-                    <Button
-                      variant={activeTab === 'en' ? 'blue' : 'gray'}
-                      type="button"
-                      onClick={() => handleTabChange('en')}
-                      className={`!rounded text-xs font-medium`}
-                    >
-                      English
-                    </Button>
-                    <Button
-                      variant={activeTab === 'he' ? 'blue' : 'gray'}
-                      type="button"
-                      onClick={() => handleTabChange('he')}
-                      className={`!rounded text-xs font-medium`}
-                      dir="rtl"
-                    >
-                      עברית
-                    </Button>
+                      <Button
+                        variant={activeTab === 'en' ? 'blue' : 'gray'}
+                        type="button"
+                        onClick={() => handleTabChange('en')}
+                        className={`!rounded text-xs font-medium`}
+                      >
+                        English
+                      </Button>
+                      <Button
+                        variant={activeTab === 'he' ? 'blue' : 'gray'}
+                        type="button"
+                        onClick={() => handleTabChange('he')}
+                        className={`!rounded text-xs font-medium`}
+                        dir="rtl"
+                      >
+                        עברית
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -862,9 +890,12 @@ export default function NewGuidePage() {
                       Add Content Block
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-64 p-2 bg-siderbar-bg dark:bg-siderbar-bg-dark" align="end">
+                  <PopoverContent
+                    className="w-64 p-2 bg-siderbar-bg dark:bg-siderbar-bg-dark"
+                    align="end"
+                  >
                     <div className="grid grid-cols-2 gap-2">
-                      {CONTENT_BLOCK_TYPES.map(type => (
+                      {CONTENT_BLOCK_TYPES.map((type) => (
                         <button
                           key={type.value}
                           type="button"
@@ -878,7 +909,9 @@ export default function NewGuidePage() {
                           className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bord text-left"
                         >
                           <span className="text-2xl">{type.icon}</span>
-                          <span className="text-xs font-medium text-text-secondary dark:text-text-secondary-dark">{type.label}</span>
+                          <span className="text-xs font-medium text-text-secondary dark:text-text-secondary-dark">
+                            {type.label}
+                          </span>
                         </button>
                       ))}
                     </div>
@@ -889,18 +922,22 @@ export default function NewGuidePage() {
             <CardContent className="space-y-4">
               {/* Debug info - remove after testing */}
               <div className="text-xs text-gray-400 mb-2 px-2">
-                Showing {formData.contentBlocks[activeTab]?.length || 0} {activeTab === 'en' ? 'English' : 'Hebrew'} block(s) | 
-                English: {formData.contentBlocks.en?.length || 0} | Hebrew: {formData.contentBlocks.he?.length || 0}
+                Showing {formData.contentBlocks[activeTab]?.length || 0}{' '}
+                {activeTab === 'en' ? 'English' : 'Hebrew'} block(s) | English:{' '}
+                {formData.contentBlocks.en?.length || 0} | Hebrew:{' '}
+                {formData.contentBlocks.he?.length || 0}
               </div>
-              {(!formData.contentBlocks[activeTab] || formData.contentBlocks[activeTab].length === 0) ? (
+              {!formData.contentBlocks[activeTab] ||
+              formData.contentBlocks[activeTab].length === 0 ? (
                 <div className="text-center py-12 text-text-secondary dark:text-text-secondary-dark">
-                  No {activeTab === 'en' ? 'English' : 'Hebrew'} content blocks yet. Add one to get started.
+                  No {activeTab === 'en' ? 'English' : 'Hebrew'} content blocks yet. Add one to get
+                  started.
                 </div>
               ) : (
                 formData.contentBlocks[activeTab]
                   .sort((a, b) => a.order - b.order)
                   .map((block, index) => {
-                    const blockType = CONTENT_BLOCK_TYPES.find(t => t.value === block.type);
+                    const blockType = CONTENT_BLOCK_TYPES.find((t) => t.value === block.type);
                     return (
                       <div
                         key={`${activeTab}-${block.id}`}
@@ -908,8 +945,8 @@ export default function NewGuidePage() {
                           selectedBlock === block.id
                             ? 'border-blue-border bg-blue-bg dark:bg-blue-bg-dark'
                             : draggedOverId === block.id
-                            ? 'border-blue-border dark:border-blue-border-dark bg-blue-bg dark:bg-blue-bg-dark border-dashed'
-                            : 'border-border dark:border-border-dark'
+                              ? 'border-blue-border dark:border-blue-border-dark bg-blue-bg dark:bg-blue-bg-dark border-dashed'
+                              : 'border-border dark:border-border-dark'
                         } ${draggedBlockRef.current?.id === block.id ? 'opacity-50' : ''}`}
                         draggable
                         onDragStart={(e) => {
@@ -936,12 +973,14 @@ export default function NewGuidePage() {
                           const lang = activeTab;
                           if (draggedBlockRef.current && draggedBlockRef.current.id !== block.id) {
                             const blocks = [...formData.contentBlocks[lang]];
-                            const draggedIndex = blocks.findIndex(b => b.id === draggedBlockRef.current!.id);
-                            const targetIndex = blocks.findIndex(b => b.id === block.id);
+                            const draggedIndex = blocks.findIndex(
+                              (b) => b.id === draggedBlockRef.current!.id
+                            );
+                            const targetIndex = blocks.findIndex((b) => b.id === block.id);
                             const [moved] = blocks.splice(draggedIndex, 1);
                             blocks.splice(targetIndex, 0, moved);
-                            blocks.forEach((b, i) => b.order = i);
-                            setFormData(prev => ({
+                            blocks.forEach((b, i) => (b.order = i));
+                            setFormData((prev) => ({
                               ...prev,
                               contentBlocks: {
                                 ...prev.contentBlocks,
@@ -967,11 +1006,23 @@ export default function NewGuidePage() {
                                 className="p-1 rounded hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
                                 title="Move up"
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 15l7-7 7 7"
+                                  />
                                 </svg>
                               </button>
-                              <span className="text-xs text-text-secondary dark:text-text-secondary-dark font-medium">{index + 1}</span>
+                              <span className="text-xs text-text-secondary dark:text-text-secondary-dark font-medium">
+                                {index + 1}
+                              </span>
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -982,14 +1033,37 @@ export default function NewGuidePage() {
                                 className="p-1 rounded hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed"
                                 title="Move down"
                               >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M19 9l-7 7-7-7"
+                                  />
                                 </svg>
                               </button>
                             </div>
-                            <div className="flex items-center gap-2 cursor-move" title="Drag to reorder">
-                              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                            <div
+                              className="flex items-center gap-2 cursor-move"
+                              title="Drag to reorder"
+                            >
+                              <svg
+                                className="w-5 h-5 text-gray-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 8h16M4 16h16"
+                                />
                               </svg>
                               <span className="text-sm font-medium text-text dark:text-text-dark">
                                 {blockType?.icon} {blockType?.label}
@@ -1030,13 +1104,20 @@ export default function NewGuidePage() {
                                   }
                                   rows={6}
                                   className="font-mono text-sm"
-                                  placeholder={activeTab === 'en' ? 'Enter text... Use [link text](url) for links' : 'הכנס טקסט... השתמש ב-[טקסט קישור](url) לקישורים'}
+                                  placeholder={
+                                    activeTab === 'en'
+                                      ? 'Enter text... Use [link text](url) for links'
+                                      : 'הכנס טקסט... השתמש ב-[טקסט קישור](url) לקישורים'
+                                  }
                                   dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                 />
                                 <div className="text-xs text-text-secondary dark:text-text-secondary-dark bg-gray-50 p-2 rounded border">
                                   <p className="font-semibold mb-1">Link Format:</p>
                                   <p className="font-mono">[link text](https://example.com)</p>
-                                  <p className="mt-1 text-gray-400">Example: Check out our [shop](https://example.com/shop) for more products.</p>
+                                  <p className="mt-1 text-gray-400">
+                                    Example: Check out our [shop](https://example.com/shop) for more
+                                    products.
+                                  </p>
                                 </div>
                               </div>
                             )}
@@ -1058,7 +1139,9 @@ export default function NewGuidePage() {
                                       heading: e.target.value,
                                     })
                                   }
-                                  placeholder={activeTab === 'en' ? 'Enter heading...' : 'הכנס כותרת...'}
+                                  placeholder={
+                                    activeTab === 'en' ? 'Enter heading...' : 'הכנס כותרת...'
+                                  }
                                   dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                 />
                                 <div>
@@ -1068,7 +1151,9 @@ export default function NewGuidePage() {
                                   <SegmentedControls
                                     value={block.headingLevel || 'h2'}
                                     onValueChange={(value) =>
-                                      handleUpdateContentBlock(block.id, { headingLevel: value as 'h2' | 'h3' | 'h4' })
+                                      handleUpdateContentBlock(block.id, {
+                                        headingLevel: value as 'h2' | 'h3' | 'h4',
+                                      })
                                     }
                                     options={[
                                       { value: 'h2', label: 'H2' },
@@ -1081,81 +1166,109 @@ export default function NewGuidePage() {
                               </div>
                             )}
 
-                            {block.type === 'list' && (() => {
-                              const items = block.listItems || [];
-                              
-                              return (
-                                <div>
-                                  <div className="mb-3">
-                                    <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                                      {activeTab === 'en' ? 'List Type' : 'סוג רשימה'}
-                                    </label>
-                                    <SegmentedControls
-                                      value={block.listType || 'bullet'}
-                                      onValueChange={(value) =>
-                                        handleUpdateContentBlock(block.id, { listType: value as 'bullet' | 'numbered' })
-                                      }
-                                      options={[
-                                        { value: 'bullet', label: 'Bullet' },
-                                        { value: 'numbered', label: 'Numbered' },
-                                      ]}
-                                      className="max-w-[200px]"
-                                    />
-                                  </div>
-                                  <div className="mt-2 space-y-3">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                                        {activeTab === 'en' ? 'English List Items' : 'פריטי רשימה בעברית'}
-                                      </span>
-                                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
-                                        {activeTab === 'en' ? 'EN' : 'HE'}
-                                      </span>
+                            {block.type === 'list' &&
+                              (() => {
+                                const items = block.listItems || [];
+
+                                return (
+                                  <div>
+                                    <div className="mb-3">
+                                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                        {activeTab === 'en' ? 'List Type' : 'סוג רשימה'}
+                                      </label>
+                                      <SegmentedControls
+                                        value={block.listType || 'bullet'}
+                                        onValueChange={(value) =>
+                                          handleUpdateContentBlock(block.id, {
+                                            listType: value as 'bullet' | 'numbered',
+                                          })
+                                        }
+                                        options={[
+                                          { value: 'bullet', label: 'Bullet' },
+                                          { value: 'numbered', label: 'Numbered' },
+                                        ]}
+                                        className="max-w-[200px]"
+                                      />
                                     </div>
-                                    {items.map((item, itemIndex) => (
-                                      <div key={itemIndex} className="border border-gray-200 rounded-lg p-3 space-y-2">
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-xs text-text-secondary dark:text-text-secondary-dark">Item {itemIndex + 1}</span>
-                                          <Button
-                                            type="button"
-                                            variant="red"
-                                            size="sm"
-                                            onClick={() => handleRemoveListItem(block.id, itemIndex)}
-                                          >
-                                            Remove
-                                          </Button>
-                                        </div>
-                                        <Input
-                                          label="Title (Optional)"
-                                          value={item.title || ''}
-                                          onChange={(e) =>
-                                            handleUpdateListItem(block.id, itemIndex, 'title', e.target.value)
-                                          }
-                                          placeholder={activeTab === 'en' ? 'Item title...' : 'כותרת פריט...'}
-                                          dir={activeTab === 'he' ? 'rtl' : 'ltr'}
-                                        />
-                                        <Textarea
-                                          value={item.content || ''}
-                                          onChange={(e) =>
-                                            handleUpdateListItem(block.id, itemIndex, 'content', e.target.value)
-                                          }
-                                          rows={3}
-                                          placeholder={activeTab === 'en' ? 'Item content...' : 'תוכן פריט...'}
-                                          dir={activeTab === 'he' ? 'rtl' : 'ltr'}
-                                        />
+                                    <div className="mt-2 space-y-3">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                          {activeTab === 'en'
+                                            ? 'English List Items'
+                                            : 'פריטי רשימה בעברית'}
+                                        </span>
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                                          {activeTab === 'en' ? 'EN' : 'HE'}
+                                        </span>
                                       </div>
-                                    ))}
-                                    <Button
-                                      type="button"
-                                      variant="purple"
-                                      size="sm"
-                                      onClick={() => handleAddListItem(block.id)}
-                                    >
-                                      + Add Item
-                                    </Button>
+                                      {items.map((item, itemIndex) => (
+                                        <div
+                                          key={itemIndex}
+                                          className="border border-gray-200 rounded-lg p-3 space-y-2"
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <span className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                                              Item {itemIndex + 1}
+                                            </span>
+                                            <Button
+                                              type="button"
+                                              variant="red"
+                                              size="sm"
+                                              onClick={() =>
+                                                handleRemoveListItem(block.id, itemIndex)
+                                              }
+                                            >
+                                              Remove
+                                            </Button>
+                                          </div>
+                                          <Input
+                                            label="Title (Optional)"
+                                            value={item.title || ''}
+                                            onChange={(e) =>
+                                              handleUpdateListItem(
+                                                block.id,
+                                                itemIndex,
+                                                'title',
+                                                e.target.value
+                                              )
+                                            }
+                                            placeholder={
+                                              activeTab === 'en' ? 'Item title...' : 'כותרת פריט...'
+                                            }
+                                            dir={activeTab === 'he' ? 'rtl' : 'ltr'}
+                                          />
+                                          <Textarea
+                                            value={item.content || ''}
+                                            onChange={(e) =>
+                                              handleUpdateListItem(
+                                                block.id,
+                                                itemIndex,
+                                                'content',
+                                                e.target.value
+                                              )
+                                            }
+                                            rows={3}
+                                            placeholder={
+                                              activeTab === 'en'
+                                                ? 'Item content...'
+                                                : 'תוכן פריט...'
+                                            }
+                                            dir={activeTab === 'he' ? 'rtl' : 'ltr'}
+                                          />
+                                        </div>
+                                      ))}
+                                      <Button
+                                        type="button"
+                                        variant="purple"
+                                        size="sm"
+                                        onClick={() => handleAddListItem(block.id)}
+                                      >
+                                        + Add Item
+                                      </Button>
+                                    </div>
                                   </div>
-                                </div>
-                              );
-                            })()}
+                                );
+                              })()}
 
                             {block.type === 'image' && (
                               <div className="space-y-2">
@@ -1168,12 +1281,18 @@ export default function NewGuidePage() {
                                   placeholder="https://..."
                                 />
                                 <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                                  <h4 className="text-xs font-medium text-text-secondary dark:text-text-secondary-dark mb-2">Upload to Cloudinary (guideAssets)</h4>
+                                  <h4 className="text-xs font-medium text-text-secondary dark:text-text-secondary-dark mb-2">
+                                    Upload to Cloudinary (guideAssets)
+                                  </h4>
                                   <ImageUploader
-                                    images={block.imageUrl ? [{ url: block.imageUrl, publicId: '' }] : []}
+                                    images={
+                                      block.imageUrl ? [{ url: block.imageUrl, publicId: '' }] : []
+                                    }
                                     onUpload={(uploadedImages) => {
                                       if (uploadedImages.length > 0) {
-                                        handleUpdateContentBlock(block.id, { imageUrl: uploadedImages[0].url });
+                                        handleUpdateContentBlock(block.id, {
+                                          imageUrl: uploadedImages[0].url,
+                                        });
                                       }
                                     }}
                                     maxImages={1}
@@ -1196,7 +1315,9 @@ export default function NewGuidePage() {
                                         imageAlt: e.target.value,
                                       })
                                     }
-                                    placeholder={activeTab === 'en' ? 'Image description' : 'תיאור תמונה'}
+                                    placeholder={
+                                      activeTab === 'en' ? 'Image description' : 'תיאור תמונה'
+                                    }
                                     dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                   />
                                 </div>
@@ -1216,7 +1337,9 @@ export default function NewGuidePage() {
                                         imageCaption: e.target.value,
                                       })
                                     }
-                                    placeholder={activeTab === 'en' ? 'Image caption' : 'כיתוב תמונה'}
+                                    placeholder={
+                                      activeTab === 'en' ? 'Image caption' : 'כיתוב תמונה'
+                                    }
                                     dir={activeTab === 'he' ? 'rtl' : 'ltr'}
                                   />
                                 </div>
@@ -1228,9 +1351,15 @@ export default function NewGuidePage() {
                                     label="Link URL"
                                     value={block.imageLinkUrl || ''}
                                     onChange={(e) =>
-                                      handleUpdateContentBlock(block.id, { imageLinkUrl: e.target.value })
+                                      handleUpdateContentBlock(block.id, {
+                                        imageLinkUrl: e.target.value,
+                                      })
                                     }
-                                    placeholder={activeTab === 'en' ? 'https://... (leave empty for no link)' : 'https://... (השאר ריק ללא קישור)'}
+                                    placeholder={
+                                      activeTab === 'en'
+                                        ? 'https://... (leave empty for no link)'
+                                        : 'https://... (השאר ריק ללא קישור)'
+                                    }
                                   />
                                   <div className="mt-2">
                                     <Checkbox
@@ -1238,7 +1367,9 @@ export default function NewGuidePage() {
                                       id={`image-link-external-${block.id}`}
                                       checked={block.imageLinkExternal || false}
                                       onChange={(checked) =>
-                                        handleUpdateContentBlock(block.id, { imageLinkExternal: checked })
+                                        handleUpdateContentBlock(block.id, {
+                                          imageLinkExternal: checked,
+                                        })
                                       }
                                       label="Open in new tab"
                                     />
@@ -1250,7 +1381,11 @@ export default function NewGuidePage() {
                                       <a
                                         href={block.imageLinkUrl}
                                         target={block.imageLinkExternal ? '_blank' : '_self'}
-                                        rel={block.imageLinkExternal ? 'noopener noreferrer' : undefined}
+                                        rel={
+                                          block.imageLinkExternal
+                                            ? 'noopener noreferrer'
+                                            : undefined
+                                        }
                                         className="block"
                                       >
                                         <img
@@ -1355,7 +1490,7 @@ export default function NewGuidePage() {
                                   onChange={(e) =>
                                     handleUpdateContentBlock(block.id, { language: e.target.value })
                                   }
-                                  options={CODE_LANGUAGES.map(l => ({ value: l, label: l }))}
+                                  options={CODE_LANGUAGES.map((l) => ({ value: l, label: l }))}
                                 />
                                 <Textarea
                                   value={block.code || ''}
@@ -1391,7 +1526,9 @@ export default function NewGuidePage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1">Status</label>
+                  <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1">
+                    Status
+                  </label>
                   <SelectWrapper
                     value={formData.status}
                     onChange={(e) => handleInputChange('status', e.target.value)}
@@ -1418,7 +1555,7 @@ export default function NewGuidePage() {
                   label="Meta Title"
                   value={formData.metaTitle[activeTab]}
                   onChange={(e) =>
-                    setFormData(prev => ({
+                    setFormData((prev) => ({
                       ...prev,
                       metaTitle: { ...prev.metaTitle, [activeTab]: e.target.value },
                     }))
@@ -1426,7 +1563,9 @@ export default function NewGuidePage() {
                   placeholder={activeTab === 'en' ? 'SEO title' : 'כותרת SEO'}
                   maxLength={70}
                 />
-                <p className="text-xs text-text-secondary dark:text-text-secondary-dark">{formData.metaTitle[activeTab].length}/70 characters</p>
+                <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                  {formData.metaTitle[activeTab].length}/70 characters
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -1434,7 +1573,7 @@ export default function NewGuidePage() {
                   label="Meta Description"
                   value={formData.metaDescription[activeTab]}
                   onChange={(e) =>
-                    setFormData(prev => ({
+                    setFormData((prev) => ({
                       ...prev,
                       metaDescription: { ...prev.metaDescription, [activeTab]: e.target.value },
                     }))
@@ -1443,7 +1582,9 @@ export default function NewGuidePage() {
                   placeholder={activeTab === 'en' ? 'SEO description' : 'תיאור SEO'}
                   maxLength={160}
                 />
-                <p className="text-xs text-text-secondary dark:text-text-secondary-dark">{formData.metaDescription[activeTab].length}/160 characters</p>
+                <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                  {formData.metaDescription[activeTab].length}/160 characters
+                </p>
               </div>
 
               <div>
@@ -1451,12 +1592,14 @@ export default function NewGuidePage() {
                   label="Meta Keywords"
                   value={formData.metaKeywords[activeTab]}
                   onChange={(e) =>
-                    setFormData(prev => ({
+                    setFormData((prev) => ({
                       ...prev,
                       metaKeywords: { ...prev.metaKeywords, [activeTab]: e.target.value },
                     }))
                   }
-                  placeholder={activeTab === 'en' ? 'keyword1, keyword2, keyword3' : 'מילת מפתח 1, מילת מפתח 2'}
+                  placeholder={
+                    activeTab === 'en' ? 'keyword1, keyword2, keyword3' : 'מילת מפתח 1, מילת מפתח 2'
+                  }
                 />
               </div>
             </CardContent>
@@ -1505,22 +1648,18 @@ function RenderContentBlock({ block, lang: _lang }: { block: ContentBlock; lang:
         }
         return parts.length > 0 ? parts : [text];
       };
-      
-      return (
-        <p className="text-base leading-relaxed">
-          {parseTextWithLinks(textContent)}
-        </p>
-      );
-    
+
+      return <p className="text-base leading-relaxed">{parseTextWithLinks(textContent)}</p>;
+
     case 'heading':
       const HeadingTag = block.headingLevel || 'h2';
       return React.createElement(HeadingTag, { className: 'font-bold' }, block.heading || '');
-    
+
     case 'list':
       const listItems = block.listItems || [];
       const ListTag = block.listType === 'numbered' ? 'ol' : 'ul';
       const listClassName = block.listType === 'numbered' ? 'list-decimal pl-5' : 'list-disc pl-5';
-      
+
       return (
         <ListTag className={listClassName}>
           {listItems.filter(Boolean).map((item: any, i: number) => (
@@ -1531,7 +1670,7 @@ function RenderContentBlock({ block, lang: _lang }: { block: ContentBlock; lang:
           ))}
         </ListTag>
       );
-    
+
     case 'image':
       if (!block.imageUrl) return null;
       const imageElement = (
@@ -1556,7 +1695,7 @@ function RenderContentBlock({ block, lang: _lang }: { block: ContentBlock; lang:
           )}
         </div>
       );
-    
+
     case 'video':
       if (!block.videoUrl) return null;
       return (
@@ -1566,7 +1705,7 @@ function RenderContentBlock({ block, lang: _lang }: { block: ContentBlock; lang:
           </div>
         </div>
       );
-    
+
     case 'link':
       if (!block.linkUrl) return null;
       return (
@@ -1579,7 +1718,7 @@ function RenderContentBlock({ block, lang: _lang }: { block: ContentBlock; lang:
           {block.linkText || block.linkUrl}
         </a>
       );
-    
+
     case 'code':
       if (!block.code) return null;
       return (
@@ -1589,12 +1728,11 @@ function RenderContentBlock({ block, lang: _lang }: { block: ContentBlock; lang:
           </pre>
         </div>
       );
-    
+
     case 'divider':
       return <hr className="border-gray-300 my-4" />;
-    
+
     default:
       return null;
   }
 }
-

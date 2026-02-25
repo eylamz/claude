@@ -7,6 +7,39 @@ interface ImageData {
   alt?: string;
 }
 
+/** Resolves upload preset and public_id so uploads go to the correct folder with no prefix.
+ * Cloudinary: preset's folder overrides the request folder. So we use a dedicated preset per context when set.
+ * - Skateparks: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_SKATEPARKS (preset folder = skateparks), else default + folder param.
+ * - Guides: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_GUIDES (preset folder = guideAssets). If not set, use default + folder param
+ *   (works only if default preset has no folder set; otherwise create a preset with folder=guideAssets and set _GUIDES).
+ * - Events: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_EVENTS (preset folder = EventAssets).
+ */
+function getUploadConfig(folder: string): {
+  uploadPreset: string;
+  sendFolderInRequest: boolean;
+  /** public_id: only filename when using request folder; only filename when using preset folder. */
+  publicIdPrefix: string;
+} {
+  const defaultPreset = (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '').trim();
+  if (folder === 'skateparks') {
+    const preset = (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_SKATEPARKS || '').trim();
+    if (preset) return { uploadPreset: preset, sendFolderInRequest: false, publicIdPrefix: '' };
+  }
+  if (folder === 'guideAssets') {
+    const preset = (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_GUIDES || '').trim();
+    if (preset) return { uploadPreset: preset, sendFolderInRequest: false, publicIdPrefix: '' };
+    // Cloudinary: preset folder overrides the request folder. If the default preset has folder=skateparks,
+    // uploads would go there. So we require a dedicated guides preset for guideAssets.
+    return { uploadPreset: '', sendFolderInRequest: true, publicIdPrefix: '' };
+  }
+  if (folder === 'eventAssets') {
+    const preset = (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_EVENTS || '').trim();
+    if (preset) return { uploadPreset: preset, sendFolderInRequest: false, publicIdPrefix: '' };
+  }
+  // Default: send folder in request; public_id = filename only (Cloudinary places at folder/filename)
+  return { uploadPreset: defaultPreset, sendFolderInRequest: true, publicIdPrefix: '' };
+}
+
 interface ImageUploaderProps {
   images: ImageData[];
   onUpload: (images: ImageData[]) => void;
@@ -87,15 +120,19 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
     });
   };
 
-  const uploadToCloudinary = async (file: File, publicId: string): Promise<ImageData> => {
+  const uploadToCloudinary = async (
+    file: File,
+    publicId: string,
+    preset: string,
+    sendFolderInRequest: boolean,
+    folderParam: string
+  ): Promise<ImageData> => {
     return new Promise((resolve, reject) => {
-      // Get Cloudinary configuration from environment variables
-      // Note: In Next.js, client-side code can only access variables prefixed with NEXT_PUBLIC_
       const cloudName = (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '').trim();
-      const uploadPreset = (process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '').trim();
-      
+
       if (!cloudName) {
-        const errorMsg = 'Cloudinary cloud name is not configured.\n\n' +
+        const errorMsg =
+          'Cloudinary cloud name is not configured.\n\n' +
           'Please add to your .env.local file:\n' +
           'NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dr0rvohz9\n\n' +
           'Note: The NEXT_PUBLIC_ prefix is required for client-side access.\n' +
@@ -104,33 +141,39 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
         reject(new Error(errorMsg));
         return;
       }
-      
-      if (!uploadPreset) {
-        const errorMsg = 'Cloudinary upload preset is not configured.\n\n' +
-          'Please add to your .env.local file:\n' +
-          'NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your-upload-preset-name\n\n' +
-          'To create an upload preset:\n' +
-          '1. Go to Cloudinary Dashboard → Settings → Upload\n' +
-          '2. Create a new upload preset (set to "Unsigned" for client-side uploads)\n' +
-          '3. Add the preset name to your .env.local file\n' +
-          '4. Restart your Next.js development server.';
+
+      if (!preset) {
+        const isGuides = folderParam === 'guideAssets';
+        const errorMsg = isGuides
+          ? 'Guide uploads require a dedicated Cloudinary preset so images go to the guideAssets folder.\n\n' +
+            '1. In Cloudinary Dashboard → Settings → Upload, create a new unsigned preset.\n' +
+            '2. Set its Folder to: guideAssets\n' +
+            '3. In .env.local add: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_GUIDES=your-new-preset-name\n' +
+            '4. Restart the Next.js dev server.'
+          : 'Cloudinary upload preset is not configured.\n\n' +
+            'Please add to your .env.local file:\n' +
+            'NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your-upload-preset-name\n\n' +
+            'For guides (folder guideAssets) also set:\n' +
+            'NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_GUIDES=preset-with-folder-guideAssets';
         console.error('❌', errorMsg);
         reject(new Error(errorMsg));
         return;
       }
-      
+
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', uploadPreset);
-      formData.append('folder', folder);
+      formData.append('upload_preset', preset);
+      if (sendFolderInRequest) {
+        formData.append('folder', folderParam);
+      }
       formData.append('public_id', publicId);
 
       const xhr = new XMLHttpRequest();
-      
+
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
           const percentComplete = (e.loaded / e.total) * 100;
-          setUploadProgress(prev => ({ ...prev, [publicId]: percentComplete }));
+          setUploadProgress((prev) => ({ ...prev, [publicId]: percentComplete }));
         }
       });
 
@@ -155,11 +198,11 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
             statusText: xhr.statusText,
             response: xhr.responseText,
             cloudName: cloudName,
-            uploadPreset: uploadPreset,
+            uploadPreset: preset,
           });
           reject(new Error(errorMessage));
         }
-        setUploadProgress(prev => {
+        setUploadProgress((prev) => {
           const newProgress = { ...prev };
           delete newProgress[publicId];
           return newProgress;
@@ -168,7 +211,7 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
 
       xhr.addEventListener('error', () => {
         reject(new Error('Upload error'));
-        setUploadProgress(prev => {
+        setUploadProgress((prev) => {
           const newProgress = { ...prev };
           delete newProgress[publicId];
           return newProgress;
@@ -180,54 +223,62 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
     });
   };
 
-  const handleFiles = useCallback(async (files: FileList) => {
-    const fileArray = Array.from(files);
-    setErrors([]);
-    
-    // Check if adding these files would exceed max images
-    if (images.length + fileArray.length > maxImages) {
-      setErrors([`Maximum ${maxImages} images allowed`]);
-      return;
-    }
+  const handleFiles = useCallback(
+    async (files: FileList) => {
+      const fileArray = Array.from(files);
+      setErrors([]);
 
-    // Validate files
-    const validationErrors: string[] = [];
-    fileArray.forEach((file) => {
-      const error = validateFile(file);
-      if (error) validationErrors.push(`${file.name}: ${error}`);
-    });
+      // Check if adding these files would exceed max images
+      if (images.length + fileArray.length > maxImages) {
+        setErrors([`Maximum ${maxImages} images allowed`]);
+        return;
+      }
 
-    if (validationErrors.length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    setUploading(true);
-    
-    try {
-      const uploadPromises = fileArray.map(async (file, _index) => {
-        // Preserve original filename (without extension, Cloudinary adds it)
-        const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
-        // Use folder/filename format for public_id to preserve filename
-        const publicId = `${folder}/${fileNameWithoutExt}`;
-        const compressedFile = await compressImage(file);
-        return await uploadToCloudinary(compressedFile, publicId);
+      // Validate files
+      const validationErrors: string[] = [];
+      fileArray.forEach((file) => {
+        const error = validateFile(file);
+        if (error) validationErrors.push(`${file.name}: ${error}`);
       });
 
-      const uploadedImages = await Promise.all(uploadPromises);
-      onUpload([...images, ...uploadedImages]);
-    } catch (error) {
-      console.error('Upload error:', error);
-      setErrors(['Failed to upload images. Please try again.']);
-    } finally {
-      setUploading(false);
-    }
-  }, [images, onUpload, maxImages, folder]);
+      if (validationErrors.length > 0) {
+        setErrors(validationErrors);
+        return;
+      }
+
+      setUploading(true);
+
+      try {
+        const config = getUploadConfig(folder);
+        const uploadPromises = fileArray.map(async (file, _index) => {
+          const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+          const publicId = config.publicIdPrefix + fileNameWithoutExt;
+          const compressedFile = await compressImage(file);
+          return await uploadToCloudinary(
+            compressedFile,
+            publicId,
+            config.uploadPreset,
+            config.sendFolderInRequest,
+            folder
+          );
+        });
+
+        const uploadedImages = await Promise.all(uploadPromises);
+        onUpload([...images, ...uploadedImages]);
+      } catch (error) {
+        console.error('Upload error:', error);
+        setErrors(['Failed to upload images. Please try again.']);
+      } finally {
+        setUploading(false);
+      }
+    },
+    [images, onUpload, maxImages, folder]
+  );
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (e.type === 'dragenter' || e.type === 'dragover') {
       setDragActive(true);
     } else if (e.type === 'dragleave') {
@@ -238,34 +289,46 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    dragCounter.current = 0;
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+      dragCounter.current = 0;
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFiles(e.dataTransfer.files);
-    }
-  }, [handleFiles]);
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleFiles(e.dataTransfer.files);
+      }
+    },
+    [handleFiles]
+  );
 
-  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handleFiles(e.target.files);
-    }
-  }, [handleFiles]);
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        handleFiles(e.target.files);
+      }
+    },
+    [handleFiles]
+  );
 
-  const handleRemove = useCallback((index: number) => {
-    const newImages = images.filter((_, i) => i !== index);
-    onUpload(newImages);
-  }, [images, onUpload]);
+  const handleRemove = useCallback(
+    (index: number) => {
+      const newImages = images.filter((_, i) => i !== index);
+      onUpload(newImages);
+    },
+    [images, onUpload]
+  );
 
-  const handleSetPrimary = useCallback((index: number) => {
-    if (index === 0) return;
-    const newImages = [...images];
-    const [primary] = newImages.splice(index, 1);
-    onUpload([primary, ...newImages]);
-  }, [images, onUpload]);
+  const handleSetPrimary = useCallback(
+    (index: number) => {
+      if (index === 0) return;
+      const newImages = [...images];
+      const [primary] = newImages.splice(index, 1);
+      onUpload([primary, ...newImages]);
+    },
+    [images, onUpload]
+  );
 
   const handleDragStart = (index: number) => (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = 'move';
@@ -280,7 +343,7 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
   const handleDropReorder = (index: number) => (e: React.DragEvent) => {
     e.preventDefault();
     const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
-    
+
     if (draggedIndex === index) return;
 
     const newImages = [...images];
@@ -297,9 +360,7 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
       {images.length < maxImages && (
         <div
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-            dragActive
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-300 hover:border-gray-400'
+            dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
           }`}
           onDragEnter={(e) => {
             dragCounter.current++;
@@ -318,7 +379,7 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
             className="hidden"
             disabled={uploading}
           />
-          
+
           <div className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
@@ -390,7 +451,7 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
                     alt={image.alt || 'Product image'}
                     className="w-full h-full object-cover"
                   />
-                  
+
                   {/* Overlay */}
                   <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center space-x-2">
                     {!isPrimary && (
@@ -456,9 +517,25 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
       {isUploading && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center">
-            <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <svg
+              className="animate-spin h-5 w-5 text-blue-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
             </svg>
             <p className="ml-3 text-sm text-blue-800">Uploading images...</p>
           </div>
@@ -467,5 +544,3 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
     </div>
   );
 }
-
-

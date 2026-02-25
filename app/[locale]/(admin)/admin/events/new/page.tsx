@@ -417,7 +417,7 @@ export default function NewEventPage() {
                 Featured Image
               </label>
               <p className="text-xs text-text-secondary dark:text-text-secondary-dark mb-2">
-                Upload to Cloudinary (saved with original filename) or paste URL/Cloudinary ID below.
+                Upload to Cloudinary (EventAssets folder) or paste URL/Cloudinary ID below.
               </p>
               <ImageUploader
                 images={formData.featuredImage.url ? [{ url: formData.featuredImage.url, publicId: formData.featuredImage.cloudinaryId || formData.featuredImage.url, alt: formData.featuredImage.altText.en }] : []}
@@ -439,7 +439,7 @@ export default function NewEventPage() {
                   }
                 }}
                 maxImages={1}
-                folder="events"
+                folder="eventAssets"
               />
               <Input
                 type="url"
@@ -542,7 +542,7 @@ export default function NewEventPage() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-xs text-text-secondary dark:text-text-secondary-dark mb-2">
-                Upload images to Cloudinary (saved with original filename). Each upload is added as a new media item.
+                Upload images to Cloudinary (EventAssets folder). Each upload is added as a new media item.
               </p>
               <ImageUploader
                 images={[]}
@@ -560,7 +560,7 @@ export default function NewEventPage() {
                   if (newItems.length > 0) setExpandedMediaId(newItems[0].id);
                 }}
                 maxImages={20}
-                folder="events/media"
+                folder="eventAssets"
               />
             </div>
             {(!formData.media || formData.media.length === 0) ? (
