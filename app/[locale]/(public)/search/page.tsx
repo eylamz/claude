@@ -11,16 +11,16 @@ import { SearchInput } from '@/components/common/SearchInput';
 import { Icon } from '@/components/icons';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Button, SegmentedControls, Skeleton } from '@/components/ui';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Drawer } from '@/components/ui/drawer';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils/cn';
-import { searchFromCache, readFromCacheSync, type SearchResultFromCache } from '@/lib/search-from-cache';
+import {
+  searchFromCache,
+  readFromCacheSync,
+  type SearchResultFromCache,
+} from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 import { isEcommerceEnabled, isTrainersEnabled } from '@/lib/utils/ecommerce';
 import { trackSearchQuery, trackSearchClick } from '@/lib/analytics/internal';
@@ -30,8 +30,7 @@ function getOptimizedImageUrl(originalUrl: string): string | null {
   if (!originalUrl?.trim()) return null;
   if (originalUrl.includes('cloudinary.com')) {
     const parts = originalUrl.split('/upload/');
-    if (parts.length === 2)
-      return `${parts[0]}/upload/w_800,c_fill,q_auto:good,f_auto/${parts[1]}`;
+    if (parts.length === 2) return `${parts[0]}/upload/w_800,c_fill,q_auto:good,f_auto/${parts[1]}`;
   }
   return originalUrl;
 }
@@ -47,11 +46,26 @@ const SPORT_CONFIG_GUIDES = [
 
 // Sport config for filter panel (guides + events; displayName for labels)
 const SPORT_FILTER_CONFIG = [
-  { value: 'roller', iconName: 'Roller' as const, displayNameEn: 'Rollerblading', displayNameHe: 'רולר' },
+  {
+    value: 'roller',
+    iconName: 'Roller' as const,
+    displayNameEn: 'Rollerblading',
+    displayNameHe: 'רולר',
+  },
   { value: 'skate', iconName: 'Skate' as const, displayNameEn: 'Skating', displayNameHe: 'סקייט' },
-  { value: 'scoot', iconName: 'scooter' as const, displayNameEn: 'Scootering', displayNameHe: 'קורקינט' },
+  {
+    value: 'scoot',
+    iconName: 'scooter' as const,
+    displayNameEn: 'Scootering',
+    displayNameHe: 'קורקינט',
+  },
   { value: 'bmx', iconName: 'bmx-icon' as const, displayNameEn: 'BMX', displayNameHe: 'אופניים' },
-  { value: 'longboard', iconName: 'Longboard' as const, displayNameEn: 'Longboarding', displayNameHe: 'לונגבורד' },
+  {
+    value: 'longboard',
+    iconName: 'Longboard' as const,
+    displayNameEn: 'Longboarding',
+    displayNameHe: 'לונגבורד',
+  },
 ] as const;
 
 type CategoryTab = 'all' | 'products' | 'skateparks' | 'events' | 'guides' | 'trainers';
@@ -118,8 +132,14 @@ interface TrainerResult extends SearchResultBase {
 type SearchResult = ProductResult | SkateparkResult | EventResult | GuideResult | TrainerResult;
 
 // Minimal Skatepark shape for ParkCard from search result (no badges/amenities)
-function skateparkResultToPark(s: SkateparkResult, locale: string): Parameters<typeof ParkCard>[0]['park'] {
-  const name = typeof s.name === 'string' ? s.name : (s.name[locale as 'en' | 'he'] ?? s.name.en ?? s.name.he ?? '');
+function skateparkResultToPark(
+  s: SkateparkResult,
+  locale: string
+): Parameters<typeof ParkCard>[0]['park'] {
+  const name =
+    typeof s.name === 'string'
+      ? s.name
+      : (s.name[locale as 'en' | 'he'] ?? s.name.en ?? s.name.he ?? '');
   return {
     _id: s.id,
     slug: s.slug,
@@ -149,70 +169,74 @@ function skateparkResultToPark(s: SkateparkResult, locale: string): Parameters<t
 }
 
 // Event card thumbnail (match events page EventThumbnail)
-const SearchEventThumbnail = memo(
-  ({ photoUrl, title }: { photoUrl: string; title: string }) => {
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [hasError, setHasError] = useState(false);
-    const imgRef = useRef<HTMLImageElement>(null);
-    useEffect(() => {
-      setIsLoaded(false);
-      setHasError(false);
-    }, [photoUrl]);
-    useEffect(() => {
-      const check = () => {
-        if (!imgRef.current) return false;
-        const img = imgRef.current;
-        if (img.complete && img.naturalHeight !== 0) {
-          setIsLoaded(true);
-          return true;
-        }
-        if (img.complete && img.naturalHeight === 0) {
-          setIsLoaded(true);
-          setHasError(true);
-          return true;
-        }
-        return false;
-      };
-      if (check()) return;
-      const t = setTimeout(() => {
-        if (!isLoaded && !hasError && imgRef.current?.complete) {
-          setIsLoaded(true);
-          if (imgRef.current?.naturalHeight === 0) setHasError(true);
-        }
-      }, 3000);
-      return () => clearTimeout(t);
-    }, [photoUrl, isLoaded, hasError]);
-    const url = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
-    return (
-      <>
-        {!isLoaded && !hasError && (
-          <div className="absolute inset-0 bg-card dark:bg-card-dark flex items-center justify-center z-10">
-            <LoadingSpinner />
-          </div>
-        )}
-        {url ? (
-          <img
-            ref={imgRef}
-            src={url}
-            alt={title}
-            className={cn(
-              'w-full h-full rounded-xl object-cover transition-all duration-300 select-none saturate-150 group-hover:saturate-[1.75] group-hover:scale-105',
-              isLoaded ? 'opacity-100' : 'opacity-0'
-            )}
-            loading="lazy"
-            decoding="async"
-            onLoad={() => { setIsLoaded(true); setHasError(false); }}
-            onError={() => { setIsLoaded(true); setHasError(true); }}
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-            <div className="w-16 h-16 opacity-50" />
-          </div>
-        )}
-      </>
-    );
-  }
-);
+const SearchEventThumbnail = memo(({ photoUrl, title }: { photoUrl: string; title: string }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    setIsLoaded(false);
+    setHasError(false);
+  }, [photoUrl]);
+  useEffect(() => {
+    const check = () => {
+      if (!imgRef.current) return false;
+      const img = imgRef.current;
+      if (img.complete && img.naturalHeight !== 0) {
+        setIsLoaded(true);
+        return true;
+      }
+      if (img.complete && img.naturalHeight === 0) {
+        setIsLoaded(true);
+        setHasError(true);
+        return true;
+      }
+      return false;
+    };
+    if (check()) return;
+    const t = setTimeout(() => {
+      if (!isLoaded && !hasError && imgRef.current?.complete) {
+        setIsLoaded(true);
+        if (imgRef.current?.naturalHeight === 0) setHasError(true);
+      }
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [photoUrl, isLoaded, hasError]);
+  const url = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
+  return (
+    <>
+      {!isLoaded && !hasError && (
+        <div className="absolute inset-0 bg-card dark:bg-card-dark flex items-center justify-center z-10">
+          <LoadingSpinner />
+        </div>
+      )}
+      {url ? (
+        <img
+          ref={imgRef}
+          src={url}
+          alt={title}
+          className={cn(
+            'w-full h-full rounded-xl object-cover transition-all duration-300 select-none saturate-150 group-hover:saturate-[1.75] group-hover:scale-105',
+            isLoaded ? 'opacity-100' : 'opacity-0'
+          )}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => {
+            setIsLoaded(true);
+            setHasError(false);
+          }}
+          onError={() => {
+            setIsLoaded(true);
+            setHasError(true);
+          }}
+        />
+      ) : (
+        <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <div className="w-16 h-16 opacity-50" />
+        </div>
+      )}
+    </>
+  );
+});
 SearchEventThumbnail.displayName = 'SearchEventThumbnail';
 
 // Event card matching events page EventCard design
@@ -254,11 +278,13 @@ const SearchEventCard = memo(
     );
     const formatDate = (dateStr: string) => {
       const d = new Date(dateStr);
-      return d.toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      }).replace(/\./g, '/');
+      return d
+        .toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        })
+        .replace(/\./g, '/');
     };
     const href = `/${locale}/events/${event.slug}`;
     return (
@@ -267,7 +293,7 @@ const SearchEventCard = memo(
         onClick={handleClick}
         className={cn(
           'block h-fit group rounded-xl cursor-pointer relative select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn',
-          'before:content-[\'\'] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300',
+          "before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300",
           isClicked && 'before:animate-shimmerInfinite'
         )}
         style={{ animationDelay: `${animationDelay}ms` }}
@@ -342,70 +368,74 @@ const SearchEventCard = memo(
 SearchEventCard.displayName = 'SearchEventCard';
 
 // Guide card thumbnail (match guides page)
-const SearchGuideThumbnail = memo(
-  ({ photoUrl, title }: { photoUrl: string; title: string }) => {
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [hasError, setHasError] = useState(false);
-    const imgRef = useRef<HTMLImageElement>(null);
-    useEffect(() => {
-      setIsLoaded(false);
-      setHasError(false);
-    }, [photoUrl]);
-    useEffect(() => {
-      const check = () => {
-        if (!imgRef.current) return false;
-        const img = imgRef.current;
-        if (img.complete && img.naturalHeight !== 0) {
-          setIsLoaded(true);
-          return true;
-        }
-        if (img.complete && img.naturalHeight === 0) {
-          setIsLoaded(true);
-          setHasError(true);
-          return true;
-        }
-        return false;
-      };
-      if (check()) return;
-      const t = setTimeout(() => {
-        if (!isLoaded && !hasError && imgRef.current?.complete) {
-          setIsLoaded(true);
-          if (imgRef.current?.naturalHeight === 0) setHasError(true);
-        }
-      }, 3000);
-      return () => clearTimeout(t);
-    }, [photoUrl, isLoaded, hasError]);
-    const url = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
-    return (
-      <>
-        {!isLoaded && !hasError && (
-          <div className="absolute inset-0 bg-background/20 dark:bg-background/20 flex items-center justify-center z-10">
-            <LoadingSpinner />
-          </div>
-        )}
-        {url ? (
-          <img
-            ref={imgRef}
-            src={url}
-            alt={title}
-            className={cn(
-              'w-full h-full rounded-xl object-cover transition-all duration-300 select-none saturate-150 group-hover:saturate-[1.75] group-hover:scale-105',
-              isLoaded ? 'opacity-100' : 'opacity-0'
-            )}
-            loading="lazy"
-            decoding="async"
-            onLoad={() => { setIsLoaded(true); setHasError(false); }}
-            onError={() => { setIsLoaded(true); setHasError(true); }}
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-            <div className="w-16 h-16" />
-          </div>
-        )}
-      </>
-    );
-  }
-);
+const SearchGuideThumbnail = memo(({ photoUrl, title }: { photoUrl: string; title: string }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  useEffect(() => {
+    setIsLoaded(false);
+    setHasError(false);
+  }, [photoUrl]);
+  useEffect(() => {
+    const check = () => {
+      if (!imgRef.current) return false;
+      const img = imgRef.current;
+      if (img.complete && img.naturalHeight !== 0) {
+        setIsLoaded(true);
+        return true;
+      }
+      if (img.complete && img.naturalHeight === 0) {
+        setIsLoaded(true);
+        setHasError(true);
+        return true;
+      }
+      return false;
+    };
+    if (check()) return;
+    const t = setTimeout(() => {
+      if (!isLoaded && !hasError && imgRef.current?.complete) {
+        setIsLoaded(true);
+        if (imgRef.current?.naturalHeight === 0) setHasError(true);
+      }
+    }, 3000);
+    return () => clearTimeout(t);
+  }, [photoUrl, isLoaded, hasError]);
+  const url = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
+  return (
+    <>
+      {!isLoaded && !hasError && (
+        <div className="absolute inset-0 bg-background/20 dark:bg-background/20 flex items-center justify-center z-10">
+          <LoadingSpinner />
+        </div>
+      )}
+      {url ? (
+        <img
+          ref={imgRef}
+          src={url}
+          alt={title}
+          className={cn(
+            'w-full h-full rounded-xl object-cover transition-all duration-300 select-none saturate-150 group-hover:saturate-[1.75] group-hover:scale-105',
+            isLoaded ? 'opacity-100' : 'opacity-0'
+          )}
+          loading="lazy"
+          decoding="async"
+          onLoad={() => {
+            setIsLoaded(true);
+            setHasError(false);
+          }}
+          onError={() => {
+            setIsLoaded(true);
+            setHasError(true);
+          }}
+        />
+      ) : (
+        <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <div className="w-16 h-16" />
+        </div>
+      )}
+    </>
+  );
+});
 SearchGuideThumbnail.displayName = 'SearchGuideThumbnail';
 
 // Guide card matching guides-page-client GuideCard design
@@ -454,7 +484,7 @@ const SearchGuideCard = memo(
         onClick={handleClick}
         className={cn(
           'block h-fit group rounded-xl cursor-pointer relative select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn',
-          'before:content-[\'\'] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300',
+          "before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300",
           isClicked && 'before:animate-shimmerInfinite'
         )}
         style={{ animationDelay: `${animationDelay}ms` }}
@@ -544,8 +574,7 @@ function SearchPageContent() {
       if (!sport) return sport;
       const key = `sports.${sport.toLowerCase()}`;
       const translated = tGuides(key as any);
-      if (translated && translated !== key && !translated.startsWith('sports.'))
-        return translated;
+      if (translated && translated !== key && !translated.startsWith('sports.')) return translated;
       return sport.charAt(0).toUpperCase() + sport.slice(1);
     },
     [tGuides]
@@ -584,6 +613,11 @@ function SearchPageContent() {
   });
   const [amenitiesFilterOpen, setAmenitiesFilterOpen] = useState(false);
 
+  // Top 5 most clicked search results (from analytics), cached per locale in localStorage with fetchedAt (1 week TTL)
+  const [popularClicks, setPopularClicks] = useState<
+    Array<{ resultType: string; resultSlug: string; count: number; name?: string }>
+  >([]);
+
   // Scroll state
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -596,6 +630,48 @@ function SearchPageContent() {
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
   }, []);
+
+  // Fetch top 5 most clicked search results for "Popular" section; use localStorage per locale if fetched < 1 week ago
+  useEffect(() => {
+    const CACHE_KEY = `search_popular_clicks_${locale}`;
+    const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
+    type PopularItem = { resultType: string; resultSlug: string; count: number; name?: string };
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { results?: unknown[]; fetchedAt?: number };
+        const fetchedAt = parsed?.fetchedAt;
+        if (
+          typeof fetchedAt === 'number' &&
+          Date.now() - fetchedAt <= CACHE_TTL_MS &&
+          Array.isArray(parsed?.results)
+        ) {
+          setPopularClicks(parsed.results as PopularItem[]);
+          return;
+        }
+      }
+    } catch {
+      // ignore invalid cache
+    }
+    fetch(`/api/search/popular?locale=${encodeURIComponent(locale)}`)
+      .then((res) => res.json())
+      .then((data: { results?: PopularItem[] }) => {
+        if (Array.isArray(data?.results)) {
+          setPopularClicks(data.results);
+          if (data.results.length > 0) {
+            try {
+              localStorage.setItem(
+                CACHE_KEY,
+                JSON.stringify({ results: data.results, fetchedAt: Date.now() })
+              );
+            } catch {
+              // ignore quota / private mode
+            }
+          }
+        }
+      })
+      .catch(() => {});
+  }, [locale]);
 
   // Debounce
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -774,7 +850,9 @@ function SearchPageContent() {
           params.set('types', apiCategories.join(','));
           params.set('page', String(page));
           params.set('locale', String(locale));
-          const res = await fetch(`/api/search?${params.toString()}`, { signal: controller.signal });
+          const res = await fetch(`/api/search?${params.toString()}`, {
+            signal: controller.signal,
+          });
           if (!res.ok) throw new Error('Search failed');
           const data = await res.json();
           const apiResults = (data.results || []) as SearchResult[];
@@ -861,13 +939,55 @@ function SearchPageContent() {
   const ecommerceEnabled = isEcommerceEnabled();
   const trainersEnabled = isTrainersEnabled();
 
-  const tabs: { key: Exclude<CategoryTab, 'all'>; label: string; icon: string; iconBold: string; color: string }[] = useMemo(() => {
-    const allTabs: { key: Exclude<CategoryTab, 'all'>; label: string; icon: string; iconBold: string; color: string }[] = [
-      { key: 'products', label: t('tabs.products') || 'Products', icon: 'shop', iconBold: 'shopBold', color: 'orange' },
-      { key: 'skateparks', label: t('tabs.skateparks') || 'Parks', icon: 'trees', iconBold: 'treesBold', color: 'green' },
-      { key: 'events', label: t('tabs.events') || 'Events', icon: 'calendar', iconBold: 'calendarBold', color: 'purple' },
-      { key: 'guides', label: t('tabs.guides') || 'Guides', icon: 'book', iconBold: 'bookBold', color: 'blue' },
-      { key: 'trainers', label: t('tabs.trainers') || 'Trainers', icon: 'trainers', iconBold: 'trainersBold', color: 'pink' },
+  const tabs: {
+    key: Exclude<CategoryTab, 'all'>;
+    label: string;
+    icon: string;
+    iconBold: string;
+    color: string;
+  }[] = useMemo(() => {
+    const allTabs: {
+      key: Exclude<CategoryTab, 'all'>;
+      label: string;
+      icon: string;
+      iconBold: string;
+      color: string;
+    }[] = [
+      {
+        key: 'products',
+        label: t('tabs.products') || 'Products',
+        icon: 'shop',
+        iconBold: 'shopBold',
+        color: 'orange',
+      },
+      {
+        key: 'skateparks',
+        label: t('tabs.skateparks') || 'Parks',
+        icon: 'trees',
+        iconBold: 'treesBold',
+        color: 'green',
+      },
+      {
+        key: 'events',
+        label: t('tabs.events') || 'Events',
+        icon: 'calendar',
+        iconBold: 'calendarBold',
+        color: 'purple',
+      },
+      {
+        key: 'guides',
+        label: t('tabs.guides') || 'Guides',
+        icon: 'book',
+        iconBold: 'bookBold',
+        color: 'blue',
+      },
+      {
+        key: 'trainers',
+        label: t('tabs.trainers') || 'Trainers',
+        icon: 'trainers',
+        iconBold: 'trainersBold',
+        color: 'pink',
+      },
     ];
     return allTabs.filter(
       (tab) =>
@@ -879,24 +999,36 @@ function SearchPageContent() {
     );
   }, [t, ecommerceEnabled, trainersEnabled]);
 
-  // Tabs and filter buttons only for categories that have results; hide tab bar when only one category has results
+  // Show all tabs when there are any results; hide tab bar only when there are no results at all
   const { visibleTabs, showTabBar, hasSkateparkResults, hasGuideOrEventResults } = useMemo(() => {
     const typeSet = new Set(results.map((r) => r.type));
-    const visible = tabs.filter((tab) => typeSet.has(tab.key));
-    const showBar = visible.length >= 2;
+    const hasResults = results.length > 0;
     return {
-      visibleTabs: visible,
-      showTabBar: showBar,
+      visibleTabs: hasResults ? tabs : [],
+      showTabBar: hasResults,
       hasSkateparkResults: typeSet.has('skateparks'),
       hasGuideOrEventResults: typeSet.has('guides') || typeSet.has('events'),
     };
   }, [results, tabs]);
 
+  const showTabsAndFilters = (query.trim() !== '' || selectedTabs.length > 0) && showTabBar;
+
   // Group results by type for section separation (order matches tabs)
   const resultsByType = useMemo(() => {
-    const order: Exclude<CategoryTab, 'all'>[] = ['products', 'skateparks', 'events', 'guides', 'trainers'];
+    const order: Exclude<CategoryTab, 'all'>[] = [
+      'products',
+      'skateparks',
+      'events',
+      'guides',
+      'trainers',
+    ];
     const typeToTab = Object.fromEntries(tabs.map((tab) => [tab.key, tab]));
-    const groups: { type: Exclude<CategoryTab, 'all'>; label: string; icon: string; items: SearchResult[] }[] = [];
+    const groups: {
+      type: Exclude<CategoryTab, 'all'>;
+      label: string;
+      icon: string;
+      items: SearchResult[];
+    }[] = [];
     for (const type of order) {
       const items = filteredResults.filter((r) => r.type === type);
       if (items.length > 0) {
@@ -914,7 +1046,10 @@ function SearchPageContent() {
 
   // Get color classes for tab
   const getTabColorClasses = (color: string) => {
-    const colors: Record<string, { bg: string; text: string; border: string; hoverBorder: string }> = {
+    const colors: Record<
+      string,
+      { bg: string; text: string; border: string; hoverBorder: string }
+    > = {
       purple: {
         bg: 'bg-purple dark:bg-purple-dark',
         text: 'text-purple-bg dark:text-purple-bg-dark',
@@ -956,7 +1091,9 @@ function SearchPageContent() {
   };
 
   /** Map tab color to Button variant (teal → brand; others match Button variant names). */
-  const getTabButtonVariant = (color: string): 'purple' | 'green' | 'blue' | 'orange' | 'brand' | 'pink' | 'gray' | 'teal' => {
+  const getTabButtonVariant = (
+    color: string
+  ): 'purple' | 'green' | 'blue' | 'orange' | 'brand' | 'pink' | 'gray' | 'teal' => {
     return color as 'purple' | 'green' | 'blue' | 'orange' | 'pink' | 'gray' | 'teal';
   };
 
@@ -1122,7 +1259,10 @@ function SearchPageContent() {
     selectedSports.length > 0 ||
     selectedAmenities.length > 0;
   const activeFiltersCount =
-    (hasSearchQuery ? 1 : 0) + selectedTabs.length + selectedSports.length + selectedAmenities.length;
+    (hasSearchQuery ? 1 : 0) +
+    selectedTabs.length +
+    selectedSports.length +
+    selectedAmenities.length;
   const hasMultipleFilters = activeFiltersCount > 1;
 
   const clearAllFilters = useCallback(() => {
@@ -1149,28 +1289,43 @@ function SearchPageContent() {
             </h1>
             <h2 className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               {tr(
-                'Search parks, products, events, guides, and trainers in one place.',
-                'חפש פארקים, מוצרים, אירועים, מדריכים ומאמנים במקום אחד.'
+                'Search parks, guides, and events in one place.',
+                'חפש פארקים, מדריכים ואירועים במקום אחד.'
               )}
             </h2>
 
-            {/* Popular searches - tap to search (main search is in sticky bar below) */}
-            {!query && (
+            {/* Popular: show when we have at least one clicked result (visible even when user has typed) */}
+            {popularClicks.length > 0 ? (
               <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   {tr('Popular:', 'פופולרי:')}
                 </span>
-                {['skateboard', 't-shirt', 'bmx', 'helmet'].map((term) => (
-                  <button
-                    key={term}
-                    onClick={() => setQuery(term)}
-                    className="px-3 py-1.5 text-sm bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full transition-colors text-gray-700 dark:text-gray-300"
-                  >
-                    {term}
-                  </button>
-                ))}
+                {popularClicks.map((item) => {
+                  const pathPrefix = item.resultType === 'products' ? 'shop' : item.resultType;
+                  const href = `/${locale}/${pathPrefix}/${item.resultSlug}`;
+                  const label = item.name ?? item.resultSlug.replace(/-/g, ' ');
+                  return (
+                    <Link
+                      key={`${item.resultType}-${item.resultSlug}`}
+                      href={href}
+                      onClick={() =>
+                        trackSearchClick({
+                          query: label,
+                          resultType: item.resultType,
+                          resultSlug: item.resultSlug,
+                          href,
+                          source: 'search_page',
+                          locale,
+                        })
+                      }
+                      className="px-3 py-1.5 text-sm bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full transition-colors text-gray-700 dark:text-gray-300"
+                    >
+                      {label}
+                    </Link>
+                  );
+                })}
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
@@ -1187,353 +1342,520 @@ function SearchPageContent() {
         )}
       >
         <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {/* Search - full width on mobile, inline on desktop */}
-            <div className="flex-1 min-w-0">
+          <div
+            className={cn(
+              'flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3',
+              !showTabsAndFilters && 'sm:justify-center'
+            )}
+          >
+            {/* Search - centered when bar has no other elements, otherwise left-aligned */}
+            <div
+              className={cn(
+                'min-w-0',
+                showTabsAndFilters ? 'flex-1 max-w-[250px]' : 'w-full max-w-2xl sm:max-w-xl'
+              )}
+            >
               <SearchInput
                 ref={searchInputRef}
                 value={query}
                 onChange={handleQueryChange}
                 onClear={handleClearSearch}
                 placeholder={tr('Search for anything...', 'חפש כל דבר...')}
-                className="w-full sm:max-w-[250px]"
+                className="w-full !max-w-full"
               />
             </div>
-            {/* Tabs (multi-select) - only when query and 2+ categories have results */}
-            {query.trim() && showTabBar && (
-            <div className="flex overflow-x-auto scrollbar-hide gap-2 min-w-0 items-center">
-              {visibleTabs.map((tab) => {
-                const isSelected = selectedTabs.includes(tab.key);
-                return (
-                  <Button
-                    key={tab.key}
-                    type="button"
-                    variant={isSelected ? getTabButtonVariant(tab.color) : 'gray'}
-                    size="md"
-                    className="!rounded-md gap-2 flex-shrink-0 whitespace-nowrap font-semibold shadow-none"
-                    onClick={() => toggleTab(tab.key)}
-                  >
-                    <Icon name={(isSelected ? tab.iconBold : tab.icon) as any} className="w-4 h-4" />
-                    <span className="hidden md:inline">{tab.label}</span>
-                  </Button>
-                );
-              })}
-            {/* Sports filter - show when there are guides or events results */}
-            {hasGuideOrEventResults && (
-              <div className="flex-shrink-0">
-                {isMobile ? (
-                  <>
+            {/* Tabs (multi-select) - show when there are results and user has searched or selected at least one tab */}
+            {(query.trim() || selectedTabs.length > 0) && showTabBar && (
+              <div className="flex gap-2 min-w-0 items-center">
+                {visibleTabs.map((tab) => {
+                  const isSelected = selectedTabs.includes(tab.key);
+                  return (
                     <Button
-                      variant={selectedSports.length > 0 ? 'teal' : 'gray'}
+                      key={tab.key}
+                      type="button"
+                      variant={isSelected ? getTabButtonVariant(tab.color) : 'gray'}
                       size="md"
-                      className="relative"
-                      aria-label={tr('Filter by sport', 'סנן לפי ספורט')}
-                      onClick={() => setSportsFilterOpen(true)}
+                      className="!rounded-lg gap-2 flex-shrink-0 whitespace-nowrap font-semibold shadow-none"
+                      onClick={() => toggleTab(tab.key)}
                     >
-                      <Icon name={selectedSports.length > 0 ? 'filterBold' : 'filter'} className="w-5 h-5" />
-                      {selectedSports.length > 0 && (
-                        <Badge variant="teal" className="rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
-                          {selectedSports.length}
-                        </Badge>
-                      )}
+                      <Icon
+                        name={(isSelected ? tab.iconBold : tab.icon) as any}
+                        className="w-5 h-5 md:w-4 md:h-4"
+                      />
+                      <span className="hidden md:inline">{tab.label}</span>
                     </Button>
-                    <Drawer isOpen={sportsFilterOpen} onClose={() => setSportsFilterOpen(false)} title={tr('Filter by sport', 'סנן לפי ספורט')}>
-                      <div className="space-y-3">
-                        {selectedSports.length > 0 && (
-                          <Button variant="red" size="sm" onClick={() => { setSelectedSports([]); setSportsFilterOpen(false); }} className="gap-1">
-                            <Icon name="trashBold" className="h-3 w-3" /> {tr('Clear', 'נקה')}
-                          </Button>
-                        )}
-                        <div className="flex flex-col gap-1">
-                          {SPORT_FILTER_CONFIG.map((sport) => {
-                            const checked = selectedSports.includes(sport.value);
-                            return (
-                              <button
-                                key={sport.value}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedSports((prev) =>
-                                    prev.includes(sport.value) ? prev.filter((s) => s !== sport.value) : [...prev, sport.value]
-                                  );
-                                }}
-                                className={cn(
-                                  'flex items-center gap-2 w-full px-3 py-2 rounded-lg text-left font-medium transition-colors',
-                                  checked ? 'bg-teal-bg dark:bg-teal-bg-dark text-teal dark:text-teal-dark' : 'bg-muted dark:bg-muted-dark hover:bg-muted/80'
-                                )}
-                              >
-                                <Icon name={sport.iconName as any} className="w-4 h-4" />
-                                <span>{isHebrew ? sport.displayNameHe : sport.displayNameEn}</span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </Drawer>
-                  </>
-                ) : (
-                  <Popover open={sportsFilterOpen} onOpenChange={setSportsFilterOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={selectedSports.length > 0 ? 'teal' : 'gray'}
-                        size="md"
-                        className="relative"
-                        aria-label={tr('Filter by sport', 'סנן לפי ספורט')}
-                      >
-                        <Icon name={selectedSports.length > 0 ? 'filterBold' : 'filter'} className="w-5 h-5" />
-                        {selectedSports.length > 0 && (
-                          <Badge variant="teal" className="shadow-sm rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
-                            {selectedSports.length}
-                          </Badge>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="end" className="w-56 p-2">
-                      <div className="space-y-1 w-full">
-                        <div className={cn('flex items-center justify-between py-1', isHebrew ? 'flex-row-reverse' : 'flex-row')}>
-                          <span className="text-sm font-medium">{tr('Filter by sport', 'סנן לפי ספורט')}</span>
+                  );
+                })}
+                {/* Sports filter - show when there are guides or events results */}
+                {hasGuideOrEventResults && (
+                  <div className="flex-shrink-0">
+                    {isMobile ? (
+                      <>
+                        <Button
+                          variant={selectedSports.length > 0 ? 'teal' : 'gray'}
+                          size="md"
+                          className="relative"
+                          aria-label={tr('Filter by sport', 'סנן לפי ספורט')}
+                          onClick={() => setSportsFilterOpen(true)}
+                        >
+                          <Icon
+                            name={selectedSports.length > 0 ? 'filterBold' : 'filter'}
+                            className="w-5 h-5"
+                          />
                           {selectedSports.length > 0 && (
-                            <Button variant="red" size="sm" className="h-7 px-2 text-xs gap-1" onClick={() => setSelectedSports([])}>
-                              <Icon name="trashBold" className="h-3 w-3" /> {tr('Clear', 'נקה')}
-                            </Button>
+                            <Badge
+                              variant="teal"
+                              className="rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]"
+                            >
+                              {selectedSports.length}
+                            </Badge>
                           )}
-                        </div>
-                        <div className="w-full flex flex-col items-end gap-1">
-                        {SPORT_FILTER_CONFIG.map((sport) => {
-                          const checked = selectedSports.includes(sport.value);
-                          return (
-                            <button
-                              key={sport.value}
-                              type="button"
-                              onClick={() => {
-                                setSelectedSports((prev) =>
-                                  prev.includes(sport.value) ? prev.filter((s) => s !== sport.value) : [...prev, sport.value]
-                                );
-                              }}
-                              className={cn(
-                                'flex items-center gap-2 w-full px-2 py-1.5 rounded-md text-sm font-medium transition-colors',
-                                isHebrew ? 'flex-row-reverse' : 'flex-row',
-                                checked ? 'bg-teal-bg text-teal dark:bg-teal-bg-dark dark:text-teal-dark border border-teal-border dark:border-teal-border-dark' : 'hover:bg-gray-bg dark:hover:bg-gray-bg-dark'
-                              )}
-                            >
-                              <Icon name={sport.iconName as any} className="w-4 h-4" />
-                              <span>{isHebrew ? sport.displayNameHe : sport.displayNameEn}</span>
-                            </button>
-                          );
-                        })}
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
-              </div>
-            )}
-            {/* Amenities filter - show when there are skatepark results */}
-            {hasSkateparkResults && (
-              <div className="flex-shrink-0">
-                {isMobile ? (
-                  <>
-                    <Button
-                      variant={selectedAmenities.length > 0 ? 'blue' : 'gray'}
-                      size="md"
-                      className="relative"
-                      aria-label={tr('Filter by amenities', 'סנן לפי שירותים')}
-                      onClick={() => setAmenitiesFilterOpen(true)}
-                    >
-                      <Icon name={selectedAmenities.length > 0 ? 'notesBold' : 'notes'} className="w-5 h-5" />
-                      {selectedAmenities.length > 0 && (
-                        <Badge variant="blue" className="shadow-sm rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
-                          {selectedAmenities.length}
-                        </Badge>
-                      )}
-                    </Button>
-                    <Drawer isOpen={amenitiesFilterOpen} onClose={() => setAmenitiesFilterOpen(false)} title={tr('Filter by amenities', 'סנן לפי שירותים')}>
-                      <div className="space-y-2">
-                        {selectedAmenities.length > 0 && (
-                          <>
-                            <div className={cn('flex', isHebrew ? 'flex-row-reverse' : 'flex-row', 'justify-end')}>
+                        </Button>
+                        <Drawer
+                          isOpen={sportsFilterOpen}
+                          onClose={() => setSportsFilterOpen(false)}
+                          title={tr('Filter by sport', 'סנן לפי ספורט')}
+                        >
+                          <div className="space-y-3">
+                            {selectedSports.length > 0 && (
                               <Button
                                 variant="red"
                                 size="sm"
-                                onClick={() => { setSelectedAmenities([]); setAmenitiesFilterOpen(false); }}
-                                className="h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
+                                onClick={() => {
+                                  setSelectedSports([]);
+                                  setSportsFilterOpen(false);
+                                }}
+                                className="gap-1"
                               >
-                                {tr('Clear', 'נקה')}
-                                <Icon name="trashBold" className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            <Separator className="bg-popover-border dark:bg-popover-border-dark" />
-                          </>
-                        )}
-                        <div className={cn('flex flex-col gap-1', isHebrew ? 'items-end' : 'items-start')}>
-                          {AMENITY_POPOVER_OPTIONS.map((amenity) => (
-                            <Button
-                              key={amenity.key}
-                              variant={selectedAmenities.includes(amenity.key) ? 'blue' : 'none'}
-                              size="sm"
-                              className={cn(
-                                'flex gap-2 font-medium w-full justify-start min-w-0',
-                                selectedAmenities.includes(amenity.key) ? '' : 'text-gray dark:text-gray-dark',
-                                isHebrew ? 'flex-row-reverse' : 'flex-row'
-                              )}
-                              onClick={() => setSelectedAmenities((prev) => prev.includes(amenity.key) ? prev.filter((a) => a !== amenity.key) : [...prev, amenity.key])}
-                            >
-                              <Icon
-                                name={amenity.iconName as any}
-                                className={cn(
-                                  'w-4 h-4 shrink-0 transition-all duration-200',
-                                  selectedAmenities.includes(amenity.key) ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'
-                                )}
-                              />
-                              {tSkateparks(`amenities.${amenity.key}` as any) || amenity.key}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                    </Drawer>
-                  </>
-                ) : (
-                  <Popover open={amenitiesFilterOpen} onOpenChange={setAmenitiesFilterOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={selectedAmenities.length > 0 ? 'blue' : 'gray'}
-                        size="sm"
-                        className="relative"
-                        aria-label={tr('Filter by amenities', 'סנן לפי שירותים')}
-                      >
-                        <Icon name={selectedAmenities.length > 0 ? 'notesBold' : 'notes'} className="w-5 h-5" />
-                        {selectedAmenities.length > 0 && (
-                          <Badge variant="blue" className="shadow-sm rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]">
-                            {selectedAmenities.length}
-                          </Badge>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-fit p-2">
-                      <div className="space-y-2">
-                        <div className={cn('flex gap-4', isHebrew ? 'flex-row-reverse' : 'flex-row', 'items-center justify-between h-[32px]')}>
-                          <h4 className="mx-2.5 text-sm font-medium">{tr('Filter by amenities', 'סנן לפי שירותים')}</h4>
-                          <div className={cn('flex gap-1.5 items-center', isHebrew ? 'flex-row-reverse' : 'flex-row')}>
-                            {selectedAmenities.length > 0 && (
-                              <Button
-                                variant="red"
-                                size="sm"
-                                onClick={() => setSelectedAmenities([])}
-                                className="opacity-0 animate-popFadeIn h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
-                                style={{ animationDelay: '300ms' }}
-                              >
-                                {tr('Clear', 'נקה')}
-                                <Icon name="trashBold" className="h-3 w-3" />
+                                <Icon name="trashBold" className="h-3 w-3" /> {tr('Clear', 'נקה')}
                               </Button>
                             )}
-                            <Button
-                              variant="gray"
-                              size="sm"
-                              onClick={() => setAmenitiesFilterOpen(false)}
-                              className="h-8 w-8 p-0 shrink-0"
-                              aria-label={tr('Close', 'סגור')}
-                            >
-                              <Icon name="X" className="h-4 w-4" />
-                            </Button>
+                            <div className="flex flex-col gap-1">
+                              {SPORT_FILTER_CONFIG.map((sport) => {
+                                const checked = selectedSports.includes(sport.value);
+                                return (
+                                  <button
+                                    key={sport.value}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedSports((prev) =>
+                                        prev.includes(sport.value)
+                                          ? prev.filter((s) => s !== sport.value)
+                                          : [...prev, sport.value]
+                                      );
+                                    }}
+                                    className={cn(
+                                      'flex items-center gap-2 w-full px-3 py-2 rounded-lg text-left font-medium transition-colors',
+                                      checked
+                                        ? 'bg-teal-bg dark:bg-teal-bg-dark text-teal dark:text-teal-dark'
+                                        : 'bg-muted dark:bg-muted-dark hover:bg-muted/80'
+                                    )}
+                                  >
+                                    <Icon name={sport.iconName as any} className="w-4 h-4" />
+                                    <span>
+                                      {isHebrew ? sport.displayNameHe : sport.displayNameEn}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                        <Separator className="bg-popover-border dark:bg-popover-border-dark" />
-                        <table className="w-full border-collapse">
-                          <tbody>
-                            {Array.from({ length: Math.ceil(AMENITY_POPOVER_OPTIONS.length / 2) }).map((_, rowIndex) => {
-                              const leftAmenity = AMENITY_POPOVER_OPTIONS[rowIndex * 2];
-                              const rightAmenity = AMENITY_POPOVER_OPTIONS[rowIndex * 2 + 1];
-                              return (
-                                <tr key={rowIndex}>
-                                  <td
-                                    className="w-1/2 px-1 py-0.5 border-r border-popover-border dark:border-popover-border-dark"
-                                    style={{ textAlign: isHebrew ? 'right' : 'left' }}
+                        </Drawer>
+                      </>
+                    ) : (
+                      <Popover open={sportsFilterOpen} onOpenChange={setSportsFilterOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={selectedSports.length > 0 ? 'teal' : 'gray'}
+                            size="md"
+                            className="relative"
+                            aria-label={tr('Filter by sport', 'סנן לפי ספורט')}
+                          >
+                            <Icon
+                              name={selectedSports.length > 0 ? 'filterBold' : 'filter'}
+                              className="w-5 h-5"
+                            />
+                            {selectedSports.length > 0 && (
+                              <Badge
+                                variant="teal"
+                                className="shadow-sm rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]"
+                              >
+                                {selectedSports.length}
+                              </Badge>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="end" className="w-56 p-2">
+                          <div className="space-y-1 w-full">
+                            <div
+                              className={cn(
+                                'flex items-center justify-between py-1',
+                                isHebrew ? 'flex-row-reverse' : 'flex-row'
+                              )}
+                            >
+                              <span className="text-sm font-medium">
+                                {tr('Filter by sport', 'סנן לפי ספורט')}
+                              </span>
+                              {selectedSports.length > 0 && (
+                                <Button
+                                  variant="red"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs gap-1"
+                                  onClick={() => setSelectedSports([])}
+                                >
+                                  <Icon name="trashBold" className="h-3 w-3" /> {tr('Clear', 'נקה')}
+                                </Button>
+                              )}
+                            </div>
+                            <div className="w-full flex flex-col items-end gap-1">
+                              {SPORT_FILTER_CONFIG.map((sport) => {
+                                const checked = selectedSports.includes(sport.value);
+                                return (
+                                  <button
+                                    key={sport.value}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedSports((prev) =>
+                                        prev.includes(sport.value)
+                                          ? prev.filter((s) => s !== sport.value)
+                                          : [...prev, sport.value]
+                                      );
+                                    }}
+                                    className={cn(
+                                      'flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                                      isHebrew ? 'flex-row-reverse' : 'flex-row',
+                                      checked
+                                        ? 'bg-teal-bg text-teal dark:bg-teal-bg-dark dark:text-teal-dark border border-teal-border dark:border-teal-border-dark'
+                                        : 'hover:bg-gray-bg dark:hover:bg-gray-bg-dark'
+                                    )}
                                   >
-                                    <div className={cn('w-full inline-flex', isHebrew ? 'flex-row-reverse' : 'flex-row')}>
-                                      {leftAmenity && (
-                                        <Button
-                                          variant={selectedAmenities.includes(leftAmenity.key) ? 'blue' : 'none'}
-                                          size="sm"
-                                          className={cn(
-                                            'flex gap-2 !justify-start font-medium w-full text-nowrap',
-                                            selectedAmenities.includes(leftAmenity.key) ? '' : 'text-gray dark:text-gray-dark',
-                                            isHebrew ? 'flex-row-reverse' : 'flex-row'
-                                          )}
-                                          onClick={() => setSelectedAmenities((prev) => prev.includes(leftAmenity.key) ? prev.filter((a) => a !== leftAmenity.key) : [...prev, leftAmenity.key])}
-                                        >
-                                          <Icon
-                                            name={leftAmenity.iconName as any}
-                                            className={cn(
-                                              'w-4 h-4 transition-all duration-200',
-                                              selectedAmenities.includes(leftAmenity.key) ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'
-                                            )}
-                                          />
-                                          {tSkateparks(`amenities.${leftAmenity.key}` as any) || leftAmenity.key}
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </td>
-                                  <td
-                                    className="w-1/2 px-1 py-0.5"
-                                    style={{ textAlign: isHebrew ? 'right' : 'left' }}
-                                  >
-                                    <div className={cn('inline-flex', isHebrew ? 'flex-row-reverse' : 'flex-row')}>
-                                      {rightAmenity && (
-                                        <Button
-                                          variant={selectedAmenities.includes(rightAmenity.key) ? 'blue' : 'none'}
-                                          size="sm"
-                                          className={cn(
-                                            'flex gap-2 w-fit text-nowrap',
-                                            selectedAmenities.includes(rightAmenity.key) ? '' : 'text-text dark:text-text-dark/90',
-                                            isHebrew ? 'flex-row-reverse' : 'flex-row'
-                                          )}
-                                          onClick={() => setSelectedAmenities((prev) => prev.includes(rightAmenity.key) ? prev.filter((a) => a !== rightAmenity.key) : [...prev, rightAmenity.key])}
-                                        >
-                                          <Icon
-                                            name={rightAmenity.iconName as any}
-                                            className={cn(
-                                              'w-4 h-4 transition-all duration-200',
-                                              selectedAmenities.includes(rightAmenity.key) ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'
-                                            )}
-                                          />
-                                          {tSkateparks(`amenities.${rightAmenity.key}` as any) || rightAmenity.key}
-                                        </Button>
-                                      )}
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+                                    <Icon name={sport.iconName as any} className="w-4 h-4" />
+                                    <span>
+                                      {isHebrew ? sport.displayNameHe : sport.displayNameEn}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </div>
                 )}
+                {/* Amenities filter - show when there are skatepark results */}
+                {hasSkateparkResults && (
+                  <div className="flex-shrink-0">
+                    {isMobile ? (
+                      <>
+                        <Button
+                          variant={selectedAmenities.length > 0 ? 'blue' : 'gray'}
+                          size="md"
+                          className="relative"
+                          aria-label={tr('Filter by amenities', 'סנן לפי שירותים')}
+                          onClick={() => setAmenitiesFilterOpen(true)}
+                        >
+                          <Icon
+                            name={selectedAmenities.length > 0 ? 'notesBold' : 'notes'}
+                            className="w-5 h-5"
+                          />
+                          {selectedAmenities.length > 0 && (
+                            <Badge
+                              variant="blue"
+                              className="shadow-sm rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]"
+                            >
+                              {selectedAmenities.length}
+                            </Badge>
+                          )}
+                        </Button>
+                        <Drawer
+                          isOpen={amenitiesFilterOpen}
+                          onClose={() => setAmenitiesFilterOpen(false)}
+                          title={tr('Filter by amenities', 'סנן לפי שירותים')}
+                        >
+                          <div className="space-y-2">
+                            {selectedAmenities.length > 0 && (
+                              <>
+                                <div
+                                  className={cn(
+                                    'flex',
+                                    isHebrew ? 'flex-row-reverse' : 'flex-row',
+                                    'justify-end'
+                                  )}
+                                >
+                                  <Button
+                                    variant="red"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedAmenities([]);
+                                      setAmenitiesFilterOpen(false);
+                                    }}
+                                    className="h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
+                                  >
+                                    {tr('Clear', 'נקה')}
+                                    <Icon name="trashBold" className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                              </>
+                            )}
+                            <div
+                              className={cn(
+                                'flex flex-col gap-1',
+                                isHebrew ? 'items-end' : 'items-start'
+                              )}
+                            >
+                              {AMENITY_POPOVER_OPTIONS.map((amenity) => (
+                                <Button
+                                  key={amenity.key}
+                                  variant={
+                                    selectedAmenities.includes(amenity.key) ? 'blue' : 'none'
+                                  }
+                                  size="sm"
+                                  className={cn(
+                                    'flex gap-2 font-medium w-full justify-start min-w-0',
+                                    selectedAmenities.includes(amenity.key)
+                                      ? ''
+                                      : 'text-gray dark:text-gray-dark',
+                                    isHebrew ? 'flex-row-reverse' : 'flex-row'
+                                  )}
+                                  onClick={() =>
+                                    setSelectedAmenities((prev) =>
+                                      prev.includes(amenity.key)
+                                        ? prev.filter((a) => a !== amenity.key)
+                                        : [...prev, amenity.key]
+                                    )
+                                  }
+                                >
+                                  <Icon
+                                    name={amenity.iconName as any}
+                                    className={cn(
+                                      'w-4 h-4 shrink-0 transition-all duration-200',
+                                      selectedAmenities.includes(amenity.key)
+                                        ? 'text-blue dark:text-blue-dark'
+                                        : 'text-gray/75 dark:text-gray-dark/75'
+                                    )}
+                                  />
+                                  {tSkateparks(`amenities.${amenity.key}` as any) || amenity.key}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        </Drawer>
+                      </>
+                    ) : (
+                      <Popover open={amenitiesFilterOpen} onOpenChange={setAmenitiesFilterOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={selectedAmenities.length > 0 ? 'blue' : 'gray'}
+                            size="md"
+                            className="relative"
+                            aria-label={tr('Filter by amenities', 'סנן לפי שירותים')}
+                          >
+                            <Icon
+                              name={selectedAmenities.length > 0 ? 'notesBold' : 'notes'}
+                              className="w-5 h-5"
+                            />
+                            {selectedAmenities.length > 0 && (
+                              <Badge
+                                variant="blue"
+                                className="shadow-sm rounded-full absolute -top-2 -right-2 min-w-[18px] min-h-[18px] p-0 flex items-center justify-center text-[10px]"
+                              >
+                                {selectedAmenities.length}
+                              </Badge>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-fit p-2">
+                          <div className="space-y-2">
+                            <div
+                              className={cn(
+                                'flex gap-4',
+                                isHebrew ? 'flex-row-reverse' : 'flex-row',
+                                'items-center justify-between h-[32px]'
+                              )}
+                            >
+                              <h4 className="mx-2.5 text-sm font-medium">
+                                {tr('Filter by amenities', 'סנן לפי שירותים')}
+                              </h4>
+                              <div
+                                className={cn(
+                                  'flex gap-1.5 items-center',
+                                  isHebrew ? 'flex-row-reverse' : 'flex-row'
+                                )}
+                              >
+                                {selectedAmenities.length > 0 && (
+                                  <Button
+                                    variant="red"
+                                    size="sm"
+                                    onClick={() => setSelectedAmenities([])}
+                                    className="opacity-0 animate-popFadeIn h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
+                                    style={{ animationDelay: '300ms' }}
+                                  >
+                                    {tr('Clear', 'נקה')}
+                                    <Icon name="trashBold" className="h-3 w-3" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="gray"
+                                  size="sm"
+                                  onClick={() => setAmenitiesFilterOpen(false)}
+                                  className="h-8 w-8 p-0 shrink-0"
+                                  aria-label={tr('Close', 'סגור')}
+                                >
+                                  <Icon name="X" className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                            <table className="w-full border-collapse">
+                              <tbody>
+                                {Array.from({
+                                  length: Math.ceil(AMENITY_POPOVER_OPTIONS.length / 2),
+                                }).map((_, rowIndex) => {
+                                  const leftAmenity = AMENITY_POPOVER_OPTIONS[rowIndex * 2];
+                                  const rightAmenity = AMENITY_POPOVER_OPTIONS[rowIndex * 2 + 1];
+                                  return (
+                                    <tr key={rowIndex}>
+                                      <td
+                                        className="w-1/2 px-1 py-0.5 border-r border-popover-border dark:border-popover-border-dark"
+                                        style={{ textAlign: isHebrew ? 'right' : 'left' }}
+                                      >
+                                        <div
+                                          className={cn(
+                                            'w-full inline-flex',
+                                            isHebrew ? 'flex-row-reverse' : 'flex-row'
+                                          )}
+                                        >
+                                          {leftAmenity && (
+                                            <Button
+                                              variant={
+                                                selectedAmenities.includes(leftAmenity.key)
+                                                  ? 'blue'
+                                                  : 'none'
+                                              }
+                                              size="sm"
+                                              className={cn(
+                                                'flex gap-2 !justify-start font-medium w-full text-nowrap',
+                                                selectedAmenities.includes(leftAmenity.key)
+                                                  ? ''
+                                                  : 'text-gray dark:text-gray-dark',
+                                                isHebrew ? 'flex-row-reverse' : 'flex-row'
+                                              )}
+                                              onClick={() =>
+                                                setSelectedAmenities((prev) =>
+                                                  prev.includes(leftAmenity.key)
+                                                    ? prev.filter((a) => a !== leftAmenity.key)
+                                                    : [...prev, leftAmenity.key]
+                                                )
+                                              }
+                                            >
+                                              <Icon
+                                                name={leftAmenity.iconName as any}
+                                                className={cn(
+                                                  'w-4 h-4 transition-all duration-200',
+                                                  selectedAmenities.includes(leftAmenity.key)
+                                                    ? 'text-blue dark:text-blue-dark'
+                                                    : 'text-gray/75 dark:text-gray-dark/75'
+                                                )}
+                                              />
+                                              {tSkateparks(`amenities.${leftAmenity.key}` as any) ||
+                                                leftAmenity.key}
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </td>
+                                      <td
+                                        className="w-1/2 px-1 py-0.5"
+                                        style={{ textAlign: isHebrew ? 'right' : 'left' }}
+                                      >
+                                        <div
+                                          className={cn(
+                                            'inline-flex',
+                                            isHebrew ? 'flex-row-reverse' : 'flex-row'
+                                          )}
+                                        >
+                                          {rightAmenity && (
+                                            <Button
+                                              variant={
+                                                selectedAmenities.includes(rightAmenity.key)
+                                                  ? 'blue'
+                                                  : 'none'
+                                              }
+                                              size="sm"
+                                              className={cn(
+                                                'flex gap-2 w-fit text-nowrap',
+                                                selectedAmenities.includes(rightAmenity.key)
+                                                  ? ''
+                                                  : 'text-text dark:text-text-dark/90',
+                                                isHebrew ? 'flex-row-reverse' : 'flex-row'
+                                              )}
+                                              onClick={() =>
+                                                setSelectedAmenities((prev) =>
+                                                  prev.includes(rightAmenity.key)
+                                                    ? prev.filter((a) => a !== rightAmenity.key)
+                                                    : [...prev, rightAmenity.key]
+                                                )
+                                              }
+                                            >
+                                              <Icon
+                                                name={rightAmenity.iconName as any}
+                                                className={cn(
+                                                  'w-4 h-4 transition-all duration-200',
+                                                  selectedAmenities.includes(rightAmenity.key)
+                                                    ? 'text-blue dark:text-blue-dark'
+                                                    : 'text-gray/75 dark:text-gray-dark/75'
+                                                )}
+                                              />
+                                              {tSkateparks(
+                                                `amenities.${rightAmenity.key}` as any
+                                              ) || rightAmenity.key}
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                  </div>
+                )}
+                {/* View toggle - grid/list */}
+                <div className="flex items-center flex-shrink-0">
+                  <SegmentedControls
+                    name="search-view-mode"
+                    value={viewMode}
+                    onValueChange={(v) => setViewMode(v as 'grid' | 'list')}
+                    options={[
+                      {
+                        value: 'grid',
+                        icon: (
+                          <Icon
+                            name={viewMode === 'grid' ? 'categoryBold' : 'category'}
+                            className="w-5 h-5"
+                          />
+                        ),
+                        variant: 'orange',
+                      },
+                      {
+                        value: 'list',
+                        icon: (
+                          <Icon name={viewMode === 'list' ? 'taskBold' : 'task'}
+                           className="w-5 h-5" />
+                        ),
+                        variant: 'pink',
+                      },
+                    ]}
+                    className="h-[2.88rem] sm:h-[2.5rem]"
+                  />
+                </div>
               </div>
             )}
-            </div>
-            )}
-            {/* View toggle */}
-            <div className="hidden md:flex items-center flex-shrink-0">
-              <SegmentedControls
-                name="search-view-mode"
-                value={viewMode}
-                onValueChange={(v) => setViewMode(v as 'grid' | 'list')}
-                options={[
-                  {
-                    value: 'grid',
-                    icon: <Icon name={viewMode === 'grid' ? 'categoryBold' : 'category'} className="w-4 h-4" />,
-                    variant: 'orange',
-                  },
-                  {
-                    value: 'list',
-                    icon: <Icon name={viewMode === 'list' ? 'taskBold' : 'task'} className="w-4 h-4" />,
-                    variant: 'pink',
-                  },
-                ]}
-                className="h-9"
-              />
-            </div>
           </div>
 
           {/* Active / Applied Filters Status - FilterBar & events page style */}
@@ -1548,7 +1870,9 @@ function SearchPageContent() {
                       {filteredResults.length}
                     </span>
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {filteredResults.length === 1 ? tr('result', 'תוצאה') : tr('results', 'תוצאות')}
+                      {filteredResults.length === 1
+                        ? tr('result', 'תוצאה')
+                        : tr('results', 'תוצאות')}
                     </span>
                   </div>
                 )}
@@ -1560,7 +1884,9 @@ function SearchPageContent() {
                     onClick={handleClearSearch}
                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-orange-bg dark:bg-orange-bg-dark rounded-full border border-orange-border dark:border-orange-border-dark hover:bg-orange-bg/80 dark:hover:bg-orange-bg-dark/80 transition-colors cursor-pointer animate-pop"
                   >
-                    <span className="text-sm text-gray-700 dark:text-gray-300">"{query.trim()}"</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      "{query.trim()}"
+                    </span>
                     <Icon name="X" className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                   </button>
                 )}
@@ -1612,9 +1938,7 @@ function SearchPageContent() {
                     <button
                       key={sport}
                       type="button"
-                      onClick={() =>
-                        setSelectedSports((prev) => prev.filter((s) => s !== sport))
-                      }
+                      onClick={() => setSelectedSports((prev) => prev.filter((s) => s !== sport))}
                       className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-bg dark:bg-teal-bg-dark rounded-full border border-teal-border dark:border-teal-border-dark hover:bg-teal-bg/80 dark:hover:bg-teal-bg-dark/80 transition-colors cursor-pointer animate-pop"
                     >
                       {sportConfig ? (
@@ -1634,8 +1958,7 @@ function SearchPageContent() {
                 {/* Amenities badges */}
                 {selectedAmenities.map((amenityKey) => {
                   const amenityOption = AMENITY_POPOVER_OPTIONS.find((a) => a.key === amenityKey);
-                  const label =
-                    tSkateparks(`amenities.${amenityKey}` as any) || amenityKey;
+                  const label = tSkateparks(`amenities.${amenityKey}` as any) || amenityKey;
                   return (
                     <button
                       key={amenityKey}
@@ -1685,11 +2008,19 @@ function SearchPageContent() {
             <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               {selectedSports.length > 0 && total !== filteredResults.length ? (
                 <>
-                  {tr('Showing', 'מציג')} <strong className="text-gray-900 dark:text-white">{filteredResults.length}</strong> {tr('of', 'מתוך')} <strong>{total}</strong> {tr('results', 'תוצאות')}
+                  {tr('Showing', 'מציג')}{' '}
+                  <strong className="text-gray-900 dark:text-white">
+                    {filteredResults.length}
+                  </strong>{' '}
+                  {tr('of', 'מתוך')} <strong>{total}</strong> {tr('results', 'תוצאות')}
                 </>
               ) : (
                 <>
-                  {tr('Found', 'נמצאו')} <strong className="text-gray-900 dark:text-white">{filteredResults.length}</strong> {tr('results', 'תוצאות')}
+                  {tr('Found', 'נמצאו')}{' '}
+                  <strong className="text-gray-900 dark:text-white">
+                    {filteredResults.length}
+                  </strong>{' '}
+                  {tr('results', 'תוצאות')}
                 </>
               )}
             </div>
@@ -1701,7 +2032,7 @@ function SearchPageContent() {
           MAIN CONTENT - Grid like skateparks page
       ======================================== */}
       <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8 overflow-x-hidden md:overflow-x-visible">
-        {(query || selectedTabs.length > 0) ? (
+        {query || selectedTabs.length > 0 ? (
           <>
             {/* Results - same grid as skateparks: grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 */}
             <main className="min-w-0">
@@ -1719,14 +2050,22 @@ function SearchPageContent() {
                   ))}
                 </div>
               ) : filteredResults.length > 0 ? (
-                <div className="space-y-10" role="region" aria-label={tr('Search results', 'תוצאות חיפוש')}>
+                <div
+                  className="space-y-10"
+                  role="region"
+                  aria-label={tr('Search results', 'תוצאות חיפוש')}
+                >
                   {resultsByType.map((group) => {
                     const showHeading = resultsByType.length > 1;
                     return (
                       <section
                         key={group.type}
                         aria-labelledby={showHeading ? `search-section-${group.type}` : undefined}
-                        className={showHeading ? 'border-b border-gray-200 dark:border-gray-700 pb-10 last:border-b-0 last:pb-0' : ''}
+                        className={
+                          showHeading
+                            ? 'border-b border-gray-200 dark:border-gray-700 pb-10 last:border-b-0 last:pb-0'
+                            : ''
+                        }
                       >
                         {showHeading && (
                           <h2
@@ -1783,7 +2122,7 @@ function SearchPageContent() {
               <p className="text-gray-600 dark:text-gray-400">
                 {tr(
                   'Explore parks, products, events, guides, and trainers.',
-                  'גלה פארקים, מוצרים, אירועים, מדריכים ומאמנים.'
+                  'גלה פארקים, אירועים ומדריכים.'
                 )}
               </p>
             </div>
@@ -1800,7 +2139,11 @@ function SearchPageContent() {
                       'p-6 text-center bg-card dark:bg-card-dark rounded-2xl border transition-all group',
                       isSelected
                         ? colorClasses.border
-                        : cn('border-gray-border dark:border-gray-border-dark', colorClasses.hoverBorder, 'hover:shadow-lg')
+                        : cn(
+                            'border-gray-border dark:border-gray-border-dark',
+                            colorClasses.hoverBorder,
+                            'hover:shadow-lg'
+                          )
                     )}
                   >
                     <div
@@ -1810,13 +2153,15 @@ function SearchPageContent() {
                         'group-hover:opacity-90'
                       )}
                     >
-                      <Icon name={tab.icon as any} className={cn("w-7 h-7", colorClasses.text)}/>
+                      <Icon name={tab.icon as any} className={cn('w-7 h-7', colorClasses.text)} />
                     </div>
                     <h3 className="text-lg font-bold text-text dark:text-text-dark mb-1">
                       {tab.label}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {isHebrew ? `צפייה בכל ה${tab.label}` : `Browse all ${tab.label.toLowerCase()}`}
+                      {isHebrew
+                        ? `צפייה בכל ה${tab.label}`
+                        : `Browse all ${tab.label.toLowerCase()}`}
                     </p>
                   </button>
                 );

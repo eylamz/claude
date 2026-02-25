@@ -5,7 +5,14 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 import { useLocaleInfo } from '@/hooks/use-translation';
 
-export type SegmentedControlVariant = 'green' | 'blue' | 'red' | 'gray' | 'orange' | 'purple' | 'pink';
+export type SegmentedControlVariant =
+  | 'green'
+  | 'blue'
+  | 'red'
+  | 'gray'
+  | 'orange'
+  | 'purple'
+  | 'pink';
 
 export interface SegmentedControlOption {
   value: string;
@@ -25,28 +32,36 @@ export interface SegmentedControlsProps {
 }
 
 const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProps>(
-  ({ 
-    options, 
-    value, 
-    defaultValue, 
-    onValueChange, 
-    name = 'segmentedControls',
-    className,
-    ...props 
-  }, ref) => {
-    const [internalValue, setInternalValue] = React.useState(defaultValue || options[0]?.value || '');
+  (
+    {
+      options,
+      value,
+      defaultValue,
+      onValueChange,
+      name = 'segmentedControls',
+      className,
+      ...props
+    },
+    ref
+  ) => {
+    const [internalValue, setInternalValue] = React.useState(
+      defaultValue || options[0]?.value || ''
+    );
     const isControlled = value !== undefined;
     const currentValue = isControlled ? value : internalValue;
-    const selectedIndex = options.findIndex(opt => opt.value === currentValue);
+    const selectedIndex = options.findIndex((opt) => opt.value === currentValue);
     const actualIndex = selectedIndex >= 0 ? selectedIndex : 0;
     const { isRTL } = useLocaleInfo();
 
-    const handleChange = React.useCallback((newValue: string) => {
-      if (!isControlled) {
-        setInternalValue(newValue);
-      }
-      onValueChange?.(newValue);
-    }, [isControlled, onValueChange]);
+    const handleChange = React.useCallback(
+      (newValue: string) => {
+        if (!isControlled) {
+          setInternalValue(newValue);
+        }
+        onValueChange?.(newValue);
+      },
+      [isControlled, onValueChange]
+    );
 
     // Calculate transform for the paddle (last label's ::after)
     // The paddle is positioned on the last label and needs to move to the selected option
@@ -57,62 +72,63 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
     //   - If 1st option (index 0 of 4) is selected: move 3 positions left = -300%
     // In RTL: paddle moves right (positive) from last position to selected position
     const positionsFromLast = options.length - 1 - actualIndex;
-    const paddleTransform = isRTL 
-      ? positionsFromLast * 100  // Positive for RTL (moves right)
-      : positionsFromLast * -100;  // Negative for LTR (moves left)
+    const paddleTransform = isRTL
+      ? positionsFromLast * 100 // Positive for RTL (moves right)
+      : positionsFromLast * -100; // Negative for LTR (moves left)
 
     const uniqueId = React.useId();
     const controlsId = `segmented-controls-${uniqueId}`;
-    
+
     // Color mappings for variants (using the same colors as button variants)
-    const variantColors: Record<SegmentedControlVariant, { bg: { light: string; dark: string }; border: { light: string; dark: string } }> = {
+    const variantColors: Record<
+      SegmentedControlVariant,
+      { bg: { light: string; dark: string }; border: { light: string; dark: string } }
+    > = {
       green: {
         bg: { light: '#e3f6e4', dark: '#0f2f10' },
-        border: { light: '#baf0bb', dark: '#235725' }
+        border: { light: '#baf0bb', dark: '#235725' },
       },
       blue: {
         bg: { light: '#deecfc', dark: 'hsl(199,61%,15%)' },
-        border: { light: '#b6d9fd', dark: '#195570' }
+        border: { light: '#b6d9fd', dark: '#195570' },
       },
       red: {
         bg: { light: '#ffe6e6', dark: '#311c1c' },
-        border: { light: '#ffc5c5', dark: 'hsl(355, 46%, 25%)' }
+        border: { light: '#ffc5c5', dark: 'hsl(355, 46%, 25%)' },
       },
       gray: {
         bg: { light: '#efefef', dark: '#262626' },
-        border: { light: '#e6e6e6', dark: '#494949' }
+        border: { light: '#e6e6e6', dark: '#494949' },
       },
       orange: {
         bg: { light: '#fff1e0', dark: 'hsl(32, 89%, 12%)' },
-        border: { light: '#ffe0bb', dark: 'hsl(32, 89%, 25%)' }
+        border: { light: '#ffe0bb', dark: 'hsl(32, 89%, 25%)' },
       },
       purple: {
         bg: { light: '#e7defc', dark: 'hsl(261, 54%, 20%)' },
-        border: { light: 'hsl(259, 84%, 87%)', dark: '#6e40c4' }
+        border: { light: 'hsl(259, 84%, 87%)', dark: '#6e40c4' },
       },
       pink: {
         bg: { light: '#fde6f2', dark: 'hsl(314, 27%, 15%)' },
-        border: { light: 'hsl(314, 96%, 89%)', dark: 'hsl(314, 46%, 25%)' }
-      }
+        border: { light: 'hsl(314, 96%, 89%)', dark: 'hsl(314, 46%, 25%)' },
+      },
     };
-    
+
     // Get the variant of the selected option, default to 'gray' if not specified
-    const selectedOption = options.find(opt => opt.value === currentValue);
+    const selectedOption = options.find((opt) => opt.value === currentValue);
     const rawVariant = selectedOption?.variant;
-    const selectedVariant: SegmentedControlVariant = (
-      rawVariant && 
-      typeof rawVariant === 'string' && 
-      rawVariant in variantColors
-    ) 
-      ? rawVariant as SegmentedControlVariant
-      : 'gray';
-    
+    const selectedVariant: SegmentedControlVariant =
+      rawVariant && typeof rawVariant === 'string' && rawVariant in variantColors
+        ? (rawVariant as SegmentedControlVariant)
+        : 'gray';
+
     const selectedColors = variantColors[selectedVariant] || variantColors.gray;
 
     return (
       <>
-        <style dangerouslySetInnerHTML={{
-          __html: `
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
             #${controlsId} {
               --paddle-transform: ${paddleTransform}%;
               --paddle-bg-light: ${selectedColors.bg.light};
@@ -173,8 +189,9 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
               box-shadow: 0 0 0 0.2rem rgba(0,122,255,0.5);
             }
         }
-          `
-        }} />
+          `,
+          }}
+        />
         <div
           ref={ref}
           id={controlsId}
@@ -197,7 +214,7 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
                 // Unselected buttons always use default gray
                 return 'text-gray dark:text-gray-dark';
               }
-              
+
               // Selected buttons use their variant color (if specified and not gray)
               const variant = option.variant;
               if (variant && variant !== 'gray') {
@@ -211,37 +228,36 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
                 };
                 return variantColorMap[variant] || 'text-gray dark:text-gray-dark';
               }
-              
+
               // Default to gray for selected buttons without variant
               return 'text-gray dark:text-gray-dark';
             };
-            
+
             const textColorClass = getTextColorClass();
-            
+
             const labelContent = (
               <>
                 {option.icon && (
-                  <span className={cn(
-                    "w-4 h-4 flex items-center justify-center",
-                    textColorClass
-                  )}>
+                  <span className={cn('w-4 h-4 flex items-center justify-center', textColorClass)}>
                     {option.icon}
                   </span>
                 )}
                 {option.label && (
-                  <span className={cn(
-                    'text-[0.8125rem] font-medium leading-none',
-                    'font-sans', // -apple-system, BlinkMacSystemFont, sans-serif
-                    isSelected && 'text-[0.875rem] font-semibold',
-                    option.icon && 'ms-2',
-                    textColorClass
-                  )}>
+                  <span
+                    className={cn(
+                      'text-[0.8125rem] font-medium leading-none',
+                      'font-sans', // -apple-system, BlinkMacSystemFont, sans-serif
+                      isSelected && 'text-[0.875rem] font-semibold',
+                      option.icon && 'ms-2',
+                      textColorClass
+                    )}
+                  >
                     {option.label}
                   </span>
                 )}
               </>
             );
-            
+
             return (
               <React.Fragment key={`${option.value}-${index}`}>
                 <input
@@ -268,9 +284,7 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
                         {labelContent}
                       </label>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {option.tooltip}
-                    </TooltipContent>
+                    <TooltipContent side="bottom">{option.tooltip}</TooltipContent>
                   </Tooltip>
                 ) : (
                   <label

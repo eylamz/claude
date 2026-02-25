@@ -36,15 +36,27 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/context/ThemeProvider';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import { 
-  useCartStore, 
-  useCartItemCount, 
-  useCartItems, 
+import {
+  useCartStore,
+  useCartItemCount,
+  useCartItems,
   useCartTotals,
-  type CartItem 
+  type CartItem,
 } from '@/stores/cartStore';
-import { isEcommerceEnabled, isTrainersEnabled, isLoginEnabled, isGrowthLabEnabled, isCommunityEnabled } from '@/lib/utils/ecommerce';
-import { searchFromCache, readFromCacheSync, getAreaFromQuery, queryMatchesCategory, type SearchResultFromCache } from '@/lib/search-from-cache';
+import {
+  isEcommerceEnabled,
+  isTrainersEnabled,
+  isLoginEnabled,
+  isGrowthLabEnabled,
+  isCommunityEnabled,
+} from '@/lib/utils/ecommerce';
+import {
+  searchFromCache,
+  readFromCacheSync,
+  getAreaFromQuery,
+  queryMatchesCategory,
+  type SearchResultFromCache,
+} from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 import { flipLanguage } from '@/lib/utils/transliterate';
 import { trackSearchQuery, trackSearchClick } from '@/lib/analytics/internal';
@@ -118,7 +130,7 @@ export default function HeaderNav() {
   const tSearch = useTranslations('search');
   const tSkateparks = useTranslations('skateparks');
   const { theme, toggleTheme } = useTheme();
-  
+
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -127,7 +139,12 @@ export default function HeaderNav() {
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchAnalyticsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  
+
+  // Top 5 most clicked search results (from analytics), cached per locale (1 week TTL)
+  const [popularClicks, setPopularClicks] = useState<
+    Array<{ resultType: string; resultSlug: string; count: number; name?: string }>
+  >([]);
+
   const ecommerceEnabled = isEcommerceEnabled();
   const trainersEnabled = isTrainersEnabled();
   const loginEnabled = isLoginEnabled();
@@ -137,7 +154,7 @@ export default function HeaderNav() {
   const items = useCartItems();
   const totals = useCartTotals();
   const { updateQuantity, removeItem } = useCartStore();
-  
+
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -166,7 +183,7 @@ export default function HeaderNav() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const prevScrollY = prevScrollYRef.current;
-      
+
       // Determine scroll direction
       if (currentScrollY < prevScrollY || currentScrollY < 10) {
         // Scrolling up or at top - show header
@@ -175,7 +192,7 @@ export default function HeaderNav() {
         // Scrolling down - hide header
         setIsHeaderVisible(false);
       }
-      
+
       prevScrollYRef.current = currentScrollY;
       setScrollY(currentScrollY);
     };
@@ -197,7 +214,7 @@ export default function HeaderNav() {
   useEffect(() => {
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     const color = theme === 'dark' ? '#181c21' : '#f6f7f9';
-    
+
     if (metaThemeColor) {
       metaThemeColor.setAttribute('content', color);
     } else {
@@ -209,19 +226,25 @@ export default function HeaderNav() {
   }, [theme]);
 
   // Save search to recent searches
-  const saveSearch = useCallback((query: string) => {
-    if (!query.trim()) return;
-    const updated = [query, ...recentSearches.filter(s => s !== query)].slice(0, 10);
-    setRecentSearches(updated);
-    localStorage.setItem('recentSearches', JSON.stringify(updated));
-  }, [recentSearches]);
+  const saveSearch = useCallback(
+    (query: string) => {
+      if (!query.trim()) return;
+      const updated = [query, ...recentSearches.filter((s) => s !== query)].slice(0, 10);
+      setRecentSearches(updated);
+      localStorage.setItem('recentSearches', JSON.stringify(updated));
+    },
+    [recentSearches]
+  );
 
   // Set query from recent/quick action (results show in popup)
-  const handleSearchQuery = useCallback((query: string) => {
-    if (!query.trim()) return;
-    saveSearch(query);
-    setSearchQuery(query);
-  }, [saveSearch]);
+  const handleSearchQuery = useCallback(
+    (query: string) => {
+      if (!query.trim()) return;
+      saveSearch(query);
+      setSearchQuery(query);
+    },
+    [saveSearch]
+  );
 
   // Search only from localStorage cache (no server fetch) - same data source as MobileSidebar cache
   const cacheCategories = useMemo((): ('skateparks' | 'events' | 'guides')[] => {
@@ -229,63 +252,89 @@ export default function HeaderNav() {
   }, []);
 
   // Resolve display name for a result (locale-aware)
-  const getResultDisplayName = useCallback((item: SearchResult): string => {
-    const raw = 'name' in item && item.name != null
-      ? item.name
-      : 'title' in item && item.title != null
-        ? item.title
-        : '';
-    if (typeof raw === 'string') return raw;
-    if (raw && typeof raw === 'object' && 'en' in raw && 'he' in raw) {
-      const loc = locale as 'en' | 'he';
-      return (raw as { en?: string; he?: string })[loc] ?? (raw as { en?: string; he?: string }).en ?? (raw as { en?: string; he?: string }).he ?? '';
-    }
-    return String(raw);
-  }, [locale]);
+  const getResultDisplayName = useCallback(
+    (item: SearchResult): string => {
+      const raw =
+        'name' in item && item.name != null
+          ? item.name
+          : 'title' in item && item.title != null
+            ? item.title
+            : '';
+      if (typeof raw === 'string') return raw;
+      if (raw && typeof raw === 'object' && 'en' in raw && 'he' in raw) {
+        const loc = locale as 'en' | 'he';
+        return (
+          (raw as { en?: string; he?: string })[loc] ??
+          (raw as { en?: string; he?: string }).en ??
+          (raw as { en?: string; he?: string }).he ??
+          ''
+        );
+      }
+      return String(raw);
+    },
+    [locale]
+  );
 
   // Weighted search scoring (like MobileSidebar): original query ranks higher than flipped
-  const calculateSearchScore = useCallback((
-    result: SearchResult,
-    query: string,
-    flippedQuery: string | null
-  ): number => {
-    const q = query.toLowerCase().trim();
-    if (!q) return 0;
-    const flippedLower = flippedQuery ? flippedQuery.toLowerCase().trim() : null;
-    const WEIGHTS = { name: 1.0, title: 1.0, category: 0.7, area: 0.5, description: 0.5, tags: 0.5 };
-    const FLIPPED_DISCOUNT = 0.9;
-    const FLIPPED_MIDDLE_DISCOUNT = 0.8;
-    let score = 0;
-    const displayName = getResultDisplayName(result).toLowerCase();
-    if (displayName.includes(q)) {
-      score += displayName.startsWith(q) ? WEIGHTS.name * 2 : WEIGHTS.name;
-    } else if (flippedLower && displayName.includes(flippedLower)) {
-      const base = displayName.startsWith(flippedLower) ? WEIGHTS.name * 2 : WEIGHTS.name;
-      const discount = displayName.startsWith(flippedLower) ? FLIPPED_DISCOUNT : FLIPPED_MIDDLE_DISCOUNT;
-      score += base * discount;
-    }
-    const categoryMap: Record<string, string> = {
-      skateparks: 'skatepark', products: 'product', events: 'event', guides: 'guide', trainers: 'trainer',
-    };
-    const categoryName = categoryMap[result.type] || '';
-    if (categoryName && (q.includes(categoryName) || (flippedLower?.includes(categoryName)))) score += WEIGHTS.category;
-    if ('area' in result && result.area) {
-      const areaName = String(result.area).toLowerCase();
-      if (areaName && (q.includes(areaName) || (flippedLower?.includes(areaName)))) score += WEIGHTS.area;
-    }
-    if ('description' in result && result.description) {
-      const descLower = String(result.description).toLowerCase();
-      if (descLower.includes(q)) score += WEIGHTS.description;
-      else if (flippedLower && descLower.includes(flippedLower)) score += WEIGHTS.description * FLIPPED_DISCOUNT;
-    }
-    if ('relatedSports' in result && Array.isArray(result.relatedSports)) {
-      const hasMatch = result.relatedSports.some((s) =>
-        s.toLowerCase().includes(q) || (flippedLower != null && s.toLowerCase().includes(flippedLower))
-      );
-      if (hasMatch) score += WEIGHTS.tags;
-    }
-    return score;
-  }, [getResultDisplayName]);
+  const calculateSearchScore = useCallback(
+    (result: SearchResult, query: string, flippedQuery: string | null): number => {
+      const q = query.toLowerCase().trim();
+      if (!q) return 0;
+      const flippedLower = flippedQuery ? flippedQuery.toLowerCase().trim() : null;
+      const WEIGHTS = {
+        name: 1.0,
+        title: 1.0,
+        category: 0.7,
+        area: 0.5,
+        description: 0.5,
+        tags: 0.5,
+      };
+      const FLIPPED_DISCOUNT = 0.9;
+      const FLIPPED_MIDDLE_DISCOUNT = 0.8;
+      let score = 0;
+      const displayName = getResultDisplayName(result).toLowerCase();
+      if (displayName.includes(q)) {
+        score += displayName.startsWith(q) ? WEIGHTS.name * 2 : WEIGHTS.name;
+      } else if (flippedLower && displayName.includes(flippedLower)) {
+        const base = displayName.startsWith(flippedLower) ? WEIGHTS.name * 2 : WEIGHTS.name;
+        const discount = displayName.startsWith(flippedLower)
+          ? FLIPPED_DISCOUNT
+          : FLIPPED_MIDDLE_DISCOUNT;
+        score += base * discount;
+      }
+      const categoryMap: Record<string, string> = {
+        skateparks: 'skatepark',
+        products: 'product',
+        events: 'event',
+        guides: 'guide',
+        trainers: 'trainer',
+      };
+      const categoryName = categoryMap[result.type] || '';
+      if (categoryName && (q.includes(categoryName) || flippedLower?.includes(categoryName)))
+        score += WEIGHTS.category;
+      if ('area' in result && result.area) {
+        const areaName = String(result.area).toLowerCase();
+        if (areaName && (q.includes(areaName) || flippedLower?.includes(areaName)))
+          score += WEIGHTS.area;
+      }
+      if ('description' in result && result.description) {
+        const descLower = String(result.description).toLowerCase();
+        if (descLower.includes(q)) score += WEIGHTS.description;
+        else if (flippedLower && descLower.includes(flippedLower))
+          score += WEIGHTS.description * FLIPPED_DISCOUNT;
+      }
+      if ('relatedSports' in result && Array.isArray(result.relatedSports)) {
+        const hasMatch = result.relatedSports.some(
+          (s) =>
+            s.toLowerCase().includes(q) ||
+            (flippedLower != null && s.toLowerCase().includes(flippedLower))
+        );
+        if (hasMatch) score += WEIGHTS.tags;
+      }
+      return score;
+    },
+    [getResultDisplayName]
+  );
 
   // Map SearchResultFromCache to SearchResult (same shape for skateparks/events/guides)
   const mapCacheResultToSearchResult = useCallback((r: SearchResultFromCache): SearchResult => {
@@ -348,7 +397,9 @@ export default function HeaderNav() {
     }
     setSearchLoading(true);
     // Instant first paint from sync cache (same as search page)
-    const syncResults = readFromCacheSync(searchQuery, locale, cacheCategories).map(mapCacheResultToSearchResult);
+    const syncResults = readFromCacheSync(searchQuery, locale, cacheCategories).map(
+      mapCacheResultToSearchResult
+    );
     setSearchResults(syncResults);
 
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
@@ -369,10 +420,15 @@ export default function HeaderNav() {
           const name = getResultDisplayName(result).toLowerCase();
           if ('matchBy' in result && result.matchBy === 'area') return true;
           if (result.type === 'events' && queryMatchesCategory(searchQuery, 'events')) return true;
-          if (result.type === 'skateparks' && queryMatchesCategory(searchQuery, 'skateparks')) return true;
+          if (result.type === 'skateparks' && queryMatchesCategory(searchQuery, 'skateparks'))
+            return true;
           if (result.type === 'guides' && queryMatchesCategory(searchQuery, 'guides')) return true;
           if (!name) return false;
-          if (name.includes(q) || (flippedLower != null && flippedLower !== '' && name.includes(flippedLower))) return true;
+          if (
+            name.includes(q) ||
+            (flippedLower != null && flippedLower !== '' && name.includes(flippedLower))
+          )
+            return true;
           if (queryContainsHebrew) return true;
           return false;
         };
@@ -414,7 +470,9 @@ export default function HeaderNav() {
           params.set('types', apiCategories.join(','));
           params.set('page', '1');
           params.set('locale', String(locale));
-          const res = await fetch(`/api/search?${params.toString()}`, { signal: controller.signal });
+          const res = await fetch(`/api/search?${params.toString()}`, {
+            signal: controller.signal,
+          });
           if (res.ok) {
             const data = await res.json();
             apiResults = (data.results || []) as SearchResult[];
@@ -441,7 +499,17 @@ export default function HeaderNav() {
       controller.abort();
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     };
-  }, [searchQuery, locale, ecommerceEnabled, cacheCategories, apiCategories, categoryOrder, mapCacheResultToSearchResult, getResultDisplayName, calculateSearchScore]);
+  }, [
+    searchQuery,
+    locale,
+    ecommerceEnabled,
+    cacheCategories,
+    apiCategories,
+    categoryOrder,
+    mapCacheResultToSearchResult,
+    getResultDisplayName,
+    calculateSearchScore,
+  ]);
 
   // Debounced search query analytics (1.5s after user stops typing)
   useEffect(() => {
@@ -465,15 +533,70 @@ export default function HeaderNav() {
     };
   }, [searchQuery, locale]);
 
+  // Fetch top 5 most clicked search results for "Popular" in search modal; use localStorage per locale if fetched < 1 week ago
+  useEffect(() => {
+    const CACHE_KEY = `search_popular_clicks_${locale}`;
+    const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { results?: unknown[]; fetchedAt?: number };
+        const fetchedAt = parsed?.fetchedAt;
+        if (
+          typeof fetchedAt === 'number' &&
+          Date.now() - fetchedAt <= CACHE_TTL_MS &&
+          Array.isArray(parsed?.results)
+        ) {
+          setPopularClicks(
+            parsed.results as Array<{
+              resultType: string;
+              resultSlug: string;
+              count: number;
+              name?: string;
+            }>
+          );
+          return;
+        }
+      }
+    } catch {
+      // ignore invalid cache
+    }
+    fetch(`/api/search/popular?locale=${encodeURIComponent(locale)}`)
+      .then((res) => res.json())
+      .then(
+        (data: {
+          results?: Array<{ resultType: string; resultSlug: string; count: number; name?: string }>;
+        }) => {
+          if (Array.isArray(data?.results)) {
+            setPopularClicks(data.results);
+            if (data.results.length > 0) {
+              try {
+                localStorage.setItem(
+                  CACHE_KEY,
+                  JSON.stringify({ results: data.results, fetchedAt: Date.now() })
+                );
+              } catch {
+                // ignore quota / private mode
+              }
+            }
+          }
+        }
+      )
+      .catch(() => {});
+  }, [locale]);
+
   // Group results by category (like MobileSidebar)
   const groupedResults = useMemo(() => {
     return searchResults
       .filter((r) => (r.type === 'products' && !ecommerceEnabled ? false : true))
-      .reduce((acc, result) => {
-        if (!acc[result.type]) acc[result.type] = [];
-        acc[result.type].push(result);
-        return acc;
-      }, {} as Record<string, SearchResult[]>);
+      .reduce(
+        (acc, result) => {
+          if (!acc[result.type]) acc[result.type] = [];
+          acc[result.type].push(result);
+          return acc;
+        },
+        {} as Record<string, SearchResult[]>
+      );
   }, [searchResults, ecommerceEnabled]);
 
   const maxResultsPerGroup = useMemo(() => {
@@ -481,13 +604,16 @@ export default function HeaderNav() {
     return groupCount > 1 ? 6 : Infinity;
   }, [groupedResults]);
 
-  const categoryLabels: Record<string, string> = useMemo(() => ({
-    skateparks: tMobileNav('findParks') || 'Skateparks',
-    products: tMobileNav('shop') || 'Products',
-    events: tMobileNav('events') || 'Events',
-    guides: tMobileNav('guides') || 'Guides',
-    trainers: tMobileNav('findCoaches') || 'Trainers',
-  }), [tMobileNav]);
+  const categoryLabels: Record<string, string> = useMemo(
+    () => ({
+      skateparks: tMobileNav('findParks') || 'Skateparks',
+      products: tMobileNav('shop') || 'Products',
+      events: tMobileNav('events') || 'Events',
+      guides: tMobileNav('guides') || 'Guides',
+      trainers: tMobileNav('findCoaches') || 'Trainers',
+    }),
+    [tMobileNav]
+  );
 
   const searchArea = useMemo(() => getAreaFromQuery(searchQuery), [searchQuery]);
 
@@ -497,11 +623,11 @@ export default function HeaderNav() {
     try {
       // Use callbackUrl like next-auth's signOut does (defaults to window.location.href if not provided)
       const callbackUrl = `/${locale}/login`;
-      
+
       // Call signOut with redirect enabled (default behavior, like next-auth)
-      await signOut({ 
+      await signOut({
         callbackUrl,
-        redirect: true 
+        redirect: true,
       });
     } catch (error) {
       console.error('Failed to sign out:', error);
@@ -520,15 +646,15 @@ export default function HeaderNav() {
   const handleUpdateQuantity = async (item: CartItem, newQuantity: number) => {
     if (newQuantity < 1 || newQuantity > item.maxStock) return;
 
-    setUpdatingItems(prev => new Set(prev).add(item.id));
-    
+    setUpdatingItems((prev) => new Set(prev).add(item.id));
+
     try {
       await updateQuantity(item.id, newQuantity);
     } catch (err) {
       console.error('Failed to update quantity:', err);
     } finally {
       setTimeout(() => {
-        setUpdatingItems(prev => {
+        setUpdatingItems((prev) => {
           const next = new Set(prev);
           next.delete(item.id);
           return next;
@@ -539,13 +665,13 @@ export default function HeaderNav() {
 
   // Handle item removal
   const handleRemoveItem = async (item: CartItem) => {
-    setRemovingItems(prev => new Set(prev).add(item.id));
-    
+    setRemovingItems((prev) => new Set(prev).add(item.id));
+
     try {
       await removeItem(item.id);
     } catch (err) {
       console.error('Failed to remove item:', err);
-      setRemovingItems(prev => {
+      setRemovingItems((prev) => {
         const next = new Set(prev);
         next.delete(item.id);
         return next;
@@ -565,21 +691,24 @@ export default function HeaderNav() {
   const isAdmin = session?.user?.role === 'admin';
   const tHomepage = useTranslations('common.homepage');
 
-
-
   return (
     <>
       {/* Desktop Header Navigation */}
-      <header 
+      <header
         className={`hidden [@media_(min-width:820px)]:block fixed top-0 left-0 right-0 z-[50] px-3 select-none transition-all duration-300 ease-in-out text-white bg-header dark:bg-header-dark ${
           isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
         }`}
       >
-        <div className={`mx-auto  border-header-border dark:border-header-border-dark w-full max-w-6xl px-2 overflow-visible text-header-text-dark dark:text-header-text transition-colors duration-200`}>
+        <div
+          className={`mx-auto  border-header-border dark:border-header-border-dark w-full max-w-6xl px-2 overflow-visible text-header-text-dark dark:text-header-text transition-colors duration-200`}
+        >
           <div className="flex items-center justify-between h-16">
             {/* LEFT: Logo – first to paint (inline SVG, no fetch) */}
             <div className="flex items-center gap-4">
-              <Link href={`/${locale}`} className="flex flex-col items-start gap-0.5 group overflow-visible">
+              <Link
+                href={`/${locale}`}
+                className="flex flex-col items-start gap-0.5 group overflow-visible"
+              >
                 <NavIcons
                   name="logo"
                   className="text-brand-main dark:text-brand-dark overflow-visible w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] group-hover:stroke-[7px] group-hover:stroke-[#003f03] dark:group-hover:stroke-[#011c02] group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.35))] dark:group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.15))] transition-all duration-200"
@@ -610,8 +739,7 @@ export default function HeaderNav() {
                 >
                   {tAdmin('trainers')}
                   {/* "Featured" badge for premium trainers */}
-                  <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                  </span>
+                  <span className="absolute -top-1 -right-1 flex h-2 w-2"></span>
                 </Link>
               )}
 
@@ -704,215 +832,237 @@ export default function HeaderNav() {
               {ecommerceEnabled && (
                 <div className="relative">
                   <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className="relative h-9 w-9 flex items-center justify-center rounded-lg text-sidebar-text dark:text-sidebar-text-dark hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
-                      aria-label={locale === 'he' ? 'עגלת קניות' : 'Shopping cart'}
-                      type="button"
-                    >
-                      <span className="inline-flex items-center justify-center w-5 h-5">
-                        <NavIcons name="backpackBold" className="w-5 h-5" />
-                      </span>
-                      {/* Cart badge (show when items > 0) */}
-                      {itemCount > 0 && (
-                      <span className="absolute -top-1 -right-1  min-w-[16px] px-[6px] rounded-full bg-brand-main dark:bg-brand-dark text-text text-[0.75rem] font-bold flex items-center justify-center transition-colors duration-200">
-                      {itemCount > 9 ? '9+' : itemCount}
+                    <PopoverTrigger asChild>
+                      <button
+                        className="relative h-9 w-9 flex items-center justify-center rounded-lg text-sidebar-text dark:text-sidebar-text-dark hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
+                        aria-label={locale === 'he' ? 'עגלת קניות' : 'Shopping cart'}
+                        type="button"
+                      >
+                        <span className="inline-flex items-center justify-center w-5 h-5">
+                          <NavIcons name="backpackBold" className="w-5 h-5" />
                         </span>
-                      )}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-96 p-0 !right-0 !left-auto max-h-[600px] overflow-y-auto">
-                    <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-200">
-                        Shopping Cart
-                      </h3>
-                      {itemCount > 0 && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors duration-200">
-                          {itemCount} {itemCount === 1 ? 'item' : 'items'}
-                        </p>
-                      )}
-                    </div>
-
-                    {items.length === 0 ? (
-                      <div className="p-8 text-center">
-                        
-                        <Icon name="emptyBackpack" className="w-full h-auto  mx-auto mb-4 transition-colors duration-200" />
-                        <p className="text-gray-600 dark:text-gray-400 transition-colors duration-200">Your bag is empty</p>
+                        {/* Cart badge (show when items > 0) */}
+                        {itemCount > 0 && (
+                          <span className="absolute -top-1 -right-1  min-w-[16px] px-[6px] rounded-full bg-brand-main dark:bg-brand-dark text-text text-[0.75rem] font-bold flex items-center justify-center transition-colors duration-200">
+                            {itemCount > 9 ? '9+' : itemCount}
+                          </span>
+                        )}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-96 p-0 !right-0 !left-auto max-h-[600px] overflow-y-auto">
+                      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-200">
+                          Shopping Cart
+                        </h3>
+                        {itemCount > 0 && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 transition-colors duration-200">
+                            {itemCount} {itemCount === 1 ? 'item' : 'items'}
+                          </p>
+                        )}
                       </div>
-                    ) : (
-                      <>
-                        {/* Cart Items */}
-                        <div className="p-4 space-y-4">
-                          {items.map((item) => {
-                            const isUpdating = updatingItems.has(item.id);
-                            const isRemoving = removingItems.has(item.id);
-                            const currentPrice = item.discountPrice || item.price;
-                            const hasDiscount = !!item.discountPrice;
-                            const itemSubtotal = currentPrice * item.quantity;
 
-                            return (
-                              <div
-                                key={item.id}
-                                className={`flex gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg transition-all ${
-                                  isRemoving ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
-                                }`}
-                              >
-                                {/* Product Image */}
-                                <Link
-                                  href={`/${locale}/shop/product/${item.productSlug}`}
-                                  className="relative flex-shrink-0 w-16 h-16 bg-white dark:bg-gray-700 rounded-lg overflow-hidden hover:opacity-75 transition-all duration-200"
-                                >
-                                  <Image
-                                    src={item.imageUrl}
-                                    alt={item.productName}
-                                    fill
-                                    sizes="64px"
-                                    className="object-cover"
-                                  />
-                                </Link>
-
-                                {/* Product Details */}
-                                <div className="flex-1 min-w-0">
-                                  {/* Name and Remove Button */}
-                                  <div className="flex items-start justify-between gap-2 mb-1">
-                                    <Link
-                                      href={`/${locale}/shop/product/${item.productSlug}`}
-                                      className="font-medium text-sm text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 line-clamp-2 flex-1"
-                                    >
-                                      {item.productName}
-                                    </Link>
-                                    <button
-                                      onClick={() => handleRemoveItem(item)}
-                                      disabled={isRemoving || isUpdating}
-                                      className="flex-shrink-0 p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                      aria-label="Remove item"
-                                    >
-                                      {isRemoving ? (
-                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                      ) : (
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                      )}
-                                    </button>
-                                  </div>
-
-                                  {/* Size */}
-                                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                                    Size: {item.size}
-                                  </p>
-
-                                  {/* Price and Quantity */}
-                                  <div className="flex items-center justify-between gap-2">
-                                    {/* Price */}
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-semibold text-sm text-gray-900 dark:text-white transition-colors duration-200">
-                                        ${currentPrice.toFixed(2)}
-                                      </span>
-                                      {hasDiscount && (
-                                        <span className="text-xs text-gray-500 dark:text-gray-400 line-through transition-colors duration-200">
-                                          ${item.price.toFixed(2)}
-                                        </span>
-                                      )}
-                                    </div>
-
-                                    {/* Quantity Selector */}
-                                    <div className="flex items-center gap-1.5">
-                                      <button
-                                        onClick={() => handleUpdateQuantity(item, item.quantity - 1)}
-                                        disabled={item.quantity <= 1 || isUpdating || isRemoving}
-                                        className="p-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                        aria-label="Decrease quantity"
-                                      >
-                                        {isUpdating ? (
-                                          <Loader2 className="w-3 h-3 text-gray-600 dark:text-gray-300 animate-spin transition-colors duration-200" />
-                                        ) : (
-                                          <Minus className="w-3 h-3 text-gray-600 dark:text-gray-300 transition-colors duration-200" />
-                                        )}
-                                      </button>
-                                      
-                                      <span className={`min-w-[1.5rem] text-center text-sm font-medium text-gray-900 dark:text-white transition-colors duration-200 ${
-                                        isUpdating ? 'opacity-50' : ''
-                                      }`}>
-                                        {item.quantity}
-                                      </span>
-                                      
-                                      <button
-                                        onClick={() => handleUpdateQuantity(item, item.quantity + 1)}
-                                        disabled={item.quantity >= item.maxStock || isUpdating || isRemoving}
-                                        className="p-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                                        aria-label="Increase quantity"
-                                      >
-                                        {isUpdating ? (
-                                          <Loader2 className="w-3 h-3 text-gray-600 dark:text-gray-300 animate-spin transition-colors duration-200" />
-                                        ) : (
-                                          <Plus className="w-3 h-3 text-gray-600 dark:text-gray-300 transition-colors duration-200" />
-                                        )}
-                                      </button>
-                                    </div>
-                                  </div>
-
-                                  {/* Item Subtotal */}
-                                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                    Subtotal: ${itemSubtotal.toFixed(2)}
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          })}
+                      {items.length === 0 ? (
+                        <div className="p-8 text-center">
+                          <Icon
+                            name="emptyBackpack"
+                            className="w-full h-auto  mx-auto mb-4 transition-colors duration-200"
+                          />
+                          <p className="text-gray-600 dark:text-gray-400 transition-colors duration-200">
+                            Your bag is empty
+                          </p>
                         </div>
+                      ) : (
+                        <>
+                          {/* Cart Items */}
+                          <div className="p-4 space-y-4">
+                            {items.map((item) => {
+                              const isUpdating = updatingItems.has(item.id);
+                              const isRemoving = removingItems.has(item.id);
+                              const currentPrice = item.discountPrice || item.price;
+                              const hasDiscount = !!item.discountPrice;
+                              const itemSubtotal = currentPrice * item.quantity;
 
-                        {/* Totals and Checkout */}
-                        <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-                          {/* Totals */}
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-600 dark:text-gray-400 transition-colors duration-200">Subtotal:</span>
-                              <span className="font-medium text-gray-900 dark:text-white transition-colors duration-200">
-                                ${totals.subtotal.toFixed(2)}
-                              </span>
-                            </div>
-                            {totals.discount > 0 && (
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-gray-400 transition-colors duration-200">Discount:</span>
-                                <span className="font-medium text-green-600 dark:text-green-400 transition-colors duration-200">
-                                  -${totals.discount.toFixed(2)}
-                                </span>
-                              </div>
-                            )}
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-600 dark:text-gray-400 transition-colors duration-200">Tax:</span>
-                              <span className="font-medium text-gray-900 dark:text-white transition-colors duration-200">
-                                ${totals.tax.toFixed(2)}
-                              </span>
-                            </div>
-                            <div className="flex justify-between text-base font-semibold pt-2 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
-                              <span className="text-gray-900 dark:text-white transition-colors duration-200">Total:</span>
-                              <span className="text-gray-900 dark:text-white transition-colors duration-200">
-                                ${totals.total.toFixed(2)}
-                              </span>
-                            </div>
+                              return (
+                                <div
+                                  key={item.id}
+                                  className={`flex gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg transition-all ${
+                                    isRemoving ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+                                  }`}
+                                >
+                                  {/* Product Image */}
+                                  <Link
+                                    href={`/${locale}/shop/product/${item.productSlug}`}
+                                    className="relative flex-shrink-0 w-16 h-16 bg-white dark:bg-gray-700 rounded-lg overflow-hidden hover:opacity-75 transition-all duration-200"
+                                  >
+                                    <Image
+                                      src={item.imageUrl}
+                                      alt={item.productName}
+                                      fill
+                                      sizes="64px"
+                                      className="object-cover"
+                                    />
+                                  </Link>
+
+                                  {/* Product Details */}
+                                  <div className="flex-1 min-w-0">
+                                    {/* Name and Remove Button */}
+                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                      <Link
+                                        href={`/${locale}/shop/product/${item.productSlug}`}
+                                        className="font-medium text-sm text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-200 line-clamp-2 flex-1"
+                                      >
+                                        {item.productName}
+                                      </Link>
+                                      <button
+                                        onClick={() => handleRemoveItem(item)}
+                                        disabled={isRemoving || isUpdating}
+                                        className="flex-shrink-0 p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        aria-label="Remove item"
+                                      >
+                                        {isRemoving ? (
+                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        )}
+                                      </button>
+                                    </div>
+
+                                    {/* Size */}
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                      Size: {item.size}
+                                    </p>
+
+                                    {/* Price and Quantity */}
+                                    <div className="flex items-center justify-between gap-2">
+                                      {/* Price */}
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-sm text-gray-900 dark:text-white transition-colors duration-200">
+                                          ${currentPrice.toFixed(2)}
+                                        </span>
+                                        {hasDiscount && (
+                                          <span className="text-xs text-gray-500 dark:text-gray-400 line-through transition-colors duration-200">
+                                            ${item.price.toFixed(2)}
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {/* Quantity Selector */}
+                                      <div className="flex items-center gap-1.5">
+                                        <button
+                                          onClick={() =>
+                                            handleUpdateQuantity(item, item.quantity - 1)
+                                          }
+                                          disabled={item.quantity <= 1 || isUpdating || isRemoving}
+                                          className="p-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                          aria-label="Decrease quantity"
+                                        >
+                                          {isUpdating ? (
+                                            <Loader2 className="w-3 h-3 text-gray-600 dark:text-gray-300 animate-spin transition-colors duration-200" />
+                                          ) : (
+                                            <Minus className="w-3 h-3 text-gray-600 dark:text-gray-300 transition-colors duration-200" />
+                                          )}
+                                        </button>
+
+                                        <span
+                                          className={`min-w-[1.5rem] text-center text-sm font-medium text-gray-900 dark:text-white transition-colors duration-200 ${
+                                            isUpdating ? 'opacity-50' : ''
+                                          }`}
+                                        >
+                                          {item.quantity}
+                                        </span>
+
+                                        <button
+                                          onClick={() =>
+                                            handleUpdateQuantity(item, item.quantity + 1)
+                                          }
+                                          disabled={
+                                            item.quantity >= item.maxStock ||
+                                            isUpdating ||
+                                            isRemoving
+                                          }
+                                          className="p-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                                          aria-label="Increase quantity"
+                                        >
+                                          {isUpdating ? (
+                                            <Loader2 className="w-3 h-3 text-gray-600 dark:text-gray-300 animate-spin transition-colors duration-200" />
+                                          ) : (
+                                            <Plus className="w-3 h-3 text-gray-600 dark:text-gray-300 transition-colors duration-200" />
+                                          )}
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    {/* Item Subtotal */}
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                      Subtotal: ${itemSubtotal.toFixed(2)}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
 
-                          {/* Checkout Button */}
-                          <button
-                            onClick={handleCheckout}
-                            className="w-full px-4 py-2.5 bg-blue-600 dark:bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium text-sm"
-                          >
-                            Checkout
-                          </button>
+                          {/* Totals and Checkout */}
+                          <div className="border-t border-gray-200 dark:border-gray-700 p-4 space-y-3 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+                            {/* Totals */}
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600 dark:text-gray-400 transition-colors duration-200">
+                                  Subtotal:
+                                </span>
+                                <span className="font-medium text-gray-900 dark:text-white transition-colors duration-200">
+                                  ${totals.subtotal.toFixed(2)}
+                                </span>
+                              </div>
+                              {totals.discount > 0 && (
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-600 dark:text-gray-400 transition-colors duration-200">
+                                    Discount:
+                                  </span>
+                                  <span className="font-medium text-green-600 dark:text-green-400 transition-colors duration-200">
+                                    -${totals.discount.toFixed(2)}
+                                  </span>
+                                </div>
+                              )}
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600 dark:text-gray-400 transition-colors duration-200">
+                                  Tax:
+                                </span>
+                                <span className="font-medium text-gray-900 dark:text-white transition-colors duration-200">
+                                  ${totals.tax.toFixed(2)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between text-base font-semibold pt-2 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                                <span className="text-gray-900 dark:text-white transition-colors duration-200">
+                                  Total:
+                                </span>
+                                <span className="text-gray-900 dark:text-white transition-colors duration-200">
+                                  ${totals.total.toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
 
-                          {/* View Cart Link */}
-                          <Link
-                            href={`/${locale}/cart`}
-                            className="block w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:underline transition-colors duration-200"
-                          >
-                            View full cart
-                          </Link>
-                        </div>
-                      </>
-                    )}
-                  </PopoverContent>
-                </Popover>
-              </div>
+                            {/* Checkout Button */}
+                            <button
+                              onClick={handleCheckout}
+                              className="w-full px-4 py-2.5 bg-blue-600 dark:bg-blue-600 text-white hover:bg-blue-700 dark:hover:bg-blue-700 rounded-lg transition-colors duration-200 font-medium text-sm"
+                            >
+                              Checkout
+                            </button>
+
+                            {/* View Cart Link */}
+                            <Link
+                              href={`/${locale}/cart`}
+                              className="block w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:underline transition-colors duration-200"
+                            >
+                              View full cart
+                            </Link>
+                          </div>
+                        </>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                </div>
               )}
 
               {/* Settings */}
@@ -925,11 +1075,16 @@ export default function HeaderNav() {
                       type="button"
                     >
                       <span className="inline-flex items-center justify-center w-5 h-5">
-                        <Icon name="settingsBold" className="w-5 h-5 group-hover:rotate-[46deg] transition-transform duration-500" />
+                        <Icon
+                          name="settingsBold"
+                          className="w-5 h-5 group-hover:rotate-[46deg] transition-transform duration-500"
+                        />
                       </span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className={`w-fit p-2 ${locale === 'he' ? '!left-0 !right-auto' : '!right-0 !left-auto'}`}>
+                  <PopoverContent
+                    className={`w-fit p-2 ${locale === 'he' ? '!left-0 !right-auto' : '!right-0 !left-auto'}`}
+                  >
                     <div className="space-y-2">
                       {/* Theme Toggle */}
                       <Button
@@ -940,11 +1095,19 @@ export default function HeaderNav() {
                         aria-label={theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
                       >
                         {theme === 'dark' ? (
-                          <Icon name="sunBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-yellow-500" />
+                          <Icon
+                            name="sunBold"
+                            className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-yellow-500"
+                          />
                         ) : (
-                          <Icon name="moonBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-blue" />
+                          <Icon
+                            name="moonBold"
+                            className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-blue"
+                          />
                         )}
-                        <span className="text-text dark:text-text-dark/90">{theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}</span>
+                        <span className="text-text dark:text-text-dark/90">
+                          {theme === 'dark' ? tCommon('light_mode') : tCommon('dark_mode')}
+                        </span>
                       </Button>
 
                       {/* Language Switcher */}
@@ -961,11 +1124,19 @@ export default function HeaderNav() {
                         aria-label={tCommon('toggle_language') || 'Toggle language'}
                       >
                         {locale === 'en' ? (
-                          <Icon name="hebrewBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-brand-main" />
+                          <Icon
+                            name="hebrewBold"
+                            className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-brand-main"
+                          />
                         ) : (
-                          <Icon name="englishBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-brand-main" />
+                          <Icon
+                            name="englishBold"
+                            className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-brand-main"
+                          />
                         )}
-                        <span className="text-text dark:text-text-dark/90">{locale === 'en' ? 'עברית' : 'English'}</span>
+                        <span className="text-text dark:text-text-dark/90">
+                          {locale === 'en' ? 'עברית' : 'English'}
+                        </span>
                       </Button>
 
                       {/* Login Button */}
@@ -979,8 +1150,13 @@ export default function HeaderNav() {
                             className={`!px-6 w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           >
                             <Link href={`/${locale}/login`}>
-                              <Icon name="accountBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
-                              <span className="text-text dark:text-text-dark/90">{tCommon('login') || 'Login'}</span>
+                              <Icon
+                                name="accountBold"
+                                className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200"
+                              />
+                              <span className="text-text dark:text-text-dark/90">
+                                {tCommon('login') || 'Login'}
+                              </span>
                             </Link>
                           </Button>
                         </>
@@ -997,8 +1173,13 @@ export default function HeaderNav() {
                             className={`!px-6 w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           >
                             <Link href={`/${locale}/account`}>
-                              <Icon name="accountBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200" />
-                              <span className="text-text dark:text-text-dark/90">{tCommon('profile')}</span>
+                              <Icon
+                                name="accountBold"
+                                className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200"
+                              />
+                              <span className="text-text dark:text-text-dark/90">
+                                {tCommon('profile')}
+                              </span>
                             </Link>
                           </Button>
                         </>
@@ -1015,13 +1196,20 @@ export default function HeaderNav() {
                                 size="sm"
                                 className={`group !px-6 w-full flex items-center justify-between font-medium hover:!bg-blue-bg dark:hover:!bg-blue-bg-dark  hover:!border-blue-border dark:hover:!border-blue-border-dark ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                               >
-                                <div className={`flex items-center gap-2 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
-                                  <Icon name="adminBold" className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:!text-blue dark:group-hover:!text-blue-dark" />
-                                  <span className="flex-1 text-text dark:text-text-dark/90 group-hover:!text-blue dark:group-hover:!text-blue-dark">{tCommon('admin') || 'Admin'}</span>
+                                <div
+                                  className={`flex items-center gap-2 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                                >
+                                  <Icon
+                                    name="adminBold"
+                                    className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:!text-blue dark:group-hover:!text-blue-dark"
+                                  />
+                                  <span className="flex-1 text-text dark:text-text-dark/90 group-hover:!text-blue dark:group-hover:!text-blue-dark">
+                                    {tCommon('admin') || 'Admin'}
+                                  </span>
                                 </div>
                               </Button>
                             </PopoverTrigger>
-                            <PopoverContent 
+                            <PopoverContent
                               side={locale === 'he' ? 'left' : 'right'}
                               align="start"
                               sideOffset={8}
@@ -1101,20 +1289,31 @@ export default function HeaderNav() {
                                     icon: SettingsIcon,
                                   },
                                 ].map((item) => {
-                                  const isActive = pathname === item.href || (item.href !== `/${locale}/admin` && pathname.startsWith(item.href));
+                                  const isActive =
+                                    pathname === item.href ||
+                                    (item.href !== `/${locale}/admin` &&
+                                      pathname.startsWith(item.href));
                                   const IconComponent = item.icon;
-                                  
+
                                   return (
                                     <Button
                                       key={item.href}
-                                      variant={isActive ? "info" : "none"}
+                                      variant={isActive ? 'info' : 'none'}
                                       size="sm"
                                       asChild
                                       className={`!px-4 w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                                     >
                                       <Link href={item.href}>
-                                        <IconComponent className={`w-4 h-4 transition-all duration-200 ${isActive ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'}`} />
-                                        <span className={isActive ? '' : 'text-text dark:text-text-dark/90'}>{tMobileNav(item.labelKey)}</span>
+                                        <IconComponent
+                                          className={`w-4 h-4 transition-all duration-200 ${isActive ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'}`}
+                                        />
+                                        <span
+                                          className={
+                                            isActive ? '' : 'text-text dark:text-text-dark/90'
+                                          }
+                                        >
+                                          {tMobileNav(item.labelKey)}
+                                        </span>
                                       </Link>
                                     </Button>
                                   );
@@ -1138,9 +1337,12 @@ export default function HeaderNav() {
                           >
                             {isLoggingOut ? (
                               <div className="flex items-center gap-2">
-                              <LoadingSpinner size={16} variant="error" className='animate-fadeIn'/>
+                                <LoadingSpinner
+                                  size={16}
+                                  variant="error"
+                                  className="animate-fadeIn"
+                                />
                                 <span>{tCommon('logout') || 'Logout'}</span>
-
                               </div>
                             ) : (
                               <>
@@ -1162,7 +1364,7 @@ export default function HeaderNav() {
 
       {/* Search Modal - colors match MobileSidebar; height never exceeds viewport */}
       {isSearchOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-50 bg-black/40 dark:bg-black/50 backdrop-blur-sm flex items-start justify-center pt-16 md:pt-24 transition-colors duration-200"
           style={{ height: '100dvh' }}
           onClick={(e) => {
@@ -1172,7 +1374,7 @@ export default function HeaderNav() {
             }
           }}
         >
-          <div 
+          <div
             className="w-full max-w-2xl m-4 rounded-2xl shadow-2xl overflow-hidden transition-colors duration-200 flex flex-col bg-sidebar dark:bg-sidebar-dark border border-border dark:border-border-dark"
             style={{ maxHeight: 'calc(95dvh - 6rem)' }}
             onClick={(e) => e.stopPropagation()}
@@ -1190,7 +1392,7 @@ export default function HeaderNav() {
                 >
                   <X className="w-5 h-5" />
                 </button>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 pe-12">
                   <SearchInput
                     ref={searchInputRef}
                     value={searchQuery}
@@ -1239,7 +1441,9 @@ export default function HeaderNav() {
                             onClick={() => handleSearchQuery(search)}
                             className="w-full flex items-center justify-between px-4 py-3 bg-sidebar-hover dark:bg-sidebar-hover-dark rounded-xl text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200"
                           >
-                            <span className="text-sidebar-text dark:text-sidebar-text-dark">{search}</span>
+                            <span className="text-sidebar-text dark:text-sidebar-text-dark">
+                              {search}
+                            </span>
                             <SearchIcon className="w-4 h-4 text-sidebar-text dark:text-sidebar-text-dark" />
                           </button>
                         ))}
@@ -1247,23 +1451,57 @@ export default function HeaderNav() {
                     </div>
                   )}
 
-                  {/* Quick actions */}
-                  <div className="p-4">
-                    <h3 className="text-sm font-semibold text-text dark:text-text-dark mb-3">
-                      {tSearch('popup.quickSearch')}
-                    </h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {['skateboarding', 'BMX', 'events', 'skateparks'].map((term) => (
-                        <button
-                          key={term}
-                          onClick={() => handleSearchQuery(term)}
-                          className="p-4 bg-sidebar-hover dark:bg-sidebar-hover-dark rounded-xl text-left hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200 border border-transparent hover:border-sidebar-text-brand/30 dark:hover:border-sidebar-text-brand-dark/30"
+                  {/* Popular: 5 most clicked search results (from analytics); only show when we have at least one */}
+                  {popularClicks.length > 0 ? (
+                    <div className="p-4 border-b border-border dark:border-border-dark">
+                      <div className="w-full flex items-center justify-between gap-2 mb-3">
+                        <h3 className="text-sm font-semibold text-text dark:text-text-dark">
+                          {locale === 'he' ? 'חיפושים נפוצים:' : 'Popular Searches:'}
+                        </h3>
+                        <Link
+                          href={`/${locale}/search`}
+                          onClick={() => setIsSearchOpen(false)}
+                          className="flex items-center gap-1 py-1 px-2 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200"
                         >
-                          <span className="text-sm font-medium text-sidebar-text dark:text-sidebar-text-dark">{term}</span>
-                        </button>
-                      ))}
+                          <Icon
+                            name="sparksBold"
+                            className="w-3 h-3 text-brand-main dark:text-brand-dark"
+                          />
+                          <h3 className="text-sm font-semibold text-brand-main dark:text-brand-dark">
+                            {locale === 'he' ? 'חיפוש מתקדם' : 'Advanced Search'}
+                          </h3>
+                        </Link>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {popularClicks.map((item) => {
+                          const pathPrefix =
+                            item.resultType === 'products' ? 'shop' : item.resultType;
+                          const href = `/${locale}/${pathPrefix}/${item.resultSlug}`;
+                          const label = item.name ?? item.resultSlug.replace(/-/g, ' ');
+                          return (
+                            <Link
+                              key={`${item.resultType}-${item.resultSlug}`}
+                              href={href}
+                              onClick={() => {
+                                trackSearchClick({
+                                  query: label,
+                                  resultType: item.resultType,
+                                  resultSlug: item.resultSlug,
+                                  href,
+                                  source: 'header',
+                                  locale,
+                                });
+                                setIsSearchOpen(false);
+                              }}
+                              className="px-3 py-1.5 text-sm bg-sidebar-hover dark:bg-sidebar-hover-dark hover:bg-black/5 dark:hover:bg-white/5 border border-border dark:border-border-dark rounded-full transition-colors text-sidebar-text dark:text-sidebar-text-dark"
+                            >
+                              {label}
+                            </Link>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
                 </>
               ) : (
                 <>
@@ -1292,8 +1530,10 @@ export default function HeaderNav() {
                             <div key={category} className="space-y-2">
                               <h3 className="text-sm font-bold text-text dark:text-text-dark uppercase tracking-wider transition-colors duration-200">
                                 {category === 'skateparks' && searchArea
-                                  ? tSearch('skateparksInArea', { area: tSkateparks(`search.area.${searchArea}`) })
-                                  : (categoryLabels[category] || category)}
+                                  ? tSearch('skateparksInArea', {
+                                      area: tSkateparks(`search.area.${searchArea}`),
+                                    })
+                                  : categoryLabels[category] || category}
                               </h3>
                               <div className="space-y-0.5">
                                 {displayResults.map((result) => {
@@ -1303,12 +1543,24 @@ export default function HeaderNav() {
                                   if (result.type === 'skateparks') {
                                     const s = result as SkateparkResult;
                                     imageUrl = s.imageUrl || '';
-                                    name = typeof s.name === 'string' ? s.name : (s.name?.[locale as 'en' | 'he'] ?? s.name?.en ?? s.name?.he ?? '');
+                                    name =
+                                      typeof s.name === 'string'
+                                        ? s.name
+                                        : (s.name?.[locale as 'en' | 'he'] ??
+                                          s.name?.en ??
+                                          s.name?.he ??
+                                          '');
                                     href = `/${locale}/skateparks/${s.slug}`;
                                   } else if (result.type === 'products') {
                                     const p = result as ProductResult;
                                     imageUrl = p.images?.[0]?.url || '';
-                                    name = typeof p.name === 'string' ? p.name : (p.name?.[locale as 'en' | 'he'] ?? p.name?.en ?? p.name?.he ?? '');
+                                    name =
+                                      typeof p.name === 'string'
+                                        ? p.name
+                                        : (p.name?.[locale as 'en' | 'he'] ??
+                                          p.name?.en ??
+                                          p.name?.he ??
+                                          '');
                                     href = `/${locale}/shop/${p.slug}`;
                                   } else if (result.type === 'guides') {
                                     const g = result as GuideResult;
@@ -1357,11 +1609,15 @@ export default function HeaderNav() {
                                         ) : (
                                           <Icon
                                             name={
-                                              result.type === 'skateparks' ? 'treesBold' :
-                                              result.type === 'products' ? 'shopBold' :
-                                              result.type === 'guides' ? 'bookBold' :
-                                              result.type === 'trainers' ? 'trainersBold' :
-                                              'calendarBold'
+                                              result.type === 'skateparks'
+                                                ? 'treesBold'
+                                                : result.type === 'products'
+                                                  ? 'shopBold'
+                                                  : result.type === 'guides'
+                                                    ? 'bookBold'
+                                                    : result.type === 'trainers'
+                                                      ? 'trainersBold'
+                                                      : 'calendarBold'
                                             }
                                             className="w-6 h-6 text-sidebar-text dark:text-sidebar-text-dark group-hover:text-text dark:group-hover:text-text-dark transition-colors duration-200"
                                           />

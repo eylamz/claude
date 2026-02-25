@@ -796,6 +796,16 @@ export default function MobileSidebar({
           {isSearching ? (
             // Search Results
             <div className="space-y-6 px-3">
+              <Link
+                href={`/${locale}/search`}
+                onClick={onClose}
+                className="flex items-center gap-1 hover:opacity-80 transition-opacity w-fit"
+              >
+                <Icon name="sparksBold" className="w-3 h-3 text-brand-main dark:text-brand-dark" />
+                <h3 className="text-sm font-semibold text-brand-main dark:text-brand-dark">
+                  {locale === 'he' ? 'חיפוש מתקדם' : 'Advanced Search'}
+                </h3>
+              </Link>
               {searchLoading ? (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400 transition-colors duration-200">
                   {tCommon('loading') || 'Loading...'}
@@ -930,6 +940,15 @@ export default function MobileSidebar({
                     );
                   })
               )}
+              {/* Advanced search link - whole container clickable, with search icon */}
+              <Link
+                href={`/${locale}/search${searchQuery.trim() ? `?q=${encodeURIComponent(searchQuery.trim())}` : ''}`}
+                onClick={onClose}
+                className="flex items-center justify-center gap-2 w-full pt-4 pb-2 px-3 py-3 text-sm font-medium text-sidebar-text-brand dark:text-sidebar-text-brand-dark hover:underline rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              >
+                <Icon name="search" className="w-4 h-4 flex-shrink-0" />
+                <span>{tSearch('popup.advancedSearch') || 'Advanced search'}</span>
+              </Link>
             </div>
           ) : (
             // Regular Navigation Content

@@ -17,16 +17,27 @@ const config: Config = {
         '5xxl': '1070px',
       },
       screens: {
-        // Each breakpoint applies when BOTH width and height meet the same minimum
-        xxs: { raw: '(min-width: 360px) and (min-height: 360px)' },
-        xsm: { raw: '(min-width: 480px) and (min-height: 480px)' },
-        sm: { raw: '(min-width: 640px) and (min-height: 640px)' },
-        md: { raw: '(min-width: 768px) and (min-height: 768px)' },
-        lg: { raw: '(min-width: 1024px) and (min-height: 1024px)' },
-        xl: { raw: '(min-width: 1150px) and (min-height: 1150px)' },
-        '2xl': { raw: '(min-width: 1280px) and (min-height: 1280px)' },
-        '3xl': { raw: '(min-width: 1440px) and (min-height: 1440px)' },
-        '4xl': { raw: '(min-width: 1921px) and (min-height: 1921px)' },
+        'xxs': '360px',
+        'xsm': '480px',
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1150px',
+        '2xl': '1280px',
+        '3xl': '1440px',
+        '4xl': '1921px',
+      
+      
+        // // Each breakpoint applies when BOTH width and height meet the same minimum
+        // xxs: { raw: '(min-width: 360px) and (min-height: 360px)' },
+        // xsm: { raw: '(min-width: 480px) and (min-height: 480px)' },
+        // sm: { raw: '(min-width: 640px) and (min-height: 640px)' },
+        // md: { raw: '(min-width: 768px) and (min-height: 768px)' },
+        // lg: { raw: '(min-width: 1024px) and (min-height: 1024px)' },
+        // xl: { raw: '(min-width: 1150px) and (min-height: 1150px)' },
+        // '2xl': { raw: '(min-width: 1280px) and (min-height: 1280px)' },
+        // '3xl': { raw: '(min-width: 1440px) and (min-height: 1440px)' },
+        // '4xl': { raw: '(min-width: 1921px) and (min-height: 1921px)' },
       },
       fontFamily: {
         sans: ['var(--font-poppins)', 'system-ui', 'sans-serif'],

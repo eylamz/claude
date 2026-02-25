@@ -181,7 +181,7 @@ export function trackSearchQuery(payload: SearchQueryPayload): void {
 export interface SearchClickPayload {
   query: string;
   resultType: string;
-  resultId: string;
+  resultId?: string;
   resultSlug: string;
   href: string;
   source: SearchEventSource;
@@ -197,7 +197,7 @@ export function trackSearchClick(payload: SearchClickPayload): void {
     type: 'search_click',
     query: payload.query,
     resultType: payload.resultType,
-    resultId: payload.resultId,
+    ...(payload.resultId && { resultId: payload.resultId }),
     resultSlug: payload.resultSlug,
     href: payload.href,
     source: payload.source,

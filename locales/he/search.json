@@ -14,7 +14,7 @@
   },
   "skateparksInArea": "פארקים באזור {area}",
   "popup": {
-    "placeholder": "חפש פארקים, מוצרים, אירועים...",
+    "placeholder": "חפש פארקים, מדריכים, אירועים...",
     "recentSearches": "חיפושים אחרונים",
     "clear": "נקה",
     "quickSearch": "חיפוש מהיר",
@@ -22,6 +22,7 @@
     "viewAllResults": "הצג את כל התוצאות",
     "noResultsFound": "לא נמצאו תוצאות",
     "noResultsHint": "נסה מונח אחר או עיין בדף החיפוש",
-    "goToFullSearch": "עבור לחיפוש מלא"
+    "goToFullSearch": "עבור לחיפוש מלא",
+    "advancedSearch": "חיפוש מתקדם"
   }
 }
