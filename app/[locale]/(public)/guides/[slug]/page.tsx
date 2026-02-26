@@ -789,15 +789,6 @@ export default function GuidePage() {
     );
   }
 
-  // Format published date
-  const publishedDate = guide.publishedAt
-    ? new Date(guide.publishedAt).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
-    : null;
-
   // Generate structured data
   const structuredData = generateArticleStructuredData({
     title: guide.title,
@@ -852,17 +843,8 @@ export default function GuidePage() {
               {guideDescription}
             </p>
 
-            {/* Date, Author, and Share - same layout as events (meta row with share on right) */}
-            <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-gray-500 dark:text-gray-400 mb-8">
-              <div className="flex items-center gap-2">
-                {publishedDate && <span className="text-nowrap">{publishedDate}</span>}
-                {publishedDate && guide.authorName && <span>•</span>}
-                {guide.authorName && (
-                  <p className="text-nowrap">
-                    {guide.authorName}
-                  </p>
-                )}
-              </div>
+            {/* Share */}
+            <div className="flex flex-wrap items-center justify-end gap-3 text-sm -mt-6">
               <Button
                 variant="green"
                 onClick={() => {
@@ -878,7 +860,7 @@ export default function GuidePage() {
                     navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : canonicalUrl);
                   }
                 }}
-                className="!h-8 px-2 py-1rounded-lg font-medium flex-shrink-0"
+                className="!h-8 px-2 py-1 rounded-lg font-medium flex-shrink-0"
                 aria-label={locale === 'he' ? 'שתף מדריך' : 'Share guide'}
               >
                 <Icon name="shareBold" className="w-4 h-4" />
@@ -888,12 +870,12 @@ export default function GuidePage() {
 
           {/* Cover Image - Full width with rounded corners */}
           {guide.coverImage && (
-            <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-10">
+            <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-10">
               <Image
                 src={guide.coverImage}
                 alt={guideTitle}
                 fill
-                className="object-cover"
+                className="object-cover object-center"
                 priority
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
               />

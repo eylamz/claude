@@ -23,7 +23,7 @@ interface SkeletonSectionProps {
 
 export const SkeletonSection = ({ showExtraContent = false }: SkeletonSectionProps) => {
   return (
-    <div className="flex gap-4 pb-4 pt-2 -mx-4 px-4">
+    <div className="flex gap-4 pb-4 pt-2 -mx-4 px-4 overflow-hidden">
       {[...Array(4)].map((_, index) => (
         <SkeletonCard key={index} showExtraContent={showExtraContent} />
       ))}

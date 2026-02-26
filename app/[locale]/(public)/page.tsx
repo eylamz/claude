@@ -344,7 +344,7 @@ export default function HomePage() {
       )}
 
       {/* Skateparks Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
+      <section className="py-16 sm:px-6 lg:px-8 overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-2 px-4 select-none">
             <h2
@@ -379,7 +379,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Guides Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
+      <section className="py-16 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-2 px-4 xl:px-0 select-none">
             <h2
