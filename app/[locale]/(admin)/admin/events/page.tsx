@@ -56,6 +56,8 @@ const SPORTS = [
   'Scoot',
   'BMX',
   'Longboard',
+  'Ice Hocky',
+  'Roller Hocky',
 ];
 
 export default function EventsPage() {

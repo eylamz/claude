@@ -515,6 +515,25 @@ const config: Config = {
           },
         },
 
+        lime: {
+          DEFAULT: colors.lime.light,
+          dark: colors.lime.dark,
+          bg: {
+            DEFAULT: colors.lime.bg.light,
+            dark: colors.lime.bg.dark,
+          },
+          border: {
+            DEFAULT: colors.lime.border.light,
+            dark: colors.lime.border.dark,
+          },
+          hover: {
+            bg: {
+              DEFAULT: colors.lime.hover.bg.light,
+              dark: colors.lime.hover.bg.dark,
+            },
+          },
+        },
+
         ring: {
           DEFAULT: colors.brand.main,
           dark: colors.brand[400],

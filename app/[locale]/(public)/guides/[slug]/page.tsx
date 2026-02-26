@@ -846,7 +846,7 @@ export default function GuidePage() {
             {/* Share */}
             <div className="flex flex-wrap items-center justify-end gap-3 text-sm -mt-6">
               <Button
-                variant="green"
+                variant="brand"
                 onClick={() => {
                   if (typeof navigator !== 'undefined' && navigator.share) {
                     navigator.share({
@@ -860,10 +860,10 @@ export default function GuidePage() {
                     navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : canonicalUrl);
                   }
                 }}
-                className="!h-8 px-2 py-1 rounded-lg font-medium flex-shrink-0"
+                className="!h-8 !p-2 rounded-lg font-medium flex-shrink-0 "
                 aria-label={locale === 'he' ? 'שתף מדריך' : 'Share guide'}
               >
-                <Icon name="shareBold" className="w-4 h-4" />
+                <Icon name="shareBold" className="w-5 h-5" />
               </Button>
             </div>
           </header>

@@ -43,17 +43,17 @@ const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
 
           .radio-button__input:checked + .radio-button__label .radio-button__custom {
             transform: translateY(-50%) scale(1);
-            border: 8px solid #3caa41;
-            color: #3caa41;
+            border: 8px solid #8be100;
+            color: #8be100;
           }
 
           .radio-button__input:checked + .radio-button__label {
-            color: #3caa41;
+            color: #8be100;
           }
 
           .radio-button__label:hover .radio-button__custom {
             transform: translateY(-50%) scale(1.1);
-            border-color: #3caa41;
+            border-color: #8be100;
           }
 
           .radio-button__input:disabled + .radio-button__label {
@@ -65,6 +65,19 @@ const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
             transform: translateY(-50%);
             border-color: #555;
             box-shadow: none;
+          }
+
+          :global(.dark) .radio-button__input:checked + .radio-button__label .radio-button__custom {
+            border: 8px solid #9dff00;
+            color: #9dff00;
+          }
+
+          :global(.dark) .radio-button__input:checked + .radio-button__label {
+            color: #9dff00;
+          }
+
+          :global(.dark) .radio-button__label:hover .radio-button__custom {
+            border-color: #9dff00;
           }
         `}</style>
         <div className={cn("radio-button", className)}>

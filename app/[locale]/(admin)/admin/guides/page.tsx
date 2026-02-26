@@ -42,13 +42,15 @@ interface Pagination {
 }
 
 const SPORTS = [
-  'Skateboarding',
+  'Skateboard',
   'BMX',
-  'Scooter',
-  'Longboarding',
-  'Roller Skating',
+  'Scoot',
+  'Longboard',
+  'Roller',
   'Ski',
   'Snowboard',
+  'Ice Hocky',
+  'Roller Hocky',
 ];
 
 // Helper function to get tags array based on locale

@@ -622,7 +622,7 @@ const ParkImageGallery = ({
                 >
                   {parkName && (
                     <Button
-                      variant="green"
+                      variant="brand"
                       onClick={() => {
                         if (typeof navigator !== 'undefined' && navigator.share) {
                           navigator.share({

@@ -43,13 +43,15 @@ interface TrainerFormData {
 }
 
 const SPORTS = [
-  'Skateboarding',
+  'Skateboard',
   'BMX',
-  'Scooter',
-  'Longboarding',
-  'Roller Skating',
+  'Scoot',
+  'Longboard',
+  'Roller',
   'Ski',
   'Snowboard',
+  'Ice Hocky',
+  'Roller Hocky',
 ];
 
 export default function NewTrainerPage() {

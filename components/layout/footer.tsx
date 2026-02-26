@@ -193,12 +193,12 @@ export function Footer() {
                 <h4 className="text-xs font-bold uppercase tracking-widest text-text dark:text-text-dark mb-4">
                   {t('footer.discover')}
                 </h4>
-                <ul className="space-y-3">
+                <ul className="space-y-1">
                   {navLinks.map((link) => (
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-main transition-colors"
+                        className="-ms-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:font-medium hover:text-black dark:hover:text-brand-dark transition-colors duration-200"
                       >
                         {link.label}
                       </Link>
@@ -210,12 +210,12 @@ export function Footer() {
                 <h4 className="text-xs font-bold uppercase tracking-widest text-text dark:text-text-dark mb-4">
                   {t('mobileNav.infoSupport')}
                 </h4>
-                <ul className="space-y-3">
+                <ul className="space-y-1">
                   {secondaryLinks.map((link) => (
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-main transition-colors"
+                        className="-ms-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:font-medium hover:text-black dark:hover:text-brand-dark transition-colors duration-200"
                       >
                         {link.label}
                       </Link>

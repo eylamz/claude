@@ -437,10 +437,29 @@ export const colors = {
     hover: {
       bg: {
         light: '#ddd0fb',
-        dark: 'hsl(261, 54%, 19%)',
+        dark: 'hsl(261, 54%, 18%)',
       },
     },
   },
+  lime: {
+    light: 'hsl(122, 100%, 12%)',
+    dark: 'hsl(83, 100%, 50%)',
+    bg: {
+      light: 'hsl(83, 84%, 85%)',
+      dark: 'hsl(261, 54%, 20%)',
+    },
+    border: {
+      light: 'hsl(83, 96%, 68%)',
+      dark: '#6e40c4',
+    },
+    hover: {
+      bg: {
+        light: 'hsl(83, 84%, 83%)',
+        dark: 'hsl(83, 100%, 19%)',
+      },
+    },
+  },
+
 
   
 } as const;

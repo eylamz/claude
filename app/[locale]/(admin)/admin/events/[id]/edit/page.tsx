@@ -74,6 +74,8 @@ const SPORTS = [
   'Scoot',
   'BMX',
   'Longboard',
+  'Ice Hocky',
+  'Roller Hocky',
 ];
 
 const EVENT_TYPES = [

@@ -1644,7 +1644,7 @@ export default function SkateparkPage() {
             </h1>
             <div className="sm:hidden shrink-0">
               <Button
-                variant="green"
+                variant="brand"
                 onClick={() => {
                   if (typeof navigator !== 'undefined' && navigator.share) {
                     navigator.share({
@@ -1743,7 +1743,7 @@ export default function SkateparkPage() {
                                 amenitiesActive
                                   ? isParkClosed
                                     ? 'bg-red-bg dark:bg-red-bg-dark !border-red-border dark:!border-red-border-dark'
-                                    : 'bg-blue-bg dark:bg-[#1452174d] !border-blue-border dark:!border-[#145217a4]'
+                                    : 'bg-blue-bg dark:bg-[#1432524d] !border-blue-border dark:!border-[#183d65]'
                                   : ' bg-gray-bg dark:bg-gray-bg-dark dark:shadow-inner'
                               }`}
                             >
@@ -1756,9 +1756,9 @@ export default function SkateparkPage() {
                                         ? isParkClosed
                                           ? 'text-red dark:text-red-dark'
                                           : 'text-blue dark:text-blue-dark'
-                                        : 'text-gray-400 dark:text-[#405e4e]'
+                                        : 'text-gray-dark dark:text-gray'
                                     }`}
-                                  />
+                                 add />
                                 </div>
                                 <p className={`text-xs xsm:text-sm font-medium transition-all duration-300 ${
                                   amenitiesActive
@@ -1773,7 +1773,7 @@ export default function SkateparkPage() {
                             </div>
                           </TooltipTrigger>
                           <TooltipContent 
-                          variant={isParkClosed ? 'red' : 'green'}
+                          variant={isParkClosed ? 'red' : 'blue'}
                           side="top"
                            className="max-w-[200px] whitespace-normal">
                             <p className="text-sm">{t(`amenities.${key}Description`)}</p>

@@ -54,13 +54,15 @@ type SortOption = 'rating' | 'alphabetical' | 'newest';
 
 // Available sports list
 const SPORTS = [
-  'Skateboarding',
+  'Skateboard',
   'BMX',
-  'Scooter',
-  'Longboarding',
-  'Roller Skating',
+  'Scoot',
+  'Longboard',
+  'Roller',
   'Ski',
   'Snowboard',
+  'Ice Hocky',
+  'Roller Hocky',
 ];
 
 // Utility function to optimize image URLs

@@ -49,23 +49,25 @@ const SPORT_FILTER_CONFIG = [
   {
     value: 'roller',
     iconName: 'Roller' as const,
-    displayNameEn: 'Rollerblading',
+    displayNameEn: 'Roller',
     displayNameHe: 'רולר',
   },
-  { value: 'skate', iconName: 'Skate' as const, displayNameEn: 'Skating', displayNameHe: 'סקייט' },
+  { value: 'skate', iconName: 'Skate' as const, displayNameEn: 'Skateboard', displayNameHe: 'סקייטבורד' },
   {
     value: 'scoot',
     iconName: 'scooter' as const,
-    displayNameEn: 'Scootering',
+    displayNameEn: 'Scoot',
     displayNameHe: 'קורקינט',
   },
   { value: 'bmx', iconName: 'bmx-icon' as const, displayNameEn: 'BMX', displayNameHe: 'אופניים' },
   {
     value: 'longboard',
     iconName: 'Longboard' as const,
-    displayNameEn: 'Longboarding',
+    displayNameEn: 'Longboard',
     displayNameHe: 'לונגבורד',
   },
+  { value: 'ice-hocky', iconName: 'IceHocky' as const, displayNameEn: 'Ice Hocky', displayNameHe: 'הוקי קרח' },
+  { value: 'roller-hocky', iconName: 'RollerHocky' as const, displayNameEn: 'Roller Hocky', displayNameHe: 'הוקי רולר' },
 ] as const;
 
 type CategoryTab = 'all' | 'products' | 'skateparks' | 'events' | 'guides' | 'trainers';
@@ -620,6 +622,9 @@ function SearchPageContent() {
 
   // Scroll state
   const [isScrolled, setIsScrolled] = useState(false);
+  // When past threshold: scroll down → bar at top-0; scroll up → bar at top-16 to reveal header
+  const [stickyBarRevealHeader, setStickyBarRevealHeader] = useState(false);
+  const lastScrollYRef = useRef(0);
 
   // Mobile detection for sports filter (Popover vs Drawer)
   const [isMobile, setIsMobile] = useState(false);
@@ -690,10 +695,21 @@ function SearchPageContent() {
     setPage(1);
   }, []);
 
-  // Track scroll (match skateparks FilterBar threshold for sticky bar)
+  // Track scroll (match skateparks FilterBar threshold for sticky bar).
+  // Past threshold: scroll down → top-0; scroll up → top-16 so header is visible.
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 260);
+      const y = window.scrollY;
+      const pastThreshold = y > 260;
+      setIsScrolled(pastThreshold);
+
+      if (pastThreshold) {
+        const scrollingUp = y < lastScrollYRef.current;
+        setStickyBarRevealHeader(scrollingUp);
+      } else {
+        setStickyBarRevealHeader(false);
+      }
+      lastScrollYRef.current = y;
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -1335,10 +1351,12 @@ function SearchPageContent() {
       ======================================== */}
       <div
         className={cn(
-          'sticky z-40 bg-background dark:bg-background-dark transition-all duration-100 border-b-2 border-transparent',
+          'sticky z-40 bg-background dark:bg-background-dark transition-all ease-in-out border-b-2 border-transparent',
           isScrolled
-            ? 'top-16 shadow-xl border-header-border dark:border-header-border-dark py-3'
-            : 'top-0 py-4'
+            ? stickyBarRevealHeader
+              ? 'top-16 duration-300 shadow-xl border-header-border dark:border-header-border-dark py-3'
+              : 'top-0 duration-50 shadow-xl border-header-border dark:border-header-border-dark py-3'
+            : 'top-0 py-4 duration-150'
         )}
       >
         <div className="max-w-6xl mx-auto px-4">
@@ -1911,6 +1929,18 @@ function SearchPageContent() {
                             : tab.color === 'pink'
                               ? 'bg-pink-bg dark:bg-pink-bg-dark border-pink-border dark:border-pink-border-dark hover:bg-pink-bg/80 dark:hover:bg-pink-bg-dark/80'
                               : 'bg-gray-bg dark:bg-gray-bg-dark border-gray-border dark:border-gray-border-dark hover:bg-gray-bg/80 dark:hover:bg-gray-bg-dark/80';
+                  const iconTextClasses =
+                    tab.color === 'orange'
+                      ? 'text-orange dark:text-orange-dark'
+                      : tab.color === 'green'
+                        ? 'text-green dark:text-green-dark'
+                        : tab.color === 'purple'
+                          ? 'text-purple dark:text-purple-dark'
+                          : tab.color === 'blue'
+                            ? 'text-blue dark:text-blue-dark'
+                            : tab.color === 'pink'
+                              ? 'text-pink dark:text-pink-dark'
+                              : 'text-gray-700 dark:text-gray-300';
                   return (
                     <button
                       key={tabKey}
@@ -1921,7 +1951,7 @@ function SearchPageContent() {
                         colorClasses
                       )}
                     >
-                      <Icon name={(tab.iconBold ?? tab.icon) as any} className="w-3.5 h-3.5" />
+                      <Icon name={(tab.iconBold ?? tab.icon) as any} className={cn('w-3.5 h-3.5', iconTextClasses)} />
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {tab.label}
                       </span>
@@ -2067,7 +2097,9 @@ function SearchPageContent() {
                           className={cn(
                             'grid gap-4 md:gap-6',
                             viewMode === 'grid'
-                              ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
+                              ? group.items.length > 8
+                                ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4'
+                                : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
                               : 'grid-cols-1 sm:grid-cols-2'
                           )}
                         >

@@ -75,17 +75,17 @@ const SPORT_CONFIG = [
   {
     value: 'roller',
     iconName: 'Roller' as const,
-    displayName: 'Rollerblading',
+    displayName: 'Roller',
     variant: 'teal' as const,
-    tooltipEn: 'Filter by Rollerblading events',
+    tooltipEn: 'Filter by Roller events',
     tooltipHe: 'סנן לפי אירועי רולר',
   },
   {
     value: 'skate',
     iconName: 'Skate' as const,
-    displayName: 'Skating',
+    displayName: 'Skateboard',
     variant: 'teal' as const,
-    tooltipEn: 'Filter by Skating events',
+    tooltipEn: 'Filter by Skateboard events',
     tooltipHe: 'סנן לפי אירועי סקייט',
   },
   {
@@ -93,13 +93,13 @@ const SPORT_CONFIG = [
     iconName: 'scooter' as const,
     displayName: 'Scootering',
     variant: 'blue' as const,
-    tooltipEn: 'Filter   by Scootering events',
+    tooltipEn: 'Filter by Scoot events',
     tooltipHe: 'סנן לפי אירועי קורקינט',
   },
   {
     value: 'bmx',
     iconName: 'bmx-icon' as const,
-    displayName: 'BMXing',
+    displayName: 'BMX',
     variant: 'teal' as const,
     tooltipEn: 'Filter by BMX events',
     tooltipHe: 'סנן לפי אירועי BMX',
@@ -107,10 +107,26 @@ const SPORT_CONFIG = [
   {
     value: 'longboard',
     iconName: 'Longboard' as const,
-    displayName: 'Longboarding',
+    displayName: 'Longboard',
     variant: 'teal' as const,
-    tooltipEn: 'Filter by Longboarding events',
+    tooltipEn: 'Filter by Longboard events',
     tooltipHe: 'סנן לפי אירועי לונגבורד',
+  },
+  {
+    value: 'ice-hocky',
+    iconName: 'IceHocky' as const,
+    displayName: 'Ice Hocky',
+    variant: 'teal' as const,
+    tooltipEn: 'Filter by Ice Hocky events',
+    tooltipHe: 'סנן לפי אירועי הוקי קרח',
+  },
+  {
+    value: 'roller-hocky',
+    iconName: 'RollerHocky' as const,
+    displayName: 'Roller Hocky',
+    variant: 'teal' as const,
+    tooltipEn: 'Filter by Roller Hocky events',
+    tooltipHe: 'סנן לפי אירועי הוקי רולר',
   },
 ] as const;
 
@@ -943,13 +959,12 @@ function EventsPageContent() {
                       {sportConfig ? (
                         <Icon
                           name={sportConfig.iconName as any}
-                          className="w-4 h-4 text-gray-700 dark:text-gray-300"
+                          className="w-3.5 h-3.5 text-teal dark:text-teal-dark"
                         />
-                      ) : (
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                          {getSportTranslation(sport)}
-                        </span>
-                      )}
+                      ) : null}
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {getSportTranslation(sport)}
+                      </span>
                       <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                     </button>
                   );

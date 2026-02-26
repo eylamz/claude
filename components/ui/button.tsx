@@ -15,13 +15,13 @@ const buttonVariants = cva(
         primaryBtn:
           'bg-header-dark text-header-text dark:text-header-text-dark hover:bg-brand-main/80 dark:bg-brand-main dark:hover:bg-brand-main/80',
         primary:
-          'bg-brand-main text-black dark:text-text hover:bg-brand-main/80 dark:bg-brand-dark dark:hover:bg-brand-dark/80',
+          'bg-brand-main text-black hover:bg-brand-main/80 dark:bg-brand-dark dark:hover:bg-brand-dark/80',
         primaryReverse:
           'bg-brand-text text-brand-main dark:text-brand-dark hover:bg-brand-text/80 dark:bg-brand-stroke dark:hover:bg-brand-stroke/80',
         success:
           'rounded-xl bg-success/10 dark:bg-success-dark/15 text-success dark:text-success-dark   hover:bg-success/15 dark:hover:bg-success-dark/20',
         brand:
-          'border-brand-main/40 dark:border-brand-dark/20 bg-brand-main/25 dark:bg-brand-dark/15 text-brand-text dark:text-brand-main   hover:bg-brand-main/35 dark:hover:bg-brand-dark/20',
+          'border-lime-border dark:border-purple-border-dark bg-lime-bg dark:bg-purple-bg-dark text-purple-border-dark dark:text-brand-dark hover:bg-lime-hover-bg dark:hover:bg-purple-hover-bg-dark',
         brandOutline:
           'border text-[#16641a] dark:text-[#85ef8a] bg-[#defce0] dark:bg-[#1452174d] border-[#85ef8a] dark:border-[#1452174d]',
         header:

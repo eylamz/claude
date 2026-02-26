@@ -24,11 +24,13 @@ interface GuideSectionProps {
 
 // Sport icon mapping (matches guides-page-client)
 const SPORT_CONFIG = [
-  { value: 'roller', iconName: 'Roller' as const, displayName: 'Rollerblading' },
-  { value: 'skate', iconName: 'Skate' as const, displayName: 'Skating' },
-  { value: 'scoot', iconName: 'scooter' as const, displayName: 'Scootering' },
-  { value: 'bmx', iconName: 'bmx-icon' as const, displayName: 'BMXing' },
-  { value: 'longboard', iconName: 'Longboard' as const, displayName: 'Longboarding' },
+  { value: 'roller', iconName: 'Roller' as const, displayName: 'Roller' },
+  { value: 'skate', iconName: 'Skate' as const, displayName: 'Skateboard' },
+  { value: 'scoot', iconName: 'scooter' as const, displayName: 'Scoot' },
+  { value: 'bmx', iconName: 'bmx-icon' as const, displayName: 'BMX' },
+  { value: 'longboard', iconName: 'Longboard' as const, displayName: 'Longboard' },
+  { value: 'ice-hocky', iconName: 'IceHocky' as const, displayName: 'Ice Hocky' },
+  { value: 'roller-hocky', iconName: 'RollerHocky' as const, displayName: 'Roller Hocky' },
 ] as const;
 
 const getOptimizedImageUrl = (originalUrl: string): string | null => {

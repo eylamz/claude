@@ -57,7 +57,7 @@ export function ThemeToggle({ className = '', lng }: ThemeToggleProps) {
   return (
     <button
       onClick={handleThemeToggle}
-      className={`group inline-flex items-center gap-2 rounded-lg text-sm font-semibold transition-colors duration-300 text-text dark:text-text-dark ${theme === 'dark' ? 'hover:text-yellow-500 dark:hover:text-yellow-400' : 'hover:text-blue dark:hover:text-blue-dark'} ${className}`}
+      className={`p-4 -m-4 group inline-flex items-center gap-2 rounded-lg text-sm font-semibold transition-colors duration-300 text-text dark:text-text-dark ${theme === 'dark' ? 'hover:text-yellow-500 dark:hover:text-yellow-400' : 'hover:text-blue dark:hover:text-blue-dark'} ${className}`}
       aria-label={theme === 'dark' ? t('light_mode') : t('dark_mode')}
     >
       {theme === 'dark' ? (

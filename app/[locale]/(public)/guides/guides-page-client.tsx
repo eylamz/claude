@@ -85,42 +85,58 @@ const SPORT_CONFIG = [
   {
     value: 'roller',
     iconName: 'Roller' as const,
-    displayName: 'Rollerblading',
+    displayName: 'Roller',
     variant: 'teal' as const,
-    tooltipEn: 'Filter by Rollerblading guides',
+    tooltipEn: 'Filter by Roller guides',
     tooltipHe: 'סנן לפי מדריכי רולר',
   },
   {
     value: 'skate',
     iconName: 'Skate' as const,
-    displayName: 'Skating',
+    displayName: 'Skateboard',
     variant: 'teal' as const,
-    tooltipEn: 'Filter by Skating guides',
+    tooltipEn: 'Filter by Skateboard guides',
     tooltipHe: 'סנן לפי מדריכי סקייט',
   },
   {
     value: 'scoot',
     iconName: 'scooter' as const,
-    displayName: 'Scootering',
+    displayName: 'Scoot',
     variant: 'teal' as const,
-    tooltipEn: 'Filter by Scootering guides',
+    tooltipEn: 'Filter by Scoot guides',
     tooltipHe: 'סנן לפי מדריכי קורקינט',
   },
   {
     value: 'bmx',
     iconName: 'bmx-icon' as const,
-    displayName: 'BMXing',
+    displayName: 'BMX',
     variant: 'teal' as const,
     tooltipEn: 'Filter by BMX guides',
-    tooltipHe: 'סנן לפי מדריכי BMX',
+    tooltipHe: 'סנן לפי מדריכי אופניים',
   },
   {
     value: 'longboard',
     iconName: 'Longboard' as const,
-    displayName: 'Longboarding',
+    displayName: 'Longboard',
     variant: 'teal' as const,
-    tooltipEn: 'Filter by Longboarding guides',
+    tooltipEn: 'Filter by Longboard guides',
     tooltipHe: 'סנן לפי מדריכי לונגבורד',
+  },
+  {
+    value: 'ice-hocky',
+    iconName: 'IceHocky' as const,
+    displayName: 'Ice Hocky',
+    variant: 'teal' as const,
+    tooltipEn: 'Filter by Ice Hocky guides',
+    tooltipHe: 'סנן לפי מדריכי הוקי קרח',
+  },
+  {
+    value: 'roller-hocky',
+    iconName: 'RollerHocky' as const,
+    displayName: 'Roller Hocky',
+    variant: 'teal' as const,
+    tooltipEn: 'Filter by Roller Hocky guides',
+    tooltipHe: 'סנן לפי מדריכי הוקי רולר',
   },
 ] as const;
 
@@ -1014,18 +1030,24 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                 )}
 
                 {/* Sports Badges */}
-                {selectedSports.map((sport) => (
+                {selectedSports.map((sport) => {
+                  const sportConfig = SPORT_CONFIG.find((c) => c.value === sport);
+                  return (
                   <button
                     key={sport}
                     onClick={() => setSelectedSports((prev) => prev.filter((s) => s !== sport))}
                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-teal-bg dark:bg-teal-bg-dark rounded-full border border-teal-border dark:border-teal-border-dark hover:bg-teal-hover-bg dark:hover:bg-teal-hover-bg-dark transition-colors duration-200 cursor-pointer animate-pop"
                   >
+                    {sportConfig && (
+                      <Icon name={sportConfig.iconName as any} className="w-3.5 h-3.5 text-teal dark:text-teal-dark" />
+                    )}
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {getSportTranslation(sport)}
                     </span>
                     <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                   </button>
-                ))}
+                  );
+                })}
 
                 {/* Difficulty Badge */}
                 {difficulty && (
@@ -1044,11 +1066,11 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                 {minRating > 0 && (
                   <button
                     onClick={() => setMinRating(0)}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-full border border-yellow-200 dark:border-yellow-800 hover:bg-yellow-100 dark:hover:bg-yellow-900/30 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-lime-bg dark:bg-lime-bg-dark rounded-full border border-lime-border dark:border-lime-border-dark hover:bg-lime-hover-bg dark:hover:bg-lime-hover-bg-dark transition-colors cursor-pointer"
                   >
                     <Icon
                       name="star"
-                      className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-400"
+                      className="w-3.5 h-3.5 text-brand-text dark:text-brand-dark"
                     />
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {tr('Rating', 'דירוג')} ≥ {minRating.toFixed(1)}

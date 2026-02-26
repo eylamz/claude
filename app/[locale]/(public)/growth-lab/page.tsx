@@ -130,7 +130,7 @@ const FormCard = memo(({
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center space-y-2 p-6">
             <div className="w-16 h-16 mx-auto bg-brand-main/20 dark:bg-brand-dark/20 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-brand-main dark:text-brand-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 text-brand-text dark:text-brand-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
@@ -336,7 +336,7 @@ export default function GrowingTogetherPage() {
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               {tr(
-                'Help us grow by sharing your thoughts and experiences. Fill out the forms below to contribute to our community.',
+                'Your feedback matters. Small surveys, big changes!',
                 'סקרים קטנים, שינויים גדולים. בואו נשפר ביחד!'
               )}
             </p>
@@ -344,16 +344,16 @@ export default function GrowingTogetherPage() {
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
               <div className="flex items-center gap-2 text-sm">
-                  <Icon name="clipboardBold" className="w-3 h-3 text-green-500" />
+                  <Icon name="clipboardBold" className="w-3 h-3 text-brand-text dark:text-brand-dark" />
                 <span className="text-gray-600 dark:text-gray-400">
-                {tr('Updated Daily', 'סקרים משתנים')}
+                {tr('Rotating surveys', 'סקרים משתנים')}
                 </span>
               </div>
               <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
               <div className="flex items-center gap-2 text-sm">
-              <Icon name="plantBold" className="w-3.5 h-3.5 text-green-500" />
+              <Icon name="plantBold" className="w-3.5 h-3.5 text-brand-text dark:text-brand-dark" />
               <span className="text-gray-600 dark:text-gray-400">
-                  {tr('Updated Daily', 'שדרוגים גדולים')}
+                  {tr('Major upgrades', 'שדרוגים גדולים')}
                 </span>
               </div>
             </div>
@@ -393,7 +393,7 @@ export default function GrowingTogetherPage() {
       {/* Forms Grid */}
       <div className="max-w-6xl mx-auto px-4 py-8">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="space-y-2">
                 <Skeleton className="h-[12rem] md:h-[16rem] w-full rounded-2xl" />

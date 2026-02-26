@@ -74,7 +74,7 @@ const CONTENT_BLOCK_TYPES: { value: ContentBlockType; label: string; icon: strin
   { value: 'divider', label: 'Divider', icon: '─' },
 ];
 
-const SPORTS = ['Roller', 'Skate', 'Scoot', 'BMX', 'Longboard'];
+const SPORTS = ['Roller', 'Skate', 'Scoot', 'BMX', 'Longboard', 'Ice Hocky', 'Roller Hocky'];
 
 const CODE_LANGUAGES = [
   'javascript',

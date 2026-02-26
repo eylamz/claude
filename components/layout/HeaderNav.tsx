@@ -1098,7 +1098,7 @@ export default function HeaderNav() {
                   <PopoverContent
                     className={`w-fit p-2 ${locale === 'he' ? '!left-0 !right-auto' : '!right-0 !left-auto'}`}
                   >
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2 justify-center items-center">
                       {/* Theme Toggle */}
                       <Button
                         variant="none"
@@ -1139,12 +1139,12 @@ export default function HeaderNav() {
                         {locale === 'en' ? (
                           <Icon
                             name="hebrewBold"
-                            className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-brand-main"
+                            className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-[#8be100] dark:group-hover:text-brand-dark"
                           />
                         ) : (
                           <Icon
                             name="englishBold"
-                            className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-brand-main"
+                            className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-[#8be100] dark:group-hover:text-brand-dark"
                           />
                         )}
                         <span className="text-text dark:text-text-dark/90">
@@ -1479,10 +1479,7 @@ export default function HeaderNav() {
                           <h3 className="text-sm font-semibold">
                             {locale === 'he' ? 'חיפוש מתקדם' : 'Advanced Search'}
                           </h3>
-                          <Icon
-                            name="sparksBold"
-                            className="w-3 h-3"
-                          />
+                          <Icon name="sparksBold" className="w-3 h-3" />
                         </Link>
                       </div>
                       <div className="flex flex-wrap gap-2">
@@ -1671,7 +1668,7 @@ export default function HeaderNav() {
                       <p className="text-sm text-sidebar-text dark:text-sidebar-text-dark mb-4">
                         {tSearch('popup.noResultsHint')}
                       </p>
-                      
+
                       <Link
                         href={`/${locale}/search`}
                         onClick={() => setIsSearchOpen(false)}
