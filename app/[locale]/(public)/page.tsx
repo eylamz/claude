@@ -655,7 +655,7 @@ export default function HomePage() {
 
             <Button
               variant="primary"
-              className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-base lg:text-lg font-semibold text-text dark:text-white rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 translate-x-5 sm:translate-x-2.5 lg:translate-x-0 xl:translate-x-20"
+              className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-base lg:text-lg font-semibold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 translate-x-5 sm:translate-x-2.5 lg:translate-x-0 xl:translate-x-20"
             >
               {t('getStarted')}
             </Button>

@@ -15,7 +15,9 @@ const buttonVariants = cva(
         primaryBtn:
           'bg-header-dark text-header-text dark:text-header-text-dark hover:bg-brand-main/80 dark:bg-brand-main dark:hover:bg-brand-main/80',
         primary:
-          'bg-brand-main text-white dark:text-text hover:bg-brand-main/80 dark:bg-brand-dark dark:hover:bg-brand-dark/80',
+          'bg-brand-main text-black dark:text-text hover:bg-brand-main/80 dark:bg-brand-dark dark:hover:bg-brand-dark/80',
+        primaryReverse:
+          'bg-brand-text text-brand-main dark:text-brand-dark hover:bg-brand-text/80 dark:bg-brand-stroke dark:hover:bg-brand-stroke/80',
         success:
           'rounded-xl bg-success/10 dark:bg-success-dark/15 text-success dark:text-success-dark   hover:bg-success/15 dark:hover:bg-success-dark/20',
         brand:

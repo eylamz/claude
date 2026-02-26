@@ -386,10 +386,13 @@ export default function EventPage() {
           </h1>
           <Link
             href={`/${locale}/events`}
-            className="inline-flex items-center gap-2 text-brand-main hover:text-brand-main/80 dark:text-brand-dark font-medium"
+            className=""
           >
-            <ChevronLeft className="w-4 h-4" />
+            <Button variant="primary" className={`inline-flex items-center gap-2 text-brand-text hover:text-brand-text/80 dark:hover:text-brand-dark/80 dark:text-brand-dark font-semibold ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
+
+            <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
             {locale === 'he' ? 'חזרה לאירועים' : 'Back to Events'}
+            </Button>
           </Link>
         </div>
       </div>
@@ -496,7 +499,7 @@ export default function EventPage() {
         {/* Article Header - Duolingo Style */}
         <header className="my-10 px-4 sm:px-6">
           {/* Badges */}
-          <div className="flex flex-wrap items-center gap-2 mb-4">
+          <div className="flex flex-wrap items-center gap-1 xsm:gap-2 mb-4">
             {event.isFeatured && (
               <span className="px-2 py-1 rounded-lg text-sm font-semibold bg-green dark:bg-green-dark text-green-bg dark:text-green-bg-dark flex items-center gap-1">
                 <Icon name="star" className="w-4 h-4 fill-green dark:fill-green-bg-dark" />
@@ -567,15 +570,15 @@ export default function EventPage() {
               {getLocalizedAddress() && (
                 <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2">
-                  <Icon name="location" className="w-4 h-4 text-brand-main mt-0.5 flex-shrink-0" />
+                  <Icon name="location" className="w-4 h-4 text-brand-text dark:text-brand-dark mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{getLocalizedAddress()}</p>
+                    <p className="text-sm text-black dark:text-white">{getLocalizedAddress()}</p>
                     {event.location?.isSkatepark && event.location?.skateparkSlug ? (
                       <Link
                         href={`/${locale}/skateparks/${event.location.skateparkSlug}`}
-                        className="inline-flex items-center gap-1 text-brand-main hover:text-brand-main/80 dark:text-brand-dark text-sm mt-1"
+                        className="inline-flex items-center gap-1 underline hover:no-underline text-brand-text hover:text-brand-text/80 dark:hover:text-brand-dark/80 dark:text-brand-dark text-sm mt-1 transition-all duration-200"
                       >
-                        <Icon name="link" className="w-3 h-3" />
+                        <Icon name="link" className="w-4 h-4" />
                         <span>{locale === 'he' ? 'צפה בפרטי הפארק' : 'Show skatepark details'}</span>
                       </Link>
                     ) : event.location?.url ? (
@@ -583,16 +586,16 @@ export default function EventPage() {
                         href={event.location.url} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-brand-main hover:text-brand-main/80 dark:text-brand-dark text-sm mt-1"
+                        className="inline-flex items-center gap-1 underline hover:no-underline text-brand-text hover:text-brand-text/80 dark:hover:text-brand-dark/80 dark:text-brand-dark text-sm mt-1 transition-all duration-200"
                       >
-                        <Icon name="link" className="w-3 h-3" />
+                        <Icon name="link" className="w-4 h-4" />
                         <span>{locale === 'he' ? 'פתח במפה' : 'Open in Maps'}</span>
                       </a>
                     ) : null}
                   </div>
                 </div>
                             <Button
-              variant="green"
+              variant="brand"
               onClick={() => {
                 if (typeof navigator !== 'undefined' && navigator.share) {
                   navigator.share({
@@ -606,10 +609,10 @@ export default function EventPage() {
                   navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : canonicalUrl);
                 }
               }}
-              className="!h-8 px-2 py-1 rounded-lg font-medium flex-shrink-0 "
+              className="!h-8 !p-2 rounded-lg font-medium flex-shrink-0 "
               aria-label={locale === 'he' ? 'שתף אירוע' : 'Share event'}
             >
-              <Icon name="shareBold" className="w-4 h-4" />
+              <Icon name="shareBold" className="w-5 h-5" />
             </Button>
 
                 </div>
@@ -618,16 +621,16 @@ export default function EventPage() {
               <div className="flex flex-wrap gap-4">
                 {event.isOnline && (
                   <div className="flex items-center gap-2">
-                    <Icon name="monitor" className="w-4 h-4 text-brand-main" />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                    <Icon name="monitor" className="w-4 h-4 text-brand-text dark:text-brand-dark" />
+                    <span className="text-sm text-black dark:text-white">
                       {locale === 'he' ? 'אירוע מקוון' : 'Online Event'}
                     </span>
                   </div>
                 )}
                 
                 <div className="flex items-center gap-2">
-                  <Icon name={event.isFree ? "gift" : "tag"} className="w-4 h-4 text-brand-main" />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <Icon name={event.isFree ? "gift" : "tag"} className="w-4 h-4 text-brand-text dark:text-brand-dark" />
+                  <span className="text-sm text-black dark:text-white">
                     {event.isFree ? 
                       (locale === 'he' ? 'השתתפות חינם' : 'Free participation') : 
                       (locale === 'he' ? 'השתתפות בתשלום' : 'Paid')
@@ -636,8 +639,8 @@ export default function EventPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Icon name="task" className="w-4 h-4 text-brand-main" />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                  <Icon name="task" className="w-4 h-4 text-brand-text dark:text-brand-dark" />
+                  <span className="text-sm text-black dark:text-white">
                     {event.registrationRequired ? 
                       (isEventPassed || isRegistrationClosed ? 
                         (locale === 'he' ? 'הרשמה סגורה' : 'Registration Closed') : 
@@ -657,14 +660,14 @@ export default function EventPage() {
                       href={event.registrationUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block bg-brand-main hover:bg-brand-main/90 text-white font-semibold py-2.5 px-6 rounded-full text-center transition-colors"
+                      className="inline-block bg-brand-text hover:bg-brand-text/90 dark:hover:bg-brand-stroke/90 dark:text-brand-stroke text-brand-dark font-semibold py-2.5 px-6 rounded-full text-center transition-colors duration-200"
                     >
                       {locale === 'he' ? 'הירשם עכשיו' : 'Register Now'}
                     </a>
                   ) : (
                     <Link 
                       href={`/${locale}/events/${event.slug}/signup`}
-                      className="inline-block bg-brand-main hover:bg-brand-main/90 text-white font-semibold py-2.5 px-6 rounded-full text-center transition-colors"
+                      className="inline-block bg-brand-text hover:bg-brand-text/90 dark:hover:bg-brand-stroke/90 dark:text-brand-stroke text-brand-main font-semibold py-2.5 px-6 rounded-full text-center transition-colors duration-200"
                     >
                       {locale === 'he' ? 'הירשם עכשיו' : 'Register Now'}
                     </Link>
@@ -730,7 +733,7 @@ export default function EventPage() {
                             className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3`}
                           >
                             {!isNumbered && (
-                              <span className="text-brand-main dark:text-brand-dark font-bold flex-shrink-0">•</span>
+                              <span className="text-brand-text dark:text-brand-dark font-bold flex-shrink-0">•</span>
                             )}
                             <div>
                               {item.title && (
@@ -824,10 +827,13 @@ export default function EventPage() {
         <div className="text-center pt-8">
           <Link
             href={`/${locale}/events`}
-            className={`inline-flex items-center gap-2 px-6 py-3 rounded-full bg-brand-main hover:bg-brand-main/90 text-white font-semibold transition-colors ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+            className={`transition-colors`}
           >
-            <ChevronLeft className="w-4 h-4" />
+            <Button variant="primary" className={`inline-flex items-center gap-2  font-semibold  px-6 py-3  rounded-full flex-shrink-0 ${locale === 'he' ? 'flex-row' : 'flex-row'}`}>
+
+            <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
             {locale === 'he' ? 'חזרה לאירועים' : 'Back to Events'}
+            </Button>
           </Link>
         </div>
       </main>

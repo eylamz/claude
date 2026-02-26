@@ -164,7 +164,7 @@ export default function ReviewForm({
             >
               <Star
                 className={`w-6 h-6 transition-colors ${
-                  (hoverRating || rating) >= star ? 'fill-yellow-400 text-yellow-400' : 'text-text-secondary dark:text-text-secondary-dark'
+                  (hoverRating || rating) >= star ? 'fill-brand-main text-brand-main' : 'text-text-secondary dark:text-text-secondary-dark'
                 }`}
               />
             </button>

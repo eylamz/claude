@@ -83,6 +83,7 @@ const config: Config = {
           text: colors.brand.text,
           color: colors.brand.color,
           accent: colors.brand.accent,
+          stroke: colors.brand.stroke,
 
           orange: colors.brand.orange,
           red: colors.brand.red,

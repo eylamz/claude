@@ -930,12 +930,12 @@ export default function GuidePage() {
 
           {/* Back to Guides - Bottom CTA */}
           <div className="text-center pt-8">
-            <Button variant="primary" className={`gap-2 px-6 font-semibold`} asChild>
+            <Button variant="primary" className={`px-6 font-semibold`} asChild>
               <Link href={`/${locale}/guides`}
-              className={`flex ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+              className={`inline-flex items-center gap-2 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
               >
-                <ChevronLeft className="w-4 h-4" />
                 {locale === 'he' ? 'חזרה למדריכים' : 'Back to Guides'}
+                <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
               </Link>
             </Button>
           </div>

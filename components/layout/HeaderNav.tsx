@@ -724,7 +724,7 @@ export default function HeaderNav() {
               >
                 <NavIcons
                   name="logo"
-                  className="text-brand-main dark:text-brand-dark overflow-visible w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] group-hover:stroke-[7px] group-hover:stroke-[#003f03] dark:group-hover:stroke-[#011c02] group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.35))] dark:group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.15))] transition-all duration-200"
+                  className="text-brand-main dark:text-brand-dark overflow-visible w-[124px] h-[39px] sm:w-[128px] sm:h-[24px] stroke-[7px] stroke-brand-stroke dark:stroke-transparent group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.35))] dark:group-hover:[filter:drop-shadow(0_0_10px_rgba(60,170,65,0.15))] transition-all duration-200"
                   style={{ paintOrder: 'stroke' }}
                 />
               </Link>

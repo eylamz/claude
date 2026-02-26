@@ -962,13 +962,13 @@ export default function MobileSidebar({
                         onClick={onClose}
                         className={`flex items-center gap-5 px-2 py-3 text-3xl ${
                           isActive
-                            ? 'ps-4 pe-6 bg-brand-main/20 dark:bg-brand-main/5 text-brand-main dark:text-brand-main'
+                            ? 'ps-4 pe-6 bg-brand-main/20 dark:bg-brand-main/5 text-brand-text dark:text-brand-dark'
                             : 'ms-2 text-black/80 dark:text-white/90'
                         }`}
                       >
                         <Icon
                           name={card.icon}
-                          className={`flex-shrink-0 w-4 h-4 -mb-0.5 overflow-visible ${isActive ? 'text-brand-main dark:text-brand-main' : 'text-black/80 dark:text-white/90'}`}
+                          className={`flex-shrink-0 w-4 h-4 -mb-0.5 overflow-visible ${isActive ? 'text-brand-text dark:text-brand-dark' : 'text-black/80 dark:text-white/90'}`}
                         />
                         <span className="font-medium">{card.label}</span>
                       </Link>

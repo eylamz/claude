@@ -1,11 +1,12 @@
 export const colors = {
   brand: {
-    main: 'hsl(123, 48%, 45%)',
-    dark: 'hsl(123, 44%, 50%)',
-    text: 'hsl(148, 61%, 46%)',
+    main: 'hsl(83, 100%, 50%)',
+    dark: 'hsl(83, 100%, 50%)',
+    text: 'hsl(83, 100%, 17%)',
     color: 'hsl(162, 56%, 45%)',
     accent: 'hsl(249, 60%, 57%)',
     hover: 'hsl(121, 92%, 26%)',
+    stroke: 'hsl(122, 100%, 12%)',
 
     orange: '#FF5528',
     red: '#FF006E',

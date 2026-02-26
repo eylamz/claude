@@ -1743,7 +1743,7 @@ export default function SkateparkPage() {
                                 amenitiesActive
                                   ? isParkClosed
                                     ? 'bg-red-bg dark:bg-red-bg-dark !border-red-border dark:!border-red-border-dark'
-                                    : 'bg-green-bg dark:bg-[#1452174d] !border-green-border dark:!border-[#145217a4]'
+                                    : 'bg-blue-bg dark:bg-[#1452174d] !border-blue-border dark:!border-[#145217a4]'
                                   : ' bg-gray-bg dark:bg-gray-bg-dark dark:shadow-inner'
                               }`}
                             >
@@ -1755,7 +1755,7 @@ export default function SkateparkPage() {
                                       amenitiesActive
                                         ? isParkClosed
                                           ? 'text-red dark:text-red-dark'
-                                          : 'text-green dark:text-green-dark'
+                                          : 'text-blue dark:text-blue-dark'
                                         : 'text-gray-400 dark:text-[#405e4e]'
                                     }`}
                                   />
@@ -1764,7 +1764,7 @@ export default function SkateparkPage() {
                                   amenitiesActive
                                   ? isParkClosed
                                     ? 'text-red dark:text-red-dark'
-                                    : 'text-green dark:text-green-dark'
+                                    : 'text-blue dark:text-blue-dark'
                                     : 'text-gray-dark dark:text-gray line-through'
                                 }`}>
                                   {t(`amenities.${key}`) || key.replace(/([A-Z])/g, ' $1').trim()}
@@ -2320,7 +2320,7 @@ export default function SkateparkPage() {
                           <p className="text-base font-medium w-15">{rating} {t('stars')}</p>
                           <div className="w-full flex-1 h-2 bg-card dark:bg-card-dark rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-brand-yellow rounded-full"
+                              className="h-full bg-brand-main rounded-full"
                               style={{ width: `${percentage}%` }}
                             />
                           </div>
@@ -2350,7 +2350,7 @@ export default function SkateparkPage() {
                                     name="star"
                                     className={`w-4 h-4 ${
                                       star <= review.rating
-                                        ? 'fill-brand-yellow text-brand-yellow'
+                                        ? 'fill-brand-main text-brand-main'
                                         : 'text-text-secondary dark:text-text-secondary'
                                     }`}
                                   />
@@ -2389,7 +2389,7 @@ export default function SkateparkPage() {
                                     name="star"
                                     className={`w-4 h-4 ${
                                       star <= review.rating
-                                        ? 'fill-brand-yellow text-brand-yellow'
+                                        ? 'fill-brand-main text-brand-main'
                                         : 'text-text-secondary dark:text-text-secondary'
                                     }`}
                                   />

@@ -98,10 +98,10 @@ export const Checkbox: FC<CheckboxProps> = ({ id, checked, onChange, label, vari
             margin-right: 6px;
           }
           .checkbox-wrapper-brand .cbx:hover {
-            background: hsla(123, 48%, 45%, 0.06);
+            background: hsla(83, 48%, 45%, 0.06);
           }
           .dark .checkbox-wrapper-brand .cbx:hover {
-            background: hsla(123, 44%, 50%, 0.1);
+            background: hsla(83, 44%, 50%, 0.1);
           }
           .checkbox-wrapper-brand .cbx span {
             float: left;
@@ -141,23 +141,23 @@ export const Checkbox: FC<CheckboxProps> = ({ id, checked, onChange, label, vari
             line-height: 18px;
           }
           .checkbox-wrapper-brand .cbx:hover span:first-child {
-            border-color: hsl(123, 48%, 45%);
+            border-color: hsl(83, 100%, 45%);
           }
           .dark .checkbox-wrapper-brand .cbx:hover span:first-child {
-            border-color: hsl(123, 44%, 50%);
+            border-color: hsl(83, 100%, 45%);
           }
           .checkbox-wrapper-brand .inp-cbx {
             position: absolute;
             visibility: hidden;
           }
           .checkbox-wrapper-brand .inp-cbx:checked + .cbx span:first-child {
-            background: hsl(123, 48%, 45%);
-            border-color: hsl(123, 48%, 45%);
+            background: hsl(83, 100%, 45%);
+            border-color: hsl(83, 100%, 45%);
             animation: wave-brand 0.4s ease;
           }
           .dark .checkbox-wrapper-brand .inp-cbx:checked + .cbx span:first-child {
-            background: hsl(123, 44%, 50%);
-            border-color: hsl(123, 44%, 50%);
+            background: hsl(83, 100%, 45%);
+            border-color: hsl(83, 100%, 45%);
           }
           .checkbox-wrapper-brand .inp-cbx:checked + .cbx span:first-child svg {
             stroke-dashoffset: 0;
