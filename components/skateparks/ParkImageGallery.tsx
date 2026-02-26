@@ -9,7 +9,7 @@ import { Button } from '../ui';
 import { Icon } from '@/components/icons';
 
 interface ParkImageGalleryProps {
-  images: { url: string; alt?: string }[];
+  images: { url: string; alt?: string; caption?: string }[];
   className?: string;
   parkName?: string;
   closingYear?: number | null;
@@ -122,6 +122,7 @@ const ImageContainer = ({
     <div
       ref={ref}
       className={cn(
+        'group',
         className,
         isInViewport && 'md:animate-fadeInUp',
         'md:[box-shadow:0_1px_1px_#66666612,0_2px_2px_#5e5e5e12,0_4px_4px_#7a5d4413,0_8px_8px_#5e5e5e12,0_16px_16px_#5e5e5e12]'
@@ -350,6 +351,11 @@ const ParkImageGallery = ({
                 alt={mainImage.alt}
                 onClick={handleImageClick}
               />
+              {mainImage.caption && (
+                <div className="absolute bottom-0 left-0 right-0 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-sm px-3 py-2 text-center">
+                  {mainImage.caption}
+                </div>
+              )}
               {/* Search Icon Overlay */}
               <div className={`absolute top-2 rounded-xl  ${locale === 'he' ? 'right-2' : 'left-2'} z-20 bg-background-dark/70 backdrop-blur-sm  flex items-start justify-start p-2`}>
                 <Icon name="zoomIn" className="w-4 h-4 text-white" />
@@ -371,6 +377,11 @@ const ParkImageGallery = ({
                       alt={image.alt}
                       onClick={handleImageClick}
                     />
+                    {image.caption && (
+                      <div className="absolute bottom-0 left-0 right-0 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-xs px-3 py-1">
+                        {image.caption}
+                      </div>
+                    )}
                   </ImageContainer>
                 ))}
               </div>
@@ -411,6 +422,11 @@ const ParkImageGallery = ({
                       alt={image.alt}
                       onClick={handleImageClick}
                     />
+                    {image.caption && (
+                      <div className="absolute bottom-0 left-0 right-0 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-sm px-3 py-2 text-center">
+                        {image.caption}
+                      </div>
+                    )}
                   </ImageContainer>
                 </div>
               ))}
@@ -496,6 +512,11 @@ const ParkImageGallery = ({
                           alt={row.images[0].alt}
                           onClick={handleImageClick}
                         />
+                        {row.images[0].caption && (
+                          <div className="absolute bottom-0 left-0 right-0 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-sm px-3 py-2 text-center">
+                            {row.images[0].caption}
+                          </div>
+                        )}
                       </ImageContainer>
                       <div className="flex flex-col w-1/3 gap-2">
                         {row.images.slice(1).map((image, imgIndex) => (
@@ -510,6 +531,11 @@ const ParkImageGallery = ({
                               alt={image.alt}
                               onClick={handleImageClick}
                             />
+                            {image.caption && (
+                              <div className="absolute bottom-0 left-0 right-0 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-sm px-3 py-2 text-center">
+                                {image.caption}
+                              </div>
+                            )}
                           </ImageContainer>
                         ))}
                       </div>
@@ -532,6 +558,11 @@ const ParkImageGallery = ({
                               alt={image.alt}
                               onClick={handleImageClick}
                             />
+                            {image.caption && (
+                              <div className="absolute bottom-0 left-0 right-0 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-sm px-3 py-2 text-center">
+                                {image.caption}
+                              </div>
+                            )}
                           </ImageContainer>
                         ))}
                       </div>
@@ -545,6 +576,11 @@ const ParkImageGallery = ({
                           alt={row.images[2].alt}
                           onClick={handleImageClick}
                         />
+                        {row.images[2].caption && (
+                          <div className="absolute bottom-0 left-0 right-0 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-sm px-3 py-2 text-center">
+                            {row.images[2].caption}
+                          </div>
+                        )}
                       </ImageContainer>
                     </div>
                   );
@@ -564,6 +600,11 @@ const ParkImageGallery = ({
                             alt={image.alt}
                             onClick={handleImageClick}
                           />
+                          {image.caption && (
+                            <div className="absolute bottom-0 left-0 right-0 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-sm px-3 py-2 text-center">
+                              {image.caption}
+                            </div>
+                          )}
                         </ImageContainer>
                       ))}
                     </div>
@@ -584,6 +625,11 @@ const ParkImageGallery = ({
                             alt={image.alt}
                             onClick={handleImageClick}
                           />
+                          {image.caption && (
+                            <div className="absolute bottom-0 left-0 right-0 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-sm px-3 py-2 text-center">
+                              {image.caption}
+                            </div>
+                          )}
                         </ImageContainer>
                       ))}
                     </div>
@@ -602,6 +648,11 @@ const ParkImageGallery = ({
                           alt={row.images[0].alt}
                           onClick={handleImageClick}
                         />
+                        {row.images[0].caption && (
+                          <div className="absolute bottom-0 left-0 right-0 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-sm px-3 py-2 text-center">
+                            {row.images[0].caption}
+                          </div>
+                        )}
                       </ImageContainer>
                     </div>
                   );

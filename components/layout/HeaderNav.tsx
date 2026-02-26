@@ -1205,21 +1205,18 @@ export default function HeaderNav() {
                           <Popover>
                             <PopoverTrigger asChild>
                               <Button
-                                variant="none"
+                                variant="brand"
                                 size="sm"
-                                className={`group !px-6 w-full flex items-center justify-between font-medium hover:!bg-blue-bg dark:hover:!bg-blue-bg-dark  hover:!border-blue-border dark:hover:!border-blue-border-dark ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                                className={`group !px-6 w-full flex items-center justify-between font-medium bg-transparent dark:bg-transparent dark:border-transparent border-transparent hover:border-purple-border dark:hover:border-purple-border-dark  ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                               >
-                                <div
-                                  className={`flex items-center gap-2 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
-                                >
+
                                   <Icon
                                     name="adminBold"
-                                    className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:!text-blue dark:group-hover:!text-blue-dark"
+                                    className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 group-hover:text-brand-text dark:group-hover:text-brand-dark  transition-all duration-200 "
                                   />
-                                  <span className="flex-1 text-text dark:text-text-dark/90 group-hover:!text-blue dark:group-hover:!text-blue-dark">
+                                  <span className="flex-1 text-text dark:text-text-dark/90 group-hover:text-brand-text dark:group-hover:text-brand-dark  transition-all duration-200 ">
                                     {tCommon('admin') || 'Admin'}
                                   </span>
-                                </div>
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent

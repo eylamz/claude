@@ -24,7 +24,7 @@ interface IEvent {
   type: 'competition' | 'workshop' | 'event' | 'meetup' | 'jam';
   status: 'draft' | 'published' | 'archived' | 'cancelled';
   isFeatured: boolean;
-  
+
   // Event timing
   dateTime: {
     startDate: Date | string;
@@ -36,7 +36,7 @@ interface IEvent {
       en: string;
     };
   };
-  
+
   // Event location
   location: {
     name: {
@@ -55,12 +55,12 @@ interface IEvent {
     isSkatepark?: boolean;
     skateparkSlug?: string;
   };
-  
+
   // Engagement metrics
   viewCount: number;
   interestedCount: number;
   attendingCount: number;
-  
+
   // Localized content
   content: {
     he: {
@@ -76,7 +76,7 @@ interface IEvent {
       sections: any[];
     };
   };
-  
+
   // Media management
   media: any[];
   featuredImage: {
@@ -87,7 +87,7 @@ interface IEvent {
       en: string;
     };
   };
-  
+
   // Event specific fields
   isOnline: boolean;
   isFree: boolean;
@@ -261,11 +261,13 @@ export default function EventPage() {
     if (!event) return;
     const metaTitleResolved = getMetaTitleWithFallback(event.metaTitle, locale);
     const contentTitleFallback = event.content?.[locale]?.title || event.content?.en?.title || '';
-    const titleBase = (metaTitleResolved !== DEFAULT_META_TITLE ? metaTitleResolved : null)
-      || contentTitleFallback
-      || DEFAULT_META_TITLE;
+    const titleBase =
+      (metaTitleResolved !== DEFAULT_META_TITLE ? metaTitleResolved : null) ||
+      contentTitleFallback ||
+      DEFAULT_META_TITLE;
     const brand = locale === 'he' ? 'אנבוס' : 'ENBOSS';
-    document.title = titleBase === DEFAULT_META_TITLE ? DEFAULT_META_TITLE : `${brand} | ${titleBase}`;
+    document.title =
+      titleBase === DEFAULT_META_TITLE ? DEFAULT_META_TITLE : `${brand} | ${titleBase}`;
     const otherLocale = locale === 'he' ? 'en' : 'he';
     const getSeo = (field: { en: string; he: string } | undefined) => {
       if (!field) return '';
@@ -273,7 +275,11 @@ export default function EventPage() {
       const fallback = (field[otherLocale as 'en' | 'he'] ?? '').trim();
       return primary || fallback || '';
     };
-    const description = getSeo(event.metaDescription) || event.content?.[locale]?.description || event.content?.en?.description || '';
+    const description =
+      getSeo(event.metaDescription) ||
+      event.content?.[locale]?.description ||
+      event.content?.en?.description ||
+      '';
     let metaDesc = document.querySelector('meta[name="description"]');
     if (!metaDesc) {
       metaDesc = document.createElement('meta');
@@ -384,14 +390,13 @@ export default function EventPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             {error || (locale === 'he' ? 'אירוע לא נמצא' : 'Event not found')}
           </h1>
-          <Link
-            href={`/${locale}/events`}
-            className=""
-          >
-            <Button variant="primary" className={`inline-flex items-center gap-2 text-brand-text hover:text-brand-text/80 dark:hover:text-brand-dark/80 dark:text-brand-dark font-semibold ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
-
-            <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
-            {locale === 'he' ? 'חזרה לאירועים' : 'Back to Events'}
+          <Link href={`/${locale}/events`} className="">
+            <Button
+              variant="primary"
+              className={`inline-flex items-center gap-2 text-brand-text hover:text-brand-text/80 dark:hover:text-brand-dark/80 dark:text-brand-dark font-semibold ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+            >
+              <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
+              {locale === 'he' ? 'חזרה לאירועים' : 'Back to Events'}
             </Button>
           </Link>
         </div>
@@ -401,17 +406,23 @@ export default function EventPage() {
 
   // Check if event has passed and if registration has closed (by date/time)
   const now = new Date();
-  const eventStartDate = event.dateTime?.startDate ? new Date(event.dateTime.startDate) : new Date();
+  const eventStartDate = event.dateTime?.startDate
+    ? new Date(event.dateTime.startDate)
+    : new Date();
   const isEventPassed = eventStartDate < now;
-  const isRegistrationClosed = event.registrationClosesAt ? new Date(event.registrationClosesAt) < now : false;
+  const isRegistrationClosed = event.registrationClosesAt
+    ? new Date(event.registrationClosesAt) < now
+    : false;
 
   const getLocalizedTitle = () => {
     if (!event.content) return '';
-    return locale === 'he' ? (event.content.he?.title || '') : (event.content.en?.title || '');
+    return locale === 'he' ? event.content.he?.title || '' : event.content.en?.title || '';
   };
   const getLocalizedDescription = () => {
     if (!event.content) return '';
-    return locale === 'he' ? (event.content.he?.description || '') : (event.content.en?.description || '');
+    return locale === 'he'
+      ? event.content.he?.description || ''
+      : event.content.en?.description || '';
   };
   const getLocalizedTags = () => {
     if (!event.content) return [];
@@ -420,19 +431,23 @@ export default function EventPage() {
   };
   const getLocalizedLocationName = () => {
     if (!event.location?.name) return '';
-    return locale === 'he' ? (event.location.name.he || '') : (event.location.name.en || '');
+    return locale === 'he' ? event.location.name.he || '' : event.location.name.en || '';
   };
   const getLocalizedAddress = () => {
     if (!event.location?.address) return null;
-    return locale === 'he' ? (event.location.address.he || null) : (event.location.address.en || null);
+    return locale === 'he' ? event.location.address.he || null : event.location.address.en || null;
   };
   const getLocalizedTimezone = () => {
     if (!event.dateTime?.timezone) return locale === 'he' ? 'אסיה/ירושלים' : 'Asia/Jerusalem';
-    return locale === 'he' ? (event.dateTime.timezone.he || 'אסיה/ירושלים') : (event.dateTime.timezone.en || 'Asia/Jerusalem');
+    return locale === 'he'
+      ? event.dateTime.timezone.he || 'אסיה/ירושלים'
+      : event.dateTime.timezone.en || 'Asia/Jerusalem';
   };
   const getLocalizedAltText = () => {
     if (!event.featuredImage?.altText) return getLocalizedTitle() || 'Event image';
-    return locale === 'he' ? (event.featuredImage.altText.he || getLocalizedTitle()) : (event.featuredImage.altText.en || getLocalizedTitle());
+    return locale === 'he'
+      ? event.featuredImage.altText.he || getLocalizedTitle()
+      : event.featuredImage.altText.en || getLocalizedTitle();
   };
 
   const formatDate = (date: Date | string) => {
@@ -470,21 +485,40 @@ export default function EventPage() {
       workshop: 'books',
       event: 'calendarBold',
       meetup: 'user',
-      jam: 'music'
+      jam: 'music',
     };
     return iconMap[type] || 'calendar';
   };
 
-  // Gallery images for ParkImageGallery (same format as skateparks)
-  const galleryImages: { url: string; alt?: string }[] = [];
-  if (event?.featuredImage?.url && typeof event.featuredImage.url === 'string' && event.featuredImage.url.trim() !== '') {
+  // Gallery images for ParkImageGallery (same format as skateparks); include caption from Event media model
+  const galleryImages: { url: string; alt?: string; caption?: string }[] = [];
+  if (
+    event?.featuredImage?.url &&
+    typeof event.featuredImage.url === 'string' &&
+    event.featuredImage.url.trim() !== ''
+  ) {
     galleryImages.push({ url: event.featuredImage.url, alt: getLocalizedAltText() });
   }
   if (event.media && Array.isArray(event.media)) {
     event.media.forEach((mediaItem: any) => {
-      if (mediaItem && typeof mediaItem === 'object' && mediaItem.url && typeof mediaItem.url === 'string' && mediaItem.url.trim() !== '') {
+      if (
+        mediaItem &&
+        typeof mediaItem === 'object' &&
+        mediaItem.url &&
+        typeof mediaItem.url === 'string' &&
+        mediaItem.url.trim() !== ''
+      ) {
         if (mediaItem.url !== event.featuredImage?.url) {
-          galleryImages.push({ url: mediaItem.url, alt: mediaItem.altText?.[locale] || mediaItem.alt });
+          const caption = mediaItem.caption
+            ? (locale === 'he'
+                ? mediaItem.caption.he || mediaItem.caption.en
+                : mediaItem.caption.en || mediaItem.caption.he)
+            : undefined;
+          galleryImages.push({
+            url: mediaItem.url,
+            alt: mediaItem.altText?.[locale] || mediaItem.alt,
+            caption: caption || undefined,
+          });
         }
       }
     });
@@ -506,12 +540,17 @@ export default function EventPage() {
                 <span>{locale === 'he' ? 'אירוע מומלץ' : 'Featured Event'}</span>
               </span>
             )}
-            {(event.relatedSports && event.relatedSports.length > 0 ? event.relatedSports : []).map((sport: string) => (
-              <span key={sport} className="px-2 py-1 rounded-lg text-sm font-semibold bg-teal dark:bg-teal-dark text-teal-bg dark:text-teal-bg-dark flex items-center gap-1.5">
-                <Icon name={getSportIcon(sport) as any} className="w-4 h-4" />
-                {t(`sports.${sport}` as any) || sport}
-              </span>
-            ))}
+            {(event.relatedSports && event.relatedSports.length > 0 ? event.relatedSports : []).map(
+              (sport: string) => (
+                <span
+                  key={sport}
+                  className="px-2 py-1 rounded-lg text-sm font-semibold bg-teal dark:bg-teal-dark text-teal-bg dark:text-teal-bg-dark flex items-center gap-1.5"
+                >
+                  <Icon name={getSportIcon(sport) as any} className="w-4 h-4" />
+                  {t(`sports.${sport}` as any) || sport}
+                </span>
+              )
+            )}
             <span className="px-2 py-1 rounded-lg text-sm font-semibold bg-orange dark:bg-orange-dark text-orange-bg dark:text-orange-bg-dark flex items-center gap-1">
               <Icon name={getTypeIcon(event.type) as any} className="w-4 h-4" />
               {t(`types.${event.type}` as any) || event.type}
@@ -566,55 +605,63 @@ export default function EventPage() {
           {/* Event Details Card */}
           <div className="bg-card dark:bg-card-dark rounded-2xl p-6 mb-8">
             <div className="space-y-4">
-              
               {getLocalizedAddress() && (
                 <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-2">
-                  <Icon name="location" className="w-4 h-4 text-brand-text dark:text-brand-dark mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-sm text-black dark:text-white">{getLocalizedAddress()}</p>
-                    {event.location?.isSkatepark && event.location?.skateparkSlug ? (
-                      <Link
-                        href={`/${locale}/skateparks/${event.location.skateparkSlug}`}
-                        className="inline-flex items-center gap-1 underline hover:no-underline text-brand-text hover:text-brand-text/80 dark:hover:text-brand-dark/80 dark:text-brand-dark text-sm mt-1 transition-all duration-200"
-                      >
-                        <Icon name="link" className="w-4 h-4" />
-                        <span>{locale === 'he' ? 'צפה בפרטי הפארק' : 'Show skatepark details'}</span>
-                      </Link>
-                    ) : event.location?.url ? (
-                      <a 
-                        href={event.location.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 underline hover:no-underline text-brand-text hover:text-brand-text/80 dark:hover:text-brand-dark/80 dark:text-brand-dark text-sm mt-1 transition-all duration-200"
-                      >
-                        <Icon name="link" className="w-4 h-4" />
-                        <span>{locale === 'he' ? 'פתח במפה' : 'Open in Maps'}</span>
-                      </a>
-                    ) : null}
+                  <div className="flex items-start gap-2">
+                    <Icon
+                      name="location"
+                      className="w-4 h-4 text-brand-text dark:text-brand-dark mt-0.5 flex-shrink-0"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm text-black dark:text-white">{getLocalizedAddress()}</p>
+                      {event.location?.isSkatepark && event.location?.skateparkSlug ? (
+                        <Link
+                          href={`/${locale}/skateparks/${event.location.skateparkSlug}`}
+                          className="inline-flex items-center gap-1 underline hover:no-underline text-brand-text hover:text-brand-text/80 dark:hover:text-brand-dark/80 dark:text-brand-dark text-sm mt-1 transition-all duration-200"
+                        >
+                          <Icon name="link" className="w-4 h-4" />
+                          <span>
+                            {locale === 'he' ? 'צפה בפרטי הפארק' : 'Show skatepark details'}
+                          </span>
+                        </Link>
+                      ) : event.location?.url ? (
+                        <a
+                          href={event.location.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 underline hover:no-underline text-brand-text hover:text-brand-text/80 dark:hover:text-brand-dark/80 dark:text-brand-dark text-sm mt-1 transition-all duration-200"
+                        >
+                          <Icon name="link" className="w-4 h-4" />
+                          <span>{locale === 'he' ? 'פתח במפה' : 'Open in Maps'}</span>
+                        </a>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-                            <Button
-              variant="brand"
-              onClick={() => {
-                if (typeof navigator !== 'undefined' && navigator.share) {
-                  navigator.share({
-                    title: getLocalizedTitle(),
-                    text: `${getLocalizedTitle()} - ${locale === 'he' ? 'אירוע' : 'Event'}`,
-                    url: typeof window !== 'undefined' ? window.location.href : canonicalUrl,
-                  }).catch((error) => {
-                    console.error('Error sharing:', error);
-                  });
-                } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
-                  navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : canonicalUrl);
-                }
-              }}
-              className="!h-8 !p-2 rounded-lg font-medium flex-shrink-0 "
-              aria-label={locale === 'he' ? 'שתף אירוע' : 'Share event'}
-            >
-              <Icon name="shareBold" className="w-5 h-5" />
-            </Button>
-
+                  <Button
+                    variant="brand"
+                    onClick={() => {
+                      if (typeof navigator !== 'undefined' && navigator.share) {
+                        navigator
+                          .share({
+                            title: getLocalizedTitle(),
+                            text: `${getLocalizedTitle()} - ${locale === 'he' ? 'אירוע' : 'Event'}`,
+                            url:
+                              typeof window !== 'undefined' ? window.location.href : canonicalUrl,
+                          })
+                          .catch((error) => {
+                            console.error('Error sharing:', error);
+                          });
+                      } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                        navigator.clipboard.writeText(
+                          typeof window !== 'undefined' ? window.location.href : canonicalUrl
+                        );
+                      }
+                    }}
+                    className="!h-8 !p-2 rounded-lg font-medium flex-shrink-0 "
+                    aria-label={locale === 'he' ? 'שתף אירוע' : 'Share event'}
+                  >
+                    <Icon name="shareBold" className="w-5 h-5" />
+                  </Button>
                 </div>
               )}
 
@@ -627,27 +674,37 @@ export default function EventPage() {
                     </span>
                   </div>
                 )}
-                
+
                 <div className="flex items-center gap-2">
-                  <Icon name={event.isFree ? "gift" : "tag"} className="w-4 h-4 text-brand-text dark:text-brand-dark" />
+                  <Icon
+                    name={event.isFree ? 'gift' : 'tag'}
+                    className="w-4 h-4 text-brand-text dark:text-brand-dark"
+                  />
                   <span className="text-sm text-black dark:text-white">
-                    {event.isFree ? 
-                      (locale === 'he' ? 'השתתפות חינם' : 'Free participation') : 
-                      (locale === 'he' ? 'השתתפות בתשלום' : 'Paid')
-                    }
+                    {event.isFree
+                      ? locale === 'he'
+                        ? 'השתתפות חינם'
+                        : 'Free participation'
+                      : locale === 'he'
+                        ? 'השתתפות בתשלום'
+                        : 'Paid'}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Icon name="task" className="w-4 h-4 text-brand-text dark:text-brand-dark" />
                   <span className="text-sm text-black dark:text-white">
-                    {event.registrationRequired ? 
-                      (isEventPassed || isRegistrationClosed ? 
-                        (locale === 'he' ? 'הרשמה סגורה' : 'Registration Closed') : 
-                        (locale === 'he' ? 'נדרשת הרשמה מראש' : 'Registration Required')
-                      ) : 
-                      (locale === 'he' ? 'ללא הרשמה מראש' : 'No Registration')
-                    }
+                    {event.registrationRequired
+                      ? isEventPassed || isRegistrationClosed
+                        ? locale === 'he'
+                          ? 'הרשמה סגורה'
+                          : 'Registration Closed'
+                        : locale === 'he'
+                          ? 'נדרשת הרשמה מראש'
+                          : 'Registration Required'
+                      : locale === 'he'
+                        ? 'ללא הרשמה מראש'
+                        : 'No Registration'}
                   </span>
                 </div>
               </div>
@@ -656,7 +713,7 @@ export default function EventPage() {
               {event.registrationRequired && !isEventPassed && !isRegistrationClosed && (
                 <div className="pt-2">
                   {event.registrationUrl ? (
-                    <a 
+                    <a
                       href={event.registrationUrl}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -665,7 +722,7 @@ export default function EventPage() {
                       {locale === 'he' ? 'הירשם עכשיו' : 'Register Now'}
                     </a>
                   ) : (
-                    <Link 
+                    <Link
                       href={`/${locale}/events/${event.slug}/signup`}
                       className="inline-block bg-brand-text hover:bg-brand-text/90 dark:hover:bg-brand-stroke/90 dark:text-brand-stroke text-brand-main font-semibold py-2.5 px-6 rounded-full text-center transition-colors duration-200"
                     >
@@ -674,18 +731,13 @@ export default function EventPage() {
                   )}
                 </div>
               )}
-
             </div>
           </div>
         </header>
 
         {/* Photo Gallery - same layout as skateparks (main + side, mobile swipe, show more) */}
         {galleryImages.length > 0 && (
-          <ParkImageGallery
-            images={galleryImages}
-            className="mb-10"
-            locale={locale}
-          />
+          <ParkImageGallery images={galleryImages} className="mb-10" locale={locale} />
         )}
 
         {/* Article Content */}
@@ -696,7 +748,8 @@ export default function EventPage() {
               {(event.content[locale]?.sections || []).map((section: any, index: number) => {
                 switch (section.type) {
                   case 'heading':
-                    const HeadingTag = section.level === 1 ? 'h2' : section.level === 2 ? 'h3' : 'h4';
+                    const HeadingTag =
+                      section.level === 1 ? 'h2' : section.level === 2 ? 'h3' : 'h4';
                     const headingClasses = {
                       h2: 'text-[1.225rem] sm:text-3xl font-extrabold mt-12 mb-4 text-gray-900 dark:text-white',
                       h3: 'text-xl sm:text-[1.225rem] font-bold mt-10 mb-3 text-gray-900 dark:text-white',
@@ -705,7 +758,9 @@ export default function EventPage() {
                     return (
                       <HeadingTag
                         key={index}
-                        className={headingClasses[HeadingTag as 'h2' | 'h3' | 'h4'] || headingClasses.h2}
+                        className={
+                          headingClasses[HeadingTag as 'h2' | 'h3' | 'h4'] || headingClasses.h2
+                        }
                       >
                         {section.content}
                       </HeadingTag>
@@ -713,7 +768,10 @@ export default function EventPage() {
 
                   case 'text':
                     return (
-                      <p key={index} className="text-[1rem] leading-relaxed text-gray-700 dark:text-gray-300">
+                      <p
+                        key={index}
+                        className="text-[1rem] leading-relaxed text-gray-700 dark:text-gray-300"
+                      >
                         {section.content}
                       </p>
                     );
@@ -723,31 +781,36 @@ export default function EventPage() {
                     const isNumbered = section.listType === 'numbered';
                     const isRTL = locale === 'he';
                     return (
-                      <ListTag 
-                        key={index} 
+                      <ListTag
+                        key={index}
                         className={`my-6 space-y-3 ${isNumbered ? 'list-decimal' : 'list-none'} ${isRTL ? 'pr-0' : 'pl-0'}`}
                       >
-                        {section.items && section.items.map((item: { title: string; content: string }, itemIndex: number) => (
-                          <li 
-                            key={itemIndex} 
-                            className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3`}
-                          >
-                            {!isNumbered && (
-                              <span className="text-brand-text dark:text-brand-dark font-bold flex-shrink-0">•</span>
-                            )}
-                            <div>
-                              {item.title && (
-                                <>
-                                  <span className="font-semibold text-gray-900 dark:text-white">
-                                    {item.title}
+                        {section.items &&
+                          section.items.map(
+                            (item: { title: string; content: string }, itemIndex: number) => (
+                              <li
+                                key={itemIndex}
+                                className={`text-lg text-gray-700 dark:text-gray-300 leading-relaxed flex gap-3`}
+                              >
+                                {!isNumbered && (
+                                  <span className="text-brand-text dark:text-brand-dark font-bold flex-shrink-0">
+                                    •
                                   </span>
-                                  <br />
-                                </>
-                              )}
-                              {item.content}
-                            </div>
-                          </li>
-                        ))}
+                                )}
+                                <div>
+                                  {item.title && (
+                                    <>
+                                      <span className="font-semibold text-gray-900 dark:text-white">
+                                        {item.title}
+                                      </span>
+                                      <br />
+                                    </>
+                                  )}
+                                  {item.content}
+                                </div>
+                              </li>
+                            )
+                          )}
                       </ListTag>
                     );
 
@@ -772,12 +835,14 @@ export default function EventPage() {
 
                   case 'info-box':
                     return (
-                      <div 
+                      <div
                         key={index}
                         className={`p-4 rounded-lg text-sm ${
-                          section.boxStyle === 'warning' ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200' :
-                          section.boxStyle === 'highlight' ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200' :
-                          'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
+                          section.boxStyle === 'warning'
+                            ? 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200'
+                            : section.boxStyle === 'highlight'
+                              ? 'bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200'
+                              : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200'
                         }`}
                       >
                         {section.content}
@@ -786,7 +851,10 @@ export default function EventPage() {
 
                   case 'divider':
                     return (
-                      <hr key={index} className="my-12 border-t-2 border-gray-200 dark:border-gray-700" />
+                      <hr
+                        key={index}
+                        className="my-12 border-t-2 border-gray-200 dark:border-gray-700"
+                      />
                     );
 
                   default:
@@ -795,7 +863,6 @@ export default function EventPage() {
               })}
             </div>
           )}
-
         </article>
 
         {/* Tags Section - Duolingo Style */}
@@ -815,7 +882,7 @@ export default function EventPage() {
                   key={index}
                   href={`/${locale}/events?tag=${encodeURIComponent(tag)}`}
                   className="capitalize px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark border border-purple-border dark:border-purple-border-dark hover:bg-purple-hover-bg dark:hover:bg-purple-hover-bg-dark transition-colors duration-200"
-                  >
+                >
                   {tag}
                 </Link>
               ))}
@@ -825,14 +892,13 @@ export default function EventPage() {
 
         {/* Back to Events - Bottom CTA */}
         <div className="text-center pt-8">
-          <Link
-            href={`/${locale}/events`}
-            className={`transition-colors`}
-          >
-            <Button variant="primary" className={`inline-flex items-center gap-2  font-semibold  px-6 py-3  rounded-full flex-shrink-0 ${locale === 'he' ? 'flex-row' : 'flex-row'}`}>
-
-            <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
-            {locale === 'he' ? 'חזרה לאירועים' : 'Back to Events'}
+          <Link href={`/${locale}/events`} className={`transition-colors`}>
+            <Button
+              variant="primary"
+              className={`inline-flex items-center gap-2  font-semibold  px-6 py-3  rounded-full flex-shrink-0 ${locale === 'he' ? 'flex-row' : 'flex-row'}`}
+            >
+              <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
+              {locale === 'he' ? 'חזרה לאירועים' : 'Back to Events'}
             </Button>
           </Link>
         </div>

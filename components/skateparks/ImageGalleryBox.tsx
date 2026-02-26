@@ -6,12 +6,16 @@ import FullscreenImageViewer from './FullscreenImageViewer';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
 interface ImageGalleryBoxProps {
-  images: { url: string; alt?: string }[];
+  images: { url: string; alt?: string; caption?: string }[];
   className?: string;
 }
 
 // Creates optimized versions of Cloudinary images
-const getOptimizedImageUrl = (originalUrl: string, width: number = 800, quality: number = 90): string => {
+const getOptimizedImageUrl = (
+  originalUrl: string,
+  width: number = 800,
+  quality: number = 90
+): string => {
   if (originalUrl && originalUrl.includes('cloudinary.com')) {
     const urlParts = originalUrl.split('/upload/');
     if (urlParts.length === 2) {
@@ -22,7 +26,11 @@ const getOptimizedImageUrl = (originalUrl: string, width: number = 800, quality:
 };
 
 // Creates optimized thumbnails
-const getOptimizedThumbnailUrl = (originalUrl: string, width: number = 120, quality: number = 80): string => {
+const getOptimizedThumbnailUrl = (
+  originalUrl: string,
+  width: number = 120,
+  quality: number = 80
+): string => {
   if (originalUrl && originalUrl.includes('cloudinary.com')) {
     const urlParts = originalUrl.split('/upload/');
     if (urlParts.length === 2) {
@@ -39,7 +47,12 @@ const ImageGalleryBox = ({ images, className }: ImageGalleryBoxProps) => {
 
   if (!images || images.length === 0) {
     return (
-      <div className={cn('relative h-64 md:h-96 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center', className)}>
+      <div
+        className={cn(
+          'relative h-64 md:h-96 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center',
+          className
+        )}
+      >
         <span className="text-gray-400">No images available</span>
       </div>
     );
@@ -73,7 +86,7 @@ const ImageGalleryBox = ({ images, className }: ImageGalleryBoxProps) => {
         <div className="backdrop-blur-custom bg-background/80 dark:bg-background-secondary-dark/70 rounded-3xl overflow-hidden border-4 border-border-dark/20 dark:border-text-secondary-dark/70">
           {/* Main Image - Top on mobile, Left on lg+ */}
           <div className="relative w-full lg:w-auto lg:flex lg:flex-row">
-            <div 
+            <div
               className="relative w-full lg:w-3/4 aspect-video lg:aspect-auto lg:h-[500px] cursor-pointer group overflow-hidden"
               onClick={handleMainImageClick}
             >
@@ -99,6 +112,12 @@ const ImageGalleryBox = ({ images, className }: ImageGalleryBoxProps) => {
                   Click to view fullscreen
                 </div>
               </div>
+              {/* Caption at bottom on hover */}
+              {currentImage.caption && (
+                <div className="absolute bottom-0 left-0 right-0 m-2 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-sm px-3 py-2 text-center">
+                  {currentImage.caption}
+                </div>
+              )}
             </div>
 
             {/* Thumbnails - Bottom on mobile (5 column grid), Right on lg+ (vertical) */}
@@ -186,4 +205,3 @@ const ImageGalleryBox = ({ images, className }: ImageGalleryBoxProps) => {
 };
 
 export default ImageGalleryBox;
-
