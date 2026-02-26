@@ -81,6 +81,7 @@ const config: Config = {
           main: colors.brand.main,
           dark: colors.brand.dark,
           text: colors.brand.text,
+          hover: colors.brand.hover,
           color: colors.brand.color,
           accent: colors.brand.accent,
           stroke: colors.brand.stroke,

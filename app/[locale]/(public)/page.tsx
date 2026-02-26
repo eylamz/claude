@@ -258,7 +258,7 @@ export default function HomePage() {
 
           {/* Tagline */}
           <div
-            className="font-bold mb-12 text-[#3ba540] dark:text-[#5fbb63]"
+            className="font-bold mb-12 text-brand-text dark:text-brand-dark"
             style={{
               fontSize: 'clamp(1.3rem, 3vw, 2rem)',
               letterSpacing: '-0.01em',
@@ -271,22 +271,19 @@ export default function HomePage() {
           {/* CTA Button */}
           <Link href={`/${locale}/skateparks`}>
             <Button
-              variant="primary"
-              className="opacity-0 inline-block !px-12 !py-[18px] !text-lg dark:text-white font-semibold !h-auto rounded-full transition-all duration-300"
+              variant="primaryReverse"
+              className="opacity-0 inline-block !px-12 !py-[18px] !text-lg dark:text-black font-semibold !h-auto rounded-full transition-all duration-300 dark:bg-brand-dark hover:bg-brand-text/95 dark:hover:bg-brand-dark/95"
               style={{
-                background: '#3caa41',
                 boxShadow: '0 10px 40px rgba(13, 119, 19, 0.3)',
                 animation: 'popFadeIn 0.3s ease-out 0.6s  forwards',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-3px)';
                 e.currentTarget.style.boxShadow = '0 15px 50px rgba(13, 119, 19, 0.5)';
-                e.currentTarget.style.background = '#389f3c';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
                 e.currentTarget.style.boxShadow = '0 10px 40px rgba(13, 119, 19, 0.3)';
-                e.currentTarget.style.background = '#3fb344';
               }}
             >
               {t('discoverSkateparks')}
