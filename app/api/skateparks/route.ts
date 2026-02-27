@@ -3,17 +3,52 @@ import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';
 import Settings from '@/lib/models/Settings';
 import { PLACEHOLDER_SKATEPARK_IMAGE } from '@/lib/constants/placeholders';
+import { RateLimiter } from '@/lib/redis';
+import { MAX_SKATEPARK_RESULTS } from '@/lib/config/api';
 
 /**
  * Skateparks API Route
- * 
+ *
  * GET /api/skateparks
- * 
+ *
  * Fetches all skateparks with filtering (no pagination, no server-side sorting)
  */
 
+const skateparksRateLimiter = new RateLimiter(60000, 30);
+
+function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const realIp = request.headers.get('x-real-ip');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return realIp || request.ip || 'unknown';
+}
+
 export async function GET(request: NextRequest) {
   try {
+    const ip = getClientIP(request);
+    const rate = await skateparksRateLimiter.isAllowed(`skateparks:${ip}`);
+    if (!rate.allowed) {
+      const retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((rate.resetTime - Date.now()) / 1000)
+      );
+      return NextResponse.json(
+        {
+          error: 'Too many requests',
+          message: 'Skateparks rate limit exceeded. Please try again later.',
+          retryAfter: retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': retryAfterSeconds.toString(),
+          },
+        }
+      );
+    }
+
     await connectDB();
 
     const searchParams = request.nextUrl.searchParams;
@@ -56,8 +91,10 @@ export async function GET(request: NextRequest) {
       query.$and = amenityQueries;
     }
 
-    // Fetch ALL skateparks (no pagination, no sorting)
-    let skateparks = await Skatepark.find(query).lean();
+    // Fetch skateparks with a hard upper bound to prevent overload
+    let skateparks = await Skatepark.find(query)
+      .limit(MAX_SKATEPARK_RESULTS)
+      .lean();
 
     // Filter by "open now" if requested
     if (openNow) {

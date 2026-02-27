@@ -160,7 +160,9 @@ npm run dev
 
 ## Database Setup (MongoDB Atlas)
 
-- Create Atlas cluster, network access, and application user; set `MONGODB_URI` in Railway.
+- Create an Atlas cluster and **least-privilege application user** with `readWrite` on your app database (for example `nextjs_app`); avoid cluster-admin roles.
+- Restrict Atlas **Network Access** to trusted deployment IPs/VPCs and your own IP in development.
+- Set `MONGODB_URI` in Railway/hosting provider using that application user.
 - Suggested Indexes (adjust to schema):
   - Products: `{ slug: 1 }` (unique), `{ category: 1, relatedSports: 1 }`
   - Skateparks: `{ slug: 1 }`, `{ area: 1 }`

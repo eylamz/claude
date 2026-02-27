@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import Order, { OrderStatus } from '@/lib/db/models/Order';
+import { AuthError, requireUser } from '@/lib/auth/server';
 
 /**
  * Orders API Route
@@ -17,13 +18,7 @@ const ITEMS_PER_PAGE = 10;
 export async function GET(request: NextRequest) {
   try {
     // Authentication check
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const sessionUser = await requireUser();
 
     // Connect to database
     await connectDB();
@@ -38,7 +33,7 @@ export async function GET(request: NextRequest) {
 
     // Build query
     const query: any = {
-      userId: session.user.id,
+      userId: sessionUser.id,
     };
 
     // Status filter
@@ -92,7 +87,13 @@ export async function GET(request: NextRequest) {
         hasMore,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
     console.error('Error fetching orders:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

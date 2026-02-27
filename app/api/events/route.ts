@@ -4,6 +4,8 @@ import Event from '@/lib/models/Event';
 import EventSignup from '@/lib/models/EventSignup';
 import Settings from '@/lib/models/Settings';
 import { formatEventForDetail } from '@/lib/events/formatEvent';
+import { RateLimiter } from '@/lib/redis';
+import { MAX_PUBLIC_PAGE_SIZE } from '@/lib/config/api';
 
 /**
  * Public Events API Route
@@ -12,14 +14,54 @@ import { formatEventForDetail } from '@/lib/events/formatEvent';
  * GET /api/events?full=true - returns full event objects (same shape as GET /api/events/[slug]) for cache
  */
 
+const eventsRateLimiter = new RateLimiter(60000, 30);
+
+function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const realIp = request.headers.get('x-real-ip');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return realIp || request.ip || 'unknown';
+}
+
 export async function GET(request: NextRequest) {
   try {
+    const ip = getClientIP(request);
+    const rate = await eventsRateLimiter.isAllowed(`events:${ip}`);
+    if (!rate.allowed) {
+      const retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((rate.resetTime - Date.now()) / 1000)
+      );
+      return NextResponse.json(
+        {
+          error: 'Too many requests',
+          message: 'Events listing rate limit exceeded. Please try again later.',
+          retryAfter: retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': retryAfterSeconds.toString(),
+          },
+        }
+      );
+    }
+
     await connectDB();
 
     const searchParams = request.nextUrl.searchParams;
     const versionOnly = searchParams.get('versionOnly') === 'true';
     const full = searchParams.get('full') === 'true';
     const locale = searchParams.get('locale') || 'en';
+    const rawPage = parseInt(searchParams.get('page') || '1', 10);
+    const page = Number.isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
+    const requestedLimit = parseInt(searchParams.get('limit') || '50', 10);
+    const limit = Math.min(
+      Math.max(Number.isNaN(requestedLimit) ? 50 : requestedLimit, 1),
+      MAX_PUBLIC_PAGE_SIZE
+    );
 
     // If only version is requested, return it without fetching events
     if (versionOnly) {
@@ -34,6 +76,8 @@ export async function GET(request: NextRequest) {
 
     const events = await Event.find(query)
       .sort({ startDate: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
       .lean();
 
     console.log(`[Events API] Found ${events.length} events matching query:`, JSON.stringify(query));
@@ -166,6 +210,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       events: formattedEvents,
       version,
+      pagination: {
+        page,
+        limit,
+      },
     });
   } catch (error: any) {
     console.error('Events API error:', error);

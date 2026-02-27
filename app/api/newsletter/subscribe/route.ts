@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import NewsletterSubscriber from '@/lib/models/NewsletterSubscriber';
+import { RateLimiter } from '@/lib/redis';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -8,44 +9,48 @@ function getClientIP(request: NextRequest): string {
   const forwarded = request.headers.get('x-forwarded-for');
   const realIp = request.headers.get('x-real-ip');
   if (forwarded) return forwarded.split(',')[0].trim();
-  return realIp || 'unknown';
+  return realIp || request.ip || 'unknown';
 }
 
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const windowMs = 60 * 1000;
-  const maxRequests = 10;
-  const key = ip;
-  const record = rateLimitStore.get(key);
-  if (!record || now > record.resetTime) {
-    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
-    return { allowed: true };
-  }
-  if (record.count >= maxRequests) {
-    return { allowed: false, retryAfter: Math.ceil((record.resetTime - now) / 1000) };
-  }
-  record.count++;
-  return { allowed: true };
-}
+// Redis-backed limiter: limit newsletter attempts per IP+email
+const newsletterRateLimiter = new RateLimiter(60000, 10);
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = getClientIP(request);
-    const rateLimit = checkRateLimit(ip);
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        { error: 'Too many requests', message: 'Please try again later.', retryAfter: rateLimit.retryAfter },
-        { status: 429, headers: rateLimit.retryAfter ? { 'Retry-After': String(rateLimit.retryAfter) } : {} }
-      );
-    }
-
     const body = await request.json();
     const rawEmail = typeof body.email === 'string' ? body.email.trim() : '';
     const email = rawEmail.toLowerCase();
     const rawLocale = typeof body.locale === 'string' ? body.locale.trim().toLowerCase() : '';
     const locale = rawLocale === 'he' ? 'he' : 'en';
+
+    const ip = getClientIP(request);
+    const rate = await newsletterRateLimiter.isAllowed(
+      `newsletter:${ip}:${email}`
+    );
+    if (!rate.allowed) {
+      const retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((rate.resetTime - Date.now()) / 1000)
+      );
+      console.warn('Newsletter subscribe rate limit exceeded', {
+        ip,
+        email,
+        retryAfterSeconds,
+      });
+      return NextResponse.json(
+        {
+          error: 'Too many requests',
+          message: 'Please try again later.',
+          retryAfter: retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(retryAfterSeconds),
+          },
+        }
+      );
+    }
 
     if (!email || !emailRegex.test(email)) {
       return NextResponse.json(

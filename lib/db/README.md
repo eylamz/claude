@@ -271,10 +271,8 @@ process.on('exit', async () => {
 Add to `.env.local`:
 
 ```bash
-# MongoDB connection string
-MONGODB_URI=mongodb://localhost:27017/myapp
-# Or for MongoDB Atlas
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
+# MongoDB connection string (use a least-privilege Atlas user)
+MONGODB_URI=mongodb+srv://app_user:strong-password@cluster.mongodb.net/nextjs_app?retryWrites=true&w=majority
 ```
 
 ### Connection Pool Sizes
@@ -365,6 +363,7 @@ The utility automatically sets up event listeners for:
 5. **Call `disconnectDB()`** in cleanup handlers
 6. **Monitor connection state** in production
 7. **Use environment-specific** configurations
+8. **Use least-privilege Atlas users** and never connect with cluster admin credentials from the app
 
 ## Testing
 

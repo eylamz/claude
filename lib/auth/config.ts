@@ -38,10 +38,41 @@ const getNextAuthSecret = (): string => {
 const NEXTAUTH_SECRET = getNextAuthSecret();
 
 /**
- * MongoDB client for NextAuth adapter
+ * Resolve and validate the MongoDB URI for NextAuth.
+ *
+ * This mirrors the strict checks used in the main MongoDB utility so that:
+ * - We fail fast when MONGODB_URI is missing or misconfigured.
+ * - We avoid accidentally using an administrative connection string.
  */
-const client = new MongoClient(process.env.MONGODB_URI!);
-const clientPromise = client.connect();
+const getMongoDbUriForAuth = (): string => {
+  const uri = process.env.MONGODB_URI;
+
+  if (!uri) {
+    throw new Error(
+      'MONGODB_URI environment variable is not defined. ' +
+        'Set MONGODB_URI to a least-privilege MongoDB Atlas user (readWrite on your app database).'
+    );
+  }
+
+  return uri;
+};
+
+/**
+ * MongoDB client for NextAuth adapter
+ *
+ * We lazily create and reuse a single MongoClient connection for the lifetime
+ * of this module to avoid opening multiple clients in development.
+ */
+let clientPromise: Promise<MongoClient> | null = null;
+
+const getMongoClientPromise = (): Promise<MongoClient> => {
+  if (!clientPromise) {
+    const uri = getMongoDbUriForAuth();
+    const client = new MongoClient(uri);
+    clientPromise = client.connect();
+  }
+  return clientPromise;
+};
 
 /**
  * NextAuth configuration
@@ -49,7 +80,7 @@ const clientPromise = client.connect();
 export const authOptions: NextAuthOptions = {
   // Use MongoDB adapter for session management
   // Cast: @auth/mongodb-adapter uses @auth/core types; next-auth expects extended User (e.g. role)
-  adapter: MongoDBAdapter(clientPromise) as NextAuthOptions['adapter'],
+  adapter: MongoDBAdapter(getMongoClientPromise()) as NextAuthOptions['adapter'],
 
   // Providers
   providers: [
@@ -241,7 +272,7 @@ export const authOptions: NextAuthOptions = {
 
   // Pages configuration
   pages: {
-    signIn: '/en/login',
+    signIn: '/login',
     signOut: '/en/signout',
     error: '/en/error',
     newUser: '/en/register',

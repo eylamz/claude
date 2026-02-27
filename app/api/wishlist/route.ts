@@ -5,6 +5,7 @@ import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import Product from '@/lib/models/Product';
 import { validateCsrf } from '@/lib/security/csrf';
+import { AuthError, requireUser } from '@/lib/auth/server';
 
 /**
  * Wishlist API Route
@@ -17,17 +18,11 @@ import { validateCsrf } from '@/lib/security/csrf';
 // GET - Fetch wishlist
 export async function GET(_request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const sessionUser = await requireUser();
 
     await connectDB();
 
-    const user = await User.findById(session.user.id)
+    const user = await User.findById(sessionUser.id)
       .populate({
         path: 'wishlist',
         select: 'name slug price discountPrice discountStartDate discountEndDate images variants status',
@@ -77,7 +72,13 @@ export async function GET(_request: NextRequest) {
       wishlist: wishlistItems,
       count: wishlistItems.length,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
     console.error('Error fetching wishlist:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -94,13 +95,7 @@ export async function POST(request: NextRequest) {
       return csrfResponse;
     }
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const sessionUser = await requireUser();
 
     const body = await request.json();
     const { productId } = body;
@@ -114,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     await connectDB();
 
-    const user = await User.findById(session.user.id);
+    const user = await User.findById(sessionUser.id);
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -141,7 +136,13 @@ export async function POST(request: NextRequest) {
       message: 'Product added to wishlist',
       success: true,
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
     console.error('Error adding to wishlist:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -158,13 +159,7 @@ export async function DELETE(request: NextRequest) {
       return csrfResponse;
     }
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const sessionUser = await requireUser();
 
     const searchParams = request.nextUrl.searchParams;
     const productId = searchParams.get('productId');
@@ -172,7 +167,7 @@ export async function DELETE(request: NextRequest) {
 
     await connectDB();
 
-    const user = await User.findById(session.user.id);
+    const user = await User.findById(sessionUser.id);
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -202,7 +197,13 @@ export async function DELETE(request: NextRequest) {
         { status: 400 }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
     console.error('Error removing from wishlist:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

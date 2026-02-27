@@ -69,7 +69,7 @@ function isPublicRoute(pathname: string): boolean {
   }
 
   // Routes under (public) folder are public:
-  // shop, skateparks, trainers, guides, events, cart, checkout, search
+  // shop, skateparks, trainers, guides, events, cart, checkout, search, about, growth-lab
   const publicPathPatterns = [
     /^\/[a-z]{2}\/shop/,
     /^\/[a-z]{2}\/skateparks/,
@@ -79,6 +79,8 @@ function isPublicRoute(pathname: string): boolean {
     /^\/[a-z]{2}\/cart/,
     /^\/[a-z]{2}\/checkout/,
     /^\/[a-z]{2}\/search/,
+    /^\/[a-z]{2}\/about$/,
+    /^\/[a-z]{2}\/growth-lab$/,
   ];
 
   return publicPathPatterns.some((pattern) => pattern.test(pathname));

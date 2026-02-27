@@ -6,6 +6,7 @@ import Review from '@/lib/db/models/Review';
 import type { ReviewContentByLocale } from '@/lib/db/models/Review';
 import Skatepark from '@/lib/models/Skatepark';
 import Settings from '@/lib/models/Settings';
+import { validateCsrf } from '@/lib/security/csrf';
 
 // List reviews with filtering (admin only)
 export async function GET(request: NextRequest) {
@@ -86,6 +87,11 @@ export async function GET(request: NextRequest) {
 // Update review: approve/reject or update content (admin)
 export async function PATCH(request: NextRequest) {
   try {
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.role || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

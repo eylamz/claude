@@ -6,6 +6,7 @@ import User from '@/lib/models/User';
 import Event from '@/lib/models/Event';
 import EventSignup from '@/lib/models/EventSignup';
 import mongoose from 'mongoose';
+import { validateCsrf } from '@/lib/security/csrf';
 
 /**
  * GET /api/admin/event-signups/[id]
@@ -92,6 +93,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
+    }
+
     const body = await request.json();
     const { status, formData, userEmail, userName, notes } = body;
 
@@ -162,13 +168,18 @@ export async function PATCH(
  * Delete a signup (admin only). Decrements event attendingCount.
  */
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid signup ID' }, { status: 400 });
+    }
+
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
     }
 
     const session = await getServerSession(authOptions);

@@ -5,6 +5,7 @@ import connectDB from '@/lib/db/mongodb';
 import Form from '@/lib/models/Form';
 import FormSubmission from '@/lib/models/FormSubmission';
 import crypto from 'crypto';
+import { RateLimiter } from '@/lib/redis';
 
 /**
  * Get client IP from request
@@ -15,7 +16,7 @@ function getClientIP(request: NextRequest): string {
   if (forwarded) {
     return forwarded.split(',')[0].trim();
   }
-  return realIp || 'unknown';
+  return realIp || request.ip || 'unknown';
 }
 
 /**
@@ -32,6 +33,9 @@ function generateFingerprint(ip: string, userAgent: string): string {
 function hashData(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex');
 }
+
+// Rate limiter: protect against form spam per IP+form
+const formSubmitRateLimiter = new RateLimiter(60000, 10);
 
 export async function POST(
   request: NextRequest,
@@ -57,6 +61,30 @@ export async function POST(
     const ip = getClientIP(request);
     const userAgent = request.headers.get('user-agent') || 'unknown';
     const fingerprint = generateFingerprint(ip, userAgent);
+
+    // Rate limiting per IP + form
+    const rate = await formSubmitRateLimiter.isAllowed(
+      `form-submit:${slug}:${ip}`
+    );
+    if (!rate.allowed) {
+      const retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((rate.resetTime - Date.now()) / 1000)
+      );
+      return NextResponse.json(
+        {
+          error: 'Too many submissions',
+          message: 'Form submission rate limit exceeded. Please try again later.',
+          retryAfter: retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': retryAfterSeconds.toString(),
+          },
+        }
+      );
+    }
 
     // Check for duplicate submission
     const existingSubmission = await FormSubmission.findByFingerprint(new mongoose.Types.ObjectId(String(form._id)), fingerprint);

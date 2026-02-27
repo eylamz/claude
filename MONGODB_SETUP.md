@@ -128,9 +128,18 @@ console.log(status);
 Add to `.env.local`:
 
 ```env
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
+# Use a least-privilege Atlas application user (no admin roles)
+MONGODB_URI=mongodb+srv://app_user:strong-password@cluster.mongodb.net/nextjs_app?retryWrites=true&w=majority
 NODE_ENV=development
 ```
+
+### Recommended Atlas configuration
+
+- Create an **application user** with `readWrite` on your app database only (for example `nextjs_app`), not `readWriteAnyDatabase` or cluster admin roles.
+- Restrict **Network Access** to:
+  - Trusted deployment IP ranges or VPC peering in production.
+  - Your own IP while developing locally.
+- Keep TLS enabled and always use `mongodb+srv://` URLs from Atlas.
 
 ## Connection States
 

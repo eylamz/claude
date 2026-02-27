@@ -5,6 +5,7 @@ import { connectDB } from '@/lib/db/mongodb';
 import Event from '@/lib/models/Event';
 import EventSignup from '@/lib/models/EventSignup';
 import { getRateLimiter } from '@/lib/redis';
+import { z } from 'zod';
 
 /**
  * Event Signup API Route
@@ -127,6 +128,19 @@ async function getUniqueConfirmationNumber(): Promise<string> {
 /**
  * POST handler for event signup
  */
+const signupBodySchema = z.object({
+  formData: z
+    .array(
+      z.object({
+        type: z.string().optional(),
+        name: z.string().optional(),
+        value: z.unknown().optional(),
+      })
+    )
+    .min(1),
+  captchaToken: z.string().optional().nullable(),
+});
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -156,8 +170,18 @@ export async function POST(
     }
     
     // Get request body (never use confirmationNumber from client — always generate server-side)
-    const body = await request.json();
-    const { formData, captchaToken } = body;
+    const json = await request.json();
+    const parsedBody = signupBodySchema.safeParse(json);
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        {
+          error: 'Invalid signup payload',
+          details: parsedBody.error.issues,
+        },
+        { status: 400 }
+      );
+    }
+    const { formData, captchaToken } = parsedBody.data;
     
     // Validate CAPTCHA if enabled
     const captchaValid = await validateCaptcha(captchaToken || null);

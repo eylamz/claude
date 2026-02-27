@@ -1,15 +1,20 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import NewsletterSubscriber from '@/lib/models/NewsletterSubscriber';
+import { validateCsrf } from '@/lib/security/csrf';
 
 export async function DELETE(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
+    }
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

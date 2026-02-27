@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import Settings from '@/lib/models/Settings';
 import connectMongoDB from '@/lib/db/mongodb';
+import { validateCsrf } from '@/lib/security/csrf';
 
 export async function GET() {
   try {
@@ -28,6 +29,11 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
+    }
+
     const session = await getServerSession(authOptions);
     
     if (!session || session.user?.role !== 'admin') {

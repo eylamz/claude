@@ -1,31 +1,29 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import Event from '@/lib/models/Event';
 import Settings from '@/lib/models/Settings';
+import { AuthError, requireAdmin } from '@/lib/auth/server';
+import { MAX_ADMIN_PAGE_SIZE } from '@/lib/config/api';
+import { validateCsrf } from '@/lib/security/csrf';
 
 export async function GET(request: Request) {
   try {
-    // Verify authentication
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if user is admin
-    const user = await User.findById(session.user.id);
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    await requireAdmin();
 
     await connectDB();
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const rawPage = parseInt(searchParams.get('page') || '1');
+    const page = Number.isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
+    const requestedLimit = parseInt(searchParams.get('limit') || '20');
+    const limit = Math.min(
+      Math.max(Number.isNaN(requestedLimit) ? 20 : requestedLimit, 1),
+      MAX_ADMIN_PAGE_SIZE
+    );
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
     const sport = searchParams.get('sport') || '';
@@ -200,6 +198,9 @@ export async function GET(request: Request) {
       },
     });
   } catch (error: any) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('Events API error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch events' },
@@ -208,19 +209,13 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    // Verify authentication
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
     }
-
-    // Check if user is admin
-    const user = await User.findById(session.user.id);
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    await requireAdmin();
 
     await connectDB();
 
@@ -332,6 +327,9 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error: any) {
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('Create event error:', error);
     return NextResponse.json(
       { error: error.message || 'Failed to create event' },

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import { validateCsrf } from '@/lib/security/csrf';
+import { AuthError, requireUser } from '@/lib/auth/server';
 
 /**
  * Addresses API
@@ -17,17 +18,17 @@ const MAX_ADDRESSES = 5;
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireUser();
 
     await connectDB();
-    const user = await User.findById(session.user.id).lean();
+    const user = await User.findById(sessionUser.id).lean();
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     return NextResponse.json({ addresses: user.addresses || [] });
-  } catch (err) {
+  } catch (err: any) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('Addresses GET error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -40,10 +41,7 @@ export async function POST(request: NextRequest) {
       return csrfResponse;
     }
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireUser();
 
     const body = await request.json();
     const { type, name, street, city, zip, country, phone, isDefault } = body;
@@ -53,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     await connectDB();
-    const user = await User.findById(session.user.id);
+    const user = await User.findById(sessionUser.id);
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     if ((user.addresses?.length || 0) >= MAX_ADDRESSES) {
@@ -71,7 +69,10 @@ export async function POST(request: NextRequest) {
     await user.save();
 
     return NextResponse.json({ addresses: user.addresses });
-  } catch (err) {
+  } catch (err: any) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('Addresses POST error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -84,10 +85,7 @@ export async function PATCH(request: NextRequest) {
       return csrfResponse;
     }
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireUser();
 
     const body = await request.json();
     const { index, update, setDefault } = body as { index: number; update?: any; setDefault?: boolean };
@@ -96,7 +94,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     await connectDB();
-    const user = await User.findById(session.user.id);
+    const user = await User.findById(sessionUser.id);
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     if (!user.addresses || index < 0 || index >= user.addresses.length) {
@@ -118,7 +116,10 @@ export async function PATCH(request: NextRequest) {
 
     await user.save();
     return NextResponse.json({ addresses: user.addresses });
-  } catch (err) {
+  } catch (err: any) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('Addresses PATCH error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -131,17 +132,14 @@ export async function DELETE(request: NextRequest) {
       return csrfResponse;
     }
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const sessionUser = await requireUser();
 
     const indexParam = request.nextUrl.searchParams.get('index');
     if (!indexParam) return NextResponse.json({ error: 'Address index is required' }, { status: 400 });
     const index = parseInt(indexParam, 10);
 
     await connectDB();
-    const user = await User.findById(session.user.id);
+    const user = await User.findById(sessionUser.id);
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     if (!user.addresses || index < 0 || index >= user.addresses.length) {
@@ -152,7 +150,10 @@ export async function DELETE(request: NextRequest) {
     await user.save();
 
     return NextResponse.json({ addresses: user.addresses });
-  } catch (err) {
+  } catch (err: any) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.message }, { status: err.status });
+    }
     console.error('Addresses DELETE error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

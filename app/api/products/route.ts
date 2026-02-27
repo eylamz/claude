@@ -1,15 +1,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Product from '@/lib/models/Product';
 import connectDB from '@/lib/db/mongodb';
+import { RateLimiter } from '@/lib/redis';
+import { MAX_PUBLIC_PAGE_SIZE } from '@/lib/config/api';
+
+const productsRateLimiter = new RateLimiter(60000, 60);
+
+function getClientIP(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  const realIp = request.headers.get('x-real-ip');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return realIp || request.ip || 'unknown';
+}
 
 export async function GET(request: NextRequest) {
   try {
+    const ip = getClientIP(request);
+    const rate = await productsRateLimiter.isAllowed(`products:${ip}`);
+    if (!rate.allowed) {
+      const retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((rate.resetTime - Date.now()) / 1000)
+      );
+      return NextResponse.json(
+        {
+          error: 'Too many requests',
+          message: 'Product browsing rate limit exceeded. Please try again later.',
+          retryAfter: retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': retryAfterSeconds.toString(),
+          },
+        }
+      );
+    }
+
     await connectDB();
     
     const searchParams = request.nextUrl.searchParams;
     const locale = searchParams.get('locale') || 'en';
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '12', 10);
+    const rawPage = parseInt(searchParams.get('page') || '1', 10);
+    const page = Number.isNaN(rawPage) || rawPage < 1 ? 1 : rawPage;
+    const requestedLimit = parseInt(searchParams.get('limit') || '12', 10);
+    const limit = Math.min(
+      Math.max(Number.isNaN(requestedLimit) ? 12 : requestedLimit, 1),
+      MAX_PUBLIC_PAGE_SIZE
+    );
     const sort = searchParams.get('sort') || 'createdAt-desc';
     const category = searchParams.get('category');
     const sports = searchParams.get('sports')?.split(',').filter(Boolean);

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
@@ -6,6 +6,7 @@ import User from '@/lib/models/User';
 import Event from '@/lib/models/Event';
 import EventSignup from '@/lib/models/EventSignup';
 import Settings from '@/lib/models/Settings';
+import { validateCsrf } from '@/lib/security/csrf';
 import type { IEvent } from '@/lib/models/Event';
 import mongoose from 'mongoose';
 
@@ -161,7 +162,7 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -189,6 +190,11 @@ export async function PUT(
     const event = await Event.findById(id);
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
+
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
     }
 
     const body = await request.json();
@@ -483,7 +489,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -495,6 +501,11 @@ export async function DELETE(
     }
 
     // Verify authentication
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
+    }
+
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
