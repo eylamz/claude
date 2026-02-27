@@ -6,6 +6,38 @@ import User from '@/lib/models/User';
 import { connectDB, isDBConnected } from '@/lib/db/mongodb';
 
 /**
+ * Resolve a safe NextAuth secret.
+ *
+ * - In production (and other non-development environments), NEXTAUTH_SECRET is mandatory,
+ *   and we fail fast if it is missing or still set to the placeholder value.
+ * - In development, we allow a deterministic fallback to make onboarding easier,
+ *   but log a warning so it is not mistaken for a production-ready configuration.
+ */
+const getNextAuthSecret = (): string => {
+  const envSecret = process.env.NEXTAUTH_SECRET;
+
+  if (envSecret && envSecret !== 'generate_a_random_secret_here') {
+    return envSecret;
+  }
+
+  if (process.env.NODE_ENV === 'development') {
+    // eslint-disable-next-line no-console
+    console.warn(
+      'NEXTAUTH_SECRET is not set or is using the placeholder value. ' +
+        'Using an insecure development-only fallback. Do NOT use this configuration in production.'
+    );
+    return 'development-only-insecure-nextauth-secret';
+  }
+
+  throw new Error(
+    'NEXTAUTH_SECRET is required and must be a strong, random value in production. ' +
+      'Set NEXTAUTH_SECRET in your environment configuration.'
+  );
+};
+
+const NEXTAUTH_SECRET = getNextAuthSecret();
+
+/**
  * MongoDB client for NextAuth adapter
  */
 const client = new MongoClient(process.env.MONGODB_URI!);
@@ -91,11 +123,11 @@ export const authOptions: NextAuthOptions = {
   // Note: maxAge is set dynamically in jwt callback based on rememberMe
   jwt: {
     maxAge: 30 * 24 * 60 * 60, // Default: 30 days (for rememberMe=true)
-    secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-change-in-production',
+    secret: NEXTAUTH_SECRET,
   },
 
   // Secret for encrypting JWT
-  secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-change-in-production',
+  secret: NEXTAUTH_SECRET,
 
   // Callbacks
   callbacks: {

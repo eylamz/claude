@@ -95,14 +95,23 @@ function isAdminRoute(pathname: string): boolean {
 
 // Check if a route requires authentication (but not admin)
 function isProtectedRoute(pathname: string): boolean {
-  // Check for localized protected routes
-  return protectedRoutes.some((route) => {
+  // 1) Explicit protected routes (e.g. /account) and their localized variants
+  const matchesExplicitProtected = protectedRoutes.some((route) => {
     return (
       pathname === route ||
       pathname.startsWith(`/en${route}`) ||
       pathname.startsWith(`/he${route}`)
     );
   });
+
+  if (matchesExplicitProtected) {
+    return true;
+  }
+
+  // 2) Any route under the localized (protected) segment is treated as protected by convention:
+  //    /en/(protected)/... or /he/(protected)/...
+  const protectedGroupPattern = /^\/(en|he)\/\(protected\)\//;
+  return protectedGroupPattern.test(pathname);
 }
 
 // Auth middleware configuration
@@ -134,7 +143,15 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token, req }: { token: any; req: any }) => {
+      authorized: ({
+        token,
+        req,
+      }: {
+        token: {
+          role?: string;
+        } | null;
+        req: NextRequest;
+      }) => {
         const pathname = req.nextUrl.pathname;
 
         // Allow public routes (no authentication required)
@@ -152,9 +169,9 @@ export default withAuth(
           return !!token;
         }
 
-        // For all other routes, allow without authentication (they might be new public routes)
-        // If you want to protect everything by default, change this to: return !!token;
-        return true;
+        // For all other routes, require authentication by default.
+        // New non-public pages must either be added to publicRoutes or placed under (public).
+        return !!token;
       },
     },
   }

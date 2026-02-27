@@ -7,6 +7,7 @@ import { getShopifyClient } from '@/lib/shopify/client';
 import { getRateLimiter } from '@/lib/redis/session';
 import { getRedisClient } from '@/lib/redis/client';
 import type { CartItem } from '@/stores/cartStore';
+import { validateCsrf } from '@/lib/security/csrf';
 
 /**
  * Checkout Create API Route
@@ -214,6 +215,12 @@ export async function POST(request: NextRequest) {
     const identifier = getClientIP(request);
     const rateLimitError = await checkRateLimit(identifier);
     if (rateLimitError) return rateLimitError;
+
+    // CSRF protection for cookie-authenticated and guest checkouts
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
+    }
 
     // Authentication check (optional for guest checkout)
     const session = await getServerSession(authOptions);

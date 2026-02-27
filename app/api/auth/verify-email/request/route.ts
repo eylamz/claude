@@ -2,76 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import crypto from 'crypto';
+import { getRateLimiter } from '@/lib/redis';
 
-// Rate limiting: Store in-memory (use Redis for production)
-const rateLimitStore = new Map<string, { count: number; resetTime: number; firstRequest: number }>();
-
-function checkRateLimit(ip: string, email: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const key = `${ip}:${email.toLowerCase()}`;
-  const record = rateLimitStore.get(key);
-
-  if (!record) {
-    // First request - allow it
-    rateLimitStore.set(key, { 
-      count: 1, 
-      resetTime: now + 10000, // 10 seconds for second request
-      firstRequest: now 
-    });
-    return { allowed: true };
-  }
-
-  // If it's been more than 1 minute since first request, reset to allow
-  if (now - record.firstRequest > 60000) {
-    rateLimitStore.set(key, { 
-      count: 1, 
-      resetTime: now + 10000, // 10 seconds for second request
-      firstRequest: now 
-    });
-    return { allowed: true };
-  }
-
-  // Check if we're in the 10-second window for second request
-  if (record.count === 1 && now < record.resetTime) {
-    // Second request within 10 seconds - block
-    return { 
-      allowed: false, 
-      retryAfter: Math.ceil((record.resetTime - now) / 1000) 
-    };
-  }
-
-  // After second request, use 1-minute rate limit
-  if (record.count >= 2) {
-    if (now < record.resetTime) {
-      return { 
-        allowed: false, 
-        retryAfter: Math.ceil((record.resetTime - now) / 1000) 
-      };
-    }
-    // Reset to 1-minute window
-    record.count = 1;
-    record.resetTime = now + 60000; // 1 minute
-    record.firstRequest = now;
-    return { allowed: true };
-  }
-
-  // Increment count and set new reset time
-  record.count++;
-  if (record.count === 2) {
-    record.resetTime = now + 10000; // 10 seconds for second request
-  } else {
-    record.resetTime = now + 60000; // 1 minute for subsequent requests
-  }
-  
-  return { allowed: true };
-}
+// Shared rate limiter: allow small bursts, then enforce 1-minute window per IP/email
+const rateLimiter = getRateLimiter(60000, 3);
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting - Get client IP from headers
-    const forwarded = request.headers.get('x-forwarded-for');
-    const ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || 'unknown';
-    
     const { email, locale: requestLocale } = await request.json();
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -81,15 +18,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check rate limit
-    const rateLimit = checkRateLimit(ip, email);
+    // Rate limiting - Get client IP from headers and combine with email
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || 'unknown';
+    const identifier = `${ip}:${email.toLowerCase()}`;
+
+    const rateLimit = await rateLimiter.isAllowed(identifier);
     if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
       return NextResponse.json(
         { 
-          error: `Too many requests. Please try again in ${rateLimit.retryAfter} second${rateLimit.retryAfter !== 1 ? 's' : ''}.`,
-          retryAfter: rateLimit.retryAfter 
+          error: `Too many requests. Please try again in ${retryAfterSeconds} second${retryAfterSeconds !== 1 ? 's' : ''}.`,
+          retryAfter: retryAfterSeconds, 
         },
-        { status: 429 }
+        { status: 429, headers: { 'Retry-After': retryAfterSeconds.toString() } }
       );
     }
 

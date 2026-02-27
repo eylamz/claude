@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import Trainer from '@/lib/models/Trainer';
+import { validateCsrf } from '@/lib/security/csrf';
 
 // GET reviews for a trainer
 export async function GET(
@@ -105,6 +106,11 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

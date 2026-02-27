@@ -6,6 +6,7 @@ import Skatepark from '@/lib/models/Skatepark';
 import Review from '@/lib/db/models/Review';
 import Settings from '@/lib/models/Settings';
 import type { ReviewContentByLocale } from '@/lib/db/models/Review';
+import { validateCsrf } from '@/lib/security/csrf';
 
 const LOCALES = ['en', 'he'] as const;
 type Locale = (typeof LOCALES)[number];
@@ -169,6 +170,11 @@ export async function POST(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
+    }
+
     const session = await getServerSession(authOptions);
     
     // Check environment variables for review permissions

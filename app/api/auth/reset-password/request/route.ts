@@ -2,46 +2,37 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import crypto from 'crypto';
+import { getRateLimiter } from '@/lib/redis';
 
-// Rate limiting: Store in-memory (use Redis for production)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const record = rateLimitStore.get(ip);
-
-  if (!record || now > record.resetTime) {
-    rateLimitStore.set(ip, { count: 1, resetTime: now + 60000 }); // 1 minute
-    return true;
-  }
-
-  if (record.count >= 1) {
-    return false; // Rate limit exceeded
-  }
-
-  record.count++;
-  return true;
-}
+// Shared rate limiter: 1 request per minute per IP/email combination
+const rateLimiter = getRateLimiter(60000, 1);
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting - Get client IP from headers
-    const forwarded = request.headers.get('x-forwarded-for');
-    const ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || 'unknown';
-    
-    if (!checkRateLimit(ip)) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please try again in a minute.' },
-        { status: 429 }
-      );
-    }
-
     const { email, locale: requestLocale } = await request.json();
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json(
         { error: 'Valid email is required' },
         { status: 400 }
+      );
+    }
+
+    // Rate limiting - Get client IP from headers and combine with email
+    const forwarded = request.headers.get('x-forwarded-for');
+    const ip = forwarded ? forwarded.split(',')[0] : request.headers.get('x-real-ip') || 'unknown';
+    const identifier = `${ip}:${email.toLowerCase()}`;
+
+    const rateLimit = await rateLimiter.isAllowed(identifier);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again in a minute.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString(),
+          },
+        }
       );
     }
 

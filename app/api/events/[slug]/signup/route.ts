@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import { connectDB } from '@/lib/db/mongodb';
 import Event from '@/lib/models/Event';
 import EventSignup from '@/lib/models/EventSignup';
+import { getRateLimiter } from '@/lib/redis';
 
 /**
  * Event Signup API Route
@@ -13,47 +14,8 @@ import EventSignup from '@/lib/models/EventSignup';
  * Handles event registration with validation, capacity checks, and email confirmation
  */
 
-// Rate limiting storage (in production, use Redis)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-/**
- * Check rate limit by IP
- */
-function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const windowMs = 60 * 1000; // 1 minute window
-  const maxRequests = 5; // 5 requests per minute per IP
-  
-  const key = ip;
-  const record = rateLimitStore.get(key);
-  
-  if (!record || now > record.resetTime) {
-    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
-    return { allowed: true };
-  }
-  
-  if (record.count >= maxRequests) {
-    return {
-      allowed: false,
-      retryAfter: Math.ceil((record.resetTime - now) / 1000),
-    };
-  }
-  
-  record.count++;
-  return { allowed: true };
-}
-
-/**
- * Clean up old rate limit entries
- */
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, record] of rateLimitStore.entries()) {
-    if (now > record.resetTime) {
-      rateLimitStore.delete(key);
-    }
-  }
-}, 60000); // Clean every minute
+// Shared rate limiter: 5 event signup attempts per minute per IP
+const rateLimiter = getRateLimiter(60000, 5);
 
 /**
  * Get client IP from request
@@ -175,18 +137,19 @@ export async function POST(
     const userAgent = request.headers.get('user-agent') || undefined;
     
     // Rate limiting
-    const rateLimit = checkRateLimit(ipAddress);
+    const rateLimit = await rateLimiter.isAllowed(ipAddress);
     if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.ceil((rateLimit.resetTime - Date.now()) / 1000);
       return NextResponse.json(
         {
           error: 'Too many requests',
           message: 'Rate limit exceeded. Please try again later.',
-          retryAfter: rateLimit.retryAfter,
+          retryAfter: retryAfterSeconds,
         },
         {
           status: 429,
           headers: {
-            'Retry-After': String(rateLimit.retryAfter),
+            'Retry-After': retryAfterSeconds.toString(),
           },
         }
       );

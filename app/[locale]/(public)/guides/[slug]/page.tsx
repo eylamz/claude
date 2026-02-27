@@ -10,6 +10,7 @@ import { Icon } from '@/components/icons';
 import { Button, Skeleton } from '@/components/ui';
 import { generateArticleStructuredData } from '@/lib/seo/utils';
 import type { GuideData } from '@/lib/api/guides';
+import { sanitizeUrl } from '@/lib/utils/sanitizeUrl';
 import {
   parseGuidesVersion,
   isGuidesCacheFresh,
@@ -131,17 +132,25 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
       if (match.index > lastIndex) {
         parts.push(text.substring(lastIndex, match.index));
       }
-      parts.push(
-        <a
-          key={key++}
-          href={match[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-brand-main dark:text-brand-dark font-medium underline decoration-2 underline-offset-2 hover:decoration-brand-main/50 transition-all"
-        >
-          {match[1]}
-        </a>
-      );
+
+      const safeHref = sanitizeUrl(match[2]);
+      if (safeHref) {
+        parts.push(
+          <a
+            key={key++}
+            href={safeHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-main dark:text-brand-dark font-medium underline decoration-2 underline-offset-2 hover:decoration-brand-main/50 transition-all"
+          >
+            {match[1]}
+          </a>
+        );
+      } else {
+        // If URL is unsafe, render just the link text
+        parts.push(match[1]);
+      }
+
       lastIndex = match.index + match[0].length;
     }
     if (lastIndex < text.length) {
@@ -302,11 +311,13 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
               />
             ) : null;
             
+            const safeImageLinkUrl = sanitizeUrl(item.imageLinkUrl);
+
             return (
               <figure key={index} className="my-8">
-                {item.imageLinkUrl ? (
+                {safeImageLinkUrl ? (
                   <a
-                    href={item.imageLinkUrl}
+                    href={safeImageLinkUrl}
                     target={item.imageLinkExternal ? '_blank' : '_self'}
                     rel={item.imageLinkExternal ? 'noopener noreferrer' : undefined}
                   >
@@ -361,11 +372,13 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
               : item.linkTextOld
               ? getLocalizedText(item.linkTextOld, locale)
               : item.linkUrl || '';
+
+            const safeLinkUrl = sanitizeUrl(item.linkUrl);
             
             return (
               <p key={index} className="my-6">
                 <Link
-                  href={item.linkUrl || '#'}
+                  href={safeLinkUrl || '#'}
                   target={item.linkExternal ? '_blank' : '_self'}
                   rel={item.linkExternal ? 'noopener noreferrer' : undefined}
                   className="inline-flex items-center gap-1 text-brand-main dark:text-brand-dark font-semibold underline decoration-2 underline-offset-2 hover:decoration-brand-main/50 transition-colors"

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import Product from '@/lib/models/Product';
+import { validateCsrf } from '@/lib/security/csrf';
 
 /**
  * Wishlist API Route
@@ -88,6 +89,11 @@ export async function GET(_request: NextRequest) {
 // POST - Add product to wishlist
 export async function POST(request: NextRequest) {
   try {
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -147,6 +153,11 @@ export async function POST(request: NextRequest) {
 // DELETE - Remove product from wishlist or clear wishlist
 export async function DELETE(request: NextRequest) {
   try {
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) {
+      return csrfResponse;
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json(
