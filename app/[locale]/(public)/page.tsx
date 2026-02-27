@@ -8,6 +8,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   HeroCarousel,
+  HeroCarouselSkeleton,
   FixedBanner,
   SkeletonSection,
   ProductSection,
@@ -91,7 +92,10 @@ export default function HomePage() {
   // Get locale from pathname as fallback to ensure it matches the URL
   const locale = (pathname?.split('/')?.[1] as Locale) || (localeFromHook as Locale) || 'en';
   const t = useTranslations('common.homepage');
-  const tr = useCallback((enText: string, heText: string) => (locale === 'he' ? heText : enText), [locale]);
+  const tr = useCallback(
+    (enText: string, heText: string) => (locale === 'he' ? heText : enText),
+    [locale]
+  );
   const ecommerceEnabled = isEcommerceEnabled();
 
   const [loading, setLoading] = useState(true);
@@ -305,11 +309,13 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
+        
 
       {/* Hero Carousel Section */}
-      {homepageSettings?.heroCarouselImages && homepageSettings.heroCarouselImages.length > 0 && (
+      {homepageSettings?.heroCarouselImages && homepageSettings.heroCarouselImages.length > 0 ? (
         <HeroCarousel images={homepageSettings.heroCarouselImages} />
+      ) : (
+        <HeroCarouselSkeleton />
       )}
 
       {/* Featured Products Section - only show if ecommerce is enabled */}
@@ -417,7 +423,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
             <Link
               href={`/${locale}/skateparks`}
-              className="group block bg-transparent transition-all duration-300"
+              className="h-full group block bg-transparent transition-all duration-300"
             >
               <div className=" card-gradient card-anim-1 rounded-[22px] overflow-hidden relative min-h-full">
                 <div className="gradient-0" aria-hidden />
@@ -452,19 +458,15 @@ export default function HomePage() {
                       <Icon name="mapBold" className="w-8 h-8 text-white" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3">
-                    {t('featureDiscoverTitle')}
-                  </h3>
-                  <p className="text-white/90 leading-relaxed">
-                    {t('featureDiscoverDesc')}
-                  </p>
+                  <h3 className="text-xl font-bold mb-3">{t('featureDiscoverTitle')}</h3>
+                  <p className="text-white/90 leading-relaxed">{t('featureDiscoverDesc')}</p>
                 </div>
               </div>
             </Link>
 
             <Link
               href={`/${locale}/guides`}
-              className="group block bg-transparent transition-all duration-300"
+              className="h-full group block bg-transparent transition-all duration-300"
             >
               <div className=" card-gradient card-anim-2 rounded-[22px] overflow-hidden relative min-h-full">
                 <div className="gradient-0" aria-hidden />
@@ -499,19 +501,15 @@ export default function HomePage() {
                       <Icon name="bookBold" className="w-8 h-8 text-white" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3">
-                    {t('featureLearnTitle')}
-                  </h3>
-                  <p className="text-white/90 leading-relaxed">
-                    {t('featureLearnDesc')}
-                  </p>
+                  <h3 className="text-xl font-bold mb-3">{t('featureLearnTitle')}</h3>
+                  <p className="text-white/90 leading-relaxed">{t('featureLearnDesc')}</p>
                 </div>
               </div>
             </Link>
 
             <Link
               href={`/${locale}/skateparks`}
-              className="group block  bg-transparent transition-all duration-300"
+              className="h-full group block  bg-transparent transition-all duration-300"
             >
               <div className=" card-gradient card-anim-3 rounded-[22px] overflow-hidden relative min-h-full">
                 <div className="gradient-0" aria-hidden />
@@ -546,12 +544,8 @@ export default function HomePage() {
                       <Icon name="reviewBold" className="w-8 h-8 text-white" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3">
-                    {t('featureRateTitle')}
-                  </h3>
-                  <p className="text-white/90 leading-relaxed">
-                    {t('featureRateDesc')}
-                  </p>
+                  <h3 className="text-xl font-bold mb-3">{t('featureRateTitle')}</h3>
+                  <p className="text-white/90 leading-relaxed">{t('featureRateDesc')}</p>
                 </div>
               </div>
             </Link>
@@ -580,7 +574,7 @@ export default function HomePage() {
                   navigator.clipboard.writeText(url);
                 }
               }}
-              className="group block bg-transparent transition-all duration-300 text-left w-full cursor-pointer"
+              className="h-full group block bg-transparent transition-all duration-300 text-left w-full cursor-pointer"
             >
               <div className="card-gradient card-anim-4 rounded-[22px] overflow-hidden relative min-h-full">
                 <div className="gradient-0" aria-hidden />
@@ -615,12 +609,8 @@ export default function HomePage() {
                       <Icon name="heartBold" className="w-8 h-8 text-white" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3">
-                    {t('featureSpreadTitle')}
-                  </h3>
-                  <p className="text-white/90 leading-relaxed">
-                    {t('featureSpreadDesc')}
-                  </p>
+                  <h3 className="text-xl font-bold mb-3">{t('featureSpreadTitle')}</h3>
+                  <p className="text-white/90 leading-relaxed">{t('featureSpreadDesc')}</p>
                 </div>
               </div>
             </button>
@@ -628,15 +618,18 @@ export default function HomePage() {
         </div>
       </section>
 
-
       {/* Final CTA Section */}
       <section
         className="relative 4xl:rounded-2xl h-[400px] md:h-[500px] lg:h-[900px] max-w-[2000px] mx-auto py-20 sm:py-8 md:py-20 lg:py-20 px-4 sm:px-6 lg:px-8 text-center overflow-hidden bg-cover bg-bottom bg-no-repeat 4xl:shadow-lg "
         style={{
-          backgroundImage: "url('https://res.cloudinary.com/dr0rvohz9/image/upload/v1771769672/wcjoumbnl57r6aqe9nae.webp')",
+          backgroundImage:
+            "url('https://res.cloudinary.com/dr0rvohz9/image/upload/v1771769672/wcjoumbnl57r6aqe9nae.webp')",
         }}
       >
-        <div className="absolute inset-0  dark:bg-background-dark/30 md:dark:bg-background-dark/20" aria-hidden="true" />
+        <div
+          className="absolute inset-0  dark:bg-background-dark/30 md:dark:bg-background-dark/20"
+          aria-hidden="true"
+        />
         <div className="relative z-10 max-w-4xl mx-auto">
           <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-4 md:mb-8  [text-shadow:_0px_0px_25px_rgba(0,0,0,1)] leading-tight text-white dark:text-text-dark sm:translate-x-8 lg:translate-x-0 xl:translate-x-[8rem]">
             {t('nextSessionAwaits')
@@ -649,7 +642,6 @@ export default function HomePage() {
               ))}
           </h2>
           <Link href={`/${locale}/skateparks`} className="block">
-
             <Button
               variant="primary"
               className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-base lg:text-lg font-semibold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 translate-x-5 sm:translate-x-2.5 lg:translate-x-0 xl:translate-x-20"
@@ -659,7 +651,6 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
-
 
       {/* Community Section */}
       <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8">
@@ -744,7 +735,10 @@ export default function HomePage() {
               {tr('Built By Riders. For Riders.', 'נבנה על ידי רוכבים. עבור רוכבים.')}
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-             {tr('Spreading the joy of skateparks across Israel.', 'מפיצים את השמחה על גלגלים ברחבי הארץ.')}
+              {tr(
+                'Spreading the joy of skateparks across Israel.',
+                'מפיצים את השמחה על גלגלים ברחבי הארץ.'
+              )}
             </p>
           </div>
         </div>

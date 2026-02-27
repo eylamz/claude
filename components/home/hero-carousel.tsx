@@ -7,6 +7,34 @@ import { usePathname } from 'next/navigation';
 import type { IMultilingualText } from '@/lib/models/Settings';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 
+// Skeleton: same layout as carousel container, with 3 slide-like placeholders
+export function HeroCarouselSkeleton() {
+  return (
+    <div className="pt-[15px] bg-background dark:bg-background-dark w-full flex flex-col items-center">
+      <div
+        className="relative w-full h-screen max-h-[500px] min-h-[500px] md:min-h-[370px] md:max-h-[370px] lg:min-h-[520px] lg:max-h-[520px] 3xl:max-h-[520px] overflow-hidden bg-background dark:bg-background-dark pt-10 "
+        aria-hidden
+      >
+        <div className="relative max-w-[2000px] mx-auto w-full h-full px-2 sm:px-4 md:px-6 flex items-end justify-center gap-5">
+          {/* 3 slide-like placeholders: narrower on mobile so all 3 fit, match carousel slide size on md+ */}
+          <div className="flex-none w-[275px] sm:w-[220px] md:w-[690px] md:max-w-[690px] lg:w-[980px] lg:max-w-[980px] h-[97%] min-h-[485px] md:min-h-[358px] lg:min-h-[505px] max-h-[485px] md:max-h-[358px] lg:max-h-[505px] bg-card dark:bg-card-dark  opacity-90" />
+          <div className="flex-none w-[275px] sm:w-[220px] md:w-[690px] md:max-w-[690px] lg:w-[980px] lg:max-w-[980px] h-[97%] min-h-[500px] md:min-h-[373px] lg:min-h-[520px] max-h-[500px] md:max-h-[373px] lg:max-h-[512px] bg-card dark:bg-card-dark  "
+          >
+            <LoadingSpinner size={36} variant="default" />
+          </div>
+          <div className="flex-none w-[275px] sm:w-[220px] md:w-[690px] md:max-w-[690px] lg:w-[980px] lg:max-w-[980px] h-[97%] min-h-[485px] md:min-h-[358px] lg:min-h-[505px] max-h-[485px] md:max-h-[358px] lg:max-h-[505px] bg-card dark:bg-card-dark  opacity-90" />
+        </div>
+      </div>
+      <div className="w-full flex gap-2 sm:gap-2.5 md:gap-3 items-center justify-center py-1 sm:py-2 md:py-3">
+        <div className="w-1.5 sm:w-2 md:w-2 h-1.5 sm:h-2 md:h-2 bg-gray-200 dark:bg-white/30 rounded-full" />
+        <div className="w-1.5 sm:w-2 md:w-2 h-1.5 sm:h-2 md:h-2 bg-gray-200 dark:bg-white/30 rounded-full" />
+        <div className="w-1.5 sm:w-2 md:w-2 h-1.5 sm:h-2 md:h-2 bg-gray-200 dark:bg-white/30 rounded-full" />
+        <div className="w-6 sm:w-8 md:w-6 h-1.5 sm:h-2 md:h-2 bg-gray-300 dark:bg-bg-white rounded-full" />
+      </div>
+    </div>
+  );
+}
+
 interface HeroCarouselImage {
   desktopImageUrl?: string;
   tabletImageUrl?: string;
@@ -157,31 +185,60 @@ export default function HeroCarousel({ images, autoSlideInterval = 3000 }: HeroC
   const realSlidesCount = sortedImages.length;
   const totalSlidesCount = slides.length; 
 
-  // --- Width Calculation (Unchanged) ---
-  const calculateWidths = useCallback(() => {
+  // --- Width Calculation: ResizeObserver on container only (not window), throttled via rAF to avoid scroll jank
+  const updateWidthsFromContainer = useCallback(() => {
     if (!containerRef.current) return;
     const currentWidth = containerRef.current.clientWidth;
     setContainerWidth(currentWidth);
     let newSlidePxWidth = MAX_WIDTH_MAP.mobile;
     let breakpoint: 'mobile' | 'tablet' | 'desktop' = 'mobile';
-    if (currentWidth >= 1024) { 
-        newSlidePxWidth = MAX_WIDTH_MAP.lg;
-        breakpoint = 'desktop';
-    } else if (currentWidth >= 768) { 
-        newSlidePxWidth = MAX_WIDTH_MAP.md;
-        breakpoint = 'tablet';
-    } else {
-        breakpoint = 'mobile';
+    if (currentWidth >= 1024) {
+      newSlidePxWidth = MAX_WIDTH_MAP.lg;
+      breakpoint = 'desktop';
+    } else if (currentWidth >= 768) {
+      newSlidePxWidth = MAX_WIDTH_MAP.md;
+      breakpoint = 'tablet';
     }
     setCurrentBreakpoint(breakpoint);
     setSlidePxWidth(Math.min(currentWidth, newSlidePxWidth));
   }, []);
 
   useEffect(() => {
-    calculateWidths();
-    window.addEventListener('resize', calculateWidths);
-    return () => window.removeEventListener('resize', calculateWidths);
-  }, [calculateWidths]);
+    const el = containerRef.current;
+    if (!el) return;
+    let rafId: number | null = null;
+    let lastWidth = 0;
+    const onResize = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (!containerRef.current) return;
+        const w = containerRef.current.clientWidth;
+        if (w === lastWidth) return;
+        lastWidth = w;
+        setContainerWidth(w);
+        let newSlidePxWidth = MAX_WIDTH_MAP.mobile;
+        let breakpoint: 'mobile' | 'tablet' | 'desktop' = 'mobile';
+        if (w >= 1024) {
+          newSlidePxWidth = MAX_WIDTH_MAP.lg;
+          breakpoint = 'desktop';
+        } else if (w >= 768) {
+          newSlidePxWidth = MAX_WIDTH_MAP.md;
+          breakpoint = 'tablet';
+        }
+        setCurrentBreakpoint(breakpoint);
+        setSlidePxWidth(Math.min(w, newSlidePxWidth));
+      });
+    };
+    const observer = new ResizeObserver(onResize);
+    observer.observe(el);
+    // Initial measure (ResizeObserver may fire async)
+    updateWidthsFromContainer();
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      observer.disconnect();
+    };
+  }, [updateWidthsFromContainer]);
 
   // --- Core Navigation and Loop Logic with Fast Jump ---
 
@@ -351,7 +408,7 @@ export default function HeroCarousel({ images, autoSlideInterval = 3000 }: HeroC
   
   // --- JSX Rendering (Unchanged) ---
   return (
-    <div className="w-full flex flex-col items-center">
+    <div className="transform-gpu w-full flex flex-col items-center">
       {/* Carousel Container */}
       <div
         ref={containerRef} 
@@ -393,8 +450,8 @@ export default function HeroCarousel({ images, autoSlideInterval = 3000 }: HeroC
               
               return (
                 <div
-                  key={viewIndex} 
-                  className={`absolute bottom-0 max-h-[500px] md:max-h-[370px] lg:max-h-[520px] max-w-[275px] md:max-w-[690px] lg:max-w-[980px] flex items-center justify-center overflow-hidden transition-none will-change-transform ${
+                  key={viewIndex}
+                  className={`absolute bottom-0 max-h-[500px] md:max-h-[370px] lg:max-h-[520px] max-w-[275px] md:max-w-[690px] lg:max-w-[980px] flex items-center justify-center overflow-hidden transition-none ${
                     isActive ? 'opacity-100 h-full' : 'opacity-20 h-[97%]'
                   }`}
                   style={{

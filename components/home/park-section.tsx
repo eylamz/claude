@@ -124,7 +124,7 @@ export const ParkSection = ({ parks, t: _t }: ParkSectionProps) => {
   }, [isRtl]);
 
   return (
-    <section className="rtl:pr-4 ltr:pl-4 xl:!px-0 mx-auto relative">
+    <section className="transform-gpu rtl:pr-4 ltr:pl-4 xl:!px-0 mx-auto relative">
       <div className="relative">
         {showStartButton && (
           <button
@@ -139,16 +139,12 @@ export const ParkSection = ({ parks, t: _t }: ParkSectionProps) => {
           ref={scrollContainerRef}
           className={`flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory pt-2 scrollbar-hide hover:scrollbar-show ${isRtl ? 'rtl' : 'ltr'}`}
         >
-          {parks.map((park, index) => (
+          {parks.map((park) => (
             <div
               key={park._id}
               className="flex-none w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] snap-center"
             >
-              <ParkCard
-                park={park as any}
-                locale={locale}
-                animationDelay={550 + index * 125}
-              />
+              <ParkCard park={park as any} locale={locale} compact />
             </div>
           ))}
         </div>

@@ -87,50 +87,130 @@
 }
 
 /* Card orb animations: running by default, 4x slower on hover (icon orbs unchanged) */
-.card-gradient:hover > .gradient-2 .color-1 { animation-duration: 18.4s; }
-.card-gradient:hover > .gradient-2 .color-2 { animation-duration: 19.6s; }
-.card-gradient:hover > .gradient-2 .color-3 { animation-duration: 17.6s; }
-.card-gradient:hover > .gradient-2 .color-4 { animation-duration: 18.8s; }
-.card-gradient:hover > .gradient-2 .color-5 { animation-duration: 20s; }
-.card-gradient:hover > .gradient-2 .color-6 { animation-duration: 18s; }
-.card-gradient:hover > .gradient-2 .color-7 { animation-duration: 19.2s; }
-.card-gradient:hover > .gradient-2 .color-8 { animation-duration: 16.8s; }
+.card-gradient:hover > .gradient-2 .color-1 {
+  animation-duration: 18.4s;
+}
+.card-gradient:hover > .gradient-2 .color-2 {
+  animation-duration: 19.6s;
+}
+.card-gradient:hover > .gradient-2 .color-3 {
+  animation-duration: 17.6s;
+}
+.card-gradient:hover > .gradient-2 .color-4 {
+  animation-duration: 18.8s;
+}
+.card-gradient:hover > .gradient-2 .color-5 {
+  animation-duration: 20s;
+}
+.card-gradient:hover > .gradient-2 .color-6 {
+  animation-duration: 18s;
+}
+.card-gradient:hover > .gradient-2 .color-7 {
+  animation-duration: 19.2s;
+}
+.card-gradient:hover > .gradient-2 .color-8 {
+  animation-duration: 16.8s;
+}
 /* Card 1: same base durations → 4x on hover */
-.card-gradient.card-anim-1:hover > .gradient-2 .color-1 { animation-duration: 18.4s; }
-.card-gradient.card-anim-1:hover > .gradient-2 .color-2 { animation-duration: 19.6s; }
-.card-gradient.card-anim-1:hover > .gradient-2 .color-3 { animation-duration: 17.6s; }
-.card-gradient.card-anim-1:hover > .gradient-2 .color-4 { animation-duration: 18.8s; }
-.card-gradient.card-anim-1:hover > .gradient-2 .color-5 { animation-duration: 20s; }
-.card-gradient.card-anim-1:hover > .gradient-2 .color-6 { animation-duration: 18s; }
-.card-gradient.card-anim-1:hover > .gradient-2 .color-7 { animation-duration: 19.2s; }
-.card-gradient.card-anim-1:hover > .gradient-2 .color-8 { animation-duration: 16.8s; }
+.card-gradient.card-anim-1:hover > .gradient-2 .color-1 {
+  animation-duration: 18.4s;
+}
+.card-gradient.card-anim-1:hover > .gradient-2 .color-2 {
+  animation-duration: 19.6s;
+}
+.card-gradient.card-anim-1:hover > .gradient-2 .color-3 {
+  animation-duration: 17.6s;
+}
+.card-gradient.card-anim-1:hover > .gradient-2 .color-4 {
+  animation-duration: 18.8s;
+}
+.card-gradient.card-anim-1:hover > .gradient-2 .color-5 {
+  animation-duration: 20s;
+}
+.card-gradient.card-anim-1:hover > .gradient-2 .color-6 {
+  animation-duration: 18s;
+}
+.card-gradient.card-anim-1:hover > .gradient-2 .color-7 {
+  animation-duration: 19.2s;
+}
+.card-gradient.card-anim-1:hover > .gradient-2 .color-8 {
+  animation-duration: 16.8s;
+}
 /* Card 2: slower base → 4x on hover */
-.card-gradient.card-anim-2:hover > .gradient-2 .color-1 { animation-duration: 23.2s; }
-.card-gradient.card-anim-2:hover > .gradient-2 .color-2 { animation-duration: 24.8s; }
-.card-gradient.card-anim-2:hover > .gradient-2 .color-3 { animation-duration: 21.6s; }
-.card-gradient.card-anim-2:hover > .gradient-2 .color-4 { animation-duration: 24s; }
-.card-gradient.card-anim-2:hover > .gradient-2 .color-5 { animation-duration: 25.6s; }
-.card-gradient.card-anim-2:hover > .gradient-2 .color-6 { animation-duration: 22.4s; }
-.card-gradient.card-anim-2:hover > .gradient-2 .color-7 { animation-duration: 24s; }
-.card-gradient.card-anim-2:hover > .gradient-2 .color-8 { animation-duration: 20.8s; }
+.card-gradient.card-anim-2:hover > .gradient-2 .color-1 {
+  animation-duration: 23.2s;
+}
+.card-gradient.card-anim-2:hover > .gradient-2 .color-2 {
+  animation-duration: 24.8s;
+}
+.card-gradient.card-anim-2:hover > .gradient-2 .color-3 {
+  animation-duration: 21.6s;
+}
+.card-gradient.card-anim-2:hover > .gradient-2 .color-4 {
+  animation-duration: 24s;
+}
+.card-gradient.card-anim-2:hover > .gradient-2 .color-5 {
+  animation-duration: 25.6s;
+}
+.card-gradient.card-anim-2:hover > .gradient-2 .color-6 {
+  animation-duration: 22.4s;
+}
+.card-gradient.card-anim-2:hover > .gradient-2 .color-7 {
+  animation-duration: 24s;
+}
+.card-gradient.card-anim-2:hover > .gradient-2 .color-8 {
+  animation-duration: 20.8s;
+}
 /* Card 3: faster base → 4x on hover */
-.card-gradient.card-anim-3:hover > .gradient-2 .color-1 { animation-duration: 14.4s; }
-.card-gradient.card-anim-3:hover > .gradient-2 .color-2 { animation-duration: 15.6s; }
-.card-gradient.card-anim-3:hover > .gradient-2 .color-3 { animation-duration: 12.8s; }
-.card-gradient.card-anim-3:hover > .gradient-2 .color-4 { animation-duration: 14s; }
-.card-gradient.card-anim-3:hover > .gradient-2 .color-5 { animation-duration: 16s; }
-.card-gradient.card-anim-3:hover > .gradient-2 .color-6 { animation-duration: 13.6s; }
-.card-gradient.card-anim-3:hover > .gradient-2 .color-7 { animation-duration: 15.2s; }
-.card-gradient.card-anim-3:hover > .gradient-2 .color-8 { animation-duration: 12.8s; }
+.card-gradient.card-anim-3:hover > .gradient-2 .color-1 {
+  animation-duration: 14.4s;
+}
+.card-gradient.card-anim-3:hover > .gradient-2 .color-2 {
+  animation-duration: 15.6s;
+}
+.card-gradient.card-anim-3:hover > .gradient-2 .color-3 {
+  animation-duration: 12.8s;
+}
+.card-gradient.card-anim-3:hover > .gradient-2 .color-4 {
+  animation-duration: 14s;
+}
+.card-gradient.card-anim-3:hover > .gradient-2 .color-5 {
+  animation-duration: 16s;
+}
+.card-gradient.card-anim-3:hover > .gradient-2 .color-6 {
+  animation-duration: 13.6s;
+}
+.card-gradient.card-anim-3:hover > .gradient-2 .color-7 {
+  animation-duration: 15.2s;
+}
+.card-gradient.card-anim-3:hover > .gradient-2 .color-8 {
+  animation-duration: 12.8s;
+}
 /* Card 4: medium speed, reverse → 4x on hover (direction unchanged) */
-.card-gradient.card-anim-4:hover > .gradient-2 .color-1 { animation-duration: 19.2s; }
-.card-gradient.card-anim-4:hover > .gradient-2 .color-2 { animation-duration: 20.4s; }
-.card-gradient.card-anim-4:hover > .gradient-2 .color-3 { animation-duration: 16.8s; }
-.card-gradient.card-anim-4:hover > .gradient-2 .color-4 { animation-duration: 18s; }
-.card-gradient.card-anim-4:hover > .gradient-2 .color-5 { animation-duration: 20.8s; }
-.card-gradient.card-anim-4:hover > .gradient-2 .color-6 { animation-duration: 17.6s; }
-.card-gradient.card-anim-4:hover > .gradient-2 .color-7 { animation-duration: 18.4s; }
-.card-gradient.card-anim-4:hover > .gradient-2 .color-8 { animation-duration: 16.4s; }
+.card-gradient.card-anim-4:hover > .gradient-2 .color-1 {
+  animation-duration: 19.2s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-2 {
+  animation-duration: 20.4s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-3 {
+  animation-duration: 16.8s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-4 {
+  animation-duration: 18s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-5 {
+  animation-duration: 20.8s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-6 {
+  animation-duration: 17.6s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-7 {
+  animation-duration: 18.4s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-8 {
+  animation-duration: 16.4s;
+}
 
 /* Theme colors: pink, purple, green, yellow, orange, red, gray, blue */
 .card-gradient .gradient-2 .color-1,

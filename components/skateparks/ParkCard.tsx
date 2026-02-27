@@ -54,13 +54,19 @@ interface UserLocation {
 type SortOption = 'nearest' | 'alphabetical' | 'newest' | 'rating' | 'shuffle';
 
 // Utility function to optimize image URLs
-const getOptimizedImageUrl = (originalUrl: string): string | null => {
+const getOptimizedImageUrl = (
+  originalUrl: string,
+  options?: { width?: number; height?: number }
+): string | null => {
   if (!originalUrl || originalUrl.trim() === '') return null;
 
   if (originalUrl.includes('cloudinary.com')) {
     const urlParts = originalUrl.split('/upload/');
     if (urlParts.length === 2) {
-      return `${urlParts[0]}/upload/w_800,c_fill,q_auto:good,f_auto/${urlParts[1]}`;
+      const w = options?.width ?? 800;
+      const h = options?.height;
+      const sizePart = h != null ? `w_${w},h_${h},c_fill` : `w_${w},c_fill`;
+      return `${urlParts[0]}/upload/${sizePart},q_auto:good,f_auto/${urlParts[1]}`;
     }
   }
   return originalUrl;
@@ -115,11 +121,14 @@ const isNewPark = (createdAt: string | null): boolean => {
 const SkateparkThumbnail = memo(({ 
   photoUrl, 
   onLoad,
-  alwaysSaturated = false
+  alwaysSaturated = false,
+  compact = false
 }: { 
   photoUrl: string, 
   onLoad?: () => void,
-  alwaysSaturated?: boolean
+  alwaysSaturated?: boolean,
+  /** When true, request and display at most 220x200 for faster load (e.g. homepage park section). */
+  compact?: boolean
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -187,7 +196,12 @@ const SkateparkThumbnail = memo(({
     setHasError(true);
   };
 
-  const optimizedUrl = photoUrl ? getOptimizedImageUrl(photoUrl) : null;
+  const optimizedUrl = photoUrl
+    ? getOptimizedImageUrl(
+        photoUrl,
+        compact ? { width: 400, height: 400 } : undefined
+      )
+    : null;
 
   return (
     <>
@@ -290,12 +304,14 @@ interface ParkCardProps {
   userLocation?: UserLocation | null;
   /** When set, highlights matching substring in park name (e.g. search query). */
   highlightQuery?: string;
+  /** Lighter card for homepage: no badges, no amenities. */
+  compact?: boolean;
 }
 
 /**
  * Skatepark Card Component
  */
-export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLocation, highlightQuery }: ParkCardProps) => {
+export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLocation, highlightQuery, compact = false }: ParkCardProps) => {
   const [isClicked, setIsClicked] = useState(false);
   const [isInViewport, setIsInViewport] = useState(false);
   const [showBadgeContainer, setShowBadgeContainer] = useState<Record<string, boolean>>({});
@@ -327,9 +343,9 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
   }, []);
 
 
-  // Animate badges when card enters viewport
+  // Animate badges when card enters viewport (skip in compact mode)
   useEffect(() => {
-    if (!isInViewport) return;
+    if (compact || !isInViewport) return;
 
     const currentYear = new Date().getFullYear();
     const recentYears = [currentYear, currentYear - 1, currentYear - 2];
@@ -411,21 +427,24 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
       onKeyDown={handleCardKeyDown}
       tabIndex={0}
       role="button"
-      className={`h-fit cursor-pointer relative group select-none transform-gpu transition-all duration-300 opacity-0 animate-popFadeIn before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 outline-none  focus:outline-brand-main dark:focus:outline-brand-dark rounded-2xl ${isClicked ? 'before:animate-shimmerInfinite' : ''} `}
-      style={{ animationDelay: `${animationDelay}ms` }}
+      className={`h-fit cursor-pointer relative group select-none transform-gpu transition-all duration-300 before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 outline-none focus:outline-brand-main dark:focus:outline-brand-dark rounded-2xl ${isClicked ? 'before:animate-shimmerInfinite' : ''} ${compact ? '' : 'opacity-0 animate-popFadeIn'}`}
+      style={compact ? undefined : { animationDelay: `${animationDelay}ms` }}
       aria-label={`${name}${distanceText ? `, ${distanceText}` : ''}`}
     >
-      {park.amenities && Object.values(park.amenities).some(Boolean) && (
+      {!compact && park.amenities && Object.values(park.amenities).some(Boolean) && (
         <ParkAmenities amenities={park.amenities} locale={locale} />
       )}
 
-      <div className="relative h-[12rem] lg:h-[14rem] !overflow-hidden rounded-2xl" 
+      <div
+        className={`relative !overflow-hidden rounded-2xl ${
+          compact ? 'h-[200px]' : 'h-[12rem] lg:h-[14rem]'
+        }`}
         style={{
           filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
         }}
       >
         {/* Opening Year Badge */}
-        {hasOpeningYear && (
+        {!compact && hasOpeningYear && (
           <div className={`absolute bottom-2 left-0 z-10 ${
             showBadgeContainer.openingYear ? 'animate-slideRight animation-delay-[2s]' : 'opacity-0 translate-x-[-30px]'
           }`}>
@@ -439,7 +458,7 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
         )}
 
         {/* Closed Badge */}
-        {isClosed && (
+        {!compact && isClosed && (
           <div className={`absolute bottom-2 z-10 ${
             hasOpeningYear ? 'right-0' : 'left-0'
           } ${
@@ -459,7 +478,7 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
         )}
 
         {/* New Badge */}
-        {isNew && (() => {
+        {!compact && isNew && (() => {
           const isOnlyOpeningYear = hasOpeningYear && !isClosed;
           const isClosedBadge = isClosed;
           
@@ -484,7 +503,7 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
         })()}
 
         {/* Featured Badge */}
-        {isFeatured && (
+        {!compact && isFeatured && (
           <div className={`absolute bottom-2 z-10 ${
             hasOpeningYear || isClosed || isNew ? 'right-0' : 'left-0'
           } ${
@@ -505,13 +524,15 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
 
         <SkateparkThumbnail
           photoUrl={photoUrl}
+          compact={compact}
         />
       </div>
 
       {/* Name Section - Always visible below image */}
-      <div className={`w-full py-2 `}>
-        <h3 className={`text-xl font-semibold truncate text-text dark:text-text-dark opacity-0 animate-fadeInDown`}
-          style={{ animationDelay: `400ms` }}
+      <div className="w-full py-2">
+        <h3
+          className={`text-xl font-semibold truncate text-text dark:text-text-dark ${compact ? '' : 'opacity-0 animate-fadeInDown'}`}
+          style={compact ? undefined : { animationDelay: '400ms' }}
         >
           {highlightQuery ? highlightMatch(name, highlightQuery) : name}
         </h3>
