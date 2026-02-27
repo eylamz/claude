@@ -71,7 +71,11 @@ export default function FixedBanner({ isRtl, locale }: FixedBannerProps) {
           <motion.div
             variants={{
               hidden: { opacity: 0, x: -50 },
-              visible: { opacity: 1, x: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
+              visible: {
+                opacity: 1,
+                x: 0,
+                transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+              },
             }}
           >
             <Icon
@@ -84,7 +88,11 @@ export default function FixedBanner({ isRtl, locale }: FixedBannerProps) {
             className="mt-2 text-center rtl:font-rtl ltr:font-ltr leading-[0.95] text-text-dark font-bold textShadow text-3xl sm:text-4xl md:text-5xl"
             variants={{
               hidden: { opacity: 0, x: -30 },
-              visible: { opacity: 1, x: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } },
+              visible: {
+                opacity: 1,
+                x: 0,
+                transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+              },
             }}
           >
             {title}

@@ -38,10 +38,10 @@ export const ParkSection = ({ parks, t: _t }: ParkSectionProps) => {
   const updateButtonVisibility = () => {
     if (scrollContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
-      
+
       // Check if content overflows
       setHasOverflow(scrollWidth > clientWidth);
-      
+
       if (isRtl) {
         // In RTL, scrollLeft is negative
         const maxScroll = scrollWidth - clientWidth;
@@ -63,11 +63,11 @@ export const ParkSection = ({ parks, t: _t }: ParkSectionProps) => {
       }
       updateButtonVisibility();
       container.addEventListener('scroll', updateButtonVisibility);
-      
+
       // Add resize observer to check for overflow on window resize
       const resizeObserver = new ResizeObserver(updateButtonVisibility);
       resizeObserver.observe(container);
-      
+
       return () => {
         container.removeEventListener('scroll', updateButtonVisibility);
         resizeObserver.disconnect();
@@ -75,53 +75,59 @@ export const ParkSection = ({ parks, t: _t }: ParkSectionProps) => {
     }
   }, [isRtl]);
 
-  const scroll = useCallback((direction: 'left' | 'right') => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = 300;
-      const container = scrollContainerRef.current;
-      const { scrollLeft, scrollWidth, clientWidth } = container;
-      
-      // Normalize scrollLeft across browsers for RTL mode
-      const normalizedScrollLeft = isRtl 
-        ? (scrollLeft >= 0 
-            ? scrollLeft  // Firefox-style RTL (positive from right)
-            : Math.abs(scrollLeft)) // Chrome/Safari RTL (negative from right)
-        : scrollLeft;
-      
-      // Calculate normalized position for limit detection
-      const scrollStart = isRtl ? scrollWidth - clientWidth - normalizedScrollLeft : normalizedScrollLeft;
-      const scrollEnd = isRtl ? normalizedScrollLeft : scrollLeft + clientWidth;
-      
-      // Check limits using normalized values
-      const isAtStart = scrollStart <= 0;
-      const isAtEnd = scrollEnd >= scrollWidth;
-      
-      const isAtLimit = (direction === 'left' && isAtStart) || (direction === 'right' && isAtEnd);
-      
-      if (isAtLimit) {
-        // Trigger the scale animation by adding and removing the class
-        const button = direction === 'right' 
-          ? container.nextElementSibling as HTMLElement
-          : container.previousElementSibling as HTMLElement;
-        
-        if (button) {
-          button.classList.add('errorPop');
-          setTimeout(() => button.classList.remove('errorPop'), 200);
+  const scroll = useCallback(
+    (direction: 'left' | 'right') => {
+      if (scrollContainerRef.current) {
+        const scrollAmount = 300;
+        const container = scrollContainerRef.current;
+        const { scrollLeft, scrollWidth, clientWidth } = container;
+
+        // Normalize scrollLeft across browsers for RTL mode
+        const normalizedScrollLeft = isRtl
+          ? scrollLeft >= 0
+            ? scrollLeft // Firefox-style RTL (positive from right)
+            : Math.abs(scrollLeft) // Chrome/Safari RTL (negative from right)
+          : scrollLeft;
+
+        // Calculate normalized position for limit detection
+        const scrollStart = isRtl
+          ? scrollWidth - clientWidth - normalizedScrollLeft
+          : normalizedScrollLeft;
+        const scrollEnd = isRtl ? normalizedScrollLeft : scrollLeft + clientWidth;
+
+        // Check limits using normalized values
+        const isAtStart = scrollStart <= 0;
+        const isAtEnd = scrollEnd >= scrollWidth;
+
+        const isAtLimit = (direction === 'left' && isAtStart) || (direction === 'right' && isAtEnd);
+
+        if (isAtLimit) {
+          // Trigger the scale animation by adding and removing the class
+          const button =
+            direction === 'right'
+              ? (container.nextElementSibling as HTMLElement)
+              : (container.previousElementSibling as HTMLElement);
+
+          if (button) {
+            button.classList.add('errorPop');
+            setTimeout(() => button.classList.remove('errorPop'), 200);
+          }
+          return;
         }
-        return;
+
+        // Adjust scrollBy parameters for RTL
+        const scrollDelta = direction === 'right' ? scrollAmount : -scrollAmount;
+        // In RTL, we need to invert the scroll direction
+        const adjustedScrollDelta = isRtl ? -scrollDelta : scrollDelta;
+
+        container.scrollBy({
+          left: adjustedScrollDelta,
+          behavior: 'smooth',
+        });
       }
-      
-      // Adjust scrollBy parameters for RTL
-      const scrollDelta = direction === 'right' ? scrollAmount : -scrollAmount;
-      // In RTL, we need to invert the scroll direction
-      const adjustedScrollDelta = isRtl ? -scrollDelta : scrollDelta;
-      
-      container.scrollBy({
-        left: adjustedScrollDelta,
-        behavior: 'smooth'
-      });
-    }
-  }, [isRtl]);
+    },
+    [isRtl]
+  );
 
   return (
     <section className="transform-gpu rtl:pr-4 ltr:pl-4 xl:!px-0 mx-auto relative">
@@ -135,7 +141,7 @@ export const ParkSection = ({ parks, t: _t }: ParkSectionProps) => {
             <ArrowRight className="h-6 w-6 rotate-180" />
           </button>
         )}
-        <div 
+        <div
           ref={scrollContainerRef}
           className={`flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory pt-2 scrollbar-hide hover:scrollbar-show ${isRtl ? 'rtl' : 'ltr'}`}
         >
@@ -192,8 +198,3 @@ export const ParkSection = ({ parks, t: _t }: ParkSectionProps) => {
     </section>
   );
 };
-
-
-
-
-

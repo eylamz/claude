@@ -173,14 +173,18 @@ export const GuideSection = ({ guides, t: _t }: GuideSectionProps) => {
       const scrollAmount = 300;
       const container = scrollContainerRef.current;
       const { scrollLeft, scrollWidth, clientWidth } = container;
-      const normalizedScrollLeft =
-        isRtl ? (scrollLeft >= 0 ? scrollLeft : Math.abs(scrollLeft)) : scrollLeft;
-      const scrollStart = isRtl ? scrollWidth - clientWidth - normalizedScrollLeft : normalizedScrollLeft;
+      const normalizedScrollLeft = isRtl
+        ? scrollLeft >= 0
+          ? scrollLeft
+          : Math.abs(scrollLeft)
+        : scrollLeft;
+      const scrollStart = isRtl
+        ? scrollWidth - clientWidth - normalizedScrollLeft
+        : normalizedScrollLeft;
       const scrollEnd = isRtl ? normalizedScrollLeft : scrollLeft + clientWidth;
       const isAtStart = scrollStart <= 0;
       const isAtEnd = scrollEnd >= scrollWidth;
-      const isAtLimit =
-        (direction === 'left' && isAtStart) || (direction === 'right' && isAtEnd);
+      const isAtLimit = (direction === 'left' && isAtStart) || (direction === 'right' && isAtEnd);
       if (isAtLimit) {
         const button =
           direction === 'right'
@@ -216,11 +220,7 @@ export const GuideSection = ({ guides, t: _t }: GuideSectionProps) => {
           className={`flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory pt-2 scrollbar-hide hover:scrollbar-show ${isRtl ? 'rtl' : 'ltr'}`}
         >
           {guides.map((guide) => (
-            <GuideSectionCard
-              key={guide.id}
-              guide={guide}
-              locale={locale}
-            />
+            <GuideSectionCard key={guide.id} guide={guide} locale={locale} />
           ))}
         </div>
         {hasOverflow && (
@@ -269,50 +269,42 @@ export const GuideSection = ({ guides, t: _t }: GuideSectionProps) => {
 };
 
 // Single card for homepage: image + title only, always visible (no entrance animation)
-const GuideSectionCard = memo(
-  ({
-    guide,
-    locale,
-  }: {
-    guide: Guide;
-    locale: string;
-  }) => {
-    const [isClicked, setIsClicked] = useState(false);
+const GuideSectionCard = memo(({ guide, locale }: { guide: Guide; locale: string }) => {
+  const [isClicked, setIsClicked] = useState(false);
 
-    const handleCardClick = useCallback(
-      (e: React.MouseEvent) => {
-        e.preventDefault();
-        setIsClicked(true);
-        setTimeout(() => {
-          window.location.href = `/${locale}/guides/${guide.slug}`;
-        }, 300);
-      },
-      [guide.slug, locale]
-    );
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      setIsClicked(true);
+      setTimeout(() => {
+        window.location.href = `/${locale}/guides/${guide.slug}`;
+      }, 300);
+    },
+    [guide.slug, locale]
+  );
 
-    return (
+  return (
+    <div
+      onClick={handleCardClick}
+      className={`h-fit group rounded-xl cursor-pointer relative select-none transform-gpu transition-all duration-300 before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''}`}
+      aria-label={guide.title}
+    >
       <div
-        onClick={handleCardClick}
-        className={`h-fit group rounded-xl cursor-pointer relative select-none transform-gpu transition-all duration-300 before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 ${isClicked ? 'before:animate-shimmerInfinite' : ''}`}
-        aria-label={guide.title}
+        className="group-hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden flex-none w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] snap-center"
+        style={{
+          filter:
+            'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)',
+        }}
       >
-        <div
-          className="group-hover:!scale-[1.02] bg-card dark:bg-card-dark rounded-2xl relative h-[12rem] md:h-[16rem] overflow-hidden flex-none w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] snap-center"
-          style={{
-            filter:
-              'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)',
-          }}
-        >
-          <GuideThumbnail photoUrl={guide.image ?? ''} guideTitle={guide.title} />
-        </div>
-
-        <div className="w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] pt-2">
-          <h3 className="text-lg font-medium text-text dark:text-text-dark line-clamp-2">
-            {guide.title}
-          </h3>
-        </div>
+        <GuideThumbnail photoUrl={guide.image ?? ''} guideTitle={guide.title} />
       </div>
-    );
-  }
-);
+
+      <div className="w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] pt-2">
+        <h3 className="text-lg font-medium text-text dark:text-text-dark line-clamp-2">
+          {guide.title}
+        </h3>
+      </div>
+    </div>
+  );
+});
 GuideSectionCard.displayName = 'GuideSectionCard';
