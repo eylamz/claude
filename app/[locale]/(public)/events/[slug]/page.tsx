@@ -657,7 +657,7 @@ export default function EventPage() {
                         );
                       }
                     }}
-                    className="!h-8 !p-2 rounded-lg font-medium flex-shrink-0 "
+                    className="px-2 py-1 rounded-lg font-medium flex-shrink-0 "
                     aria-label={locale === 'he' ? 'שתף אירוע' : 'Share event'}
                   >
                     <Icon name="shareBold" className="w-5 h-5" />

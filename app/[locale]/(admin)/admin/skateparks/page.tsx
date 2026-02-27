@@ -968,7 +968,7 @@ export default function SkateparksPage() {
           >
             {t('admin.viewStatistics')}
           </Button>
-          <Button variant="brand" onClick={() => router.push(`/${locale}/admin/skateparks/new`)}>
+          <Button variant="green" onClick={() => router.push(`/${locale}/admin/skateparks/new`)}>
             {t('admin.addSkatepark')}
           </Button>
         </div>
@@ -1238,7 +1238,7 @@ export default function SkateparksPage() {
                   <TableCell className="whitespace-nowrap text-sm text-text dark:text-text-dark">
                     <button
                       onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkId}`)}
-                      className="text-brand-main dark:text-brand-dark hover:underline"
+                      className="text-brand-text underline dark:no-underline hover:font-medium dark:hover:underline"
                     >
                       {skatepark.slug}
                     </button>

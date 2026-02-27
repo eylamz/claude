@@ -72,7 +72,7 @@ export default function SkateparkSlugLoading() {
               <Skeleton className="h-6 w-24" />
             </div>
             <div className="flex flex-wrap -mx-1">
-              {[...Array(8)].map((_, i) => (
+              {[...Array(12)].map((_, i) => (
                 <div key={i} className="w-1/4 px-1 mb-2">
                   <Skeleton className="h-20 w-full rounded-md" />
                 </div>

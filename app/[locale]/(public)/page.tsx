@@ -669,21 +669,21 @@ export default function HomePage() {
                 href: `/${locale}/skateparks`,
                 gradient: 'from-[#32CD32] to-[#2ECC71]',
                 backgroundImage:
-                  'https://res.cloudinary.com/dr0rvohz9/image/upload/w_1200,q_90,c_fill/v1743681941/e7yc36ybmw6yxsinuffv.webp',
+                  'https://res.cloudinary.com/dr0rvohz9/image/upload/w_1700,q_100,c_fill/v1772201356/bxxxmy7bnrxdeirj6fed.png',
               },
               {
                 label: t('communityGuides'),
                 href: `/${locale}/guides`,
                 gradient: 'from-[#14A3A8] to-[#32CD32]',
                 backgroundImage:
-                  'https://placehold.co/800x800/333333/FFFFFF/png?text=What%20is%20a%20skate%20bearing%20beginner%20guide&w=828&q=100',
+                  'https://res.cloudinary.com/dr0rvohz9/image/upload/w_1700,q_100,c_fill/v1772210378/nmbijyydjsjmfase5sec.png',
               },
               {
                 label: t('communityEvents'),
                 href: `/${locale}/events`,
                 gradient: 'from-[#2ECC71] to-[#39FF14]',
                 backgroundImage:
-                  'https://res.cloudinary.com/dr0rvohz9/image/upload/w_1200,q_90,c_fill/v1756030070/t4wjquwwrdmgb3it1x5x.jpg',
+                  'https://res.cloudinary.com/dr0rvohz9/image/upload/w_1700,q_100,c_fill/v1772201360/m4njuep6fcpami4oph3v.png',
               },
             ].map((item, index) => (
               <Link

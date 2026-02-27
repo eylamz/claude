@@ -126,7 +126,7 @@ export const Checkbox: FC<CheckboxProps> = ({ id, checked, onChange, label, vari
             top: 3px;
             left: 2px;
             fill: none;
-            stroke: #fff;
+            stroke: #003d02;
             stroke-width: 2;
             stroke-linecap: round;
             stroke-linejoin: round;

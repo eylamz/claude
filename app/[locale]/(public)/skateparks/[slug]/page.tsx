@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback, Suspense, Fragment } from 'react';
-import {  useParams } from 'next/navigation';
+import {  useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -701,6 +701,7 @@ function FormattedHours({
  */
 export default function SkateparkPage() {
   const params = useParams();
+  const router = useRouter();
   const locale = useLocale();
   const t = useTranslations('skateparks');
   const tCommon = useTranslations('common');
@@ -722,6 +723,7 @@ export default function SkateparkPage() {
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
   const [amenitiesActive, setAmenitiesActive] = useState(false);
+  const [clickedNearbyParkId, setClickedNearbyParkId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSkatepark();
@@ -948,18 +950,31 @@ export default function SkateparkPage() {
             // Failed to merge inactive parks, continue with active parks only
           }
           
-          // Filter parks (now includes both active and inactive)
+          // Filter parks (same area only, now includes both active and inactive)
+          const currentArea = cachedSkatepark.area;
           const filteredParks = allCachedParks.filter((park: Skatepark) => {
+            const sameArea = currentArea && park.area === currentArea;
             const hasValidSlug = park.slug !== slug;
             const hasValidLocation = park.location && (
               (park.location.coordinates && Array.isArray(park.location.coordinates) && park.location.coordinates.length >= 2) ||
               (park.location && 'lat' in park.location && 'lng' in park.location)
             );
             
-            return hasValidSlug && hasValidLocation;
+            return sameArea && hasValidSlug && hasValidLocation;
           });
           
-          const nearbyFromCache = filteredParks
+          // Shuffle for variety so it won't show the same parks every time
+          const shuffleArray = <T,>(arr: T[]): T[] => {
+            const out = [...arr];
+            for (let i = out.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [out[i], out[j]] = [out[j], out[i]];
+            }
+            return out;
+          };
+          
+          const nearbyFromCache = shuffleArray(
+            filteredParks
             .map((park: Skatepark) => {
               // Extract coordinates - handle both formats
               let parkCoords = { lat: 0, lng: 0 };
@@ -1010,8 +1025,8 @@ export default function SkateparkPage() {
               };
             })
             .filter((park): park is NonNullable<typeof park> => park !== null) // Remove null entries
-            .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
-            .slice(0, 4) // Get top 4 closest
+          )
+            .slice(0, 4) // Take 4 after shuffle for variety
             .map(({ distance, ...park }) => park); // Remove distance from final result
           
           setNearbyParks(nearbyFromCache);
@@ -1434,7 +1449,7 @@ export default function SkateparkPage() {
                 <Skeleton className="h-6 w-24" />
               </div>
               <div className="flex flex-wrap -mx-1">
-                {[...Array(8)].map((_, i) => (
+                {[...Array(12)].map((_, i) => (
                   <div key={i} className="w-1/4 px-1 mb-2">
                     <Skeleton className="h-20 w-full rounded-md" />
                   </div>
@@ -1658,10 +1673,10 @@ export default function SkateparkPage() {
                     navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : '');
                   }
                 }}
-                className="!h-8 px-2 py-1 rounded-lg font-medium flex-shrink-0"
+                className=" !p-2 rounded-lg font-medium flex-shrink-0"
                 aria-label={locale === 'he' ? 'שתף סקייטפארק' : 'Share skatepark'}
               >
-                <Icon name="shareBold" className="w-4 h-4" />
+                <Icon name="shareBold" className="w-5 h-5" />
               </Button>
             </div>
           </div>
@@ -1725,7 +1740,7 @@ export default function SkateparkPage() {
               </div>
 
               {/* Amenities grid */}
-              <div className="grid grid-cols-4 gap-1">
+              <div className="grid grid-cols-4 gap-1.5">
                 {Object.entries(skatepark.amenities).map(([key, value]) => {
                   const isAvailable = Boolean(value);
                   const isParkClosed = Boolean(skatepark.closingYear);
@@ -1758,7 +1773,7 @@ export default function SkateparkPage() {
                                           : 'text-blue dark:text-blue-dark'
                                         : 'text-gray-dark dark:text-gray'
                                     }`}
-                                 add />
+                                  />
                                 </div>
                                 <p className={`text-xs xsm:text-sm font-medium transition-all duration-300 ${
                                   amenitiesActive
@@ -2546,9 +2561,7 @@ export default function SkateparkPage() {
                       : null;
                     
                     const distanceText = distance !== null
-                      ? locale === 'he' 
-                        ? `במרחק ${distance.toFixed(1)} ${tr('km', 'ק"מ')}`
-                        : `at distance ${distance.toFixed(1)} ${tr('km', 'ק"מ')}`
+                      ? `${distance.toFixed(1)} ${locale === 'he' ? 'ק"מ מפארק זה' : 'km from this park'}`
                       : null;
                     
                     // Hide items based on breakpoint:
@@ -2569,6 +2582,13 @@ export default function SkateparkPage() {
                         key={park._id}
                         href={`/${locale}/skateparks/${park.slug}`}
                         className={`h-fit cursor-pointer relative group select-none transform-gpu transition-all duration-200 ${hideClass}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setClickedNearbyParkId(park._id);
+                          setTimeout(() => {
+                            router.push(`/${locale}/skateparks/${park.slug}`);
+                          }, 300);
+                        }}
                       >
                         <div
                          className="rounded-2xl relative h-[10.5rem] overflow-hidden"
@@ -2576,6 +2596,12 @@ export default function SkateparkPage() {
                           filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
                         }}
                          >
+                          {/* Loading overlay when navigating to park page */}
+                          {clickedNearbyParkId === park._id && (
+                            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-2xl">
+                              <LoadingSpinner variant="header" size={40} />
+                            </div>
+                          )}
                           {/* Closed Badge */}
                           {isClosed && (
                             <div className="absolute bottom-2 left-0 z-10">

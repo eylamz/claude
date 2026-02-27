@@ -687,10 +687,10 @@ const ParkImageGallery = ({
                           navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : '');
                         }
                       }}
-                      className="!h-8 px-2 py-1 rounded-lg font-medium flex-shrink-0"
+                      className="px-2 py-1 rounded-lg font-medium flex-shrink-0"
                       aria-label={locale === 'he' ? 'שתף סקייטפארק' : 'Share skatepark'}
                     >
-                      <Icon name="shareBold" className="w-4 h-4" />
+                      <Icon name="shareBold" className="w-5 h-5" />
                     </Button>
                   )}
                 </div>

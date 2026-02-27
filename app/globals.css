@@ -235,6 +235,23 @@ button *::selection,
   height: 10px;
 }
 
+/* Reserve space when cookie banner is visible so page scroll is smooth */
+body.cookie-banner-visible {
+  padding-bottom: 220px;
+}
+@media (min-width: 1024px) {
+  body.cookie-banner-visible {
+    padding-bottom: 180px;
+  }
+}
+
+/* Keep cookie banner on its own GPU layer to avoid scroll jank */
+[data-cookie-banner] {
+  contain: layout paint;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
 .map {
   transition: all 0.3s ease-in-out;
 }

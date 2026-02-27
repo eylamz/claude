@@ -215,7 +215,7 @@ const SkateparkThumbnail = memo(({
           ref={imgRef}
           src={optimizedUrl}
           alt=""
-          className={`absolute left-1/2 -translate-x-1/2 w-[110%] h-full object-cover rounded-2xl transition-all duration-200 select-none bg-card dark:bg-card-dark shadow-lg shadow-[rgba(0,0,0,0.05)] group-hover:shadow-lg dark:group-hover:!scale-[1.02] ${
+          className={`absolute left-1/2 -translate-x-1/2 w-[110%] h-full object-cover rounded-2xl transition-[transform,box-shadow,filter] duration-200 ease-out select-none bg-card dark:bg-card-dark shadow-lg shadow-[rgba(0,0,0,0.05)] group-hover:shadow-lg dark:group-hover:shadow-none dark:group-hover:!scale-[1.02] ${
             alwaysSaturated ? 'saturate-[1.75]' : 'saturate-150 group-hover:saturate-[1.75]'
           } ${
             isLoaded ? 'opacity-100' : 'opacity-0'
@@ -284,7 +284,7 @@ const ParkAmenities = memo(({
         return (
           <div
             key={key}
-            className="flex items-center bg-black/45 backdrop-blur-sm p-1.5  rounded-lg"
+            className="flex items-center bg-black/55 p-1.5 rounded-lg"
             title={getAmenityLabel(key, locale)}
           >
             <Icon name={iconName as any} className="w-4 h-4 text-white" />
@@ -427,7 +427,7 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
       onKeyDown={handleCardKeyDown}
       tabIndex={0}
       role="button"
-      className={`h-fit cursor-pointer relative group select-none transform-gpu transition-all duration-300 before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 outline-none focus:outline-brand-main dark:focus:outline-brand-dark rounded-2xl ${isClicked ? 'before:animate-shimmerInfinite' : ''} ${compact ? '' : 'opacity-0 animate-popFadeIn'}`}
+      className={`h-fit cursor-pointer relative group select-none transform-gpu transition-opacity duration-300 before:content-[''] before:absolute before:top-0 before:right-[-150%] before:w-[150%] before:h-full before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:z-[20] before:pointer-events-none before:opacity-0 before:transition-opacity before:duration-300 outline-none rounded-2xl ${isClicked ? 'before:animate-shimmerInfinite' : ''} ${compact ? '' : 'opacity-0 animate-popFadeIn'}`}
       style={compact ? undefined : { animationDelay: `${animationDelay}ms` }}
       aria-label={`${name}${distanceText ? `, ${distanceText}` : ''}`}
     >
@@ -438,11 +438,15 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
       <div
         className={`relative !overflow-hidden rounded-2xl ${
           compact ? 'h-[200px]' : 'h-[12rem] lg:h-[14rem]'
-        }`}
-        style={{
-          filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
-        }}
+        } shadow-[0_1px_1px_rgba(102,102,102,0.07),0_4px_8px_rgba(94,94,94,0.08),0_8px_16px_rgba(94,94,94,0.06)]`}
       >
+        {/* Loading overlay when navigating to park page */}
+        {isClicked && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-2xl">
+            <LoadingSpinner variant="header" size={40} />
+          </div>
+        )}
+
         {/* Opening Year Badge */}
         {!compact && hasOpeningYear && (
           <div className={`absolute bottom-2 left-0 z-10 ${

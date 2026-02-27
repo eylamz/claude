@@ -7,6 +7,15 @@ import { isBlocked, record404, recordSuccess } from '@/lib/utils/circuitBreaker'
 
 const ENDPOINT = '/api/skateparks/[slug]';
 
+/** Fisher–Yates shuffle (mutates array) */
+function shuffleArray<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 /**
  * Skatepark Detail API Route
  * 
@@ -49,15 +58,16 @@ export async function GET(
 
     const [lng, lat] = skatepark.location.coordinates;
 
-    // Get all active parks (excluding current) - no area filter
+    // Get all active parks in the same area (excluding current)
     const allParks = await Skatepark.find({
       status: 'active',
       _id: { $ne: skatepark._id },
+      area: skatepark.area,
     })
-      .select('slug name images location area rating totalReviews')
+      .select('slug name images location area rating totalReviews closingYear')
       .lean();
 
-    // Calculate distance for each park and sort by distance
+    // Calculate distance for each park, sort by distance, shuffle for variety, take 4
     const parksWithDistance = allParks
       .map((park: any) => {
         const coords = park.location?.coordinates;
@@ -89,10 +99,12 @@ export async function GET(
       })
       .filter((park): park is NonNullable<typeof park> => park !== null) // Remove null entries
       .sort((a, b) => a.distance - b.distance) // Sort by distance (closest first)
-      .slice(0, 4); // Take top 4 closest
+      .slice(); // Copy before shuffle
+    shuffleArray(parksWithDistance);
+    const nearbyFour = parksWithDistance.slice(0, 4);
 
     // Format nearby parks (remove distance from response)
-    const formattedNearby = parksWithDistance.map((park: any) => {
+    const formattedNearby = nearbyFour.map((park: any) => {
       const coords = park.location?.coordinates;
       const [parkLng, parkLat] = coords || [0, 0];
       
@@ -110,6 +122,7 @@ export async function GET(
         area: park.area,
         rating: park.rating || 0,
         totalReviews: park.totalReviews || 0,
+        closingYear: park.closingYear ?? null,
         location: hasValidCoords ? {
           lat: parkLat,
           lng: parkLng,

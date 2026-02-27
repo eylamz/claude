@@ -19,6 +19,10 @@ import { Switch } from '@/components/ui/switch';
 
 const isIlCookiePolicy = process.env.NEXT_PUBLIC_SET_IL_COOKIE_POLICY === 'true';
 
+/** GPU layer + containment so the banner doesn't make page scroll janky */
+const BANNER_LAYER_CLASS =
+  'translate-z-0 will-change-transform contain-paint contain-layout';
+
 export default function CookieConsentBanner() {
   const t = useTranslations('common');
   const locale = useLocale();
@@ -60,6 +64,14 @@ export default function CookieConsentBanner() {
       window.removeEventListener('showCookieSettings', handleShowSettings);
     };
   }, []);
+
+  // Reserve space on the page when banner is visible so scrolling feels correct
+  useEffect(() => {
+    document.body.classList.toggle('cookie-banner-visible', isVisible);
+    return () => {
+      document.body.classList.remove('cookie-banner-visible');
+    };
+  }, [isVisible]);
 
   const handleAcceptAll = () => {
     trackConsent('accept_all');
@@ -130,19 +142,28 @@ export default function CookieConsentBanner() {
   if (isIlCookiePolicy) {
     return (
       <div
+        data-cookie-banner
         dir={isRtl ? 'rtl' : 'ltr'}
-        className="fixed z-[10000] font-assistant bottom-4 left-4 right-4 lg:bottom-9 lg:left-9 lg:right-9 px-4 pb-4 pt-2 lg:py-6 lg:px-9 rounded-3xl border border-[#E5E5E5] dark:border-border-dark bg-white/80 dark:bg-background-dark/80 backdrop-blur-[12px] shadow-[0_8px_25px_rgba(16,42,118,0.17)] dark:shadow-none dark:[filter:drop-shadow(0_1px_1px_#66666612)_drop-shadow(0_2px_2px_#5e5e5e12)_drop-shadow(0_4px_4px_#7a5d4413)_drop-shadow(0_8px_8px_#5e5e5e12)_drop-shadow(0_16px_16px_#5e5e5e12)] opacity-0 animate-popUp transition-all duration-300"
-        style={{ animationDelay: '3s' }}
+        className={`fixed z-[10000] font-assistant bottom-4 left-4 right-4 lg:bottom-9 lg:left-9 lg:right-9 px-4 pb-4 pt-2 lg:py-6 lg:px-9 rounded-3xl border border-[#E5E5E5] dark:border-border-dark bg-card dark:bg-card-dark shadow-lg dark:shadow-lg opacity-0 animate-popUp transition-all duration-200 overflow-hidden ${BANNER_LAYER_CLASS}`}
+        style={{ animationDelay: '0.6s' }}
       >
-        <div>
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div className="relative w-full h-full min-h-0">
+        {/* Background cookie icon – behind content, larger than banner */}
+        <div className="cookie-icon absolute inset-0 flex items-center justify-end overflow-visible pointer-events-none z-0" aria-hidden>
+          <Icon
+            name="cookieBold"
+            className="w-48 h-48 md:w-64 md:h-64 lg:w-80 lg:h-80 text-[#eaffc9] dark:text-[#2b2b2b] translate-y-[8%] translate-x-[-8%] "
+          />
+        </div>
+        <div className="relative z-10">
+          <div className="flex flex-col items-start justify-between gap-4">
             <div className="flex-1 w-full">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <Icon name="cookieBold" className="w-6 h-6" />
                   <h3 className="text-lg -mb-2 font-semibold text-gray-900 dark:text-white">
                     {t('cookieConsent.title')}
                   </h3>
+                  <Icon name="cookieBold" className="w-6 h-6" />
                 </div>
                 <button
                   type="button"
@@ -159,7 +180,7 @@ export default function CookieConsentBanner() {
                   {t('cookieConsent.ilBanner.moreInfoBeforeLink')}
                   <Link
                     href={`/${locale}/cookies`}
-                    className=" text-brand-main dark:text-brand-dark hover:underline"
+                    className=" text-brand-text dark:text-brand-dark underline dark:no-underline hover:font-medium dark:hover:underline"
                   >
                     {t('cookieConsent.ilBanner.privacyPolicy')}
                   </Link>
@@ -170,12 +191,13 @@ export default function CookieConsentBanner() {
             <Button
               size="sm"
               variant="primary"
-              onClick={handleIlConfirm}
-              className="w-full md:w-auto !px-4 font-semibold shrink-0 md:hidden"
+               onClick={handleIlConfirm}
+              className="w-full md:w-fit !px-4 md:!px-10 font-semibold shrink-0"
             >
               {t('cookieConsent.ilBanner.understand')}
             </Button>
           </div>
+        </div>
         </div>
       </div>
     );
@@ -183,9 +205,10 @@ export default function CookieConsentBanner() {
 
   return (
     <div
+      data-cookie-banner
       dir={isRtl ? 'rtl' : 'ltr'}
-      className={`fixed z-[10000] font-assistant bottom-4 left-4 right-4 lg:bottom-9 lg:left-9 lg:right-9 p-4 lg:py-6 lg:px-9 rounded-3xl border border-[#E5E5E5] dark:border-border-dark bg-white dark:bg-background-dark shadow-[0_8px_25px_rgba(16,42,118,0.17)] dark:shadow-none dark:[filter:drop-shadow(0_1px_1px_#66666612)_drop-shadow(0_2px_2px_#5e5e5e12)_drop-shadow(0_4px_4px_#7a5d4413)_drop-shadow(0_8px_8px_#5e5e5e12)_drop-shadow(0_16px_16px_#5e5e5e12)] opacity-0 animate-popUp transition-all duration-300 ${showSettings ? 'max-h-[85vh] overflow-y-auto' : ''}`}
-      style={{ animationDelay: '3s' }}
+      className={`fixed z-[10000] font-assistant bottom-4 left-4 right-4 lg:bottom-9 lg:left-9 lg:right-9 p-4 lg:py-6 lg:px-9 rounded-3xl border border-[#E5E5E5] dark:border-border-dark bg-white dark:bg-background-dark shadow-lg dark:shadow-lg opacity-0 animate-popUp transition-all duration-200 ${showSettings ? 'max-h-[85vh] overflow-y-auto' : ''} ${BANNER_LAYER_CLASS}`}
+      style={{ animationDelay: '0.6s' }}
     >
       <div className="flex-1 min-w-0 w-full">
         <div className="relative">
