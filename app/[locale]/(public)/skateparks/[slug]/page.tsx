@@ -97,6 +97,10 @@ interface Skatepark {
     en?: string[];
     he?: string[];
   };
+  nicknames?: {
+    en?: string[];
+    he?: string[];
+  };
   qualityRating?: {
     elementDiversity?: number;
     cleanliness?: number;
@@ -1510,6 +1514,8 @@ export default function SkateparkPage() {
   const parkName = getLocalizedText(skatepark.name);
   const address = getLocalizedText(skatepark.address);
   const notes = getLocalizedNotes(skatepark.notes);
+  const nicknamesLocale = (skatepark.nicknames?.[locale === 'he' ? 'he' : 'en'] ?? []).filter(Boolean);
+  const nicknamesStr = nicknamesLocale.join(', ');
 
   // Handle both new format (coordinates array) and old format (lat/lng)
   const getCoordinates = () => {
@@ -1638,6 +1644,11 @@ export default function SkateparkPage() {
               {parkName}
             </span>
           </h1>
+          {nicknamesStr && (
+            <p className="text-center text-sm text-text-secondary dark:text-text-secondary-dark -mt-2 mb-2 hidden sm:block">
+              {t('alsoKnownAs')}: {nicknamesStr}
+            </p>
+          )}
 
           {/* Image Gallery - skeleton shown while images load inside ParkImageGallery */}
           <div className="relative z-0">
@@ -1654,9 +1665,16 @@ export default function SkateparkPage() {
           </div>
 
           <div className="flex items-center justify-between px-4">
-            <h1 className="sm:hidden mb-1 text-xl font-semibold text-text dark:text-text-dark">
-              {parkName}
-            </h1>
+            <div>
+              <h1 className="sm:hidden mb-1 text-xl font-semibold text-text dark:text-text-dark">
+                {parkName}
+              </h1>
+              {nicknamesStr && (
+                <p className="sm:hidden text-sm text-text-secondary dark:text-text-secondary-dark -mt-0.5">
+                  {t('alsoKnownAs')}: {nicknamesStr}
+                </p>
+              )}
+            </div>
             <div className="sm:hidden shrink-0">
               <Button
                 variant="brand"

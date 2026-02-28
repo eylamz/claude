@@ -406,12 +406,22 @@ function searchSkateparks(
   const nameResults: SearchResultFromCache[] = [];
   const areaResults: SearchResultFromCache[] = [];
 
-  // 1) Name matches first
+  // 1) Name matches first (including nicknames)
   for (const park of items) {
     const nameEn = getLocalizedText(park.name, 'en');
     const nameHe = getLocalizedText(park.name, 'he');
     const nameLocale = getLocalizedText(park.name, locale);
-    if (!q || matchesQueryOrFlipped(nameEn, query) || matchesQueryOrFlipped(nameHe, query)) {
+    const nicknamesEn = park.nicknames?.en ?? [];
+    const nicknamesHe = park.nicknames?.he ?? [];
+    const nicknameMatches =
+      nicknamesEn.some((n: string) => matchesQueryOrFlipped(n, query)) ||
+      nicknamesHe.some((n: string) => matchesQueryOrFlipped(n, query));
+    if (
+      !q ||
+      matchesQueryOrFlipped(nameEn, query) ||
+      matchesQueryOrFlipped(nameHe, query) ||
+      nicknameMatches
+    ) {
       const id = park._id?.toString() || park.id || park.slug;
       nameMatchedIds.add(id);
       nameResults.push({

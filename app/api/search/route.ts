@@ -152,6 +152,8 @@ export async function GET(request: NextRequest) {
           ...nameOrConditions.flatMap((cond) => [
             { 'name.en': cond },
             { 'name.he': cond },
+            { 'nicknames.en': cond },
+            { 'nicknames.he': cond },
           ]),
         ];
       }

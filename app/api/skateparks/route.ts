@@ -171,6 +171,7 @@ export async function GET(request: NextRequest) {
         closingYear: park.closingYear ?? null,
         closingMonth: park.closingMonth ?? null,
         notes: park.notes || {},
+        nicknames: park.nicknames || {},
         mediaLinks: park.mediaLinks || {},
         status: park.status || 'active',
         seoMetadata: park.seoMetadata || undefined,

@@ -55,6 +55,10 @@ interface SkateparkFormData {
     en?: string[];
     he?: string[];
   };
+  nicknames?: {
+    en?: string[];
+    he?: string[];
+  };
   isFeatured: boolean;
   skillLevel: { beginners: boolean; advanced: boolean; pro: boolean };
   status: 'active' | 'inactive';
@@ -135,6 +139,7 @@ export default function NewSkateparkPage() {
       en: [],
       he: [],
     },
+    nicknames: { en: [], he: [] },
     isFeatured: false,
     skillLevel: { beginners: false, advanced: false, pro: false },
     status: 'active',
@@ -419,6 +424,88 @@ export default function NewSkateparkPage() {
           <p className="text-sm text-text-secondary dark:text-text-secondary-dark -mt-2">
             URL-friendly identifier (auto-generated from English name)
           </p>
+          {/* Nicknames */}
+          <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <p className="text-sm font-medium text-text dark:text-text-dark">Nicknames (optional)</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text dark:text-text-dark">Nicknames (English)</label>
+                {(formData.nicknames?.en || []).map((nickname, index) => (
+                  <div key={`en-${index}`} className="flex gap-2">
+                    <Input
+                      value={nickname}
+                      onChange={(e) => {
+                        const newEn = [...(formData.nicknames?.en || [])];
+                        newEn[index] = e.target.value;
+                        setFormData({ ...formData, nicknames: { ...formData.nicknames, en: newEn } });
+                      }}
+                      placeholder={`Nickname ${index + 1}`}
+                    />
+                    <Button
+                      type="button"
+                      variant="error"
+                      size="sm"
+                      onClick={() => {
+                        const newEn = (formData.nicknames?.en || []).filter((_, i) => i !== index);
+                        setFormData({ ...formData, nicknames: { ...formData.nicknames, en: newEn } });
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const newEn = [...(formData.nicknames?.en || []), ''];
+                    setFormData({ ...formData, nicknames: { ...formData.nicknames, en: newEn } });
+                  }}
+                >
+                  + Add English Nickname
+                </Button>
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-text dark:text-text-dark">Nicknames (Hebrew)</label>
+                {(formData.nicknames?.he || []).map((nickname, index) => (
+                  <div key={`he-${index}`} className="flex gap-2">
+                    <Input
+                      value={nickname}
+                      onChange={(e) => {
+                        const newHe = [...(formData.nicknames?.he || [])];
+                        newHe[index] = e.target.value;
+                        setFormData({ ...formData, nicknames: { ...formData.nicknames, he: newHe } });
+                      }}
+                      placeholder={`כינוי ${index + 1}`}
+                    />
+                    <Button
+                      type="button"
+                      variant="error"
+                      size="sm"
+                      onClick={() => {
+                        const newHe = (formData.nicknames?.he || []).filter((_, i) => i !== index);
+                        setFormData({ ...formData, nicknames: { ...formData.nicknames, he: newHe } });
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    const newHe = [...(formData.nicknames?.he || []), ''];
+                    setFormData({ ...formData, nicknames: { ...formData.nicknames, he: newHe } });
+                  }}
+                >
+                  + Add Hebrew Nickname
+                </Button>
+              </div>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <SelectWrapper

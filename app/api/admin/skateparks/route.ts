@@ -61,6 +61,8 @@ export async function GET(request: Request) {
         { 'name.he': { $regex: search, $options: 'i' } },
         { 'address.street': { $regex: search, $options: 'i' } },
         { 'address.city': { $regex: search, $options: 'i' } },
+        { 'nicknames.en': { $regex: search, $options: 'i' } },
+        { 'nicknames.he': { $regex: search, $options: 'i' } },
       ];
     }
 
@@ -129,6 +131,7 @@ export async function GET(request: Request) {
           closingYear: skatepark.closingYear ?? null,
           closingMonth: skatepark.closingMonth ?? null,
           notes: skatepark.notes || {},
+          nicknames: skatepark.nicknames || {},
           mediaLinks: skatepark.mediaLinks || {},
           status: skatepark.status || 'active',
           seoMetadata: skatepark.seoMetadata || undefined,
@@ -224,6 +227,7 @@ export async function POST(request: NextRequest) {
       closingYear,
       closingMonth,
       notes,
+      nicknames,
       is24Hours,
       isFeatured,
       skillLevel,
@@ -344,6 +348,7 @@ export async function POST(request: NextRequest) {
     
     console.log('Opening year value:', openingYear, 'Processed:', skateparkData.openingYear);
     skateparkData.notes = notes || { en: '', he: '' };
+    skateparkData.nicknames = nicknames ?? { en: [], he: [] };
     skateparkData.is24Hours = is24Hours || false;
     skateparkData.isFeatured = isFeatured || false;
     skateparkData.skillLevel = skillLevel || { beginners: false, advanced: false, pro: false };

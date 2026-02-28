@@ -94,6 +94,7 @@ export async function GET(
       closingYear: skatepark.closingYear ?? undefined,
       closingMonth: skatepark.closingMonth ?? undefined,
       notes: skatepark.notes || { en: '', he: '' },
+      nicknames: skatepark.nicknames || { en: [], he: [] },
       isFeatured: skatepark.isFeatured || false,
       skillLevel: skatepark.skillLevel ?? (skatepark as any).beginners !== undefined
         ? { beginners: (skatepark as any).beginners || false, advanced: (skatepark as any).advanced || false, pro: (skatepark as any).pro || false }
@@ -196,6 +197,7 @@ export async function PUT(
       closingYear,
       closingMonth,
       notes,
+      nicknames,
       is24Hours,
       isFeatured,
       skillLevel,
@@ -386,6 +388,10 @@ export async function PUT(
     if (notes !== undefined) {
       skatepark.notes = notes;
       skatepark.markModified('notes');
+    }
+    if (nicknames !== undefined) {
+      skatepark.nicknames = nicknames;
+      skatepark.markModified('nicknames');
     }
     if (is24Hours !== undefined) {
       skatepark.lightingHours = { ...(skatepark.lightingHours || {}), is24Hours, endTime: skatepark.lightingHours?.endTime || '23:59' };

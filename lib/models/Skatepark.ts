@@ -146,6 +146,7 @@ export interface ISkatepark extends Document {
   closingYear?: number;
   closingMonth?: number;
   notes: ILocalizedStringArray;
+  nicknames?: ILocalizedStringArray;
   isFeatured: boolean;
   mediaLinks: IMediaLinks;
   rating: number;
@@ -472,6 +473,10 @@ const SkateparkSchema: Schema<ISkatepark> = new Schema<ISkatepark>(
       en: { type: [String] },
       he: { type: [String] },
     },
+    nicknames: {
+      en: { type: [String] },
+      he: { type: [String] },
+    },
     isFeatured: {
       type: Boolean,
       default: false,
@@ -618,6 +623,8 @@ SkateparkSchema.index({
   'address.he': 'text',
   'notes.en': 'text',
   'notes.he': 'text',
+  'nicknames.en': 'text',
+  'nicknames.he': 'text',
   area: 'text',
 });
 

@@ -58,6 +58,7 @@ interface Skatepark {
   createdAt?: string | null;
   updatedAt?: string | null;
   distance?: number | null;
+  nicknames?: { en?: string[]; he?: string[] };
 }
 
 interface UserLocation {
@@ -609,17 +610,35 @@ export default function SkateparksPage() {
               nameEn = park.name.en || '';
               nameHe = park.name.he || '';
             }
+            const nicknamesEn = park.nicknames?.en ?? [];
+            const nicknamesHe = park.nicknames?.he ?? [];
+            const nicknameStartsWith = (arr: string[]) =>
+              arr.some(
+                (n) =>
+                  normalizeSearchText(n).startsWith(normalizedQuery) ||
+                  (normalizedFlipped && normalizeSearchText(n).startsWith(normalizedFlipped))
+              );
+            const nicknameIncludes = (arr: string[]) =>
+              arr.some(
+                (n) =>
+                  normalizeSearchText(n).includes(normalizedQuery) ||
+                  (normalizedFlipped && normalizeSearchText(n).includes(normalizedFlipped))
+              );
             const normalizedNameEn = normalizeSearchText(nameEn);
             const normalizedNameHe = normalizeSearchText(nameHe);
             const startsWithMatch =
               normalizedNameEn.startsWith(normalizedQuery) ||
               normalizedNameHe.startsWith(normalizedQuery) ||
+              nicknameStartsWith(nicknamesEn) ||
+              nicknameStartsWith(nicknamesHe) ||
               (normalizedFlipped &&
                 (normalizedNameEn.startsWith(normalizedFlipped) ||
                   normalizedNameHe.startsWith(normalizedFlipped)));
             const includesMatch =
               normalizedNameEn.includes(normalizedQuery) ||
               normalizedNameHe.includes(normalizedQuery) ||
+              nicknameIncludes(nicknamesEn) ||
+              nicknameIncludes(nicknamesHe) ||
               (normalizedFlipped &&
                 (normalizedNameEn.includes(normalizedFlipped) ||
                   normalizedNameHe.includes(normalizedFlipped)));

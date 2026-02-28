@@ -164,6 +164,7 @@ export async function GET(
       closingYear: skatepark.closingYear ?? null,
       closingMonth: skatepark.closingMonth ?? null,
       notes: skatepark.notes || {},
+      nicknames: skatepark.nicknames || {},
       rating: skatepark.rating || 0,
       totalReviews: skatepark.totalReviews || 0,
       mediaLinks: skatepark.mediaLinks || {},
