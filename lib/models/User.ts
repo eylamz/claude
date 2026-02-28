@@ -48,6 +48,7 @@ export interface IUser extends Document {
   emailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
+  lastLoginAt?: Date;
   
   // Instance methods
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -185,6 +186,9 @@ const UserSchema: Schema<IUser> = new Schema<IUser>(
     emailVerified: {
       type: Boolean,
       default: false,
+    },
+    lastLoginAt: {
+      type: Date,
     },
   },
   {

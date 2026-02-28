@@ -67,15 +67,15 @@ export default function FormFulfilledPage() {
           </p>
           <p className="text-sm text-text-secondary dark:text-text-secondary-dark">
             {locale === 'en'
-              ? 'To ensure data accuracy, each form can only be submitted once per user.'
-              : 'כדי להבטיח דיוק נתונים, כל טופס יכול להישלח רק פעם אחת לכל משתמש.'}
+              ? 'To ensure data accuracy, each survey can only be submitted once per user.'
+              : 'כדי להבטיח דיוק נתונים, כל סקר יכול להישלח רק פעם אחת לכל משתמש.'}
           </p>
           <div className="pt-4">
             <Button
               variant="blue"
               onClick={() => router.push(`/${locale}/growth-lab`)}
             >
-              {locale === 'en' ? 'Back to Forms' : 'חזרה לטפסים'}
+              {locale === 'en' ? 'Back to Growth Lab' : 'חזרה למרחב'}
             </Button>
           </div>
         </CardContent>

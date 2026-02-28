@@ -202,7 +202,22 @@ export default function UsersPage() {
     return colors[role] || 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300';
   };
 
-  const getStatusColor = (emailVerified: boolean) => {
+  const getStatusColor = (emailVerified: boolean, lastLogin?: string) => {
+    let isRecentlyActive = false;
+
+    if (lastLogin) {
+      const lastLoginDate = new Date(lastLogin);
+      if (!Number.isNaN(lastLoginDate.getTime())) {
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        isRecentlyActive = lastLoginDate >= oneWeekAgo;
+      }
+    }
+
+    if (isRecentlyActive) {
+      return 'bg-purple-bg dark:bg-purple-bg-dark text-brand-dark dark:text-lime-400';
+    }
+
     return emailVerified
       ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
       : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400';
@@ -210,10 +225,12 @@ export default function UsersPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   };
 
@@ -259,7 +276,7 @@ export default function UsersPage() {
       </div>
 
       {/* Filters */}
-      <Card className="!p-0 bg-card dark:bg-card-dark">
+      <Card className="!p-0 bg-card dark:bg-card-dark overflow-visible">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-64">
@@ -418,7 +435,7 @@ export default function UsersPage() {
                 <TableCell className="hidden md:table-cell">
                   <button
                     onClick={() => setViewDetailsModal(user.id)}
-                    className="text-sm font-medium text-brand-main dark:text-brand-dark hover:underline"
+                    className="text-sm font-medium text-brand-text underline  dark:no-underline dark:text-brand-dark hover:font-medium dark:hover:underline"
                   >
                     {user.fullName}
                   </button>
@@ -444,7 +461,7 @@ export default function UsersPage() {
                   {user.orderCount}
                 </TableCell>
                 <TableCell className="hidden md:table-cell whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.emailVerified)}`}>
+                  <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.emailVerified, user.lastLogin)}`}>
                     {user.emailVerified ? 'Active' : 'Pending'}
                   </span>
                 </TableCell>
@@ -564,7 +581,7 @@ export default function UsersPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-text-secondary dark:text-text-secondary-dark mb-1">Status</label>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.emailVerified)}`}>
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(user.emailVerified, user.lastLogin)}`}>
                           {user.emailVerified ? 'Active' : 'Pending'}
                         </span>
                       </div>

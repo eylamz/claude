@@ -122,6 +122,14 @@ export const authOptions: NextAuthOptions = {
             throw new Error('EMAIL_NOT_VERIFIED');
           }
 
+          // Update last login timestamp
+          try {
+            user.lastLoginAt = new Date();
+            await user.save();
+          } catch (error) {
+            console.error('Failed to update lastLoginAt:', error);
+          }
+
           // Return user object for JWT token including preferences
           // Also pass rememberMe so it can be used in jwt callback for session duration
           return {

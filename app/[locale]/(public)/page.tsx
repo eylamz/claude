@@ -4,7 +4,7 @@ import '@/app/[locale]/(public)/button-bg-animated.css';
 import '@/app/[locale]/(public)/card-bg-animated.css';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   HeroCarousel,
@@ -17,6 +17,7 @@ import {
   ArrowRight,
 } from '@/components/home';
 import { Button } from '@/components/ui';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Icon } from '@/components/icons/Icon';
 import { Locale } from '@/i18n';
 import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
@@ -103,6 +104,10 @@ export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [skateparks, setSkateparks] = useState<HomeSkatepark[]>([]);
   const [guides, setGuides] = useState<Guide[]>([]);
+  const [communityClickedIndex, setCommunityClickedIndex] = useState<number | null>(null);
+  const [heroCtaLoading, setHeroCtaLoading] = useState(false);
+  const [finalCtaLoading, setFinalCtaLoading] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetchHomepageData();
@@ -273,26 +278,36 @@ export default function HomePage() {
           </div>
 
           {/* CTA Button */}
-          <Link href={`/${locale}/skateparks`}>
-            <Button
-              variant="primaryReverse"
-              className="opacity-0 inline-block !px-12 !py-[18px] !text-lg dark:text-black font-semibold !h-auto rounded-full transition-all duration-300 dark:bg-brand-dark hover:bg-brand-text/95 dark:hover:bg-brand-dark/95"
-              style={{
-                boxShadow: '0 10px 40px rgba(13, 119, 19, 0.3)',
-                animation: 'popFadeIn 0.3s ease-out 0.6s  forwards',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 15px 50px rgba(13, 119, 19, 0.5)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 10px 40px rgba(13, 119, 19, 0.3)';
-              }}
-            >
-              {t('discoverSkateparks')}
-            </Button>
-          </Link>
+          <Button
+            variant="primaryReverse"
+            className="opacity-0 inline-block !px-12 !py-[18px] !text-lg dark:text-black font-semibold !h-auto rounded-full transition-all duration-300 dark:bg-brand-dark hover:bg-brand-text/95 dark:hover:bg-brand-dark/95"
+            style={{
+              boxShadow: '0 10px 40px rgba(13, 119, 19, 0.3)',
+              animation: 'popFadeIn 0.3s ease-out 0.6s  forwards',
+            }}
+            onMouseEnter={(e) => {
+              if (heroCtaLoading) return;
+              e.currentTarget.style.transform = 'translateY(-3px)';
+              e.currentTarget.style.boxShadow = '0 15px 50px rgba(13, 119, 19, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 10px 40px rgba(13, 119, 19, 0.3)';
+            }}
+            disabled={heroCtaLoading}
+            onClick={() => {
+              setHeroCtaLoading(true);
+              router.push(`/${locale}/skateparks`);
+            }}
+          >
+            {heroCtaLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <LoadingSpinner size={16} variant="brand" />
+              </span>
+            ) : (
+              t('discoverSkateparks')
+            )}
+          </Button>
         </div>
 
         {/* Scroll indicator */}
@@ -641,14 +656,23 @@ export default function HomePage() {
                 </span>
               ))}
           </h2>
-          <Link href={`/${locale}/skateparks`} className="block">
-            <Button
-              variant="primary"
-              className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-base lg:text-lg font-semibold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 translate-x-5 sm:translate-x-2.5 lg:translate-x-0 xl:translate-x-20"
-            >
-              {t('getStarted')}
-            </Button>
-          </Link>
+          <Button
+            variant="primary"
+            className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-base lg:text-lg font-semibold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 translate-x-5 sm:translate-x-2.5 lg:translate-x-0 xl:translate-x-20 block"
+            disabled={finalCtaLoading}
+            onClick={() => {
+              setFinalCtaLoading(true);
+              router.push(`/${locale}/skateparks`);
+            }}
+          >
+            {finalCtaLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <LoadingSpinner size={16} variant="brand" />
+              </span>
+            ) : (
+              t('getStarted')
+            )}
+          </Button>
         </div>
       </section>
 
@@ -686,9 +710,14 @@ export default function HomePage() {
                   'https://res.cloudinary.com/dr0rvohz9/image/upload/w_1700,q_100,c_fill/v1772201360/m4njuep6fcpami4oph3v.png',
               },
             ].map((item, index) => (
-              <Link
+              <a
                 key={index}
                 href={item.href}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCommunityClickedIndex(index);
+                  setTimeout(() => router.push(item.href), 300);
+                }}
                 className={`relative aspect-square rounded-2xl bg-gradient-to-br ${item.gradient} overflow-hidden transition-all duration-300 hover:bg-[length:160%] bg-[length:150%] bg-center saturate-150 block`}
                 style={
                   item.backgroundImage
@@ -696,11 +725,16 @@ export default function HomePage() {
                     : undefined
                 }
               >
+                {communityClickedIndex === index && (
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-2xl">
+                    <LoadingSpinner variant="header" size={40} />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
                 <div className="absolute bottom-5 left-5 z-10 font-semibold text-white">
                   {item.label}
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         </div>

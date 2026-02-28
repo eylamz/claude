@@ -101,7 +101,7 @@ export async function GET(request: Request) {
       emailVerified: user.emailVerified || false,
       addresses: user.addresses || [],
       orderCount: 0, // Would need to query Order model
-      lastLogin: user.updatedAt || user.createdAt, // Would need to track separately
+      lastLogin: user.lastLoginAt || user.updatedAt || user.createdAt,
     }));
 
     return NextResponse.json({

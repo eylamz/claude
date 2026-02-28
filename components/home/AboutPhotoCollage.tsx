@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import styles from './AboutPhotoCollage.module.css';
 
 interface Skatepark {
@@ -20,8 +21,10 @@ interface AboutPhotoCollageProps {
 
 export const AboutPhotoCollage = ({ parks: initialParks }: AboutPhotoCollageProps) => {
   const locale = useLocale();
+  const router = useRouter();
   const [parks, setParks] = useState<Skatepark[]>(initialParks || []);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [clickedIndex, setClickedIndex] = useState<number | null>(null);
 
   // Fetch parks if not provided
   useEffect(() => {
@@ -29,6 +32,17 @@ export const AboutPhotoCollage = ({ parks: initialParks }: AboutPhotoCollageProp
       fetchParks();
     }
   }, [initialParks]);
+
+  const handleCardClick = useCallback(
+    (e: React.MouseEvent, index: number, slug: string) => {
+      e.preventDefault();
+      setClickedIndex(index);
+      setTimeout(() => {
+        router.push(`/${locale}/skateparks/${slug}`);
+      }, 300);
+    },
+    [locale, router]
+  );
 
   const fetchParks = async () => {
     try {
@@ -100,13 +114,19 @@ export const AboutPhotoCollage = ({ parks: initialParks }: AboutPhotoCollageProp
           const isDimmed = isEveryThird ? !isHovered : isHovered;
           
           return (
-            <Link
+            <a
               key={park.id}
               href={`/${locale}/skateparks/${park.slug}`}
               className={`${styles.card} ${isDimmed ? styles.dimmed : ''}`}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
+              onClick={(e) => handleCardClick(e, index, park.slug)}
             >
+              {clickedIndex === index && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-lg">
+                  <LoadingSpinner variant="header" size={40} />
+                </div>
+              )}
               <div className={styles.imageWrapper}>
                 <img
                   src={park.image || '/placeholder.jpg'}
@@ -115,7 +135,7 @@ export const AboutPhotoCollage = ({ parks: initialParks }: AboutPhotoCollageProp
                   loading="lazy"
                 />
               </div>
-            </Link>
+            </a>
           );
         })}
       </div>

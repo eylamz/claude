@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import { Button, Skeleton, Toaster } from '@/components/ui';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { SearchInput } from '@/components/common/SearchInput';
 import { useToast } from '@/hooks/use-toast';
 import { isGrowthLabEnabled } from '@/lib/utils/ecommerce';
@@ -106,6 +107,12 @@ const FormCard = memo(({
           filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'
         }}
       >
+        {/* Loading overlay when navigating to form page */}
+        {isClicked && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-2xl">
+            <LoadingSpinner variant="header" size={40} />
+          </div>
+        )}
         {/* Gradient Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-brand-purple/20 via-brand-main/10 to-brand-blue/20 dark:from-brand-purple/10 dark:via-brand-dark/10 dark:to-brand-blue/10" />
         

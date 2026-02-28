@@ -296,6 +296,11 @@ const GuideSectionCard = memo(({ guide, locale }: { guide: Guide; locale: string
             'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)',
         }}
       >
+        {isClicked && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-2xl">
+            <LoadingSpinner variant="header" size={40} />
+          </div>
+        )}
         <GuideThumbnail photoUrl={guide.image ?? ''} guideTitle={guide.title} />
       </div>
 

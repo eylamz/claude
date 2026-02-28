@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
-import { Button, Card, CardContent, Skeleton, Toaster } from '@/components/ui';
+import { Button, Card, CardContent, Toaster } from '@/components/ui';
 import { FormFieldRenderer } from '@/components/forms/FormFieldRenderer';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/use-toast';
 import { isGrowthLabEnabled } from '@/lib/utils/ecommerce';
 
@@ -334,16 +335,8 @@ export default function FormFillPage() {
 
   if (loading || alreadySubmitted) {
     return (
-      <div className="pt-16 space-y-6 max-w-4xl mx-auto px-4">
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-4 w-full" />
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-20 w-full" />
-            ))}
-          </CardContent>
-        </Card>
+      <div className="fixed inset-0 flex items-center justify-center min-h-screen bg-background dark:bg-background-dark">
+        <LoadingSpinner size={56} />
       </div>
     );
   }
@@ -354,14 +347,14 @@ export default function FormFillPage() {
         <Card>
           <CardContent className="p-12 text-center">
             <p className="text-text-secondary dark:text-text-secondary-dark">
-              {locale === 'en' ? 'Form not found' : 'טופס לא נמצא'}
+              {locale === 'en' ? 'Survey not found' : 'סקר לא נמצא'}
             </p>
             <Button
               variant="blue"
               onClick={() => router.push(`/${locale}/growth-lab`)}
               className="mt-4"
             >
-              {locale === 'en' ? 'Back to Forms' : 'חזרה לטפסים'}
+              {locale === 'en' ? 'Back to Growth Lab' : 'חזרה למרחב'}
             </Button>
           </CardContent>
         </Card>
@@ -418,7 +411,7 @@ export default function FormFillPage() {
                 : 'שולח...'
               : locale === 'en'
               ? 'Submit Form'
-              : 'שלח טופס'}
+              : 'שלח סקר'}
           </Button>
         </div>
       </form>

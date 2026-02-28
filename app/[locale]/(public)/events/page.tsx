@@ -329,6 +329,12 @@ const EventCard = memo(
               'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)',
           }}
         >
+          {/* Loading overlay when navigating to event page */}
+          {isClicked && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-2xl">
+              <LoadingSpinner variant="header" size={40} />
+            </div>
+          )}
           {/* Sports Tags Overlay */}
           {event.sports && event.sports.length > 0 && (
             <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">

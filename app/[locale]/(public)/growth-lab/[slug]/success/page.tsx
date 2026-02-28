@@ -62,15 +62,15 @@ export default function FormSuccessPage() {
           </h1>
           <p className="text-lg text-text-secondary dark:text-text-secondary-dark">
             {locale === 'en'
-              ? 'Thank you for fulfilling the form and helping the community.'
-              : 'תודה שמילאתם את הטופס ועזרתם לקהילה.'}
+              ? 'Thank you for fulfilling the survey and helping the community.'
+              : 'תודה שמילאתם את הסקר ועזרתם לקהילה.'}
           </p>
           <div className="pt-4">
             <Button
               variant="blue"
               onClick={() => router.push(`/${locale}/growth-lab`)}
             >
-              {locale === 'en' ? 'Back to Forms' : 'חזרה לטפסים'}
+              {locale === 'en' ? 'Back to Growth Lab' : 'חזרה למרחב'}
             </Button>
           </div>
         </CardContent>
