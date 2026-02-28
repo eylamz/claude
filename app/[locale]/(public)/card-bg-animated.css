@@ -69,6 +69,24 @@
   z-index: 12;
 }
 
+/* Light mode only: per-card gradient-0 colors (when .dark is not applied) */
+html:not(.dark) .card-gradient.card-anim-1 > .gradient-0 {
+  background: hsl(123, 11%, 43%);
+  transition: background 0.2s ease;
+}
+html:not(.dark) .card-gradient.card-anim-2 > .gradient-0 {
+  background: hsl(224, 40%, 29%);
+  transition: background 0.2s ease;
+}
+html:not(.dark) .card-gradient.card-anim-3 > .gradient-0 {
+  background: hsl(48, 59%, 34%);
+  transition: background 0.2s ease;
+}
+html:not(.dark) .card-gradient.card-anim-4 > .gradient-0 {
+  background: hsl(4, 51%, 31%);
+  transition: background 0.2s ease;
+}
+
 .card-gradient .gradient-2 {
   align-items: center;
   display: flex;

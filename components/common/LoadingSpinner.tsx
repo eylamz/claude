@@ -3,9 +3,9 @@
 import React from 'react';
 import { useTheme } from '@/context/ThemeProvider';
 
-export const LoadingSpinner: React.FC<{ 
+export const LoadingSpinner: React.FC<{
   className?: string;
-  variant?: 'default' | 'error' | 'brand' | 'info' | 'success' | 'warning' | 'header' | 'blue';
+  variant?: 'default' | 'error' | 'brand' | 'brandText' | 'info' | 'success' | 'warning' | 'header' | 'blue';
   size?: number;
 }> = ({ className, variant = 'default', size = 48 }) => {
   const { theme } = useTheme();
@@ -13,11 +13,13 @@ export const LoadingSpinner: React.FC<{
   const getVariantColors = () => {
     switch (variant) {
       case 'error':
-        return theme === 'dark' 
+        return theme === 'dark'
           ? { active: '#f3394c', track: 'transparent' }
           : { active: '#cc2a2a', track: 'transparent' };
       case 'brand':
         return { active: '#143116', track: 'transparent' };
+      case 'brandText':
+        return { active: 'hsl(122, 100%, 12%)', track: 'transparent' };
       case 'info':
         return { active: '#3b82f6', track: 'transparent' };
       case 'success':
@@ -25,13 +27,13 @@ export const LoadingSpinner: React.FC<{
       case 'warning':
         return { active: '#eab308', track: 'transparent' };
       case 'blue':
-        return theme === 'dark' 
+        return theme === 'dark'
           ? { active: '#93c5fd', track: 'transparent' }
           : { active: '#1d4ed8', track: 'transparent' };
       case 'header':
-        return theme === 'dark' 
+        return theme === 'dark'
           ? { active: '#f9fafb', track: 'transparent' }
-            : { active: '#111827', track: 'transparent' };
+          : { active: '#111827', track: 'transparent' };
       default:
         return { active: '#4d4d4d', track: 'transparent' };
     }
@@ -40,7 +42,7 @@ export const LoadingSpinner: React.FC<{
   // const getVariantColors = () => {
   //   switch (variant) {
   //     case 'error':
-  //       return theme === 'dark' 
+  //       return theme === 'dark'
   //         ? { active: '#f3394c', track: '#5d2227' }
   //         : { active: '#cc2a2a', track: '#5d2227' };
   //     case 'brand':
@@ -52,11 +54,11 @@ export const LoadingSpinner: React.FC<{
   //     case 'warning':
   //       return { active: '#eab308', track: '#fef9c3' };
   //     case 'blue':
-  //       return theme === 'dark' 
+  //       return theme === 'dark'
   //         ? { active: '#93c5fd', track: '#195570' }
   //         : { active: '#1d4ed8', track: '#b6d9fd' };
   //     case 'header':
-  //       return theme === 'dark' 
+  //       return theme === 'dark'
   //         ? { active: '#f9fafb', track: '#374151' }
   //         : { active: '#111827', track: '#e5e7eb' };
   //     default:
@@ -173,9 +175,9 @@ export const LoadingSpinner: React.FC<{
         }
       `}</style>
       <div className={`flex items-center justify-center h-full ${className || ''}`}>
-        <svg 
-          className="loader" 
-          viewBox="0 0 384 384" 
+        <svg
+          className="loader"
+          viewBox="0 0 384 384"
           xmlns="http://www.w3.org/2000/svg"
           style={{ width: size, height: size }}
         >
@@ -204,6 +206,3 @@ export const LoadingSpinner: React.FC<{
 };
 
 export default LoadingSpinner;
-
-
-

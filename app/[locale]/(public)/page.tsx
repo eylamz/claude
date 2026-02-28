@@ -229,17 +229,17 @@ export default function HomePage() {
   return (
     <main className=" w-full bg-background dark:bg-background-dark">
       {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple/10 via-transparent to-brand-main/10 dark:from-purple/5 dark:to-brand-dark/5">
+      <section className="relative min-h-[500px] h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-purple/10 via-transparent to-brand-main/10 dark:from-purple/5 dark:to-brand-dark/5">
         {/* Animated gradient overlay */}
         <div className="absolute inset-0 hero-gradient z-[1] bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]"></div>
 
         {/* Hero content */}
-        <div className="relative z-10 text-center px-5 max-w-[1000px]">
-          {/* Main title */}
+        <div className="relative z-10 text-center px-4 sm:px-5 max-w-[1000px] w-full">
+          {/* Main title - scales with viewport, stays readable at 150% zoom */}
           <h1
-            className="hero-title-gradient font-extrabold mb-6 leading-[1] tracking-[-0.02em]"
+            className="hero-title-gradient font-extrabold mb-4 sm:mb-6 leading-[1.1] tracking-[-0.02em]"
             style={{
-              fontSize: 'clamp(2.5rem, 8vw, 6rem)',
+              fontSize: 'clamp(2rem, 5.5vw + 1rem, 4rem)',
               animation: 'fadeInUp 0.7s ease-out',
             }}
           >
@@ -255,9 +255,9 @@ export default function HomePage() {
 
           {/* Subtitle */}
           <p
-            className="font-normal mb-8 max-w-3xl mx-auto leading-relaxed text-[#5C5C5C] dark:text-[#A0A0A0]"
+            className="font-normal mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed text-[#5C5C5C] dark:text-[#A0A0A0]"
             style={{
-              fontSize: 'clamp(1.1rem, 2.5vw, 1.5rem)',
+              fontSize: 'clamp(0.9375rem, 1.5vw + 0.75rem, 1.25rem)',
               lineHeight: '1.6',
               animation: 'fadeInUp 0.7s ease-out 0.2s backwards',
             }}
@@ -267,9 +267,9 @@ export default function HomePage() {
 
           {/* Tagline */}
           <div
-            className="font-bold mb-12 text-brand-text dark:text-brand-dark"
+            className="font-bold mb-8 sm:mb-12 text-brand-text dark:text-brand-dark"
             style={{
-              fontSize: 'clamp(1.3rem, 3vw, 2rem)',
+              fontSize: 'clamp(1.0625rem, 2vw + 0.75rem, 1.5rem)',
               letterSpacing: '-0.01em',
               animation: 'fadeInUp 0.7s ease-out 0.25s backwards',
             }}
@@ -277,11 +277,13 @@ export default function HomePage() {
             {t('heroTagline')}
           </div>
 
-          {/* CTA Button */}
+          {/* CTA Button - responsive size for zoom and viewport */}
           <Button
             variant="primaryReverse"
-            className="opacity-0 inline-block !px-12 !py-[18px] !text-lg dark:text-black font-semibold !h-auto rounded-full transition-all duration-300 dark:bg-brand-dark hover:bg-brand-text/95 dark:hover:bg-brand-dark/95"
+            className="opacity-0 inline-block dark:text-black font-semibold !h-auto rounded-full transition-all duration-300 dark:bg-brand-dark hover:bg-brand-text/95 dark:hover:bg-brand-dark/95"
             style={{
+              padding: 'clamp(0.625rem, 1.5vw + 0.25rem, 1rem) clamp(1.5rem, 3.5vw + 0.5rem, 2.75rem)',
+              fontSize: 'clamp(0.9375rem, 1.25vw + 0.625rem, 1.0625rem)',
               boxShadow: '0 10px 40px rgba(13, 119, 19, 0.3)',
               animation: 'popFadeIn 0.3s ease-out 0.6s  forwards',
             }}
@@ -301,8 +303,8 @@ export default function HomePage() {
             }}
           >
             {heroCtaLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <LoadingSpinner size={16} variant="brand" />
+              <span className="h-[1.25rem] md:h-[1rem] w-[6.25rem] flex items-center justify-center gap-2">
+                <LoadingSpinner size={16} variant="brandText" />
               </span>
             ) : (
               t('discoverSkateparks')
@@ -324,7 +326,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-        
 
       {/* Hero Carousel Section */}
       {homepageSettings?.heroCarouselImages && homepageSettings.heroCarouselImages.length > 0 ? (
@@ -642,7 +643,7 @@ export default function HomePage() {
         }}
       >
         <div
-          className="absolute inset-0  dark:bg-background-dark/30 md:dark:bg-background-dark/20"
+          className="absolute inset-0 dark:bg-background-dark/20 md:dark:bg-background-dark/10"
           aria-hidden="true"
         />
         <div className="relative z-10 max-w-4xl mx-auto">
@@ -656,23 +657,25 @@ export default function HomePage() {
                 </span>
               ))}
           </h2>
-          <Button
-            variant="primary"
-            className="px-6 md:px-8 py-4 md:py-6 text-xs md:text-base lg:text-lg font-semibold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 translate-x-5 sm:translate-x-2.5 lg:translate-x-0 xl:translate-x-20 block"
-            disabled={finalCtaLoading}
-            onClick={() => {
-              setFinalCtaLoading(true);
-              router.push(`/${locale}/skateparks`);
-            }}
-          >
-            {finalCtaLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <LoadingSpinner size={16} variant="brand" />
-              </span>
-            ) : (
-              t('getStarted')
-            )}
-          </Button>
+          <div className="flex justify-center">
+            <Button
+              variant="primary"
+              className=" !h-auto px-4 md:px-6 py-2 md:py-2 text-xs md:text-base lg:text-lg font-semibold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 translate-x-5 sm:translate-x-2.5 lg:translate-x-0 xl:translate-x-20 block"
+              disabled={finalCtaLoading}
+              onClick={() => {
+                setFinalCtaLoading(true);
+                router.push(`/${locale}/skateparks`);
+              }}
+            >
+              {finalCtaLoading ? (
+                <span className="h-[1rem] w-[4.375rem] md:h-[0.6rem] md:w-[5rem] lg:h-[1.75rem] lg:w-[6.25rem] flex items-center justify-center gap-2">
+                  <LoadingSpinner size={16} variant="default" className="!h-auto" />
+                </span>
+              ) : (
+                t('getStarted')
+              )}
+            </Button>
+          </div>
         </div>
       </section>
 

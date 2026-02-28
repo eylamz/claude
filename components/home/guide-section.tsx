@@ -212,7 +212,7 @@ export const GuideSection = ({ guides, t: _t }: GuideSectionProps) => {
             className="absolute ltr:left-[0px] rtl:right-[5px] top-1/2 -translate-y-1/2 z-10 transition-all duration-200 bg-white/80 hover:bg-white/90 dark:bg-black/80 dark:hover:bg-black/90 rounded-full p-2 shadow-lg opacity-0 animate-popFadeIn"
             style={{ animationDelay: '1600ms' }}
           >
-            <ArrowRight className="h-6 w-6 rotate-180" />
+            <ArrowRight className="h-6 w-6 ltr:rotate-180" />
           </button>
         )}
         <div
@@ -229,7 +229,7 @@ export const GuideSection = ({ guides, t: _t }: GuideSectionProps) => {
             className="absolute ltr:right-[-10px] rtl:left-[-10px] top-1/2 -translate-y-1/2 z-10 transition-all duration-200 bg-white/80 hover:bg-white/90 dark:bg-black/80 dark:hover:bg-black/90 rounded-full p-2 shadow-lg opacity-0 animate-popFadeIn"
             style={{ animationDelay: '1600ms' }}
           >
-            <ArrowRight className="h-6 w-6" />
+            <ArrowRight className="h-6 w-6 rtl:rotate-180" />
           </button>
         )}
       </div>
