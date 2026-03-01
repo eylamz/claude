@@ -4,7 +4,7 @@ import * as React from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type SelectVariant = "purple" | "red" | "orange" | "green" | "gray" | "blue" | "pink" | "default";
+type SelectVariant = "purple" | "red" | "orange" | "green" | "gray" | "blue" | "pink" | "default"| "teal" | "yellow";
 
 const variants: Record<SelectVariant, string> = {
   default: "bg-input dark:bg-input-dark border-border dark:border-border-dark text-text dark:text-text-dark",
@@ -15,6 +15,8 @@ const variants: Record<SelectVariant, string> = {
   gray: "border-gray-border dark:border-gray-border-dark bg-gray-bg dark:bg-gray-bg-dark text-gray dark:text-gray-dark hover:bg-gray-hover-bg dark:hover:bg-gray-hover-bg-dark",
   blue: "border-blue-border dark:border-blue-border-dark bg-blue-bg dark:bg-blue-bg-dark text-blue dark:text-blue-dark hover:bg-blue-hover-bg dark:hover:bg-blue-hover-bg-dark",
   pink: "border-pink-border dark:border-pink-border-dark bg-pink-bg dark:bg-pink-bg-dark text-pink dark:text-pink-dark hover:bg-pink-hover-bg dark:hover:bg-pink-hover-bg-dark",
+  yellow: "border-yellow-border dark:border-yellow-border-dark bg-yellow-bg dark:bg-yellow-bg-dark text-yellow dark:text-yellow-dark hover:bg-yellow-hover-bg dark:hover:bg-yellow-hover-bg-dark",
+  teal: "border-teal-border dark:border-teal-border-dark bg-teal-bg dark:bg-teal-bg-dark text-teal dark:text-teal-dark hover:bg-teal-hover-bg dark:hover:bg-teal-hover-bg-dark",
 };
 
 const SelectContext = React.createContext<{

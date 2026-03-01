@@ -769,7 +769,7 @@ export default function SkateparkDetailPage() {
                 ))}
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="blue"
                   size="sm"
                   onClick={() => {
                     const newEn = [...(skatepark.nicknames?.en || []), ''];
@@ -807,7 +807,7 @@ export default function SkateparkDetailPage() {
                 ))}
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="blue"
                   size="sm"
                   onClick={() => {
                     const newHe = [...(skatepark.nicknames?.he || []), ''];

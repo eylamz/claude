@@ -1,5 +1,10 @@
 import { Metadata } from 'next';
-import { generateMetadata as genMeta, getLocalizedText, getMetaTitleWithFallback, DEFAULT_META_TITLE } from './utils';
+import {
+  generateMetadata as genMeta,
+  getLocalizedText,
+  getMetaTitleWithFallback,
+  DEFAULT_META_TITLE,
+} from './utils';
 import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';
 import Guide from '@/lib/models/Guide';
@@ -9,13 +14,18 @@ import { formatEventForDetail } from '@/lib/events/formatEvent';
 
 // Example metadata generators for different page types
 
-export async function generateProductMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
+export async function generateProductMetadata(params: {
+  slug: string;
+  locale: string;
+}): Promise<Metadata> {
   const { slug, locale } = params;
-  
+
   // Fetch product data
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
-  const res = await fetch(`${siteUrl}/api/products/${slug}?locale=${locale}`, { next: { revalidate: 3600 } });
-  
+  const res = await fetch(`${siteUrl}/api/products/${slug}?locale=${locale}`, {
+    next: { revalidate: 3600 },
+  });
+
   if (!res.ok) {
     return genMeta({
       title: 'Product Not Found',
@@ -26,10 +36,10 @@ export async function generateProductMetadata(params: { slug: string; locale: st
 
   const { product } = await res.json();
   const title = getLocalizedText(product.name, locale);
-  const description = product.description 
+  const description = product.description
     ? getLocalizedText(product.description, locale).substring(0, 160)
     : `Shop ${title} at ENBOSS. High-quality products for extreme sports enthusiasts.`;
-  
+
   const image = product.images?.[0]?.url || '/og-product-default.jpg';
   const price = product.discountPrice || product.price;
 
@@ -44,34 +54,36 @@ export async function generateProductMetadata(params: { slug: string; locale: st
   });
 }
 
-export async function generateSkateparkMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
+export async function generateSkateparkMetadata(params: {
+  slug: string;
+  locale: string;
+}): Promise<Metadata> {
   const { slug, locale } = params;
-  
+
   try {
     await connectDB();
-    
+
     // Try to find active skatepark first
-    let skatepark = await Skatepark.findOne({ 
-      slug: slug.toLowerCase(), 
-      status: 'active' 
+    let skatepark = await Skatepark.findOne({
+      slug: slug.toLowerCase(),
+      status: 'active',
     }).lean();
-    
+
     // If not found, try inactive parks (for closed parks that should still be accessible)
     if (!skatepark) {
-      skatepark = await Skatepark.findOne({ 
-        slug: slug.toLowerCase(), 
-        status: 'inactive' 
+      skatepark = await Skatepark.findOne({
+        slug: slug.toLowerCase(),
+        status: 'inactive',
       }).lean();
     }
-    
+
     if (!skatepark) {
-      const notFoundTitle = locale === 'he' 
-        ? 'סקייטפארק לא נמצא'
-        : 'Skatepark Not Found';
-      const notFoundDesc = locale === 'he'
-        ? 'הסקייטפארק שחיפשת לא נמצא.'
-        : 'The skatepark you are looking for could not be found.';
-      
+      const notFoundTitle = locale === 'he' ? 'סקייטפארק לא נמצא' : 'Skatepark Not Found';
+      const notFoundDesc =
+        locale === 'he'
+          ? 'הסקייטפארק שחיפשת לא נמצא.'
+          : 'The skatepark you are looking for could not be found.';
+
       return genMeta({
         title: notFoundTitle,
         description: notFoundDesc,
@@ -84,15 +96,19 @@ export async function generateSkateparkMetadata(params: { slug: string; locale: 
     const seo = (skatepark as any).seoMetadata;
 
     // Meta description: prefer seoMetadata.description, then notes, then fallback
-    const seoDescription = seo?.description && (seo.description.en || seo.description.he)
-      ? getLocalizedText(seo.description, locale).trim()
-      : '';
+    const seoDescription =
+      seo?.description && (seo.description.en || seo.description.he)
+        ? getLocalizedText(seo.description, locale).trim()
+        : '';
     let notesText = '';
     if (skatepark.notes) {
       if (typeof skatepark.notes === 'string') {
         notesText = skatepark.notes;
       } else if (typeof skatepark.notes === 'object') {
-        const localeNotes = (skatepark.notes as any)[locale] || (skatepark.notes as any).en || (skatepark.notes as any).he;
+        const localeNotes =
+          (skatepark.notes as any)[locale] ||
+          (skatepark.notes as any).en ||
+          (skatepark.notes as any).he;
         if (Array.isArray(localeNotes)) {
           notesText = localeNotes.join(' ');
         } else if (typeof localeNotes === 'string') {
@@ -100,14 +116,15 @@ export async function generateSkateparkMetadata(params: { slug: string; locale: 
         }
       }
     }
-    const fallbackDescription = locale === 'he'
-      ? `בקר ב${name} - ${address}. בדוק שעות פעילות, שירותים וביקורות ב-ENBOSS.`
-      : `Visit ${name} - ${address}. Check hours, amenities, and reviews on ENBOSS.`;
+    const fallbackDescription =
+      locale === 'he'
+        ? `בקר ב${name} - ${address}. בדוק שעות פעילות, שירותים וביקורות ב-ENBOSS.`
+        : `Visit ${name} - ${address}. Check hours, amenities, and reviews on ENBOSS.`;
     const description = seoDescription
       ? seoDescription.substring(0, 160)
-      : (notesText && notesText.trim()
-          ? notesText.substring(0, 160)
-          : fallbackDescription);
+      : notesText && notesText.trim()
+        ? notesText.substring(0, 160)
+        : fallbackDescription;
 
     // OG image: use seoMetadata.ogImage when set; when empty, use first skatepark image, then default
     let image = '/og-skatepark-default.jpg';
@@ -118,14 +135,13 @@ export async function generateSkateparkMetadata(params: { slug: string; locale: 
     }
 
     // Localized title format (Skatepark has no metaTitle; use name + brand)
-    const title = locale === 'he'
-      ? `סקייטפארק ${name} | אנבוס`
-      : `${name} Skatepark | ENBOSS`;
+    const title = locale === 'he' ? `סקייטפארק ${name} | אנבוס` : `${name} Skatepark | ENBOSS`;
 
     // Keywords from seoMetadata.keywords (localized)
-    const keywords = seo?.keywords && (seo.keywords.en || seo.keywords.he)
-      ? getLocalizedText(seo.keywords, locale).trim()
-      : undefined;
+    const keywords =
+      seo?.keywords && (seo.keywords.en || seo.keywords.he)
+        ? getLocalizedText(seo.keywords, locale).trim()
+        : undefined;
 
     return genMeta({
       title,
@@ -138,13 +154,12 @@ export async function generateSkateparkMetadata(params: { slug: string; locale: 
     });
   } catch (error) {
     console.error('Error generating skatepark metadata:', error);
-    const notFoundTitle = locale === 'he' 
-      ? 'סקייטפארק לא נמצא'
-      : 'Skatepark Not Found';
-    const notFoundDesc = locale === 'he'
-      ? 'הסקייטפארק שחיפשת לא נמצא.'
-      : 'The skatepark you are looking for could not be found.';
-    
+    const notFoundTitle = locale === 'he' ? 'סקייטפארק לא נמצא' : 'Skatepark Not Found';
+    const notFoundDesc =
+      locale === 'he'
+        ? 'הסקייטפארק שחיפשת לא נמצא.'
+        : 'The skatepark you are looking for could not be found.';
+
     return genMeta({
       title: notFoundTitle,
       description: notFoundDesc,
@@ -153,10 +168,11 @@ export async function generateSkateparkMetadata(params: { slug: string; locale: 
   }
 }
 
-export async function generateSkateparksListingMetadata(params: { locale: string }): Promise<Metadata> {
+export async function generateSkateparksListingMetadata(params: {
+  locale: string;
+}): Promise<Metadata> {
   const { locale } = params;
-  
-  
+
   let parksCount = 0;
   try {
     await connectDB();
@@ -166,13 +182,12 @@ export async function generateSkateparksListingMetadata(params: { locale: string
   }
 
   // Localized titles and descriptions
-  const title = locale === 'he' 
-    ? 'סקייטפארקים בישראל | ENBOSS'
-    : 'Skateparks in Israel | ENBOSS';
-  
-  const description = locale === 'he'
-    ? `גלה ${parksCount > 0 ? `${parksCount} ` : ''}סקייטפארקים בישראל. מצא פארקים קרובים, בדוק שעות פעילות, שירותים וביקורות. הצטרף לקהילת הרוכבים הגדולה בישראל.`
-    : `Discover ${parksCount > 0 ? `${parksCount} ` : ''}skateparks across Israel. Find nearby parks, check hours, amenities, and reviews. Join Israel's largest skating community.`;
+  const title = locale === 'he' ? 'סקייטפארקים בישראל | אנבוס' : 'Skateparks in Israel | ENBOSS';
+
+  const description =
+    locale === 'he'
+      ? `גלה ${parksCount > 0 ? `${parksCount} ` : ''}סקייטפארקים בישראל. מצא פארקים קרובים, בדוק שעות פעילות, שירותים וביקורות. הצטרף לקהילת הרוכבים הגדולה בישראל.`
+      : `Discover ${parksCount > 0 ? `${parksCount} ` : ''}skateparks across Israel. Find nearby parks, check hours, amenities, and reviews. Join Israel's largest skating community.`;
 
   return genMeta({
     title,
@@ -184,12 +199,40 @@ export async function generateSkateparksListingMetadata(params: { locale: string
   });
 }
 
-export async function generateGuidesListingMetadata(params: { locale: string }): Promise<Metadata> {
+export async function generateEventsListingMetadata(params: { locale: string }): Promise<Metadata> {
   const { locale } = params;
-  
+
+  let eventsCount = 0;
   try {
     await connectDB();
-    
+    eventsCount = await Event.countDocuments({ status: 'published' });
+  } catch (error) {
+    console.warn('Failed to fetch events count for metadata', error);
+  }
+
+  const title = locale === 'he' ? 'אירועים | אנבוס' : 'Events | ENBOSS';
+
+  const description =
+    locale === 'he'
+      ? `גלה ${eventsCount > 0 ? `${eventsCount} ` : ''}אירועי ספורט אקסטרים בישראל. אירועים קרובים, רישום והצטרפות. הצטרפו לחוויה.`
+      : `Discover ${eventsCount > 0 ? `${eventsCount} ` : ''}extreme sports events in Israel. Upcoming events, registration, and join the experience.`;
+
+  return genMeta({
+    title,
+    description,
+    image: '/og-event-default.jpg',
+    url: `/${locale}/events`,
+    locale,
+    alternateLocales: locale === 'en' ? ['he'] : ['en'],
+  });
+}
+
+export async function generateGuidesListingMetadata(params: { locale: string }): Promise<Metadata> {
+  const { locale } = params;
+
+  try {
+    await connectDB();
+
     // Fetch guides count directly from database
     let guidesCount = 0;
     try {
@@ -199,13 +242,12 @@ export async function generateGuidesListingMetadata(params: { locale: string }):
     }
 
     // Localized titles and descriptions
-    const title = locale === 'he' 
-      ? 'מדריכים | אנבוס'
-      : 'Guides | ENBOSS';
-    
-    const description = locale === 'he'
-      ? `גלה ${guidesCount > 0 ? `${guidesCount} ` : ''}מדריכים מקצועיים לספורט אקסטרים. למד טריקים חדשים, טכניקות מתקדמות וטיפים ממומחים. שפר את הכישורים שלך עם המדריכים הטובים ביותר בישראל.`
-      : `Discover ${guidesCount > 0 ? `${guidesCount} ` : ''}professional guides for extreme sports. Learn new tricks, advanced techniques, and expert tips. Improve your skills with the best guides in Israel.`;
+    const title = locale === 'he' ? 'מדריכים | אנבוס' : 'Guides | ENBOSS';
+
+    const description =
+      locale === 'he'
+        ? `גלה ${guidesCount > 0 ? `${guidesCount} ` : ''}מדריכים מקצועיים לספורט אקסטרים. למד טריקים חדשים, טכניקות מתקדמות וטיפים ממומחים. שפר את הכישורים שלך עם המדריכים הטובים ביותר בישראל.`
+        : `Discover ${guidesCount > 0 ? `${guidesCount} ` : ''}professional guides for extreme sports. Learn new tricks, advanced techniques, and expert tips. Improve your skills with the best guides in Israel.`;
 
     return genMeta({
       title,
@@ -219,10 +261,11 @@ export async function generateGuidesListingMetadata(params: { locale: string }):
     console.error('Error generating guides listing metadata:', error);
     // Fallback metadata
     const title = locale === 'he' ? 'מדריכים | אנבוס' : 'Guides | ENBOSS';
-    const description = locale === 'he'
-      ? 'מדריכים מקצועיים לספורט אקסטרים בישראל.'
-      : 'Professional guides for extreme sports in Israel.';
-    
+    const description =
+      locale === 'he'
+        ? 'מדריכים מקצועיים לספורט אקסטרים בישראל.'
+        : 'Professional guides for extreme sports in Israel.';
+
     return genMeta({
       title,
       description,
@@ -233,7 +276,10 @@ export async function generateGuidesListingMetadata(params: { locale: string }):
   }
 }
 
-export async function generateEventMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
+export async function generateEventMetadata(params: {
+  slug: string;
+  locale: string;
+}): Promise<Metadata> {
   const { slug, locale } = params;
 
   try {
@@ -255,7 +301,8 @@ export async function generateEventMetadata(params: { slug: string; locale: stri
     const event = formatEventForDetail(eventDoc, { incrementView: false }) as any;
 
     const titleFromContent = event.content?.[locale]?.title ?? event.content?.en?.title ?? '';
-    const descriptionFromContent = event.content?.[locale]?.description ?? event.content?.en?.description ?? '';
+    const descriptionFromContent =
+      event.content?.[locale]?.description ?? event.content?.en?.description ?? '';
     const fallbackDescription = descriptionFromContent
       ? descriptionFromContent.substring(0, 160)
       : `Join us at ${titleFromContent}. Event details, location, and registration on ENBOSS.`;
@@ -265,22 +312,35 @@ export async function generateEventMetadata(params: { slug: string; locale: stri
     const contentTitleFallback = event.dateTime?.startDate
       ? `${titleFromContent} - ${new Date(event.dateTime.startDate).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US')}`
       : titleFromContent;
-    const titleBase = (metaTitleResolved !== DEFAULT_META_TITLE ? metaTitleResolved : null)
-      || (contentTitleFallback || DEFAULT_META_TITLE);
+    const titleBase =
+      (metaTitleResolved !== DEFAULT_META_TITLE ? metaTitleResolved : null) ||
+      contentTitleFallback ||
+      DEFAULT_META_TITLE;
     const brand = locale === 'he' ? 'אנבוס' : 'ENBOSS';
-    const title = titleBase === DEFAULT_META_TITLE
-      ? DEFAULT_META_TITLE
-      : `${brand} | ${titleBase}`;
-    const metaDescription = event.metaDescription && (event.metaDescription.en || event.metaDescription.he)
-      ? getLocalizedText(event.metaDescription, locale)
-      : undefined;
-    const description = metaDescription || (() => {
-      const eventDate = event.dateTime?.startDate ? new Date(event.dateTime.startDate).toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US') : '';
-      const locationName = event.location?.name ? getLocalizedText(event.location.name, locale) : '';
-      return `${fallbackDescription}${eventDate ? ` Date: ${eventDate}.` : ''}${locationName ? ` Location: ${locationName}.` : ''} ${event.isFree !== false ? 'Free event' : event.price ? `Price: ₪${event.price}` : ''}`.trim();
-    })();
+    const title = titleBase === DEFAULT_META_TITLE ? DEFAULT_META_TITLE : `${brand} | ${titleBase}`;
+    const metaDescription =
+      event.metaDescription && (event.metaDescription.en || event.metaDescription.he)
+        ? getLocalizedText(event.metaDescription, locale)
+        : undefined;
+    const description =
+      metaDescription ||
+      (() => {
+        const eventDate = event.dateTime?.startDate
+          ? new Date(event.dateTime.startDate).toLocaleDateString(
+              locale === 'he' ? 'he-IL' : 'en-US'
+            )
+          : '';
+        const locationName = event.location?.name
+          ? getLocalizedText(event.location.name, locale)
+          : '';
+        return `${fallbackDescription}${eventDate ? ` Date: ${eventDate}.` : ''}${locationName ? ` Location: ${locationName}.` : ''} ${event.isFree !== false ? 'Free event' : event.price ? `Price: ₪${event.price}` : ''}`.trim();
+      })();
 
-    const image = event.featuredImage?.url || (typeof event.featuredImage === 'string' ? event.featuredImage : '') || event.images?.[0]?.url || '/og-event-default.jpg';
+    const image =
+      event.featuredImage?.url ||
+      (typeof event.featuredImage === 'string' ? event.featuredImage : '') ||
+      event.images?.[0]?.url ||
+      '/og-event-default.jpg';
 
     const baseMeta = genMeta({
       title,
@@ -294,9 +354,10 @@ export async function generateEventMetadata(params: { slug: string; locale: stri
       modifiedTime: event.updatedAt,
     });
 
-    const keywords = event.metaKeywords && (event.metaKeywords.en || event.metaKeywords.he)
-      ? getLocalizedText(event.metaKeywords, locale)
-      : undefined;
+    const keywords =
+      event.metaKeywords && (event.metaKeywords.en || event.metaKeywords.he)
+        ? getLocalizedText(event.metaKeywords, locale)
+        : undefined;
     if (keywords) {
       baseMeta.keywords = keywords;
     }
@@ -311,12 +372,17 @@ export async function generateEventMetadata(params: { slug: string; locale: stri
   }
 }
 
-export async function generateGuideMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
+export async function generateGuideMetadata(params: {
+  slug: string;
+  locale: string;
+}): Promise<Metadata> {
   const { slug, locale } = params;
-  
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
-  const res = await fetch(`${siteUrl}/api/guides/${slug}?locale=${locale}`, { next: { revalidate: 3600 } });
-  
+  const res = await fetch(`${siteUrl}/api/guides/${slug}?locale=${locale}`, {
+    next: { revalidate: 3600 },
+  });
+
   if (!res.ok) {
     return genMeta({
       title: 'Guide Not Found',
@@ -330,7 +396,7 @@ export async function generateGuideMetadata(params: { slug: string; locale: stri
   const description = guide.description
     ? getLocalizedText(guide.description, locale).substring(0, 160)
     : `Read ${title} on ENBOSS. Expert guides and tutorials for extreme sports.`;
-  
+
   const image = guide.coverImage || '/og-guide-default.jpg';
   const readTime = guide.readTime ? ` ${guide.readTime} min read` : '';
   const author = guide.authorName ? ` by ${guide.authorName}` : '';
@@ -349,20 +415,24 @@ export async function generateGuideMetadata(params: { slug: string; locale: stri
   });
 }
 
-export async function generateFormMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
+export async function generateFormMetadata(params: {
+  slug: string;
+  locale: string;
+}): Promise<Metadata> {
   const { slug, locale } = params;
-  
+
   try {
     await connectDB();
-    
+
     const form = await Form.findBySlug(slug);
-    
+
     if (!form || !form.isVisible()) {
       return genMeta({
         title: locale === 'en' ? 'Form Not Found' : 'טופס לא נמצא',
-        description: locale === 'en' 
-          ? 'The form you are looking for could not be found.'
-          : 'הטופס שחיפשת לא נמצא.',
+        description:
+          locale === 'en'
+            ? 'The form you are looking for could not be found.'
+            : 'הטופס שחיפשת לא נמצא.',
         locale,
       });
     }
@@ -373,7 +443,7 @@ export async function generateFormMetadata(params: { slug: string; locale: strin
       : locale === 'en'
         ? `Fill out ${title} on ENBOSS. Help us grow by sharing your thoughts.`
         : `מלא את ${title} ב-ENBOSS. עזור לנו לגדול על ידי שיתוף המחשבות שלך.`;
-    
+
     const metaTitle = form.metaTitle
       ? getLocalizedText(form.metaTitle, locale)
       : `${title} - Growth Lab | ENBOSS`;
@@ -394,20 +464,56 @@ export async function generateFormMetadata(params: { slug: string; locale: strin
     console.error('Error generating form metadata:', error);
     return genMeta({
       title: locale === 'en' ? 'Form' : 'טופס',
-      description: locale === 'en'
-        ? 'Fill out forms on ENBOSS Growth Lab. Help us grow by sharing your thoughts and experiences.'
-        : 'מלא טפסים ב-ENBOSS מרחב גדילה. עזור לנו לגדול על ידי שיתוף המחשבות והחוויות שלך.',
+      description:
+        locale === 'en'
+          ? 'Fill out forms on ENBOSS Growth Lab. Help us grow by sharing your thoughts and experiences.'
+          : 'מלא טפסים ב-ENBOSS מרחב גדילה. עזור לנו לגדול על ידי שיתוף המחשבות והחוויות שלך.',
       locale,
     });
   }
 }
 
-export async function generateTrainerMetadata(params: { slug: string; locale: string }): Promise<Metadata> {
+export async function generateGrowthLabListingMetadata(params: {
+  locale: string;
+}): Promise<Metadata> {
+  const { locale } = params;
+
+  let formsCount = 0;
+  try {
+    await connectDB();
+    formsCount = await Form.countDocuments({ status: 'published' });
+  } catch (error) {
+    console.warn('Failed to fetch forms count for metadata', error);
+  }
+
+  const title = locale === 'he' ? 'מרחב גדילה | אנבוס' : 'Growth Lab | ENBOSS';
+
+  const description =
+    locale === 'he'
+      ? `סקרים קטנים, שינויים גדולים. ${formsCount > 0 ? `${formsCount} ` : ''}טפסים להעלאת משוב ועזרה לקהילה לגדול.`
+      : `Your feedback matters. ${formsCount > 0 ? `${formsCount} ` : ''}Small surveys, big changes! Share your thoughts and help the community grow.`;
+
+  return genMeta({
+    title,
+    description,
+    image: '/og-form-default.jpg',
+    url: `/${locale}/growth-lab`,
+    locale,
+    alternateLocales: locale === 'en' ? ['he'] : ['en'],
+  });
+}
+
+export async function generateTrainerMetadata(params: {
+  slug: string;
+  locale: string;
+}): Promise<Metadata> {
   const { slug, locale } = params;
-  
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
-  const res = await fetch(`${siteUrl}/api/trainers/${slug}?locale=${locale}`, { next: { revalidate: 3600 } });
-  
+  const res = await fetch(`${siteUrl}/api/trainers/${slug}?locale=${locale}`, {
+    next: { revalidate: 3600 },
+  });
+
   if (!res.ok) {
     return genMeta({
       title: 'Trainer Not Found',
@@ -421,7 +527,7 @@ export async function generateTrainerMetadata(params: { slug: string; locale: st
   const description = trainer.bio
     ? getLocalizedText(trainer.bio, locale).substring(0, 160)
     : `Connect with ${name}, professional trainer. View profile, sports expertise, and contact information on ENBOSS.`;
-  
+
   const image = trainer.profileImage || '/og-trainer-default.jpg';
   const rating = trainer.rating > 0 ? ` ⭐ ${trainer.rating.toFixed(1)}` : '';
   const sports = trainer.relatedSports?.slice(0, 2).join(', ') || '';
@@ -438,15 +544,14 @@ export async function generateTrainerMetadata(params: { slug: string; locale: st
 
 export async function generateLoginMetadata(params: { locale: string }): Promise<Metadata> {
   const { locale } = params;
-  
+
   // Localized titles and descriptions
-  const title = locale === 'he' 
-    ? 'התחברות | אנבוס'
-    : 'Sign In | ENBOSS';
-  
-  const description = locale === 'he'
-    ? 'התחבר לחשבון שלך ב-ENBOSS. גש לסקייטפארקים, מדריכים, אירועים ועוד. הצטרף לקהילת הרוכבים הגדולה בישראל.'
-    : 'Sign in to your ENBOSS account. Access skateparks, guides, events, and more. Join Israel\'s largest skating community.';
+  const title = locale === 'he' ? 'התחברות | אנבוס' : 'Sign In | ENBOSS';
+
+  const description =
+    locale === 'he'
+      ? 'התחבר לחשבון שלך ב-ENBOSS. גש לסקייטפארקים, מדריכים, אירועים ועוד. הצטרף לקהילת הרוכבים הגדולה בישראל.'
+      : "Sign in to your ENBOSS account. Access skateparks, guides, events, and more. Join Israel's largest skating community.";
 
   return genMeta({
     title,
@@ -460,15 +565,14 @@ export async function generateLoginMetadata(params: { locale: string }): Promise
 
 export async function generateRegisterMetadata(params: { locale: string }): Promise<Metadata> {
   const { locale } = params;
-  
+
   // Localized titles and descriptions
-  const title = locale === 'he' 
-    ? 'הרשמה | אנבוס'
-    : 'Sign Up | ENBOSS';
-  
-  const description = locale === 'he'
-    ? 'צור חשבון חדש ב-ENBOSS והצטרף לקהילת הרוכבים הגדולה בישראל. גש לסקייטפארקים, מדריכים, אירועים ועוד.'
-    : 'Create a new account on ENBOSS and join Israel\'s largest skating community. Access skateparks, guides, events, and more.';
+  const title = locale === 'he' ? 'הרשמה | אנבוס' : 'Sign Up | ENBOSS';
+
+  const description =
+    locale === 'he'
+      ? 'צור חשבון חדש ב-ENBOSS והצטרף לקהילת הרוכבים הגדולה בישראל. גש לסקייטפארקים, מדריכים, אירועים ועוד.'
+      : "Create a new account on ENBOSS and join Israel's largest skating community. Access skateparks, guides, events, and more.";
 
   return genMeta({
     title,
@@ -482,15 +586,14 @@ export async function generateRegisterMetadata(params: { locale: string }): Prom
 
 export async function generateContactMetadata(params: { locale: string }): Promise<Metadata> {
   const { locale } = params;
-  
+
   // Localized titles and descriptions
-  const title = locale === 'he' 
-    ? 'צור קשר | אנבוס'
-    : 'Contact Us | ENBOSS';
-  
-  const description = locale === 'he'
-    ? 'צור קשר עם ENBOSS. שלח לנו הודעה ונשמח לעזור לך. שאלות, הצעות או בקשות - אנחנו כאן בשבילך.'
-    : 'Contact ENBOSS. Send us a message and we\'d be happy to help. Questions, suggestions, or requests - we\'re here for you.';
+  const title = locale === 'he' ? 'צור קשר | אנבוס' : 'Contact Us | ENBOSS';
+
+  const description =
+    locale === 'he'
+      ? 'צור קשר עם ENBOSS. שלח לנו הודעה ונשמח לעזור לך. שאלות, הצעות או בקשות - אנחנו כאן בשבילך.'
+      : "Contact ENBOSS. Send us a message and we'd be happy to help. Questions, suggestions, or requests - we're here for you.";
 
   return genMeta({
     title,
@@ -501,5 +604,3 @@ export async function generateContactMetadata(params: { locale: string }): Promi
     alternateLocales: locale === 'en' ? ['he'] : ['en'],
   });
 }
-
-

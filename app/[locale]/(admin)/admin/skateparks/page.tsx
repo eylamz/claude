@@ -1238,7 +1238,7 @@ export default function SkateparksPage() {
                   <TableCell className="whitespace-nowrap text-sm text-text dark:text-text-dark">
                     <button
                       onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkId}`)}
-                      className="text-brand-text underline dark:no-underline hover:font-medium dark:hover:underline"
+                      className="text-brand-text dark:text-brand-dark underline dark:no-underline hover:font-medium dark:hover:underline"
                     >
                       {skatepark.slug}
                     </button>

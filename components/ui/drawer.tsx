@@ -2,6 +2,7 @@
 
 import { FC, ReactNode, useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocale } from 'next-intl';
 import { Icon } from '@/components/icons/Icon';
 
 interface DrawerProps {
@@ -11,14 +12,48 @@ interface DrawerProps {
   title: string;
 }
 
+const TRANSITION_MS = 300;
+
 export const Drawer: FC<DrawerProps> = ({ isOpen, onClose, children, title }) => {
+  const locale = useLocale();
+  const isRtl = locale === 'he';
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
   const [swipeDistance, setSwipeDistance] = useState(0);
+  const [isEntered, setIsEntered] = useState(false);
+  const [closing, setClosing] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
 
-  // Swipe to close drawer
+  // Animate in from off-screen (like MobileSidebar)
+  useEffect(() => {
+    if (isOpen && !closing) {
+      setIsEntered(false);
+      const id = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setIsEntered(true));
+      });
+      return () => cancelAnimationFrame(id);
+    }
+  }, [isOpen]);
+
+  // Reset entered state when drawer is fully closed so next open animates in
+  useEffect(() => {
+    if (!isOpen && !closing) setIsEntered(false);
+  }, [isOpen, closing]);
+
+  const startClose = () => {
+    if (closing) return;
+    setClosing(true);
+  };
+
+  const handleTransitionEnd = (e: React.TransitionEvent) => {
+    if (e.target !== drawerRef.current || !closing) return;
+    onClose();
+    setClosing(false);
+    setIsEntered(false);
+  };
+
+  // Swipe to close drawer (right in LTR, left in RTL)
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isOpen) return;
+    if (!isOpen || closing) return;
     setTouchStart({
       x: e.touches[0].clientX,
       y: e.touches[0].clientY,
@@ -28,7 +63,7 @@ export const Drawer: FC<DrawerProps> = ({ isOpen, onClose, children, title }) =>
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!touchStart) return;
-    
+
     const currentX = e.touches[0].clientX;
     const currentY = e.touches[0].clientY;
     const diffX = currentX - touchStart.x;
@@ -36,42 +71,45 @@ export const Drawer: FC<DrawerProps> = ({ isOpen, onClose, children, title }) =>
 
     // Check if horizontal swipe (threshold 45 degrees)
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
-      // Swipe right to close
-      if (diffX > 0) {
-        setSwipeDistance(diffX);
+      if (isRtl) {
+        // RTL: swipe left to close
+        if (diffX < 0) setSwipeDistance(-diffX);
+      } else {
+        // LTR: swipe right to close
+        if (diffX > 0) setSwipeDistance(diffX);
       }
     }
   };
 
   const handleTouchEnd = () => {
     if (!touchStart) return;
-    
+
     const threshold = 100;
     if (swipeDistance > threshold) {
-      onClose();
+      startClose();
     }
-    
+
     setTouchStart(null);
     setSwipeDistance(0);
   };
 
-  // Close drawer when clicking outside
+  // Close drawer when clicking outside (start close animation)
   useEffect(() => {
-    if (!isOpen) return;
-    
+    if (!isOpen && !closing) return;
+
     const handleClickOutside = (e: MouseEvent) => {
       if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) {
-        onClose();
+        startClose();
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen, onClose]);
+  }, [isOpen, closing]);
 
-  // Prevent body scroll when drawer is open
+  // Prevent body scroll when drawer is open or closing
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen || closing) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -79,42 +117,56 @@ export const Drawer: FC<DrawerProps> = ({ isOpen, onClose, children, title }) =>
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isOpen]);
+  }, [isOpen, closing]);
 
-  if (!isOpen) return null;
+  const visible = isOpen || closing;
+  if (!visible) return null;
+
+  const isOffScreen = closing || !isEntered;
+  const closedTransform = isRtl ? 'translateX(100%)' : 'translateX(-100%)';
+  const openTransform =
+    swipeDistance > 0
+      ? isRtl
+        ? `translateX(-${swipeDistance}px)`
+        : `translateX(${swipeDistance}px)`
+      : 'translateX(0)';
+  const transform = isOffScreen ? closedTransform : openTransform;
 
   const drawerContent = (
     <>
       {/* Backdrop - above MobileNav (z-50) and MobileSidebar (z-61) */}
       <div
-        className="md:hidden fixed inset-0 z-[80] bg-black/50 dark:bg-black/70"
-        onClick={onClose}
+        className={`md:hidden fixed inset-0 z-[80] bg-black/40 backdrop-blur-sm transition-[opacity,backdrop-filter] duration-200 ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={startClose}
       />
-      
+
       {/* Drawer - above MobileNav (z-50) and MobileSidebar (z-61) */}
       <div
         ref={drawerRef}
-        className="md:hidden fixed inset-y-0 left-0 w-[80%] z-[90] overflow-y-auto backdrop-blur-md bg-background dark:bg-background-dark"
+        className={`md:hidden fixed inset-y-0 w-[80%] max-w-[300px] z-[90] overflow-y-auto bg-background dark:bg-background-dark ease flex flex-col ${isRtl ? 'right-0' : 'left-0'}`}
         style={{
-          transform: swipeDistance > 0 ? `translateX(${swipeDistance}px)` : 'translateX(0)',
-          transition: swipeDistance === 0 ? 'transform 0.3s ease-out' : 'none',
+          transform,
+          transition: swipeDistance === 0 ? `transform ${TRANSITION_MS}ms ease-out` : 'none',
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onTransitionEnd={handleTransitionEnd}
       >
         {/* Header */}
-        <div className="flex items-start justify-between pb-2 mx-2 border-b border-border dark:border-border-dark pt-6">
-          <h2 className="text-2xl font-semibold text-header-text-dark dark:text-header-text ">{title}</h2>
+        <div className="flex items-center justify-between pb-2 mx-2 border-b border-border dark:border-border-dark pt-6">
           <button
-            onClick={onClose}
-            className="h-14 p-2 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"
+            onClick={startClose}
+            className="h-14 p-2"
             aria-label="Close drawer"
           >
-            <Icon name="X" className="w-10 h-10" />
+            <Icon name="X" className="w-6 h-6 text-gray/75 dark:text-gray-dark/75" />
           </button>
+          <h2 className="me-5 text-xl font-semibold text-text dark:text-text-dark ">
+            {title}
+          </h2>
         </div>
-        
+
         {/* Content */}
         <div className="px-4 py-4">{children}</div>
       </div>

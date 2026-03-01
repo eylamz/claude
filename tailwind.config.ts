@@ -516,6 +516,26 @@ const config: Config = {
           },
         },
 
+        
+        yellow: {
+          DEFAULT: colors.yellow.light,
+          dark: colors.yellow.dark,
+          bg: {
+            DEFAULT: colors.yellow.bg.light,
+            dark: colors.yellow.bg.dark,
+          },
+          border: {
+            DEFAULT: colors.yellow.border.light,
+            dark: colors.yellow.border.dark,
+          },
+          hover: {
+            bg: {
+              DEFAULT: colors.yellow.hover.bg.light,
+              dark: colors.yellow.hover.bg.dark,
+            },
+          },
+        },
+
         lime: {
           DEFAULT: colors.lime.light,
           dark: colors.lime.dark,

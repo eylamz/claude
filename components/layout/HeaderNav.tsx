@@ -55,6 +55,8 @@ import {
   readFromCacheSync,
   getAreaFromQuery,
   queryMatchesCategory,
+  hasCacheForCategories,
+  ensureSearchCacheFilled,
   type SearchResultFromCache,
 } from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
@@ -252,6 +254,14 @@ export default function HeaderNav() {
   const cacheCategories = useMemo((): ('skateparks' | 'events' | 'guides')[] => {
     return ['skateparks', 'events', 'guides'];
   }, []);
+
+  // When search modal opens: pre-fill cache (skateparks/events/guides) if missing, so first keystroke can show cached results
+  useEffect(() => {
+    if (!isSearchOpen) return;
+    const categories: ('skateparks' | 'events' | 'guides')[] = ['skateparks', 'events', 'guides'];
+    if (hasCacheForCategories(categories)) return;
+    ensureSearchCacheFilled(locale, categories).catch(() => {});
+  }, [isSearchOpen, locale]);
 
   // Resolve display name for a result (locale-aware)
   const getResultDisplayName = useCallback(

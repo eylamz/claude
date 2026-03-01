@@ -284,7 +284,7 @@ const ParkAmenities = memo(({
         return (
           <div
             key={key}
-            className="flex items-center bg-black/55 p-1.5 rounded-lg"
+            className="flex items-center bg-black/75 p-1.5 rounded-lg"
             title={getAmenityLabel(key, locale)}
           >
             <Icon name={iconName as any} className="w-4 h-4 text-white" />
@@ -442,7 +442,7 @@ export const ParkCard = memo(({ park, locale, animationDelay = 0, sortBy, userLo
       >
         {/* Loading overlay when navigating to park page */}
         {isClicked && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-2xl">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-background-dark/75 rounded-2xl">
             <LoadingSpinner variant="header" size={40} />
           </div>
         )}

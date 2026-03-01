@@ -2308,7 +2308,7 @@ export default function SkateparkPage() {
                       }
                       return (
                         <Button 
-                          variant={skatepark.closingYear && skatepark.closingYear <= new Date().getFullYear() ? 'error' : 'primary'}
+                          variant={'primary'}
                           onClick={() => setShowAddReview(true)}
                         >
                           {t('addReview')}
@@ -2329,7 +2329,8 @@ export default function SkateparkPage() {
                   if (allowAnonymousReviews) {
                     return (
                       <Button 
-                        variant={skatepark.closingYear && skatepark.closingYear <= new Date().getFullYear() ? 'error' : 'primary'}
+                        variant={
+                          'primary'}
                         onClick={() => setShowAddReview(true)}
                       >
                         {t('addReview')}
@@ -2688,7 +2689,9 @@ export default function SkateparkPage() {
             >
               {/* Header */}
               <div className="sticky top-0  flex items-center justify-between z-10">
-                <h2 className="text-base font-bold text-text dark:text-text-dark">{t('writeReview')}</h2>
+                <h2 className="text-base font-bold text-text dark:text-text-dark">
+                  {t('writeReview')}
+                  </h2>
                 <button
                   onClick={closeReviewModal}
                   className="p-2"

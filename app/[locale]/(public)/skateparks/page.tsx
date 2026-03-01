@@ -847,14 +847,14 @@ export default function SkateparksPage() {
               ) : (
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2 text-sm">
-                    <Icon name="parkBold" className="w-4 h-4 text-green-500" />
+                    <Icon name="parkBold" className="w-4 h-4 text-brand-text dark:text-brand-dark" />
                     <span className="text-gray-600 dark:text-gray-400">
                       {allSkateparks.length} {tr('Parks', 'פארקים')}
                     </span>
                   </div>
                   <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
                   <div className="flex items-center gap-2 text-sm">
-                    <Icon name="reviewBold" className="w-5 h-5 text-green-500" />
+                    <Icon name="reviewBold" className="w-5 h-5 text-brand-text dark:text-brand-dark" />
                     <span className="text-gray-600 dark:text-gray-400">
                       {tr('Community Reviews', 'ביקורות קהילה')}
                     </span>

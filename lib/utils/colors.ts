@@ -441,6 +441,27 @@ export const colors = {
       },
     },
   },
+
+  yellow: {
+    light: 'hsl(60, 66%, 36%)',
+    dark: 'hsl(60, 69%, 55%)',
+    bg: {
+      light: 'hsl(60, 83%, 93%)',
+      dark: 'hsl(60, 64%, 13%)',
+    },
+    border: {
+      light: 'hsl(60, 73%, 83%)',
+      dark: 'hsl(60, 62%, 25%)',
+    },
+    hover: {
+      bg: {
+        light: 'hsl(60, 83%, 93%)',
+        dark: 'hsl(60, 62%, 11%)',
+      },
+    },
+  },
+
+
   lime: {
     light: 'hsl(122, 100%, 12%)',
     dark: 'hsl(83, 100%, 50%)',

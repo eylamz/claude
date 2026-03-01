@@ -883,14 +883,14 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
               <div className="flex items-center gap-2 text-sm">
-                <Icon name="bookBold" className="w-3 h-3 text-green-500" />
+                <Icon name="bookBold" className="w-3.5 h-3.5 text-yellow dark:text-yellow-dark" />
                 <span className="text-gray-600 dark:text-gray-400">
                   {totalGuidesCount} {totalGuidesCount === 1 ? t('guide') : t('guides')}
                 </span>
               </div>
               <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
               <div className="flex items-center gap-2 text-sm">
-                <TrendingUp className="w-4 h-4 text-green-500" />
+                <TrendingUp className="w-4 h-4 text-yellow dark:text-yellow-dark" />
                 <span className="text-gray-600 dark:text-gray-400">
                   {tr('Updated Daily', 'מתעדכן יומי')}
                 </span>

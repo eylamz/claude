@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 
 interface BadgeProps {
   children: ReactNode;
-  variant?: 'default' | 'secondary' | 'outline' | 'brandOutline' | 'destructive' | 'info' | 'primary' | 'ghost' | 'blue' | 'green' | 'pink' | 'gray' | 'orange' | 'red' | 'purple' | 'teal';
+  variant?: 'default' | 'secondary' | 'outline' | 'brandOutline' | 'destructive' | 'info' | 'primary' | 'ghost' | 'blue' | 'green' | 'pink' | 'gray' | 'orange' | 'red' | 'purple' | 'teal' | 'yellow';
   className?: string;
 }
 
@@ -28,6 +28,7 @@ export function Badge({ children, variant = 'default', className = '' }: BadgePr
     purple: 'bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark',
     pink: 'bg-pink-bg dark:bg-pink-bg-dark text-pink dark:text-pink-dark',
     teal: 'bg-teal-border dark:bg-teal-border-dark text-teal dark:text-teal-dark',
+    yellow: 'bg-yellow-bg dark:bg-yellow-bg-dark text-yellow dark:text-yellow-dark',
   };
 
   return (

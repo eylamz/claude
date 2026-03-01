@@ -1007,7 +1007,7 @@ function SearchPageContent() {
         label: t('tabs.guides') || 'Guides',
         icon: 'book',
         iconBold: 'bookBold',
-        color: 'blue',
+        color: 'yellow',
       },
       {
         key: 'trainers',
@@ -1936,6 +1936,8 @@ function SearchPageContent() {
                         ? 'bg-green-bg dark:bg-green-bg-dark border-green-border dark:border-green-border-dark hover:bg-green-bg/80 dark:hover:bg-green-bg-dark/80'
                         : tab.color === 'purple'
                           ? 'bg-purple-bg dark:bg-purple-bg-dark border-purple-border dark:border-purple-border-dark hover:bg-purple-bg/80 dark:hover:bg-purple-bg-dark/80'
+                          : tab.color === 'yellow'
+                            ? 'bg-yellow-bg dark:bg-yellow-bg-dark border-yellow-border dark:border-yellow-border-dark hover:bg-yellow-bg/80 dark:hover:bg-yellow-bg-dark/80'
                           : tab.color === 'blue'
                             ? 'bg-blue-bg dark:bg-blue-bg-dark border-blue-border dark:border-blue-border-dark hover:bg-blue-bg/80 dark:hover:bg-blue-bg-dark/80'
                             : tab.color === 'pink'
@@ -1948,6 +1950,8 @@ function SearchPageContent() {
                         ? 'text-green dark:text-green-dark'
                         : tab.color === 'purple'
                           ? 'text-purple dark:text-purple-dark'
+                          : tab.color === 'yellow'
+                            ? 'text-yellow dark:text-yellow-dark'
                           : tab.color === 'blue'
                             ? 'text-blue dark:text-blue-dark'
                             : tab.color === 'pink'

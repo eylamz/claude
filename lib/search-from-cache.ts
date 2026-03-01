@@ -618,6 +618,23 @@ export function getCacheSync(category: SearchResultType): any[] | null {
   }
 }
 
+/** True if every category has at least some data in localStorage (so search can show cached results). */
+export function hasCacheForCategories(categories: SearchResultType[]): boolean {
+  if (typeof window === 'undefined') return false;
+  for (const category of categories) {
+    if (!getCacheSync(category)) return false;
+  }
+  return true;
+}
+
+/** Ensure cache is filled for all categories (e.g. when opening search modal). Call when cache is missing; safe to call multiple times. */
+export async function ensureSearchCacheFilled(
+  locale: string,
+  categories: SearchResultType[]
+): Promise<void> {
+  await searchFromCache('', locale, categories);
+}
+
 /** True if category has no cache or stored version/fetchedAt indicates we should refetch. */
 export function cacheNeedsRefresh(category: SearchResultType): boolean {
   const items = getCacheSync(category);

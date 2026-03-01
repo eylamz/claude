@@ -828,14 +828,14 @@ function EventsPageContent() {
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
               <div className="flex items-center justify-end gap-2 text-sm w-1/2">
-                <Icon name="bellBold" className="w-3 h-3 text-brand-main" />
+                <Icon name="bellBold" className="w-3 h-3 text-purple dark:text-purple-dark" />
                 <span className="text-gray-600 dark:text-gray-400">
                   {tr('Stay Tuned', 'הישארו מעודכנים')}
                 </span>
               </div>
               <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
               <div className="flex items-center gap-2 text-sm w-1/2">
-                <TrendingUp className="w-4 h-4 text-green-500" />
+                <TrendingUp className="w-4 h-4 text-purple dark:text-purple-dark" />
 
                 <span className="text-gray-600 dark:text-gray-400">
                   {totalResults} {totalResults === 1 ? t('event') : t('events')}

@@ -20,8 +20,11 @@ import {
 import { flipLanguage } from '@/lib/utils/transliterate';
 import {
   searchFromCache,
+  readFromCacheSync,
   getAreaFromQuery,
   queryMatchesCategory,
+  hasCacheForCategories,
+  ensureSearchCacheFilled,
   type SearchResultFromCache,
 } from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
@@ -223,24 +226,6 @@ export default function MobileSidebar({
     }
   }, [isOpen, openWithSearch]);
 
-  // Auto-focus search input when search opens (including when opened from MobileNav search icon)
-  useEffect(() => {
-    if (isSearchOpen && isOpen) {
-      // 150ms is enough for the sidebar to start appearing
-      const timer = setTimeout(() => {
-        if (searchInputRef.current) {
-          // Hand off the focus from the trigger input to the actual input
-          searchInputRef.current.focus();
-
-          // Optional: on some versions of iOS, a second click helps
-          searchInputRef.current.click();
-        }
-      }, 150);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isSearchOpen, isOpen]);
-
   // Resolve display name/title for search (locale-aware; handles name as object)
   const getResultDisplayName = (result: SearchResult): string => {
     const raw = result.name ?? result.title ?? '';
@@ -355,6 +340,27 @@ export default function MobileSidebar({
     return ['skateparks', 'events', 'guides'];
   }, []);
 
+  // When search panel opens: pre-fill cache (skateparks/events/guides) if missing
+  useEffect(() => {
+    if (!isOpen || !isSearchOpen) return;
+    const categories: ('skateparks' | 'events' | 'guides')[] = ['skateparks', 'events', 'guides'];
+    if (hasCacheForCategories(categories)) return;
+    ensureSearchCacheFilled(locale, categories).catch(() => {});
+  }, [isOpen, isSearchOpen, locale]);
+
+  // Auto-focus search input when search opens (including when opened from MobileNav search icon)
+  useEffect(() => {
+    if (isSearchOpen && isOpen) {
+      const timer = setTimeout(() => {
+        if (searchInputRef.current) {
+          searchInputRef.current.focus();
+          searchInputRef.current.click();
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isSearchOpen, isOpen]);
+
   const apiCategories = useMemo((): ('products' | 'trainers')[] => {
     const list: ('products' | 'trainers')[] = [];
     if (ecommerceEnabled) list.push('products');
@@ -400,7 +406,7 @@ export default function MobileSidebar({
     };
   };
 
-  // Fetch search results: cache first (localStorage), then API only for products/trainers
+  // Fetch search results: show cached data first, then fetch (cache + API) and merge
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -412,10 +418,17 @@ export default function MobileSidebar({
     setIsSearching(true);
     setSearchLoading(true);
 
+    // Show cached data immediately (from localStorage) so results appear before fetch completes
+    const syncResults = readFromCacheSync(searchQuery, locale, cacheCategories).map(
+      mapCacheResultToSearchResult
+    );
+    setSearchResults(syncResults);
+
     if (searchDebounceRef.current) {
       clearTimeout(searchDebounceRef.current);
     }
 
+    const controller = new AbortController();
     searchDebounceRef.current = setTimeout(async () => {
       try {
         const flippedQuery = flipLanguage(searchQuery);
@@ -423,13 +436,13 @@ export default function MobileSidebar({
         const flippedLower = flippedQuery ? flippedQuery.toLowerCase().trim() : null;
         const rawResults: SearchResult[] = [];
 
-        // 1) Search cache first: localStorage (skateparks_cache, events_cache, guides_cache)
+        // 1) Search cache (skateparks, events, guides) — may fill cache if missing
         if (cacheCategories.length > 0) {
           const cacheResults = await searchFromCache(searchQuery, locale, cacheCategories);
           rawResults.push(...cacheResults.map(mapCacheResultToSearchResult));
         }
 
-        // 2) Only then: fetch from API for products/trainers (no cache for these)
+        // 2) Fetch from API for products/trainers (no cache for these)
         if (apiCategories.length > 0) {
           const params = new URLSearchParams();
           params.set('q', searchQuery);
@@ -438,7 +451,9 @@ export default function MobileSidebar({
           }
           params.set('locale', locale);
           params.set('types', apiCategories.join(','));
-          const res = await fetch(`/api/search?${params.toString()}`);
+          const res = await fetch(`/api/search?${params.toString()}`, {
+            signal: controller.signal,
+          });
           if (res.ok) {
             const data = await res.json();
             rawResults.push(...(data.results || []));
@@ -518,14 +533,17 @@ export default function MobileSidebar({
 
         setSearchResults(finalResults);
       } catch (error) {
-        console.error('Search error:', error);
-        setSearchResults([]);
+        if ((error as { name?: string }).name !== 'AbortError') {
+          console.error('Search error:', error);
+        }
+        // Keep sync results on error (already set above)
       } finally {
         setSearchLoading(false);
       }
     }, 300);
 
     return () => {
+      controller.abort();
       if (searchDebounceRef.current) {
         clearTimeout(searchDebounceRef.current);
       }
