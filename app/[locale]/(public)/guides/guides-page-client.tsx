@@ -46,7 +46,7 @@ function parseTagSearch(
   if (!query || typeof query !== 'string') return { isTagSearch: false };
   const trimmed = query.trim();
   // Match "tag:" or "תג:" at start (with optional content after), case-insensitive for "tag"
-  const match = trimmed.match(/^\s*(?:tag|תג)\s*:\s*(.*)$/i);
+  const match = trimmed.match(/^\s*(?:tag|תגית)\s*:\s*(.*)$/i);
   if (!match) return { isTagSearch: false };
   const tag = (match[1] ?? '').trim();
   return { isTagSearch: true, tag };
@@ -343,12 +343,12 @@ const GuideCard = memo(
           {/* Sports Tags Overlay */}
           {guide.relatedSports && guide.relatedSports.length > 0 && (
             <div className="absolute top-2 left-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-1rem)] transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
-              {guide.relatedSports.slice(0, 4).map((sport, idx) => {
+              {guide.relatedSports.slice(0, 5).map((sport, idx) => {
                 const sportConfig = SPORT_CONFIG.find((s) => s.value === sport.toLowerCase());
                 return (
                   <div
                     key={idx}
-                    className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg"
+                    className="flex items-center bg-background-dark/75 p-1.5 rounded-lg"
                     title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
                   >
                     {sportConfig ? (
@@ -361,10 +361,10 @@ const GuideCard = memo(
                   </div>
                 );
               })}
-              {guide.relatedSports.length > 4 && (
-                <div className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg">
+              {guide.relatedSports.length > 5 && (
+                <div className="flex items-center bg-background-dark/75 p-1.5 rounded-lg">
                   <span className="text-xs font-medium text-white">
-                    +{guide.relatedSports.length - 4}
+                    +{guide.relatedSports.length - 5}
                   </span>
                 </div>
               )}
@@ -919,7 +919,11 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
             <div className="flex items-center gap-1 flex-1">
               <div className="flex-1 min-w-0 w-full">
                 <SearchInput
-                  placeholder={tr('Search guides...', 'חפש מדריכים...')}
+                  placeholder={
+                    parseTagSearch(searchQuery).isTagSearch
+                      ? tr('Search in tags...', 'חפש בתגיות...')
+                      : tr('Search guides...', 'חפש מדריכים...')
+                  }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onClear={() => setSearchQuery('')}
@@ -1181,8 +1185,8 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
           </>
         ) : (
           <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-brand-main/10 to-green-500/10 dark:from-brand-main/20 dark:to-green-500/20 mb-4">
-              <Icon name="searchQuest" className="w-8 h-8 text-brand-main" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-bg dark:bg-gray-bg-dark mb-4">
+              <Icon name="searchQuest" className="w-8 h-8 text-gray dark:text-gray-dark" />
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               {searchQuery
@@ -1193,7 +1197,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
               {tr('Try adjusting your filters or search terms', 'נסה לשנות את הפילטרים או החיפוש')}
             </p>
             {hasAnyFilter && (
-              <Button variant="brand" onClick={handleClearFilters}>
+              <Button variant="gray" onClick={handleClearFilters}>
                 {tr('Clear All Filters', 'נקה את כל הפילטרים')}
               </Button>
             )}

@@ -33,8 +33,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
 }, ref) => {
   const t = useTranslations('common');
   const locale = useLocale();
-  const tagPrefix = locale === 'he' ? 'תג:' : 'tag:';
-  const tagPrefixMatch = showTagButton && value.match(/^\s*(?:tag|תג)\s*:\s*(.*)$/i);
+  const tagPrefix = locale === 'he' ? 'תגית:' : 'tag:';
+  const tagPrefixMatch = showTagButton && value.match(/^\s*(?:tag|תגית)\s*:\s*(.*)$/i);
   const isTagActive = !!tagPrefixMatch;
 
   const displayValue = showTagButton && tagPrefixMatch
@@ -128,8 +128,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
               onClick={handleTagClick}
               tabIndex={tabIndex}
               className={`px-2 pt-1 pb-0  ${value.trim() ? '-mb-[6px] -mt-[7px] -me-[5px]' : '-mt-[9px] -mb-[7px] -me-[5px]'}  rounded-full transition-all duration-300 hover:bg-black/5 dark:hover:bg-white/5 ${isTagActive ? 'text-purple-500 dark:text-purple-400' : defaultIconColor}`}
-              title={locale === 'he' ? 'חפש לפי תג' : 'Search by tag'}
-              aria-label={locale === 'he' ? 'חפש לפי תג' : 'Search by tag'}
+              title={locale === 'he' ? 'חפש לפי תגית' : 'Search by tag'}
+              aria-label={locale === 'he' ? 'חפש לפי תגית' : 'Search by tag'}
               aria-pressed={isTagActive}
             >
               <Icon name="tag" className="w-5 h-5 -mb-2" />

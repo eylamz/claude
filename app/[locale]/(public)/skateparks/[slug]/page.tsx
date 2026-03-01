@@ -2168,7 +2168,7 @@ export default function SkateparkPage() {
                 {tr('Rating', 'דירוג')}
                 <Icon 
                   name="logo" 
-                  className={`w-auto h-4 overflow-visible ${
+                  className={`w-auto overflow-visible ${locale === 'he' ? 'h-[0.7rem] -mb-0.5' : 'h-[0.95rem]'} ${
                     skatepark.closingYear 
                       ? 'text-error dark:text-error/80' 
                       : 'text-brand-main dark:text-brand-dark'

@@ -7,12 +7,8 @@ export default function SkateparksLoading() {
       <div className="relative pt-14 md:pt-14 bg-gradient-to-br from-brand-purple/10 via-transparent to-brand-main/10 dark:from-brand-purple/5 dark:to-brand-dark/5 z-10">
         <div className="max-w-6xl mx-auto px-4 py-8 lg:py-12 bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.1)_0%,transparent_50%)] dark:bg-[radial-gradient(circle_at_50%_50%,rgba(139,92,246,0.05)_0%,transparent_50%)]">
           <div className="text-center space-y-2">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white">
-              Find Your Park
-            </h1>
-            <h2 className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Where wheels meet concrete, community happens.
-            </h2>
+            <Skeleton className="h-9 md:h-10 lg:h-12 w-64 md:w-80 mx-auto rounded" />
+            <Skeleton className="h-6 w-full max-w-2xl mx-auto rounded" />
             {/* Stats bar placeholder */}
             <div className="flex items-center justify-center min-h-[2.5rem] pt-4">
               <div className="flex items-center gap-6">

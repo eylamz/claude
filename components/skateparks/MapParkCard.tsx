@@ -335,9 +335,8 @@ export const MapParkCard = memo(({ park, locale, onClose: _onClose }: MapParkCar
     ? `${park.distance.toFixed(1)} ${tr('km', 'ק\"מ')}`
     : null;
 
-  const hasBadges = hasOpeningYear || isClosed || isNew || isFeatured;
-  const showDistanceInBadges = hasBadges;
-  const showDistanceInAmenities = !hasBadges;
+  const hasOtherBadges = hasOpeningYear || isClosed || isNew || isFeatured;
+  const showBadgesSection = hasOtherBadges || distanceText;
 
   return (
     <div
@@ -393,13 +392,12 @@ export const MapParkCard = memo(({ park, locale, onClose: _onClose }: MapParkCar
                   locale={locale} 
                   alwaysVisible={true} 
                   variant="inline"
-                  distanceText={showDistanceInAmenities ? distanceText : null}
                 />
               </div>
             )}
 
-            {/* Badges Section - Below amenities */}
-            {(hasOpeningYear || isClosed || isNew || isFeatured) && (
+            {/* Badges Section - Below amenities (includes green distance badge for all cards when distance available) */}
+            {showBadgesSection && (
               <div className={`w-full  mb-2 relative flex flex-wrap gap-2 items-center transition-all duration-300 animate-fadeInDown delay-250 ${isExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 delay-0'}`}>
                 {/* Opening Year Badge */}
                 {hasOpeningYear && (
@@ -433,7 +431,7 @@ export const MapParkCard = memo(({ park, locale, onClose: _onClose }: MapParkCar
 
                 {/* Featured Badge */}
                 {isFeatured && (
-                  <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-green-bg dark:bg-green-dark text-green dark:text-green-bg-dark text-sm md:text-base px-2 py-1 rounded-full">
+                  <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-bg dark:bg-purple-dark text-purple dark:text-purple-bg-dark text-sm md:text-base px-2 py-1 rounded-full">
                     <span className="font-medium">
                       {tr('Featured', 'מומלץ')}
                     </span>
@@ -441,9 +439,9 @@ export const MapParkCard = memo(({ park, locale, onClose: _onClose }: MapParkCar
                   </div>
                 )}
 
-                {/* Distance Badge */}
-                {distanceText && showDistanceInBadges && (
-                  <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-purple-bg dark:bg-purple-dark text-purple dark:text-purple-bg-dark text-sm md:text-base px-2 py-1 rounded-full">
+                {/* Distance Badge - shown for all map park cards when distance is available */}
+                {distanceText && (
+                  <div className="flex gap-0.5 md:gap-1 justify-center items-center bg-green-bg dark:bg-green-dark text-green dark:text-green-bg-dark text-sm md:text-base px-2 py-1 rounded-full">
                     <Icon name="locationBold" className="w-3 h-3 md:w-4 md:h-4" />
                     <span className="font-semibold">
                       {distanceText}

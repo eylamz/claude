@@ -939,7 +939,7 @@ export default function SkateparksPage() {
             {/* Empty State */}
             {skateparks.length === 0 && !loading && (
               <div className="text-center py-16">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-bg dark:bg-gray-bg-dark mb-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-bg dark:bg-gray-bg-dark mb-4">
                   <Icon name="searchQuest" className="w-8 h-8 text-gray dark:text-gray-dark" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">

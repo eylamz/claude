@@ -913,7 +913,7 @@ export default function GuidePage() {
                 {tagsToDisplay.map((tag) => (
                   <Link
                     key={tag}
-                    href={`/${locale}/guides?search=${encodeURIComponent(locale === 'he' ? 'תג:' + tag : 'tag:' + tag)}`}
+                    href={`/${locale}/guides?search=${encodeURIComponent(locale === 'he' ? 'תגית:' + tag : 'tag:' + tag)}`}
                     className="capitalize px-2 py-1 rounded-lg text-[12px] md:text-xs font-semibold bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark border border-purple-border dark:border-purple-border-dark hover:bg-purple-hover-bg dark:hover:bg-purple-hover-bg-dark transition-colors duration-200"
                   >
                     {tag}

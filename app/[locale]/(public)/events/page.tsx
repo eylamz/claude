@@ -34,7 +34,7 @@ function parseTagSearch(
 ): { isTagSearch: true; tag: string } | { isTagSearch: false } {
   if (!query || typeof query !== 'string') return { isTagSearch: false };
   const trimmed = query.trim();
-  const match = trimmed.match(/^\s*(?:tag|תג)\s*:\s*(.*)$/i);
+  const match = trimmed.match(/^\s*(?:tag|תגית)\s*:\s*(.*)$/i);
   if (!match) return { isTagSearch: false };
   const tag = (match[1] ?? '').trim();
   return { isTagSearch: true, tag };
@@ -349,7 +349,7 @@ const EventCard = memo(
                 return (
                   <div
                     key={idx}
-                    className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg"
+                    className="flex items-center bg-background-dark/75 p-1.5 rounded-lg"
                     title={sportConfig ? sportConfig.displayName : getSportTranslation(sport)}
                   >
                     {sportConfig ? (
@@ -363,7 +363,7 @@ const EventCard = memo(
                 );
               })}
               {event.sports.length > 4 && (
-                <div className="flex items-center bg-black/45 backdrop-blur-sm p-1.5 rounded-lg">
+                <div className="flex items-center bg-background-dark/75 p-1.5 rounded-lg">
                   <span className="text-xs font-medium text-white">+{event.sports.length - 4}</span>
                 </div>
               )}
@@ -461,7 +461,7 @@ function EventsPageContent() {
   );
   const [searchQuery, setSearchQuery] = useState(
     tagFromUrl != null && tagFromUrl !== ''
-      ? (locale === 'he' ? 'תג: ' : 'tag: ') + tagFromUrl
+      ? (locale === 'he' ? 'תגית: ' : 'tag: ') + tagFromUrl
       : searchFromUrl || ''
   );
   const [hasSpotsAvailable, setHasSpotsAvailable] = useState(
@@ -786,6 +786,7 @@ function EventsPageContent() {
 
   // Calculate pagination info
   const totalResults = filteredEvents.length;
+  const totalEventsCount = events.length; // Total unfiltered count for display
   const totalPages = Math.ceil(totalResults / limit);
   const currentPage = page;
   const paginatedEvents = filteredEvents.slice((currentPage - 1) * limit, currentPage * limit);
@@ -838,7 +839,7 @@ function EventsPageContent() {
                 <TrendingUp className="w-4 h-4 text-purple dark:text-purple-dark" />
 
                 <span className="text-gray-600 dark:text-gray-400">
-                  {totalResults} {totalResults === 1 ? t('event') : t('events')}
+                  {totalEventsCount} {totalEventsCount === 1 ? t('event') : t('events')}
                 </span>
               </div>
             </div>
@@ -865,7 +866,11 @@ function EventsPageContent() {
             <div className="flex items-center gap-1 flex-1">
               <div className="flex-1 min-w-0">
                 <SearchInput
-                  placeholder={tr('Search events...', 'חפש אירועים...')}
+                  placeholder={
+                    parseTagSearch(searchQuery).isTagSearch
+                      ? tr('Search in tags...', 'חפש בתגיות...')
+                      : tr('Search events...', 'חפש אירועים...')
+                  }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onClear={() => setSearchQuery('')}
@@ -1086,8 +1091,8 @@ function EventsPageContent() {
           </>
         ) : (
           <div className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-brand-main/10 to-green-500/10 dark:from-brand-main/20 dark:to-green-500/20 mb-4">
-              <Icon name="searchQuest" className="w-8 h-8 text-brand-main" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-bg dark:bg-gray-bg-dark mb-4">
+              <Icon name="searchQuest" className="w-8 h-8 text-gray dark:text-gray-dark" />
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               {searchQuery
@@ -1098,7 +1103,7 @@ function EventsPageContent() {
               {tr('Try adjusting your filters or search terms', 'נסה לשנות את הפילטרים או החיפוש')}
             </p>
             {hasAnyFilter && (
-              <Button variant="brand" onClick={handleClearFilters}>
+              <Button variant="gray" onClick={handleClearFilters}>
                 {tr('Clear All Filters', 'נקה את כל הפילטרים')}
               </Button>
             )}

@@ -357,6 +357,11 @@ html {
   background: #4a5050;
 }
 
+/* Shadows */
+
+html:not(.dark) .navLowShadow {
+  filter: drop-shadow(rgba(102, 102, 102, 0.07) 0px 1px 1px) drop-shadow(rgba(94, 94, 94, 0.07) 0px 2px 2px) drop-shadow(rgba(122, 93, 68, 0.075) 0px 4px 4px) drop-shadow(rgba(94, 94, 94, 0.07) 0px 8px 8px) drop-shadow(rgba(94, 94, 94, 0.07) 0px 16px 16px);
+}
 .navShadow {
   filter: drop-shadow(2px 4px 6px rgba(0, 0, 0, 0.25));
 }
