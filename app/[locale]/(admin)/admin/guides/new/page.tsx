@@ -58,6 +58,7 @@ interface GuideFormData {
   metaTitle: { en: string; he: string };
   metaDescription: { en: string; he: string };
   metaKeywords: { en: string; he: string };
+  metaImage: string;
 }
 
 const CONTENT_BLOCK_TYPES: { value: ContentBlockType; label: string; icon: string }[] = [
@@ -132,6 +133,7 @@ export default function NewGuidePage() {
     metaTitle: { en: '', he: '' },
     metaDescription: { en: '', he: '' },
     metaKeywords: { en: '', he: '' },
+    metaImage: '',
   });
 
   // Generate slug from title
@@ -1602,6 +1604,12 @@ export default function NewGuidePage() {
                   }
                 />
               </div>
+              <Input
+                label="OG / Meta Image URL"
+                value={formData.metaImage}
+                onChange={(e) => setFormData((prev) => ({ ...prev, metaImage: e.target.value }))}
+                placeholder="https://example.com/image.jpg or /images/og-image.jpg. Leave empty to use cover image."
+              />
             </CardContent>
           </Card>
         </form>

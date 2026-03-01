@@ -68,6 +68,7 @@ export async function GET(
         en: guide.metaKeywords?.en || '',
         he: guide.metaKeywords?.he || '',
       },
+      metaImage: guide.metaImage || '',
       viewsCount: guide.viewsCount || 0,
       likesCount: guide.likesCount || 0,
       rating: guide.rating || 0,
@@ -144,6 +145,7 @@ export async function PUT(
       metaTitle,
       metaDescription,
       metaKeywords,
+      metaImage,
     } = body;
     
     // Debug: Log what we received
@@ -286,6 +288,7 @@ export async function PUT(
     if (metaTitle !== undefined) guide.metaTitle = metaTitle;
     if (metaDescription !== undefined) guide.metaDescription = metaDescription;
     if (metaKeywords !== undefined) guide.metaKeywords = metaKeywords;
+    if (metaImage !== undefined) guide.metaImage = metaImage;
 
     // Save the guide - use validateBeforeSave: false to avoid schema validation issues with Mixed types
     // This is safe because we've already validated and cleaned the data above
@@ -311,6 +314,7 @@ export async function PUT(
       metaTitle: guide.metaTitle,
       metaDescription: guide.metaDescription,
       metaKeywords: guide.metaKeywords,
+      metaImage: guide.metaImage,
     };
 
     return NextResponse.json({

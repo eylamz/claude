@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { ExternalLink, ChevronLeft } from 'lucide-react';
 import { Icon } from '@/components/icons';
 import { Button, Skeleton } from '@/components/ui';
-import { generateArticleStructuredData } from '@/lib/seo/utils';
+import { generateArticleStructuredData, getGuideMetaFromData } from '@/lib/seo/utils';
 import type { GuideData } from '@/lib/api/guides';
 import { sanitizeUrl } from '@/lib/utils/sanitizeUrl';
 import {
@@ -74,6 +74,7 @@ interface Guide {
   metaTitle?: ILocalizedField;
   metaDescription?: ILocalizedField;
   metaKeywords?: ILocalizedField;
+  metaImage?: string;
 }
 
 function getLocalizedText(field: ILocalizedField | undefined, locale: string): string {
@@ -627,9 +628,10 @@ export default function GuidePage() {
   const canonicalUrl = guide ? `${siteUrl}/${locale}/guides/${guide.slug}` : '';
   const alternateEnUrl = guide ? `${siteUrl}/en/guides/${guide.slug}` : '';
   const alternateHeUrl = guide ? `${siteUrl}/he/guides/${guide.slug}` : '';
-  const ogImage = guide?.coverImage 
-    ? (guide.coverImage.startsWith('http') ? guide.coverImage : `${siteUrl}${guide.coverImage}`) 
-    : `${siteUrl}/og-default.jpg`;
+  const metaImageForOg = guide ? getGuideMetaFromData(guide, locale, guide.slug).image : '';
+  const ogImage = metaImageForOg
+    ? (metaImageForOg.startsWith('http') ? metaImageForOg : `${siteUrl}${metaImageForOg}`)
+    : `${siteUrl}/og-guide-default.jpg`;
 
   // Set SEO meta tags dynamically
   useEffect(() => {

@@ -85,6 +85,7 @@ export async function GET(
       metaTitle: guide.metaTitle || undefined,
       metaDescription: guide.metaDescription || undefined,
       metaKeywords: guide.metaKeywords || undefined,
+      metaImage: guide.metaImage || undefined,
       publishedAt: guide.publishedAt,
       createdAt: guide.createdAt,
       updatedAt: guide.updatedAt,

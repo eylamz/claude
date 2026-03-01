@@ -193,6 +193,47 @@ export function getSkateparkMetaFromData(
   return { title, description, image, keywords, url };
 }
 
+/** Guide-like object (from API or cache) for client-side meta derivation */
+export type GuideMetaSource = {
+  title: LocalizedField;
+  description?: LocalizedField;
+  coverImage?: string;
+  metaImage?: string;
+  metaTitle?: LocalizedField;
+  metaDescription?: LocalizedField;
+  authorName?: string;
+};
+
+/**
+ * Derive meta title, description, image, url from guide data (client-safe).
+ * Use when guide is loaded on the client so we can sync document head even if
+ * server metadata wasn't applied (e.g. client-side nav without cache).
+ */
+export function getGuideMetaFromData(
+  guide: GuideMetaSource,
+  locale: string,
+  slug: string
+): { title: string; description: string; image: string; url: string } {
+  const metaTitle = guide.metaTitle && (getLocalizedText(guide.metaTitle, locale).trim());
+  const title = metaTitle
+    ? metaTitle
+    : locale === 'he'
+      ? `${getLocalizedText(guide.title, locale)} | אנבוס`
+      : `${getLocalizedText(guide.title, locale)} | ENBOSS`;
+
+  const metaDesc = guide.metaDescription && getLocalizedText(guide.metaDescription, locale).trim();
+  const descFromGuide = guide.description ? getLocalizedText(guide.description, locale) : '';
+  const description = (metaDesc || descFromGuide || `Read ${getLocalizedText(guide.title, locale)} on ENBOSS.`).substring(0, 160);
+
+  const image =
+    guide.metaImage && String(guide.metaImage).trim()
+      ? guide.metaImage
+      : (guide.coverImage || '/og-guide-default.jpg');
+
+  const url = `/${locale}/guides/${slug}`;
+  return { title, description, image, url };
+}
+
 export function generateProductStructuredData(product: {
   name: LocalizedField;
   description?: LocalizedField;

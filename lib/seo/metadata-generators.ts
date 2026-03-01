@@ -397,7 +397,10 @@ export async function generateGuideMetadata(params: {
     ? getLocalizedText(guide.description, locale).substring(0, 160)
     : `Read ${title} on ENBOSS. Expert guides and tutorials for extreme sports.`;
 
-  const image = guide.coverImage || '/og-guide-default.jpg';
+  const image =
+    guide.metaImage && String(guide.metaImage).trim()
+      ? guide.metaImage
+      : (guide.coverImage || '/og-guide-default.jpg');
   const readTime = guide.readTime ? ` ${guide.readTime} min read` : '';
   const author = guide.authorName ? ` by ${guide.authorName}` : '';
 

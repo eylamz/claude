@@ -117,6 +117,7 @@ export interface IGuide extends Document {
   metaTitle?: ILocalizedField;
   metaDescription?: ILocalizedField;
   metaKeywords?: ILocalizedField;
+  metaImage?: string;
   
   // Author
   authorId: mongoose.Types.ObjectId;
@@ -270,6 +271,10 @@ const GuideSchema: Schema<IGuide> = new Schema<IGuide>(
         type: String,
         trim: true,
       },
+    },
+    metaImage: {
+      type: String,
+      trim: true,
     },
     authorId: {
       type: Schema.Types.ObjectId,

@@ -61,6 +61,7 @@ interface GuideFormData {
   metaTitle: { en: string; he: string };
   metaDescription: { en: string; he: string };
   metaKeywords: { en: string; he: string };
+  metaImage: string;
 }
 
 const CONTENT_BLOCK_TYPES: { value: ContentBlockType; label: string; icon: string }[] = [
@@ -141,6 +142,7 @@ export default function EditGuidePage() {
     metaTitle: { en: '', he: '' },
     metaDescription: { en: '', he: '' },
     metaKeywords: { en: '', he: '' },
+    metaImage: '',
   });
 
   // Fetch guide data
@@ -293,6 +295,7 @@ export default function EditGuidePage() {
           metaTitle: guide.metaTitle || { en: '', he: '' },
           metaDescription: guide.metaDescription || { en: '', he: '' },
           metaKeywords: guide.metaKeywords || { en: '', he: '' },
+          metaImage: guide.metaImage || '',
         });
       } catch (err: any) {
         setError(err.message || 'Failed to load guide');
@@ -1892,6 +1895,12 @@ export default function EditGuidePage() {
                   }
                 />
               </div>
+              <Input
+                label="OG / Meta Image URL"
+                value={formData.metaImage}
+                onChange={(e) => setFormData((prev) => ({ ...prev, metaImage: e.target.value }))}
+                placeholder="https://example.com/image.jpg or /images/og-image.jpg. Leave empty to use cover image."
+              />
             </CardContent>
           </Card>
         </form>
