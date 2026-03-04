@@ -70,6 +70,7 @@ function isPublicRoute(pathname: string): boolean {
 
   // Routes under (public) folder are public:
   // shop, skateparks, trainers, guides, events, cart, checkout, search, about, growth-lab
+  // Plus footer/header links: contact, terms, cookies, accessibility, community
   const publicPathPatterns = [
     /^\/[a-z]{2}\/shop/,
     /^\/[a-z]{2}\/skateparks/,
@@ -82,6 +83,12 @@ function isPublicRoute(pathname: string): boolean {
     /^\/[a-z]{2}\/about$/,
     // Growth Lab root and all its subpaths (e.g. surveys) are public
     /^\/[a-z]{2}\/growth-lab/,
+    // Footer & HeaderNav page links
+    /^\/[a-z]{2}\/contact/,
+    /^\/[a-z]{2}\/terms/,
+    /^\/[a-z]{2}\/cookies/,
+    /^\/[a-z]{2}\/accessibility/,
+    /^\/[a-z]{2}\/community/,
   ];
 
   return publicPathPatterns.some((pattern) => pattern.test(pathname));
@@ -118,6 +125,8 @@ function isProtectedRoute(pathname: string): boolean {
 }
 
 // Auth middleware configuration
+// Pass same cookie name as auth config so middleware finds the session on HTTPS
+// (getToken defaults to __Secure-next-auth.session-token on HTTPS, but we use next-auth.session-token)
 export default withAuth(
   function onSuccess(req: NextRequest) {
     // Get the token from the request
@@ -162,9 +171,10 @@ export default withAuth(
           return true;
         }
 
-        // Check admin routes (require admin role)
+        // Admin routes: allow any authenticated user; onSuccess redirects non-admins to /
+        // (avoids redirect-to-login when cookie name or token.role differs in middleware)
         if (isAdminRoute(pathname)) {
-          return token?.role === 'admin';
+          return !!token;
         }
 
         // Check protected routes (require authentication but not admin)
@@ -176,6 +186,13 @@ export default withAuth(
         // New non-public pages must either be added to publicRoutes or placed under (public).
         return !!token;
       },
+    },
+    // Use same cookie name as lib/auth/config so middleware finds the session (e.g. on HTTPS)
+    cookies: {
+      sessionToken: { name: 'next-auth.session-token' },
+    },
+    pages: {
+      signIn: '/login',
     },
   }
 );
