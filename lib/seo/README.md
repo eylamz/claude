@@ -86,6 +86,8 @@ Configured at `/robots.txt`:
 NEXT_PUBLIC_SITE_URL=https://enboss.co
 ```
 
+**Production (e.g. droplet/VPS):** Set `NEXT_PUBLIC_SITE_URL` to your public URL so og:image, canonical URLs, and sitemap use absolute URLs. If this is not set, the metadata layer will try to derive the base URL from the request (`Host` / `X-Forwarded-Host` and `X-Forwarded-Proto`), so metadata can still work behind a reverse proxy.
+
 ## Implementation Examples
 
 See page implementations in:

@@ -6,6 +6,30 @@ type LocalizedField = { en: string; he: string } | string;
 export const DEFAULT_META_TITLE = 'ENBOSS - No Rider Left Behind';
 
 /**
+ * Resolve the public site URL for absolute metadata (og:image, canonical, etc.).
+ * Use this so metadata works on production (e.g. droplet) even when NEXT_PUBLIC_SITE_URL is not set:
+ * 1. NEXT_PUBLIC_SITE_URL (set on droplet to e.g. https://enboss.co)
+ * 2. Request host from headers (x-forwarded-proto + host, e.g. behind reverse proxy)
+ * 3. Fallback https://enboss.co
+ * Uses dynamic import for next/headers so this module can be imported from API routes without pulling in Server-Only APIs at top level.
+ */
+export async function getSiteUrl(): Promise<string> {
+  const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (fromEnv) return fromEnv;
+  try {
+    const { headers } = await import('next/headers');
+    const h = await headers();
+    const host = h.get('x-forwarded-host') || h.get('host');
+    const rawProto = h.get('x-forwarded-proto');
+    const proto = rawProto ? String(rawProto).split(',')[0].trim() : 'https';
+    if (host) return `${proto}://${host}`;
+  } catch {
+    // headers() can throw outside request context (e.g. during build)
+  }
+  return 'https://enboss.co';
+}
+
+/**
  * Get localized text with fallback: if the requested locale's value is missing or empty,
  * use the other locale (e.g. Hebrew missing → English, English missing → Hebrew).
  */
@@ -45,12 +69,12 @@ export interface SEOConfig {
   keywords?: string | string[];
 }
 
-export function generateMetadata(config: SEOConfig): Metadata {
+export async function generateMetadata(config: SEOConfig): Promise<Metadata> {
   const { title, description, image, url, type = 'website', locale = 'en', alternateLocales = [], publishedTime, modifiedTime, author, keywords } = config;
   
   const titleText = getLocalizedText(title, locale);
   const descText = getLocalizedText(description, locale);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+  const siteUrl = await getSiteUrl();
   const imageUrl = image ? (image.startsWith('http') ? image : `${siteUrl}${image}`) : `${siteUrl}/og-default.jpg`;
   const canonicalUrl = url ? `${siteUrl}${url}` : siteUrl;
 

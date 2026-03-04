@@ -38,6 +38,20 @@ const getNextAuthSecret = (): string => {
 const NEXTAUTH_SECRET = getNextAuthSecret();
 
 /**
+ * Whether the app is served over HTTPS (from NEXTAUTH_URL).
+ * When false, we must not set Secure on cookies or the browser won't store them on HTTP.
+ */
+const isHttps = (): boolean => {
+  const url = process.env.NEXTAUTH_URL;
+  if (!url) return false;
+  try {
+    return new URL(url).protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Resolve and validate the MongoDB URI for NextAuth.
  *
  * This mirrors the strict checks used in the main MongoDB utility so that:
@@ -287,32 +301,33 @@ export const authOptions: NextAuthOptions = {
   },
 
   // Cookie configuration
+  // Use Secure + SameSite=None only when NEXTAUTH_URL is https; otherwise the browser won't store cookies on HTTP.
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        sameSite: isHttps() ? 'none' : 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: isHttps(),
       },
     },
     callbackUrl: {
       name: `next-auth.callback-url`,
       options: {
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        sameSite: isHttps() ? 'none' : 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: isHttps(),
       },
     },
     csrfToken: {
       name: `next-auth.csrf-token`,
       options: {
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        sameSite: isHttps() ? 'none' : 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: isHttps(),
       },
     },
   },

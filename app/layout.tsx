@@ -1,28 +1,51 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { defaultLocale } from '@/i18n';
+import { defaultLocale, locales, type Locale } from '@/i18n';
 import './globals.css';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+const defaultOgImage = 'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772636312/bd6cugckdsmod2abmxhw.png';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: 'ENBOSS - Unite & Ride',
-  description: 'Find the best skateparks near you',
+  description: 'The home your wheels deserve. Discover, connect, and progress.',
   openGraph: {
+    type: 'website',
+    siteName: 'ENBOSS',
+    title: 'ENBOSS - Unite & Ride',
+    description: 'The home your wheels deserve. Discover, connect, and progress.',
+    url: siteUrl,
     images: [
       {
-        url: 'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772474412/huuauefsaumesy5fsitc.jpg',
-        secureUrl: 'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772474412/huuauefsaumesy5fsitc.jpg',
-        width: 1424,
-        height: 752,
+        url: defaultOgImage,
+        secureUrl: defaultOgImage,
+        width: 1200,
+        height: 630,
         alt: 'ENBOSS - Unite & Ride',
-        type: 'image/jpeg',
+        type: 'image/png',
       },
     ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ENBOSS - Unite & Ride',
+    description: 'The home your wheels deserve. Discover, connect, and progress.',
+    images: [defaultOgImage],
   },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const headersList = await headers();
-  const locale = headersList.get('x-next-intl-locale') || defaultLocale;
+  let locale: Locale = defaultLocale;
+  try {
+    const headersList = await headers();
+    const fromHeader = headersList.get('x-next-intl-locale');
+    if (fromHeader && locales.includes(fromHeader as Locale)) {
+      locale = fromHeader as Locale;
+    }
+  } catch (e) {
+    // headers() can throw in some runtimes (e.g. edge, build); keep defaultLocale so layout still renders and metadata is sent
+  }
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>

@@ -116,8 +116,8 @@ npm run dev
 ### Required Environment Variables
 
 - Application
-  - `NEXT_PUBLIC_SITE_URL` = https://your-domain.com
-  - `NEXTAUTH_URL` = https://your-domain.com
+  - `NEXT_PUBLIC_SITE_URL` = https://enboss.co — **Required for correct metadata (og:image, canonical) in production.** Set this on your droplet/VPS so `lib/seo` can build absolute URLs. If unset, the app will try to derive the base URL from request headers (e.g. behind nginx with `Host` / `X-Forwarded-Host`).
+  - `NEXTAUTH_URL` = https://enboss.co
   - `NEXTAUTH_SECRET` = random 32+ chars
   - `NODE_ENV` = production
 - Database
@@ -193,6 +193,7 @@ npm run dev
 - Build fails: Check Node/Next versions, env vars, or retry deploy with clean cache.
 - 500 errors: Inspect logs; verify DB/Redis network and credentials.
 - Domain/SSL: Verify DNS CNAME and allow propagation.
+- **Missing og:image or metadata on production (e.g. droplet):** Set `NEXT_PUBLIC_SITE_URL` to your public URL (e.g. `https://enboss.co`) in the server environment. Metadata is generated at request time; if the env is missing, the app falls back to request headers (`Host` / `X-Forwarded-Host`). Ensure your reverse proxy forwards `Host` and optionally `X-Forwarded-Proto`. If MongoDB is unreachable, some page-level metadata may fall back to defaults—check server logs for connection errors.
 - Performance: Review Lighthouse budgets, run `npm run perf:bundle`, optimize images and code splitting.
 - DB timeouts: Add indexes; scale Atlas tier; review slow queries.
 - Email: Validate SMTP/EmailJS credentials; check SPF/DKIM; inspect webhook/logs.

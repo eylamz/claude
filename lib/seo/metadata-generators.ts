@@ -4,6 +4,7 @@ import {
   getLocalizedText,
   getMetaTitleWithFallback,
   DEFAULT_META_TITLE,
+  getSiteUrl,
 } from './utils';
 import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';
@@ -20,8 +21,8 @@ export async function generateProductMetadata(params: {
 }): Promise<Metadata> {
   const { slug, locale } = params;
 
-  // Fetch product data
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+  // Fetch product data (use getSiteUrl() so fetches hit the same origin on droplet)
+  const siteUrl = await getSiteUrl();
   const res = await fetch(`${siteUrl}/api/products/${slug}?locale=${locale}`, {
     next: { revalidate: 3600 },
   });
@@ -342,7 +343,7 @@ export async function generateEventMetadata(params: {
       event.images?.[0]?.url ||
       '/og-event-default.jpg';
 
-    const baseMeta = genMeta({
+    const baseMeta = await genMeta({
       title,
       description,
       image,
@@ -378,7 +379,7 @@ export async function generateGuideMetadata(params: {
 }): Promise<Metadata> {
   const { slug, locale } = params;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+  const siteUrl = await getSiteUrl();
   const res = await fetch(`${siteUrl}/api/guides/${slug}?locale=${locale}`, {
     next: { revalidate: 3600 },
   });
@@ -512,7 +513,7 @@ export async function generateTrainerMetadata(params: {
 }): Promise<Metadata> {
   const { slug, locale } = params;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
+  const siteUrl = await getSiteUrl();
   const res = await fetch(`${siteUrl}/api/trainers/${slug}?locale=${locale}`, {
     next: { revalidate: 3600 },
   });
