@@ -28,10 +28,10 @@ export async function GET(
         },
       });
     } catch (fileError: any) {
-      // Log the actual path and error for debugging
-      console.error(`Failed to read icon file: ${iconsPath}`, fileError.message);
+    // Log the actual path and error for debugging (server-side only; do not expose path to client)
+    console.error(`Failed to read icon file: ${iconsPath}`, fileError.message);
       return NextResponse.json(
-        { error: `Icon "${iconName}" not found`, path: iconsPath },
+        { error: `Icon "${iconName}" not found` },
         { status: 404 }
       );
     }

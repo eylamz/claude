@@ -76,8 +76,9 @@ const getConnectionOptions = (): mongoose.ConnectOptions => {
     // Additional options
     connectTimeoutMS: 30000,
     
-    // Disable mongoose buffering for serverless
-    bufferCommands: false,
+    // Buffer commands until connected - prevents "Cannot call X before initial connection" in serverless
+    // when metadata/layout and API run in parallel or connection is still establishing.
+    bufferCommands: true,
   };
 
   // Environment-specific overrides
@@ -173,16 +174,23 @@ export async function connectDB(): Promise<typeof mongoose> {
     return connectionPromise;
   }
 
-  // If connecting, wait for it
+  // If connecting (e.g. another request started connect), wait for that connection to complete
+  // instead of starting a duplicate connection.
   if (mongoose.connection.readyState === 2) {
-    // Wait a bit and check again
-    await new Promise(resolve => setTimeout(resolve, 100));
-    if ((mongoose.connection.readyState as number) === 1) {
+    const maxWait = 15000; // 15s max wait for in-flight connection
+    const step = 50;
+    let elapsed = 0;
+    while (mongoose.connection.readyState === 2 && elapsed < maxWait) {
+      await new Promise((resolve) => setTimeout(resolve, step));
+      elapsed += step;
+    }
+    if (mongoose.connection.readyState === 1) {
       if (!eventListenersSetup) {
         setupEventListeners();
       }
       return mongoose;
     }
+    // Still connecting after maxWait - fall through to create/await connectionPromise below
   }
 
   try {

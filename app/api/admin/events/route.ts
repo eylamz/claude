@@ -5,6 +5,7 @@ import Settings from '@/lib/models/Settings';
 import { AuthError, requireAdmin } from '@/lib/auth/server';
 import { MAX_ADMIN_PAGE_SIZE } from '@/lib/config/api';
 import { validateCsrf } from '@/lib/security/csrf';
+import { escapeRegexForMongo } from '@/lib/security/regex';
 
 export async function GET(request: Request) {
   try {
@@ -34,13 +35,15 @@ export async function GET(request: Request) {
     const filter: any = {};
 
     // Search filter - handle both new format (content[locale].title) and old format (title[locale])
+    // Escape user input to prevent ReDoS and $regex injection
     if (search) {
+      const safeSearch = escapeRegexForMongo(search);
       filter.$or = [
-        { 'content.en.title': { $regex: search, $options: 'i' } },
-        { 'content.he.title': { $regex: search, $options: 'i' } },
-        { 'title.en': { $regex: search, $options: 'i' } },
-        { 'title.he': { $regex: search, $options: 'i' } },
-        { tags: { $in: [new RegExp(search, 'i')] } },
+        { 'content.en.title': { $regex: safeSearch, $options: 'i' } },
+        { 'content.he.title': { $regex: safeSearch, $options: 'i' } },
+        { 'title.en': { $regex: safeSearch, $options: 'i' } },
+        { 'title.he': { $regex: safeSearch, $options: 'i' } },
+        { tags: { $in: [new RegExp(safeSearch, 'i')] } },
       ];
     }
 
