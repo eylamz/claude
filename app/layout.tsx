@@ -10,6 +10,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: 'ENBOSS - Unite & Ride',
   description: 'The home your wheels deserve. Discover, connect, and progress.',
+  icons: {
+    icon: '/favicon.ico',
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
   openGraph: {
     type: 'website',
     siteName: 'ENBOSS',

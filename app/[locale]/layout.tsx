@@ -1,3 +1,4 @@
+// app/[locale]/layout.tsx
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -9,6 +10,8 @@ import MobileNav from '@/components/layout/MobileNav';
 import type { Metadata } from 'next';
 
 const defaultOgImage = 'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772636312/bd6cugckdsmod2abmxhw.png';
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
 
 const localeMetadata: Record<string, { title: string; description: string }> = {
   en: {
@@ -29,8 +32,15 @@ export async function generateMetadata({
   const { locale } = await params;
   const meta = localeMetadata[locale] ?? localeMetadata.en;
   return {
+    metadataBase: new URL(siteUrl),
     title: meta.title,
     description: meta.description,
+    icons: {
+      icon: '/favicon.ico',
+      apple: [
+        { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+      ],
+    },
     openGraph: {
       type: 'website',
       siteName: meta.title.split(' - ')[0],

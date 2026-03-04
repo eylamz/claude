@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui';
 import ParkCardSkeleton from '@/components/skateparks/ParkCardSkeleton';
 import { MapView } from '@/components/skateparks/MapView';
-import { ParkCard } from '@/components/skateparks/ParkCard';
+import { ParkCard, clearPendingParkNavigation } from '@/components/skateparks/ParkCard';
 import { FilterBar } from '@/components/skateparks/FilterBar';
 import { Icon } from '@/components/icons';
 import { useTranslations } from 'next-intl';
@@ -816,6 +816,11 @@ export default function SkateparksPage() {
     fetchAllSkateparks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array - only run once on mount
+
+  // Clear card loading spinner when list page is shown (e.g. user navigated back from a park page)
+  useEffect(() => {
+    clearPendingParkNavigation();
+  }, []);
 
   const clearFilters = () => {
     setAreaFilter('');

@@ -14,6 +14,23 @@ function notifyListeners() {
   listeners.forEach((fn) => fn());
 }
 
+/** Clears pending navigation state (e.g. when user returns to list via back button). */
+export function clearPendingParkNavigation() {
+  pendingNavigation = null;
+  if (pendingTimeoutId) {
+    clearTimeout(pendingTimeoutId);
+    pendingTimeoutId = null;
+  }
+  notifyListeners();
+}
+
+// When user navigates back to this page (e.g. from a park page), clear spinner so it doesn’t stick.
+if (typeof window !== 'undefined') {
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) clearPendingParkNavigation();
+  });
+}
+
 function startParkNavigation(slug: string, locale: string) {
   if (pendingTimeoutId) clearTimeout(pendingTimeoutId);
   pendingNavigation = { slug, locale };
@@ -22,6 +39,9 @@ function startParkNavigation(slug: string, locale: string) {
     if (pendingNavigation) {
       const { slug: s, locale: l } = pendingNavigation;
       window.location.href = `/${l}/skateparks/${s}`;
+      pendingTimeoutId = null;
+      // Do not clear pendingNavigation or notifyListeners — keep spinner visible until the page unloads
+      return;
     }
     pendingNavigation = null;
     pendingTimeoutId = null;

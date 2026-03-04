@@ -1,3 +1,5 @@
+// lib/seo/metadata-generators.ts
+
 import { Metadata } from 'next';
 import {
   generateMetadata as genMeta,

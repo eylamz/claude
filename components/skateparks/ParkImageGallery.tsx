@@ -157,7 +157,6 @@ const ParkImageGallery = ({
   const isScrolling = useRef<boolean>(false);
   const isTouching = useRef<boolean>(false);
   const currentImageIndex = useRef<number>(0);
-  const scrollAnimationFrameId = useRef<number | null>(null);
   const [isScrubbing, setIsScrubbing] = useState(false);
   
   if (!images || images.length === 0) {
@@ -176,10 +175,6 @@ const ParkImageGallery = ({
   // Mobile swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!mobileGalleryRef.current) return;
-    if (scrollAnimationFrameId.current) {
-      cancelAnimationFrame(scrollAnimationFrameId.current);
-      scrollAnimationFrameId.current = null;
-    }
     const container = mobileGalleryRef.current;
     const imageWidth = container.clientWidth;
     touchStartY.current = e.touches[0].clientY;
@@ -245,10 +240,9 @@ const ParkImageGallery = ({
     
     isTouching.current = false;
     
-    const imageWidth = container.clientWidth;
     const maxScroll = container.scrollWidth - container.clientWidth;
     const isRtl = locale === 'he';
-    // Clamp scroll to valid range so we never snap from an out-of-place position
+    // Clamp scroll to valid range
     let scrollLeft = container.scrollLeft;
     if (isRtl) {
       scrollLeft = Math.max(-maxScroll, Math.min(0, scrollLeft));
@@ -256,53 +250,6 @@ const ParkImageGallery = ({
       scrollLeft = Math.max(0, Math.min(maxScroll, scrollLeft));
     }
     container.scrollLeft = scrollLeft;
-
-    const startScroll = touchStartScrollLeft.current;
-    const startIndex = touchStartIndex.current;
-    // Require only ~25% of slide width to trigger next/prev (less demanding gesture)
-    const thresholdRatio = 0.01;
-    const threshold = imageWidth * thresholdRatio;
-    const delta = isRtl ? startScroll - scrollLeft : scrollLeft - startScroll;
-
-    let targetIndex: number;
-    if (delta > threshold && startIndex < images.length - 1) {
-      targetIndex = startIndex + 1;
-    } else if (delta < -threshold && startIndex > 0) {
-      targetIndex = startIndex - 1;
-    } else {
-      targetIndex = startIndex;
-    }
-
-    targetIndex = Math.max(0, Math.min(images.length - 1, targetIndex));
-    
-    currentImageIndex.current = targetIndex;
-    setMobileCurrentIndex(targetIndex);
-
-    const targetLeft = isRtl ? -targetIndex * imageWidth : targetIndex * imageWidth;
-    const startLeft = container.scrollLeft;
-    if (startLeft === targetLeft) {
-      isScrolling.current = false;
-      return;
-    }
-
-    // Fast snap animation (150ms) instead of browser's slow default smooth scroll
-    const duration = 150;
-    const startTime = performance.now();
-    if (scrollAnimationFrameId.current) cancelAnimationFrame(scrollAnimationFrameId.current);
-
-    const tick = () => {
-      const elapsed = performance.now() - startTime;
-      const t = Math.min(1, elapsed / duration);
-      const eased = 1 - (1 - t) ** 2; // easeOutQuad
-      container.scrollLeft = startLeft + (targetLeft - startLeft) * eased;
-      if (t < 1) {
-        scrollAnimationFrameId.current = requestAnimationFrame(tick);
-      } else {
-        scrollAnimationFrameId.current = null;
-        container.scrollLeft = targetLeft;
-      }
-    };
-    scrollAnimationFrameId.current = requestAnimationFrame(tick);
     
     isScrolling.current = false;
   };
