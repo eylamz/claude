@@ -309,6 +309,7 @@ export async function POST(request: NextRequest) {
       metaTitle: body.metaTitle ? { en: body.metaTitle.en ?? '', he: body.metaTitle.he ?? '' } : undefined,
       metaDescription: body.metaDescription ? { en: body.metaDescription.en ?? '', he: body.metaDescription.he ?? '' } : undefined,
       metaKeywords: body.metaKeywords ? { en: body.metaKeywords.en ?? '', he: body.metaKeywords.he ?? '' } : undefined,
+      ogImage: body.ogImage && String(body.ogImage).trim() ? String(body.ogImage).trim() : undefined,
     });
 
     await newEvent.save();

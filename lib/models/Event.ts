@@ -182,6 +182,8 @@ export interface IEvent extends Document {
   metaTitle?: ILocalizedField;
   metaDescription?: ILocalizedField;
   metaKeywords?: ILocalizedField;
+  /** Optional OG image URL for social sharing. When empty, featured image is used. */
+  ogImage?: string;
   
   // Event specific fields
   isOnline: boolean;
@@ -372,6 +374,8 @@ const EventSchema = new Schema<IEvent>(
       en: { type: String, trim: true },
       he: { type: String, trim: true },
     },
+    /** Optional OG image URL for social sharing. When empty, featured image is used. */
+    ogImage: { type: String, trim: true },
     
     // Event specific fields
     isOnline: { type: Boolean, default: false },

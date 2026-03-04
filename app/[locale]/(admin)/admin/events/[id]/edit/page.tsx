@@ -66,6 +66,7 @@ interface EventFormData {
   notes: string;
   sections: { en: EventSectionForm[]; he: EventSectionForm[] };
   media: EventMediaItem[];
+  ogImage: string;
 }
 
 const SPORTS = [
@@ -150,6 +151,7 @@ export default function EditEventPage() {
     notes: '',
     sections: { en: [], he: [] },
     media: [],
+    ogImage: '',
   });
 
   // Fetch event data
@@ -234,6 +236,7 @@ export default function EditEventPage() {
           metaKeywords: event.metaKeywords || { en: '', he: '' },
           tags: event.tags || [],
           notes: event.notes || '',
+          ogImage: event.ogImage ?? '',
           media: Array.isArray(event.media)
             ? event.media.map((m: any) => ({
                 id: m.id || `media-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -1456,6 +1459,19 @@ export default function EditEventPage() {
             </div>
 
             <div>
+              <Input
+                type="url"
+                label="OG Image URL (optional)"
+                value={formData.ogImage}
+                onChange={(e) => handleInputChange('ogImage', e.target.value)}
+                placeholder="https://... (leave empty to use featured image)"
+              />
+              <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">
+                Image used when sharing this event on social media. If empty, the featured image above is used.
+              </p>
+            </div>
+
+            <div>
               <Textarea
                 label="Notes (Internal)"
                 value={formData.notes}
@@ -1466,6 +1482,20 @@ export default function EditEventPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Bottom actions */}
+        <div className="flex items-center justify-end gap-2 pt-4 pb-8 border-t border-gray-200 dark:border-gray-700">
+          <Button type="button" variant="red" onClick={() => router.back()}>
+            Cancel
+          </Button>
+          <Button type="button" variant="green" onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSubmit();
+          }} disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : 'Save Event'}
+          </Button>
+        </div>
       </form>
     </div>
   );

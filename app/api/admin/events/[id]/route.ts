@@ -137,6 +137,7 @@ export async function GET(
       metaTitle: event.metaTitle ?? { en: '', he: '' },
       metaDescription: event.metaDescription ?? { en: '', he: '' },
       metaKeywords: event.metaKeywords ?? { en: '', he: '' },
+      ogImage: (event as EventLean & { ogImage?: string }).ogImage ?? '',
       tags: Array.isArray(tags) ? tags : [],
       notes: ev.notes || '',
       sections: hasNewSchema
@@ -232,6 +233,9 @@ export async function PUT(
     if (body.metaTitle !== undefined) event.metaTitle = { en: body.metaTitle.en ?? '', he: body.metaTitle.he ?? '' };
     if (body.metaDescription !== undefined) event.metaDescription = { en: body.metaDescription.en ?? '', he: body.metaDescription.he ?? '' };
     if (body.metaKeywords !== undefined) event.metaKeywords = { en: body.metaKeywords.en ?? '', he: body.metaKeywords.he ?? '' };
+    if (body.ogImage !== undefined) {
+      event.ogImage = body.ogImage && String(body.ogImage).trim() ? String(body.ogImage).trim() : undefined;
+    }
 
     // content (title, description, tags) — preserve existing sections
     if (event.content) {
@@ -440,6 +444,7 @@ export async function PUT(
       metaTitle: event.metaTitle ?? { en: '', he: '' },
       metaDescription: event.metaDescription ?? { en: '', he: '' },
       metaKeywords: event.metaKeywords ?? { en: '', he: '' },
+      ogImage: (event as unknown as { ogImage?: string }).ogImage ?? '',
       tags: Array.isArray(tags) ? tags : [],
       notes: '',
       sections: {

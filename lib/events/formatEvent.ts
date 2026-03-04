@@ -118,6 +118,7 @@ export function formatEventForDetail(
     metaTitle: event.metaTitle,
     metaDescription: event.metaDescription,
     metaKeywords: event.metaKeywords,
+    ogImage: event.ogImage || undefined,
 
     createdAt: event.createdAt,
     updatedAt: event.updatedAt,

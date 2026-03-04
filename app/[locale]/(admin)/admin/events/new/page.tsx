@@ -63,6 +63,7 @@ interface EventFormData {
   metaTitle: { en: string; he: string };
   metaDescription: { en: string; he: string };
   metaKeywords: { en: string; he: string };
+  ogImage: string;
   tags: string[];
   notes: string;
   sections: { en: EventSectionForm[]; he: EventSectionForm[] };
@@ -140,6 +141,7 @@ export default function NewEventPage() {
     metaTitle: { en: '', he: '' },
     metaDescription: { en: '', he: '' },
     metaKeywords: { en: '', he: '' },
+    ogImage: '',
     tags: [],
     notes: '',
     sections: { en: [], he: [] },
@@ -1260,6 +1262,19 @@ export default function NewEventPage() {
             </div>
 
             <div>
+              <Input
+                type="url"
+                label="OG Image URL (optional)"
+                value={formData.ogImage}
+                onChange={(e) => handleInputChange('ogImage', e.target.value)}
+                placeholder="https://... (leave empty to use featured image)"
+              />
+              <p className="text-xs text-text-secondary dark:text-text-secondary-dark mt-1">
+                Image used when sharing this event on social media. If empty, the featured image above is used.
+              </p>
+            </div>
+
+            <div>
               <Textarea
                 label="Notes (Internal)"
                 value={formData.notes}
@@ -1270,6 +1285,25 @@ export default function NewEventPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Bottom actions */}
+        <div className="flex items-center justify-end gap-2 pt-4 pb-8 border-t border-gray-200 dark:border-gray-700">
+          <Button type="button" variant="red" onClick={() => router.back()}>
+            Cancel
+          </Button>
+          <Button type="button" variant="orange" onClick={(e) => {
+            e.preventDefault();
+            handleSubmit(undefined, true);
+          }} disabled={isSubmitting}>
+            {isSubmitting ? 'Saving...' : 'Save Draft'}
+          </Button>
+          <Button type="button" variant="green" onClick={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }} disabled={isSubmitting}>
+            {isSubmitting ? 'Publishing...' : 'Publish Event'}
+          </Button>
+        </div>
       </form>
     </div>
   );

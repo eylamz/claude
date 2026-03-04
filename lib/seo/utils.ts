@@ -5,6 +5,9 @@ type LocalizedField = { en: string; he: string } | string;
 /** Default site meta title (same as root layout.tsx). Used as final fallback for page titles. */
 export const DEFAULT_META_TITLE = 'ENBOSS - No Rider Left Behind';
 
+/** Default OG image URL used for site-wide and listing pages (events, skateparks, guides, growth-lab). */
+export const DEFAULT_OG_IMAGE = 'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772636312/bd6cugckdsmod2abmxhw.png';
+
 /**
  * Resolve the public site URL for absolute metadata (og:image, canonical, etc.).
  * Use this so metadata works on production (e.g. droplet) even when NEXT_PUBLIC_SITE_URL is not set:
@@ -75,7 +78,7 @@ export async function generateMetadata(config: SEOConfig): Promise<Metadata> {
   const titleText = getLocalizedText(title, locale);
   const descText = getLocalizedText(description, locale);
   const siteUrl = await getSiteUrl();
-  const imageUrl = image ? (image.startsWith('http') ? image : `${siteUrl}${image}`) : `${siteUrl}/og-default.jpg`;
+  const imageUrl = image ? (image.startsWith('http') ? image : `${siteUrl}${image}`) : DEFAULT_OG_IMAGE;
   const canonicalUrl = url ? `${siteUrl}${url}` : siteUrl;
 
   // Handle alternate language URLs

@@ -4,6 +4,7 @@ import {
   getLocalizedText,
   getMetaTitleWithFallback,
   DEFAULT_META_TITLE,
+  DEFAULT_OG_IMAGE,
   getSiteUrl,
 } from './utils';
 import connectDB from '@/lib/db/mongodb';
@@ -193,7 +194,7 @@ export async function generateSkateparksListingMetadata(params: {
   return genMeta({
     title,
     description,
-    image: '/og-skatepark-default.jpg',
+    image: DEFAULT_OG_IMAGE,
     url: `/${locale}/skateparks`,
     locale,
     alternateLocales: locale === 'en' ? ['he'] : ['en'],
@@ -221,7 +222,7 @@ export async function generateEventsListingMetadata(params: { locale: string }):
   return genMeta({
     title,
     description,
-    image: '/og-event-default.jpg',
+    image: DEFAULT_OG_IMAGE,
     url: `/${locale}/events`,
     locale,
     alternateLocales: locale === 'en' ? ['he'] : ['en'],
@@ -253,7 +254,7 @@ export async function generateGuidesListingMetadata(params: { locale: string }):
     return genMeta({
       title,
       description,
-      image: '/og-guide-default.jpg',
+      image: DEFAULT_OG_IMAGE,
       url: `/${locale}/guides`,
       locale,
       alternateLocales: locale === 'en' ? ['he'] : ['en'],
@@ -338,10 +339,12 @@ export async function generateEventMetadata(params: {
       })();
 
     const image =
-      event.featuredImage?.url ||
-      (typeof event.featuredImage === 'string' ? event.featuredImage : '') ||
-      event.images?.[0]?.url ||
-      '/og-event-default.jpg';
+      (event.ogImage && String(event.ogImage).trim())
+        ? String(event.ogImage).trim()
+        : event.featuredImage?.url ||
+          (typeof event.featuredImage === 'string' ? event.featuredImage : '') ||
+          event.images?.[0]?.url ||
+          '/og-event-default.jpg';
 
     const baseMeta = await genMeta({
       title,
@@ -458,7 +461,7 @@ export async function generateFormMetadata(params: {
     return genMeta({
       title: metaTitle,
       description: metaDescription,
-      image: '/og-form-default.jpg',
+      image: DEFAULT_OG_IMAGE,
       url: `/${locale}/growth-lab/${slug}`,
       type: 'website',
       locale,
@@ -500,7 +503,7 @@ export async function generateGrowthLabListingMetadata(params: {
   return genMeta({
     title,
     description,
-    image: '/og-form-default.jpg',
+    image: DEFAULT_OG_IMAGE,
     url: `/${locale}/growth-lab`,
     locale,
     alternateLocales: locale === 'en' ? ['he'] : ['en'],

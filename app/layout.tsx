@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { defaultLocale, locales, type Locale } from '@/i18n';
+import { DEFAULT_OG_IMAGE } from '@/lib/seo/utils';
 import './globals.css';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
-const defaultOgImage = 'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772636312/bd6cugckdsmod2abmxhw.png';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -18,8 +18,8 @@ export const metadata: Metadata = {
     url: siteUrl,
     images: [
       {
-        url: defaultOgImage,
-        secureUrl: defaultOgImage,
+        url: DEFAULT_OG_IMAGE,
+        secureUrl: DEFAULT_OG_IMAGE,
         width: 1200,
         height: 630,
         alt: 'ENBOSS - Unite & Ride',
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'ENBOSS - Unite & Ride',
     description: 'The home your wheels deserve. Discover, connect, and progress.',
-    images: [defaultOgImage],
+    images: [DEFAULT_OG_IMAGE],
   },
 };
 
