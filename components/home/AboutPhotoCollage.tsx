@@ -124,7 +124,7 @@ export const AboutPhotoCollage = ({ parks: initialParks }: AboutPhotoCollageProp
             >
               {clickedIndex === index && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-lg">
-                  <LoadingSpinner variant="header" size={40} />
+                  <LoadingSpinner variant="imageOverlay" size={40} />
                 </div>
               )}
               <div className={styles.imageWrapper}>

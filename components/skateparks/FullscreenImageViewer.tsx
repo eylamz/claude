@@ -83,6 +83,7 @@ const FullscreenImageViewer = ({
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
+  const [isPinching, setIsPinching] = useState(false);
   const [isSwiping, setIsSwiping] = useState(false);
   const [isHighQualityLoaded, setIsHighQualityLoaded] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
@@ -97,6 +98,8 @@ const FullscreenImageViewer = ({
   const lastPositionRef = useRef({ x: 0, y: 0 });
   const pinchStartDistanceRef = useRef(0);
   const startScaleRef = useRef(1);
+  const rafIdRef = useRef<number | null>(null);
+  const pendingPinchRef = useRef<{ scale: number; x: number; y: number } | null>(null);
   const touchTimeoutRef = useRef<number | null>(null);
   const touchStartXRef = useRef(0);
   const touchEndXRef = useRef(0);
@@ -345,6 +348,7 @@ const FullscreenImageViewer = ({
       e.stopPropagation();
       e.preventDefault();
       setIsSwiping(false);
+      setIsPinching(true);
       const touch1 = e.touches[0];
       const touch2 = e.touches[1];
       const distance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
@@ -378,23 +382,33 @@ const FullscreenImageViewer = ({
       const touch2 = e.touches[1];
       const distance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
       const pinchScale = distance / pinchStartDistanceRef.current;
-      let newScale = Math.max(1, Math.min(4, startScaleRef.current * pinchScale));
-      setScale(newScale);
+      const newScale = Math.max(1, Math.min(4, startScaleRef.current * pinchScale));
+      const centerX = (touch1.clientX + touch2.clientX) / 2;
+      const centerY = (touch1.clientY + touch2.clientY) / 2;
 
-      if (newScale > 1) {
-        const centerX = (touch1.clientX + touch2.clientX) / 2;
-        const centerY = (touch1.clientY + touch2.clientY) / 2;
-        if (imageContainerRef.current) {
-          const rect = imageContainerRef.current.getBoundingClientRect();
-          const offsetX = centerX - (rect.left + rect.width / 2);
-          const offsetY = centerY - (rect.top + rect.height / 2);
-          setPosition({
-            x: -offsetX * (newScale / startScaleRef.current - 1) + lastPositionRef.current.x,
-            y: -offsetY * (newScale / startScaleRef.current - 1) + lastPositionRef.current.y,
-          });
-        }
-      } else {
-        setPosition({ x: 0, y: 0 });
+      let newX = 0;
+      let newY = 0;
+      if (newScale > 1 && imageContainerRef.current) {
+        const rect = imageContainerRef.current.getBoundingClientRect();
+        const offsetX = centerX - (rect.left + rect.width / 2);
+        const offsetY = centerY - (rect.top + rect.height / 2);
+        newX =
+          -offsetX * (newScale / startScaleRef.current - 1) + lastPositionRef.current.x;
+        newY =
+          -offsetY * (newScale / startScaleRef.current - 1) + lastPositionRef.current.y;
+      }
+
+      pendingPinchRef.current = { scale: newScale, x: newX, y: newY };
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(() => {
+          rafIdRef.current = null;
+          const pending = pendingPinchRef.current;
+          if (pending) {
+            setScale(pending.scale);
+            setPosition({ x: pending.x, y: pending.y });
+            pendingPinchRef.current = null;
+          }
+        });
       }
     } else if (e.touches.length === 1 && isPanning && scale > 1) {
       e.preventDefault();
@@ -413,16 +427,50 @@ const FullscreenImageViewer = ({
       handleSwipeEnd();
     }
 
-    if (e.touches.length === 1 && pinchStartDistanceRef.current > 0) {
+    if (e.touches.length === 2) {
+      // Still pinching with 2 fingers - update pinch start refs for the remaining fingers
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      pinchStartDistanceRef.current = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      );
+      startScaleRef.current = scale;
+      lastPositionRef.current = { ...position };
+    } else if (e.touches.length === 1 && pinchStartDistanceRef.current > 0) {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      const pending = pendingPinchRef.current;
+      if (pending) {
+        setScale(pending.scale);
+        setPosition({ x: pending.x, y: pending.y });
+        lastPositionRef.current = { x: pending.x, y: pending.y };
+        pendingPinchRef.current = null;
+      } else {
+        lastPositionRef.current = { ...position };
+      }
       panStartRef.current = {
         x: e.touches[0].clientX,
         y: e.touches[0].clientY,
       };
-      lastPositionRef.current = { ...position };
       pinchStartDistanceRef.current = 0;
+      setIsPinching(false);
     } else if (e.touches.length === 0) {
       setIsPanning(false);
+      setIsPinching(false);
       pinchStartDistanceRef.current = 0;
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+      const pending = pendingPinchRef.current;
+      if (pending) {
+        setScale(pending.scale);
+        setPosition({ x: pending.x, y: pending.y });
+        pendingPinchRef.current = null;
+      }
     }
   };
 
@@ -587,7 +635,7 @@ const FullscreenImageViewer = ({
                 style={{
                   transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
                   cursor: scale > 1 ? 'grab' : 'pointer',
-                  transition: isPanning ? 'none' : 'transform 0.2s ease-out',
+                  transition: isPanning || isPinching ? 'none' : 'transform 0.2s ease-out',
                   willChange: 'transform',
                   touchAction: 'none',
                   userSelect: 'none',

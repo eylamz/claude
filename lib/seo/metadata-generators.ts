@@ -120,7 +120,7 @@ export async function generateSkateparkMetadata(params: {
     }
     const fallbackDescription =
       locale === 'he'
-        ? `בקר ב${name} - ${address}. בדוק שעות פעילות, שירותים וביקורות ב-ENBOSS.`
+        ? `בקר ב${name} - ${address}. בדוק שעות פעילות, שירותים וביקורות באנבוס.`
         : `Visit ${name} - ${address}. Check hours, amenities, and reviews on ENBOSS.`;
     const description = seoDescription
       ? seoDescription.substring(0, 160)
@@ -188,8 +188,8 @@ export async function generateSkateparksListingMetadata(params: {
 
   const description =
     locale === 'he'
-      ? `גלה ${parksCount > 0 ? `${parksCount} ` : ''}סקייטפארקים בישראל. מצא פארקים קרובים, בדוק שעות פעילות, שירותים וביקורות. הצטרף לקהילת הרוכבים הגדולה בישראל.`
-      : `Discover ${parksCount > 0 ? `${parksCount} ` : ''}skateparks across Israel. Find nearby parks, check hours, amenities, and reviews. Join Israel's largest skating community.`;
+      ? `גלה סקייטפארקים בישראל. מצא פארקים קרובים, בדוק שעות פעילות, שירותים וביקורות. הצטרף לקהילת הרוכבים הגדולה בישראל.`
+      : `Discover skateparks across Israel. Find nearby parks, check hours, amenities, and reviews. Join Israel's largest skating community.`;
 
   return genMeta({
     title,
@@ -216,8 +216,8 @@ export async function generateEventsListingMetadata(params: { locale: string }):
 
   const description =
     locale === 'he'
-      ? `גלה ${eventsCount > 0 ? `${eventsCount} ` : ''}אירועי ספורט אקסטרים בישראל. אירועים קרובים, רישום והצטרפות. הצטרפו לחוויה.`
-      : `Discover ${eventsCount > 0 ? `${eventsCount} ` : ''}extreme sports events in Israel. Upcoming events, registration, and join the experience.`;
+      ? `גלה אירועי ספורט אקסטרים בישראל. אירועים קרובים, רישום והצטרפות. הצטרפו לחוויה.`
+      : `Discover extreme sports events in Israel. Upcoming events, registration, and join the experience.`;
 
   return genMeta({
     title,
@@ -248,8 +248,8 @@ export async function generateGuidesListingMetadata(params: { locale: string }):
 
     const description =
       locale === 'he'
-        ? `גלה ${guidesCount > 0 ? `${guidesCount} ` : ''}מדריכים מקצועיים לספורט אקסטרים. למד טריקים חדשים, טכניקות מתקדמות וטיפים ממומחים. שפר את הכישורים שלך עם המדריכים הטובים ביותר בישראל.`
-        : `Discover ${guidesCount > 0 ? `${guidesCount} ` : ''}professional guides for extreme sports. Learn new tricks, advanced techniques, and expert tips. Improve your skills with the best guides in Israel.`;
+        ? `גלה מדריכים מקצועיים לספורט אקסטרים על גלגלים. למד טריקים חדשים, טכניקות מתקדמות וטיפים ממומחים. שפר את הכישורים שלך עם המדריכים הטובים ביותר.`
+        : `Discover professional guides for extreme sports on wheels. Learn new tricks, advanced techniques, and expert tips. Improve your skills with the best guides.`;
 
     return genMeta({
       title,
@@ -265,8 +265,8 @@ export async function generateGuidesListingMetadata(params: { locale: string }):
     const title = locale === 'he' ? 'מדריכים | אנבוס' : 'Guides | ENBOSS';
     const description =
       locale === 'he'
-        ? 'מדריכים מקצועיים לספורט אקסטרים בישראל.'
-        : 'Professional guides for extreme sports in Israel.';
+        ? 'מדריכים מקצועיים לספורט אקסטרים על גלגלים.'
+        : 'Professional guides for extreme sports on wheels.';
 
     return genMeta({
       title,
@@ -438,8 +438,8 @@ export async function generateFormMetadata(params: {
         title: locale === 'en' ? 'Form Not Found' : 'טופס לא נמצא',
         description:
           locale === 'en'
-            ? 'The form you are looking for could not be found.'
-            : 'הטופס שחיפשת לא נמצא.',
+            ? 'The survey you are looking for could not be found.'
+            : 'הסקר שחיפשת לא נמצא.',
         locale,
       });
     }
@@ -449,7 +449,7 @@ export async function generateFormMetadata(params: {
       ? getLocalizedText(form.description, locale).substring(0, 160)
       : locale === 'en'
         ? `Fill out ${title} on ENBOSS. Help us grow by sharing your thoughts.`
-        : `מלא את ${title} ב-ENBOSS. עזור לנו לגדול על ידי שיתוף המחשבות שלך.`;
+        : `מלא את ${title} באנבוס. עזור לנו לגדול על ידי שיתוף המחשבות שלך.`;
 
     const metaTitle = form.metaTitle
       ? getLocalizedText(form.metaTitle, locale)
@@ -474,7 +474,7 @@ export async function generateFormMetadata(params: {
       description:
         locale === 'en'
           ? 'Fill out forms on ENBOSS Growth Lab. Help us grow by sharing your thoughts and experiences.'
-          : 'מלא טפסים ב-ENBOSS מרחב גדילה. עזור לנו לגדול על ידי שיתוף המחשבות והחוויות שלך.',
+          : 'מלא טפסים באנבוס מרחב גדילה. עזור לנו לגדול על ידי שיתוף המחשבות והחוויות שלך.',
       locale,
     });
   }
@@ -497,8 +497,8 @@ export async function generateGrowthLabListingMetadata(params: {
 
   const description =
     locale === 'he'
-      ? `סקרים קטנים, שינויים גדולים. ${formsCount > 0 ? `${formsCount} ` : ''}טפסים להעלאת משוב ועזרה לקהילה לגדול.`
-      : `Your feedback matters. ${formsCount > 0 ? `${formsCount} ` : ''}Small surveys, big changes! Share your thoughts and help the community grow.`;
+      ? `סקרים קטנים, שינויים גדולים. טפסים להעלאת משוב ועזרה להרחבת הקהילה.`
+      : `Your feedback matters. Small surveys, big changes! Share your thoughts and help the community grow.`;
 
   return genMeta({
     title,
@@ -557,7 +557,7 @@ export async function generateLoginMetadata(params: { locale: string }): Promise
 
   const description =
     locale === 'he'
-      ? 'התחבר לחשבון שלך ב-ENBOSS. גש לסקייטפארקים, מדריכים, אירועים ועוד. הצטרף לקהילת הרוכבים הגדולה בישראל.'
+      ? 'התחבר לחשבון שלך באנבוס. גש לסקייטפארקים, מדריכים, אירועים ועוד. הצטרף לקהילת הרוכבים הגדולה בישראל.'
       : "Sign in to your ENBOSS account. Access skateparks, guides, events, and more. Join Israel's largest skating community.";
 
   return genMeta({
@@ -578,7 +578,7 @@ export async function generateRegisterMetadata(params: { locale: string }): Prom
 
   const description =
     locale === 'he'
-      ? 'צור חשבון חדש ב-ENBOSS והצטרף לקהילת הרוכבים הגדולה בישראל. גש לסקייטפארקים, מדריכים, אירועים ועוד.'
+      ? 'צור חשבון חדש באנבוס והצטרף לקהילת הרוכבים הגדולה בישראל. גש לסקייטפארקים, מדריכים, אירועים ועוד.'
       : "Create a new account on ENBOSS and join Israel's largest skating community. Access skateparks, guides, events, and more.";
 
   return genMeta({
@@ -599,7 +599,7 @@ export async function generateContactMetadata(params: { locale: string }): Promi
 
   const description =
     locale === 'he'
-      ? 'צור קשר עם ENBOSS. שלח לנו הודעה ונשמח לעזור לך. שאלות, הצעות או בקשות - אנחנו כאן בשבילך.'
+      ? 'צור קשר עם אנבוס. שלח לנו הודעה ונשמח לעזור לך. שאלות, הצעות או בקשות - אנחנו כאן בשבילך.'
       : "Contact ENBOSS. Send us a message and we'd be happy to help. Questions, suggestions, or requests - we're here for you.";
 
   return genMeta({

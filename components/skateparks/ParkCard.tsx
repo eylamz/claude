@@ -5,6 +5,42 @@ import { Icon } from '@/components/icons';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { highlightMatch } from '@/lib/search-highlight';
 
+// Shared pending park navigation: only one card can be "loading" at a time; last click wins.
+let pendingNavigation: { slug: string; locale: string } | null = null;
+let pendingTimeoutId: ReturnType<typeof setTimeout> | null = null;
+const listeners = new Set<() => void>();
+
+function notifyListeners() {
+  listeners.forEach((fn) => fn());
+}
+
+function startParkNavigation(slug: string, locale: string) {
+  if (pendingTimeoutId) clearTimeout(pendingTimeoutId);
+  pendingNavigation = { slug, locale };
+  notifyListeners();
+  pendingTimeoutId = setTimeout(() => {
+    if (pendingNavigation) {
+      const { slug: s, locale: l } = pendingNavigation;
+      window.location.href = `/${l}/skateparks/${s}`;
+    }
+    pendingNavigation = null;
+    pendingTimeoutId = null;
+    notifyListeners();
+  }, 300);
+}
+
+function usePendingParkNavigation() {
+  const [, setTick] = useState({});
+  const forceUpdate = useCallback(() => setTick({}), []);
+  useEffect(() => {
+    listeners.add(forceUpdate);
+    return () => {
+      listeners.delete(forceUpdate);
+    };
+  }, [forceUpdate]);
+  return pendingNavigation?.slug ?? null;
+}
+
 interface SkateparkImage {
   url: string;
   order: number;
@@ -318,11 +354,12 @@ export const ParkCard = memo(
     highlightQuery,
     compact = false,
   }: ParkCardProps) => {
-    const [isClicked, setIsClicked] = useState(false);
+    const pendingSlug = usePendingParkNavigation();
     const [isInViewport, setIsInViewport] = useState(false);
     const [showBadgeContainer, setShowBadgeContainer] = useState<Record<string, boolean>>({});
     const [showBadgeContent, setShowBadgeContent] = useState<Record<string, boolean>>({});
     const cardRef = useRef<HTMLDivElement>(null);
+    const isClicked = pendingSlug === park.slug;
     const name =
       typeof park.name === 'string'
         ? park.name
@@ -397,10 +434,7 @@ export const ParkCard = memo(
     const handleCardClick = useCallback(
       (e: React.MouseEvent) => {
         e.preventDefault();
-        setIsClicked(true);
-        setTimeout(() => {
-          window.location.href = `/${locale}/skateparks/${park.slug}`;
-        }, 300);
+        startParkNavigation(park.slug, locale);
       },
       [park.slug, locale]
     );
@@ -409,10 +443,7 @@ export const ParkCard = memo(
       (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          setIsClicked(true);
-          setTimeout(() => {
-            window.location.href = `/${locale}/skateparks/${park.slug}`;
-          }, 300);
+          startParkNavigation(park.slug, locale);
         }
       },
       [park.slug, locale]
@@ -461,7 +492,7 @@ export const ParkCard = memo(
           {/* Loading overlay when navigating to park page */}
           {isClicked && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-background-dark/75 rounded-2xl">
-              <LoadingSpinner variant="header" size={40} />
+              <LoadingSpinner variant="imageOverlay" size={40} />
             </div>
           )}
 

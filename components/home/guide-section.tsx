@@ -298,7 +298,7 @@ const GuideSectionCard = memo(({ guide, locale }: { guide: Guide; locale: string
       >
         {isClicked && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-2xl">
-            <LoadingSpinner variant="header" size={40} />
+            <LoadingSpinner variant="imageOverlay" size={40} />
           </div>
         )}
         <GuideThumbnail photoUrl={guide.image ?? ''} guideTitle={guide.title} />

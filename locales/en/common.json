@@ -144,6 +144,7 @@
     "subscribing": "Subscribing...",
     "subscribed": "Subscribed!",
     "subscribeError": "Something went wrong. Please try again.",
+    "enterEmailFirst": "Please enter your email before subscribing.",
     "enterYourEmail": "Email",
     "platform": "Platform",
     "features": "Features",

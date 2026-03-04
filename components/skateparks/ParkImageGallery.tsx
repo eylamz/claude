@@ -152,8 +152,12 @@ const ParkImageGallery = ({
   const touchStartY = useRef<number>(0);
   const touchStartX = useRef<number>(0);
   const touchStartTime = useRef<number>(0);
+  const touchStartScrollLeft = useRef<number>(0);
+  const touchStartIndex = useRef<number>(0);
   const isScrolling = useRef<boolean>(false);
+  const isTouching = useRef<boolean>(false);
   const currentImageIndex = useRef<number>(0);
+  const scrollAnimationFrameId = useRef<number | null>(null);
   const [isScrubbing, setIsScrubbing] = useState(false);
   
   if (!images || images.length === 0) {
@@ -172,9 +176,20 @@ const ParkImageGallery = ({
   // Mobile swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!mobileGalleryRef.current) return;
+    if (scrollAnimationFrameId.current) {
+      cancelAnimationFrame(scrollAnimationFrameId.current);
+      scrollAnimationFrameId.current = null;
+    }
+    const container = mobileGalleryRef.current;
+    const imageWidth = container.clientWidth;
     touchStartY.current = e.touches[0].clientY;
     touchStartX.current = e.touches[0].clientX;
     touchStartTime.current = Date.now();
+    touchStartScrollLeft.current = container.scrollLeft;
+    touchStartIndex.current = locale === 'he'
+      ? Math.round(-container.scrollLeft / imageWidth)
+      : Math.round(container.scrollLeft / imageWidth);
+    isTouching.current = true;
     isScrolling.current = false;
   };
 
@@ -189,49 +204,106 @@ const ParkImageGallery = ({
     }
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!mobileGalleryRef.current) return;
-    
-    const touchEndY = e.changedTouches[0].clientY;
-    const touchEndX = e.changedTouches[0].clientX;
-    const deltaY = touchEndY - touchStartY.current;
-    const deltaX = touchEndX - touchStartX.current;
-    const touchDuration = Date.now() - touchStartTime.current;
-    const SWIPE_THRESHOLD = 50; // Minimum distance for swipe
-    const MAX_SWIPE_TIME = 300; // Maximum time for a swipe gesture (ms)
-    
-    // Only handle quick horizontal swipes (left/right)
-    const isHorizontalSwipe = Math.abs(deltaX) > Math.abs(deltaY);
-    const isQuickSwipe = touchDuration < MAX_SWIPE_TIME && Math.abs(deltaX) > SWIPE_THRESHOLD;
-    
-    if (isHorizontalSwipe && isQuickSwipe) {
-      const container = mobileGalleryRef.current;
-      const imageWidth = container.clientWidth;
-      
-      if (deltaX < 0) {
-        // Swipe left - go to next image
-        if (currentImageIndex.current < images.length - 1) {
-          currentImageIndex.current += 1;
-          setMobileCurrentIndex(currentImageIndex.current);
-          container.scrollTo({
-            left: currentImageIndex.current * imageWidth,
-            behavior: 'smooth'
-          });
-        }
+  // Limit scroll to at most one slide from touch start (prevents fast swipe from jumping multiple images)
+  // and clamp to valid range so we never show content past first/last image
+  const handleScroll = () => {
+    const container = mobileGalleryRef.current;
+    if (!container) return;
+    const imageWidth = container.clientWidth;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    const scrollLeft = container.scrollLeft;
+    const isRtl = locale === 'he';
+
+    if (isTouching.current) {
+      const start = touchStartScrollLeft.current;
+      const maxDelta = imageWidth;
+      let clamped = scrollLeft;
+      if (scrollLeft < start - maxDelta) clamped = start - maxDelta;
+      else if (scrollLeft > start + maxDelta) clamped = start + maxDelta;
+      // Clamp to valid range: LTR [0, maxScroll], RTL [-maxScroll, 0]
+      if (isRtl) {
+        clamped = Math.max(-maxScroll, Math.min(0, clamped));
       } else {
-        // Swipe right - go to previous image
-        if (currentImageIndex.current > 0) {
-          currentImageIndex.current -= 1;
-          setMobileCurrentIndex(currentImageIndex.current);
-          container.scrollTo({
-            left: currentImageIndex.current * imageWidth,
-            behavior: 'smooth'
-          });
-        }
+        clamped = Math.max(0, Math.min(maxScroll, clamped));
+      }
+      if (clamped !== scrollLeft) container.scrollLeft = clamped;
+    } else {
+      // Not touching (e.g. programmatic or scroll momentum): still enforce valid range
+      if (isRtl) {
+        if (scrollLeft > 0) container.scrollLeft = 0;
+        else if (scrollLeft < -maxScroll) container.scrollLeft = -maxScroll;
+      } else {
+        if (scrollLeft < 0) container.scrollLeft = 0;
+        else if (scrollLeft > maxScroll) container.scrollLeft = maxScroll;
       }
     }
+  };
+
+  const handleTouchEnd = () => {
+    const container = mobileGalleryRef.current;
+    if (!container) return;
     
-    // Reset
+    isTouching.current = false;
+    
+    const imageWidth = container.clientWidth;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    const isRtl = locale === 'he';
+    // Clamp scroll to valid range so we never snap from an out-of-place position
+    let scrollLeft = container.scrollLeft;
+    if (isRtl) {
+      scrollLeft = Math.max(-maxScroll, Math.min(0, scrollLeft));
+    } else {
+      scrollLeft = Math.max(0, Math.min(maxScroll, scrollLeft));
+    }
+    container.scrollLeft = scrollLeft;
+
+    const startScroll = touchStartScrollLeft.current;
+    const startIndex = touchStartIndex.current;
+    // Require only ~25% of slide width to trigger next/prev (less demanding gesture)
+    const thresholdRatio = 0.01;
+    const threshold = imageWidth * thresholdRatio;
+    const delta = isRtl ? startScroll - scrollLeft : scrollLeft - startScroll;
+
+    let targetIndex: number;
+    if (delta > threshold && startIndex < images.length - 1) {
+      targetIndex = startIndex + 1;
+    } else if (delta < -threshold && startIndex > 0) {
+      targetIndex = startIndex - 1;
+    } else {
+      targetIndex = startIndex;
+    }
+
+    targetIndex = Math.max(0, Math.min(images.length - 1, targetIndex));
+    
+    currentImageIndex.current = targetIndex;
+    setMobileCurrentIndex(targetIndex);
+
+    const targetLeft = isRtl ? -targetIndex * imageWidth : targetIndex * imageWidth;
+    const startLeft = container.scrollLeft;
+    if (startLeft === targetLeft) {
+      isScrolling.current = false;
+      return;
+    }
+
+    // Fast snap animation (150ms) instead of browser's slow default smooth scroll
+    const duration = 150;
+    const startTime = performance.now();
+    if (scrollAnimationFrameId.current) cancelAnimationFrame(scrollAnimationFrameId.current);
+
+    const tick = () => {
+      const elapsed = performance.now() - startTime;
+      const t = Math.min(1, elapsed / duration);
+      const eased = 1 - (1 - t) ** 2; // easeOutQuad
+      container.scrollLeft = startLeft + (targetLeft - startLeft) * eased;
+      if (t < 1) {
+        scrollAnimationFrameId.current = requestAnimationFrame(tick);
+      } else {
+        scrollAnimationFrameId.current = null;
+        container.scrollLeft = targetLeft;
+      }
+    };
+    scrollAnimationFrameId.current = requestAnimationFrame(tick);
+    
     isScrolling.current = false;
   };
 
@@ -245,7 +317,7 @@ const ParkImageGallery = ({
 
     const observer = new IntersectionObserver(
       (entries) => {
-        // Among all intersecting entries, pick the one with the largest visible ratio
+        if (isTouching.current) return; // Don't update index during touch (avoids jump to first on fast swipe)
         let bestIndex = currentImageIndex.current;
         let bestRatio = 0;
         entries.forEach((entry) => {
@@ -397,10 +469,12 @@ const ParkImageGallery = ({
               style={{
                 height: '400px',
                 WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'contain',
               }}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
+              onScroll={handleScroll}
             >
               {images.map((image, index) => (
                 <div

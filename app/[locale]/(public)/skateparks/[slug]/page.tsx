@@ -2693,7 +2693,7 @@ export default function SkateparkPage() {
                           {/* Loading overlay when navigating to park page */}
                           {clickedNearbyParkId === park._id && (
                             <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-2xl">
-                              <LoadingSpinner variant="header" size={40} />
+                              <LoadingSpinner variant="imageOverlay" size={40} />
                             </div>
                           )}
                           {/* Closed Badge */}

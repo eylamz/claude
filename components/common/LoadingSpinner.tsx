@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeProvider';
 
 export const LoadingSpinner: React.FC<{
   className?: string;
-  variant?: 'default' | 'error' | 'brand' | 'brandText' | 'info' | 'success' | 'warning' | 'header' | 'blue' | 'purple' | 'yellow' | 'green' | 'orange';
+  variant?: 'default' | 'error' | 'brand' | 'brandText' | 'info' | 'success' | 'warning' | 'header' | 'blue' | 'purple' | 'yellow' | 'green' | 'orange' | 'imageOverlay';
   size?: number;
 }> = ({ className, variant = 'default', size = 48 }) => {
   const { theme } = useTheme();
@@ -38,6 +38,8 @@ export const LoadingSpinner: React.FC<{
               : { active: '#e49a43', track: 'transparent' };
       case 'brandText':
         return { active: 'hsl(122, 100%, 12%)', track: 'transparent' };
+        case 'imageOverlay':
+          return { active: 'hsl(0, 0%, 88%)', track: 'transparent' };
       case 'info':
         return { active: '#3b82f6', track: 'transparent' };
       case 'success':

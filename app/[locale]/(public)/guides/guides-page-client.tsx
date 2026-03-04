@@ -337,7 +337,7 @@ const GuideCard = memo(
           {/* Loading overlay when navigating to guide page */}
           {isClicked && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-2xl">
-              <LoadingSpinner variant="header" size={40} />
+              <LoadingSpinner variant="imageOverlay" size={40} />
             </div>
           )}
           {/* Sports Tags Overlay */}
@@ -1109,7 +1109,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
       {/* ========================================
           MAIN CONTENT AREA
       ======================================== */}
-      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
+      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8 overflow-hidden">
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (

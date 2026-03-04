@@ -9,8 +9,8 @@ export default function SkateparkSlugLoading() {
           <Skeleton className="h-4 w-48" />
         </div>
 
-        {/* Header Skeleton */}
-        <div className="flex justify-center -mb-5 mt-5 opacity-90">
+        {/* Header Skeleton - only on sm+ (page hides centered title on mobile) */}
+        <div className="hidden sm:flex justify-center -mb-5 mt-5 opacity-90">
           <Skeleton className="h-10 w-64 sm:w-96" />
         </div>
 

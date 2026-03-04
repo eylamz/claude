@@ -398,7 +398,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Guides Section */}
-      <section className="py-16 sm:px-6 lg:px-8">
+      <section className="py-16 sm:px-6 lg:px-8 overflow-hidden">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-2 px-4 xl:px-0 select-none">
             <h2
@@ -436,7 +436,7 @@ export default function HomePage() {
             {t('whyEnbossSubtitle')}
           </p>
 
-          <div className="flex md:grid overflow-x-auto md:overflow-visible snap-x md:snap-none gap-4 md:gap-8 lg:gap-10 md:grid-cols-6 pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="flex flex-col justify-center items-center md:grid md:overflow-visible snap-x md:snap-none gap-4 md:gap-8 lg:gap-10 md:grid-cols-6 pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
             <Link
               href={`/${locale}/skateparks`}
               className="flex-shrink-0 md:flex-shrink md:col-span-2 w-[min(85vw,320px)] md:w-full snap-center h-full group block bg-transparent transition-all duration-300"
@@ -633,7 +633,7 @@ export default function HomePage() {
                   navigator.clipboard.writeText(url);
                 }
               }}
-              className="flex-shrink-0 md:flex-shrink md:col-span-3 w-[min(85vw,320px)] md:w-full snap-center h-full group block bg-transparent transition-all duration-300 text-left w-full cursor-pointer"
+              className="flex-shrink-0 md:flex-shrink md:col-span-3 w-[min(85vw,320px)] md:w-full snap-center h-full group block bg-transparent transition-all duration-300 text-left cursor-pointer"
             >
               <div className="card-gradient card-anim-5 rounded-[22px] overflow-hidden relative min-h-full">
                 <div className="gradient-0" aria-hidden />
@@ -732,7 +732,7 @@ export default function HomePage() {
             {t('togetherWeRideSubtitle')}
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-5 max-w-6xl mx-auto px-4 md:px-0">
             {[
               {
                 label: t('communityProParks'),
@@ -773,7 +773,7 @@ export default function HomePage() {
               >
                 {communityClickedIndex === index && (
                   <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 rounded-2xl">
-                    <LoadingSpinner variant="header" size={40} />
+                    <LoadingSpinner variant="imageOverlay" size={40} />
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>

@@ -30,7 +30,10 @@ export function Footer() {
       e.preventDefault();
       setError(null);
       const trimmed = email.trim().toLowerCase();
-      if (!trimmed) return;
+      if (!trimmed) {
+        setError(t('footer.enterEmailFirst'));
+        return;
+      }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(trimmed)) {
         setError(t('footer.subscribeError'));
@@ -257,13 +260,17 @@ export function Footer() {
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
                 {t('footer.newsletterDescriptionNew')}
               </p>
-              <form onSubmit={handleNewsletterSubmit} className="flex flex-col xsm:flex-row gap-2">
+              <form onSubmit={handleNewsletterSubmit} className="flex flex-col gap-2">
+                <div className="flex flex-col xsm:flex-row gap-2">
                 <Input
                   type="email"
                   variant="default"
                   placeholder={t('footer.enterYourEmail')}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError(null);
+                  }}
                   disabled={loading}
                   aria-label={t('footer.enterYourEmail')}
                   className="w-full"
@@ -288,8 +295,9 @@ export function Footer() {
                     <div className="color-6 color" />
                   </div>
                 </Button>
+                </div>
                 {error && (
-                  <p className="text-xs text-red dark:text-red-dark" role="alert">
+                  <p className="text-xs text-red dark:text-red-dark animate-scaleFadeDown" role="alert">
                     {error}
                   </p>
                 )}
