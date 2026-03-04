@@ -81,7 +81,7 @@ import WazeBold from './wazeBold.svg';
 import NoWax from './Wax.svg';
 import NearbyRestaurants from './nearbyResturants.svg';
 import Roller from './Roller.svg';
-import Skate from './skate.svg';
+import Skate from './Skate.svg';
 import SkateBold from './skateBold.svg';
 import SkateBoard from './Skateboard.svg';
 import Clipboard from './clipboard.svg';

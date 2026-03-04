@@ -43,14 +43,12 @@ export async function GET(request: Request) {
       .limit(limit)
       .lean();
 
-    const list = subscribers.map(
-      (s: { _id: unknown; email: string; locale?: string; createdAt: Date }) => ({
-        id: String(s._id),
-        email: s.email,
-        locale: s.locale || 'en',
-        createdAt: s.createdAt,
-      })
-    );
+    const list = subscribers.map((s) => ({
+      id: String((s as any)._id),
+      email: (s as any).email,
+      locale: (s as any).locale || 'en',
+      createdAt: (s as any).createdAt,
+    }));
 
     return NextResponse.json({
       subscribers: list,

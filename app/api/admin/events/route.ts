@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
-import User from '@/lib/models/User';
 import Event from '@/lib/models/Event';
 import Settings from '@/lib/models/Settings';
 import { AuthError, requireAdmin } from '@/lib/auth/server';

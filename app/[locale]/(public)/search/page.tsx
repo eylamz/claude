@@ -614,7 +614,7 @@ function SearchPageContent() {
   });
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [total, setTotal] = useState(0);
+  const [, setTotal] = useState(0);
   const [page, setPage] = useState(Number(searchParams.get('page') || 1));
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedSports, setSelectedSports] = useState<string[]>(() => {

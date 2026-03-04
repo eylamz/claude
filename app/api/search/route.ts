@@ -30,7 +30,10 @@ function getClientIP(request: NextRequest): string {
   if (forwarded) {
     return forwarded.split(',')[0].trim();
   }
-  return realIp || request.ip || 'unknown';
+  if (realIp) {
+    return realIp;
+  }
+  return 'unknown';
 }
 
 const searchQuerySchema = z.object({
@@ -128,19 +131,21 @@ export async function GET(request: NextRequest) {
       MAX_SEARCH_RESULTS
     );
 
+    const typesArray = types ?? [];
+
     // Empty query: only return results when types (or category) are specified (browse-by-category).
-    if (!query && types.length === 0 && !category) {
+    if (!query && typesArray.length === 0 && !category) {
       return NextResponse.json({ results: [], total: 0 });
     }
 
     const nameOrConditions = searchOrConditions(query, flippedQuery);
 
     const results: any[] = [];
-    const categoriesToSearch = category 
-      ? [category] 
-      : (types && types.length > 0
-        ? types 
-        : ['skateparks', 'products', 'events', 'guides', 'trainers'];
+    const categoriesToSearch = category
+      ? [category]
+      : (typesArray.length > 0
+        ? typesArray
+        : ['skateparks', 'products', 'events', 'guides', 'trainers']);
 
     const perTypeLimit = Math.min(SEARCH_PER_TYPE_LIMIT, safeLimit);
 

@@ -34,15 +34,15 @@ async function getDisplayName(
       return doc?.name ? getLocalizedText(doc.name as { en: string; he: string }, locale) : '';
     }
     if (resultType === 'events') {
-      const doc = await Event.findOne({ slug }).select('title').lean();
+      const doc: any = await Event.findOne({ slug }).select('title').lean();
       return doc?.title ? getLocalizedText(doc.title as { en: string; he: string }, locale) : '';
     }
     if (resultType === 'guides') {
-      const doc = await Guide.findOne({ slug }).select('title').lean();
+      const doc: any = await Guide.findOne({ slug }).select('title').lean();
       return doc?.title ? getLocalizedText(doc.title as { en: string; he: string }, locale) : '';
     }
     if (resultType === 'trainers') {
-      const doc = await Trainer.findOne({ slug }).select('name').lean();
+      const doc: any = await Trainer.findOne({ slug }).select('name').lean();
       return doc?.name ? getLocalizedText(doc.name as { en: string; he: string }, locale) : '';
     }
   } catch {

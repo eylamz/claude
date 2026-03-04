@@ -5,13 +5,13 @@ type SearchParams = {
   callbackUrl?: string;
 };
 
-export default function LoginRedirectPage({
+export default async function LoginRedirectPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  const cookieStore = cookies();
-  const requestHeaders = headers();
+  const cookieStore = await cookies();
+  const requestHeaders = await headers();
 
   // Prefer locale from callbackUrl path, then NEXT_LOCALE cookie, then Accept-Language, fallback to 'en'
   let locale: 'en' | 'he' = 'en';

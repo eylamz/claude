@@ -32,7 +32,7 @@ interface EventFormData {
     name: { en: string; he: string };
     address: { en: string; he: string };
     url?: string;
-    coordinates?: { lat: number; lng: number };
+    coordinates?: { lat?: number; lng?: number };
     isSkatepark?: boolean;
     skateparkSlug?: string;
   };

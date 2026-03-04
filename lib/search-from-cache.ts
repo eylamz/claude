@@ -267,7 +267,11 @@ function isCategoryCacheFresh(category: SearchResultType, versionRaw: string | n
 /** Fetch current version from the server (lightweight ?versionOnly=true request). */
 export async function fetchServerVersion(category: SearchResultType): Promise<number | null> {
   const config = CACHE_CONFIG[category];
-  const url = 'versionOnlyUrl' in config ? (config as { versionOnlyUrl: string }).versionOnlyUrl : `${config.fetchUrl}${config.fetchUrl.includes('?') ? '&' : '?'}versionOnly=true`;
+  const url =
+    (config as { versionOnlyUrl?: string; fetchUrl: string }).versionOnlyUrl ??
+    `${config.fetchUrl}${
+      config.fetchUrl.includes('?') ? '&' : '?'
+    }versionOnly=true`;
   try {
     const res = await fetch(url);
     if (!res.ok) return null;

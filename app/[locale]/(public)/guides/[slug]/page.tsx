@@ -537,13 +537,11 @@ export default function GuidePage() {
 
     // 1) Try to find guide in cache
     let cachedGuide = getCachedGuide();
-    let foundInCache = !!cachedGuide;
 
     // 2) If not in cache, refresh guides_cache then look again
     if (!cachedGuide) {
       await refreshGuidesCache();
       cachedGuide = getCachedGuide();
-      foundInCache = !!cachedGuide;
     }
 
     // 3) If still no data for this guide after refresh, show 404
