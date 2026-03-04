@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui';
 import ParkCardSkeleton from '@/components/skateparks/ParkCardSkeleton';
 import { MapView } from '@/components/skateparks/MapView';
@@ -74,6 +74,8 @@ type SortOption = 'nearest' | 'alphabetical' | 'newest' | 'rating' | 'shuffle';
  */
 export default function SkateparksPage() {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const locale = pathname.split('/')[1] || 'en';
   const t = useTranslations('skateparks');
 
@@ -109,8 +111,11 @@ export default function SkateparksPage() {
   const [skillLevelFilter, setSkillLevelFilter] = useState<'beginners' | 'advanced' | 'pro' | ''>(
     ''
   );
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') || '');
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(() => {
+    const raw = searchParams.get('amenities') || '';
+    return raw.split(',').filter(Boolean);
+  });
   const [openNowOnly, setOpenNowOnly] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('shuffle');
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -126,6 +131,17 @@ export default function SkateparksPage() {
   /** Stable shuffle order: park _id -> position. Restored when user clears sort instead of reshuffling. */
   const shuffledOrderRef = useRef<Record<string, number>>({});
   const allSkateparksSignatureRef = useRef<string>(''); // Detect when dataset changes so we can reshuffle once
+
+
+  // Sync search query + amenities to URL so links are shareable, without driving rendering from URL.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('q', searchQuery);
+    if (selectedAmenities.length > 0) params.set('amenities', selectedAmenities.join(','));
+    const queryString = params.toString();
+    const url = queryString ? `${pathname}?${queryString}` : pathname;
+    router.replace(url);
+  }, [searchQuery, selectedAmenities, pathname, router]);
 
 
   // Track newly added amenities for pop animation
@@ -939,7 +955,7 @@ export default function SkateparksPage() {
             {/* Empty State */}
             {skateparks.length === 0 && !loading && (
               <div className="text-center py-16">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-bg dark:bg-gray-bg-dark mb-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-bg dark:bg-gray-bg-dark mb-4">
                   <Icon name="searchQuest" className="w-8 h-8 text-gray dark:text-gray-dark" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">

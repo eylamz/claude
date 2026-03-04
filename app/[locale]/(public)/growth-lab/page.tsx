@@ -74,12 +74,17 @@ const FormCard = memo(({
   const handleCardClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     setIsClicked(true);
+    const destination = isSubmitted
+      ? `/${locale}/growth-lab/${form.slug}/fulfilled`
+      : `/${locale}/growth-lab/${form.slug}`;
     setTimeout(() => {
-      router.push(`/${locale}/growth-lab/${form.slug}`);
+      router.push(destination);
     }, 300);
-  }, [form.slug, locale, router]);
+  }, [form.slug, isSubmitted, locale, router]);
 
-  const href = `/${locale}/growth-lab/${form.slug}`;
+  const href = isSubmitted
+    ? `/${locale}/growth-lab/${form.slug}/fulfilled`
+    : `/${locale}/growth-lab/${form.slug}`;
   const formTitle = getLocalizedText(form.title, locale);
   const formDescription = form.description ? getLocalizedText(form.description, locale) : '';
 
@@ -124,7 +129,7 @@ const FormCard = memo(({
           </div> */}
           {/* Submitted Badge */}
           {isSubmitted && (
-            <div className="flex items-center gap-1.5 bg-green-500/90 backdrop-blur-sm px-3 py-1.5 rounded-lg animate-fadeIn">
+            <div className="flex items-center gap-1.5 bg-green dark:bg-green-dark backdrop-blur-sm px-3 py-1.5 rounded-lg animate-fadeIn">
               <CheckCircle2 className="w-3.5 h-3.5 text-white" />
               <span className="text-xs font-medium text-white">
                 {locale === 'he' ? 'הוגש' : 'Submitted'}
@@ -175,6 +180,7 @@ export default function GrowingTogetherPage() {
   const router = useRouter();
   const [allForms, setAllForms] = useState<Form[]>([]);
   const [forms, setForms] = useState<Form[]>([]);
+  const [submittedForms, setSubmittedForms] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -290,6 +296,19 @@ export default function GrowingTogetherPage() {
 
     fetchForms();
   }, [toast]);
+
+  // After forms are loaded, check which have been submitted (client-side) without blocking initial render
+  useEffect(() => {
+    if (loading || forms.length === 0) return;
+    if (typeof window === 'undefined') return;
+
+    const map: Record<string, boolean> = {};
+    forms.forEach((form) => {
+      const submittedKey = `form_submission_${form.slug}`;
+      map[form.slug] = localStorage.getItem(submittedKey) !== null;
+    });
+    setSubmittedForms(map);
+  }, [forms, loading]);
 
   // Filter and sort forms (search supports Hebrew/English transliteration like skateparks)
   useEffect(() => {
@@ -452,10 +471,8 @@ export default function GrowingTogetherPage() {
             {/* Forms Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {forms.map((form, index) => {
-                // Check if form has been submitted
-                const submittedKey = `form_submission_${form.slug}`;
-                const isSubmitted = typeof window !== 'undefined' && localStorage.getItem(submittedKey) !== null;
-                
+                const isSubmitted = submittedForms[form.slug] === true;
+
                 return (
                   <FormCard
                     key={form.id}

@@ -356,7 +356,7 @@ export default function EventSignupPage() {
           href={`/${locale}/events/${slug}`}
           className="inline-flex items-center gap-2 text-brand-main hover:text-brand-main/80 font-medium mb-6"
         >
-          <ChevronLeft className="w-4 h-4" />
+          <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
           {locale === 'he'
             ? `חזרה ל-${getEventTitle() || 'אירוע'}`
             : `Back to ${getEventTitle() || 'Event'}`}

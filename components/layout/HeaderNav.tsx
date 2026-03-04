@@ -671,28 +671,16 @@ export default function HeaderNav() {
 
   const searchArea = useMemo(() => getAreaFromQuery(searchQuery), [searchQuery]);
 
-  // Handle logout - works like next-auth's internal signOut
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      // Use callbackUrl like next-auth's signOut does (defaults to window.location.href if not provided)
-      const callbackUrl = `/${locale}/login`;
-
-      // Call signOut with redirect enabled (default behavior, like next-auth)
-      await signOut({
-        callbackUrl,
-        redirect: true,
-      });
+      // Sign out without redirect and refresh the current route so session state updates in-place
+      await signOut({ redirect: false });
+      router.refresh();
     } catch (error) {
       console.error('Failed to sign out:', error);
+    } finally {
       setIsLoggingOut(false);
-      // Fallback: redirect manually if signOut fails (similar to next-auth's behavior)
-      const fallbackUrl = `/${locale}/login`;
-      window.location.href = fallbackUrl;
-      // If URL contains a hash, reload manually (like next-auth does)
-      if (fallbackUrl.includes('#')) {
-        window.location.reload();
-      }
     }
   };
 

@@ -9,7 +9,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react';
 import { Icon } from '@/components/icons';
 import { Button, Badge, Separator } from '@/components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
@@ -1950,11 +1950,14 @@ export default function SkateparkPage() {
                         {tr('Rating', 'דירוג')}
                         <Icon 
                           name="logo" 
-                          className={`w-auto  overflow-visible ${locale === 'he' ? 'h-3.5 -mb-0.5' : 'h-4'}
+                          style={{
+                            paintOrder: 'stroke',
+                          }}
+                          className={`w-auto  overflow-visible ${locale === 'he' ? 'h-3 -mb-[2px]' : 'h-3.5'}
                             ${
                             skatepark.closingYear 
                               ? 'text-error dark:text-error/80' 
-                              : 'text-brand-main dark:text-brand-dark'
+                              : 'text-brand-main stroke-[7px] stroke-brand-stroke dark:stroke-transparent dark:text-brand-dark'
                           }`} 
                         />
                       </h3>
@@ -2236,10 +2239,14 @@ export default function SkateparkPage() {
                 {tr('Rating', 'דירוג')}
                 <Icon 
                   name="logo" 
-                  className={`w-auto overflow-visible ${locale === 'he' ? 'h-[0.7rem] -mb-0.5' : 'h-[0.95rem]'} ${
+                  style={{
+                    paintOrder: 'stroke',
+                  }}
+                  className={`w-auto overflow-visible ${locale === 'he' ? 'h-[0.7rem] -mb-[1px]' : 'h-[0.95rem]'} ${
                     skatepark.closingYear 
                       ? 'text-error dark:text-error/80' 
-                      : 'text-brand-main dark:text-brand-dark'
+                      : 'text-brand-main stroke-[7px] stroke-brand-stroke dark:stroke-transparent dark:text-brand-dark'
+
                   }`} 
                 />
 

@@ -396,7 +396,7 @@ function LoginPageContent() {
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <LoadingSpinner size={16} variant="brand" />
+                  <LoadingSpinner size={16} variant="brandText" />
                 </span>
               ) : cooldownRemainingSec > 0 ? (
                 t('login.cooldown.buttonWaitSeconds', { seconds: cooldownRemainingSec }).replace('{seconds}', String(cooldownRemainingSec))

@@ -8,7 +8,12 @@ import { Icon } from '@/components/icons/Icon';
 import { Button, Input } from '@/components/ui';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { LanguageSwitcher } from '@/components/ui/language-switcher';
-import { isEcommerceEnabled, isTrainersEnabled, isNewsletterEnabled } from '@/lib/utils/ecommerce';
+import {
+  isEcommerceEnabled,
+  isTrainersEnabled,
+  isNewsletterEnabled,
+  isGrowthLabEnabled,
+} from '@/lib/utils/ecommerce';
 import '@/app/[locale]/(public)/button-bg-animated.css';
 
 export function Footer() {
@@ -57,15 +62,17 @@ export function Footer() {
 
   const ecommerceEnabled = isEcommerceEnabled();
   const trainersEnabled = isTrainersEnabled();
+  const growthLabEnabled = isGrowthLabEnabled();
   const currentYear = new Date().getFullYear();
 
   // Navigation logic synced with HeaderNav and MobileSidebar
   const navLinks = [
     { href: `/${locale}/skateparks`, label: t('skateparks') }, // From HeaderNav logic
-    { href: `/${locale}/guides`, label: tMobileNav('guides') },
     { href: `/${locale}/events`, label: tMobileNav('events') },
+    { href: `/${locale}/guides`, label: tMobileNav('guides') },
     ...(ecommerceEnabled ? [{ href: `/${locale}/shop`, label: tMobileNav('shop') }] : []),
     ...(trainersEnabled ? [{ href: `/${locale}/trainers`, label: tMobileNav('findCoaches') }] : []),
+    ...(growthLabEnabled ? [{ href: `/${locale}/growth-lab`, label: tMobileNav('forms') }] : []),
     { href: `/${locale}/about`, label: t('about') },
   ];
 
@@ -75,6 +82,22 @@ export function Footer() {
     { href: `/${locale}/cookies`, label: t('footer.cookiePolicy') },
     { href: `/${locale}/accessibility`, label: tMobileNav('accessibility') },
   ];
+
+  const getNavHoverColorClass = (href: string) => {
+    if (href.includes('/skateparks')) {
+      return 'hover:text-green dark:hover:text-green-dark';
+    }
+    if (href.includes('/events')) {
+      return 'hover:text-purple dark:hover:text-purple-dark';
+    }
+    if (href.includes('/guides')) {
+      return 'hover:text-yellow dark:hover:text-yellow-dark';
+    }
+    if (href.includes('/growth-lab')) {
+      return 'hover:text-orange dark:hover:text-orange-dark';
+    }
+    return 'hover:text-brand-main dark:hover:text-brand-dark';
+  };
 
   if (!isNewsletterEnabled()) {
     return null;
@@ -198,7 +221,9 @@ export function Footer() {
                     <li key={link.href}>
                       <Link
                         href={link.href}
-                        className="-ms-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:font-medium hover:text-black dark:hover:text-brand-dark transition-colors duration-200"
+                        className={`-ms-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:font-medium transition-colors duration-200 ${getNavHoverColorClass(
+                          link.href
+                        )}`}
                       >
                         {link.label}
                       </Link>

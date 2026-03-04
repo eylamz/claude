@@ -55,7 +55,7 @@ export default function FormFulfilledPage() {
       <Card className="max-w-2xl w-full">
         <CardContent className="p-12 text-center space-y-6">
           <div className="flex justify-center">
-            <Info className="w-20 h-20 text-blue dark:text-blue-dark" />
+            <Info className="w-20 h-20 text-orange dark:text-orange-dark" />
           </div>
           <h1 className="text-3xl font-bold text-text dark:text-text-dark">
             {locale === 'en' ? 'Already Submitted' : 'כבר נשלח'}
@@ -72,7 +72,7 @@ export default function FormFulfilledPage() {
           </p>
           <div className="pt-4">
             <Button
-              variant="blue"
+              variant="orange"
               onClick={() => router.push(`/${locale}/growth-lab`)}
             >
               {locale === 'en' ? 'Back to Growth Lab' : 'חזרה למרחב'}

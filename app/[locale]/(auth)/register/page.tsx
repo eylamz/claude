@@ -301,7 +301,7 @@ function RegisterPageContent() {
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <LoadingSpinner size={16} variant="brand" />
+                  <LoadingSpinner size={16} variant="brandText" />
                 </span>
               ) : (
                 t('register.createAccount')

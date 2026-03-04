@@ -350,7 +350,7 @@ export default function FormFillPage() {
               {locale === 'en' ? 'Survey not found' : 'סקר לא נמצא'}
             </p>
             <Button
-              variant="blue"
+              variant="orange"
               onClick={() => router.push(`/${locale}/growth-lab`)}
               className="mt-4"
             >

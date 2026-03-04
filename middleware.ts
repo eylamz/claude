@@ -80,7 +80,8 @@ function isPublicRoute(pathname: string): boolean {
     /^\/[a-z]{2}\/checkout/,
     /^\/[a-z]{2}\/search/,
     /^\/[a-z]{2}\/about$/,
-    /^\/[a-z]{2}\/growth-lab$/,
+    // Growth Lab root and all its subpaths (e.g. surveys) are public
+    /^\/[a-z]{2}\/growth-lab/,
   ];
 
   return publicPathPatterns.some((pattern) => pattern.test(pathname));

@@ -709,21 +709,33 @@ export default function EventPage() {
               {event.registrationRequired && !isEventPassed && !isRegistrationClosed && (
                 <div className="pt-2">
                   {event.registrationUrl ? (
-                    <a
-                      href={event.registrationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block bg-brand-text hover:bg-brand-text/90 dark:hover:bg-brand-stroke/90 dark:text-brand-stroke text-brand-dark font-semibold py-2.5 px-6 rounded-full text-center transition-colors duration-200"
+                    <Button
+                      asChild
+                      variant="primary"
+                      className="rounded-full font-semibold"
                     >
-                      {locale === 'he' ? 'הירשם עכשיו' : 'Register Now'}
-                    </a>
+                      <a
+                        href={event.registrationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-6 py-2.5 text-center"
+                      >
+                        {locale === 'he' ? 'הירשם עכשיו' : 'Register Now'}
+                      </a>
+                    </Button>
                   ) : (
-                    <Link
-                      href={`/${locale}/events/${event.slug}/signup`}
-                      className="inline-block bg-brand-text hover:bg-brand-text/90 dark:hover:bg-brand-stroke/90 dark:text-brand-stroke text-brand-main font-semibold py-2.5 px-6 rounded-full text-center transition-colors duration-200"
+                    <Button
+                      asChild
+                      variant="primary"
+                      className="rounded-full font-semibold"
                     >
-                      {locale === 'he' ? 'הירשם עכשיו' : 'Register Now'}
-                    </Link>
+                      <Link
+                        href={`/${locale}/events/${event.slug}/signup`}
+                        className="px-6 py-2.5 text-center"
+                      >
+                        {locale === 'he' ? 'הירשם עכשיו' : 'Register Now'}
+                      </Link>
+                    </Button>
                   )}
                 </div>
               )}
