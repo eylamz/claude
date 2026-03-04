@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 type LocalizedField = { en: string; he: string } | string;
 
 /** Default site meta title (same as root layout.tsx). Used as final fallback for page titles. */
-export const DEFAULT_META_TITLE = 'ENBOSS - No Rider Left Behind';
+export const DEFAULT_META_TITLE = 'ENBOSS - Unite & Ride';
 
 /** Default OG image URL used for site-wide and listing pages (events, skateparks, guides, growth-lab). */
 export const DEFAULT_OG_IMAGE = 'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772636312/bd6cugckdsmod2abmxhw.png';
