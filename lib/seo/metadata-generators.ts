@@ -175,10 +175,9 @@ export async function generateSkateparksListingMetadata(params: {
 }): Promise<Metadata> {
   const { locale } = params;
 
-  let parksCount = 0;
   try {
     await connectDB();
-    parksCount = await Skatepark.countDocuments({ status: 'active' });
+    await Skatepark.countDocuments({ status: 'active' });
   } catch (error) {
     console.warn('Failed to fetch skateparks count for metadata', error);
   }
@@ -204,10 +203,9 @@ export async function generateSkateparksListingMetadata(params: {
 export async function generateEventsListingMetadata(params: { locale: string }): Promise<Metadata> {
   const { locale } = params;
 
-  let eventsCount = 0;
   try {
     await connectDB();
-    eventsCount = await Event.countDocuments({ status: 'published' });
+    await Event.countDocuments({ status: 'published' });
   } catch (error) {
     console.warn('Failed to fetch events count for metadata', error);
   }
@@ -235,10 +233,8 @@ export async function generateGuidesListingMetadata(params: { locale: string }):
   try {
     await connectDB();
 
-    // Fetch guides count directly from database
-    let guidesCount = 0;
     try {
-      guidesCount = await Guide.countDocuments({ status: 'published' });
+      await Guide.countDocuments({ status: 'published' });
     } catch (error) {
       console.warn('Failed to fetch guides count for metadata', error);
     }
@@ -435,7 +431,7 @@ export async function generateFormMetadata(params: {
 
     if (!form || !form.isVisible()) {
       return genMeta({
-        title: locale === 'en' ? 'Form Not Found' : 'טופס לא נמצא',
+        title: locale === 'en' ? 'Survey Not Found' : 'סקר לא נמצא',
         description:
           locale === 'en'
             ? 'The survey you are looking for could not be found.'
@@ -485,10 +481,9 @@ export async function generateGrowthLabListingMetadata(params: {
 }): Promise<Metadata> {
   const { locale } = params;
 
-  let formsCount = 0;
   try {
     await connectDB();
-    formsCount = await Form.countDocuments({ status: 'published' });
+    await Form.countDocuments({ status: 'published' });
   } catch (error) {
     console.warn('Failed to fetch forms count for metadata', error);
   }

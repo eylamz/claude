@@ -184,7 +184,9 @@ export async function connectDB(): Promise<typeof mongoose> {
       await new Promise((resolve) => setTimeout(resolve, step));
       elapsed += step;
     }
-    if (mongoose.connection.readyState === 1) {
+    // Re-read state (may have changed to connected); assert number to avoid TS narrowing from outer branch
+    const state = mongoose.connection.readyState as number;
+    if (state === 1) {
       if (!eventListenersSetup) {
         setupEventListeners();
       }
