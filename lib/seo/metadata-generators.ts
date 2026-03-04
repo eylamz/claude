@@ -378,44 +378,57 @@ export async function generateGuideMetadata(params: {
 }): Promise<Metadata> {
   const { slug, locale } = params;
 
-  const siteUrl = await getSiteUrl();
-  const res = await fetch(`${siteUrl}/api/guides/${slug}?locale=${locale}`, {
-    next: { revalidate: 3600 },
-  });
+  try {
+    await connectDB();
 
-  if (!res.ok) {
+    const guide = await Guide.findOne({
+      slug: slug.toLowerCase(),
+      status: 'published',
+    })
+      .select(
+        'title description coverImage metaImage authorName publishedAt updatedAt'
+      )
+      .lean();
+
+    if (!guide) {
+      return genMeta({
+        title: 'Guide Not Found',
+        description: 'The guide you are looking for could not be found.',
+        locale,
+      });
+    }
+
+    const title = getLocalizedText(guide.title, locale);
+    const description = guide.description
+      ? getLocalizedText(guide.description, locale).substring(0, 160)
+      : `Read ${title} on ENBOSS. Expert guides and tutorials for extreme sports.`;
+
+    const image =
+      guide.metaImage && String(guide.metaImage).trim()
+        ? guide.metaImage
+        : (guide.coverImage || '/og-guide-default.jpg');
+    const author = guide.authorName ? ` by ${guide.authorName}` : '';
+
+    return genMeta({
+      title: `${title}${author}`,
+      description,
+      image,
+      url: `/${locale}/guides/${slug}`,
+      type: 'article',
+      locale,
+      alternateLocales: locale === 'en' ? ['he'] : ['en'],
+      publishedTime: guide.publishedAt,
+      modifiedTime: guide.updatedAt,
+      author: guide.authorName,
+    });
+  } catch (error) {
+    console.error('Error generating guide metadata:', error);
     return genMeta({
       title: 'Guide Not Found',
       description: 'The guide you are looking for could not be found.',
       locale,
     });
   }
-
-  const { guide } = await res.json();
-  const title = getLocalizedText(guide.title, locale);
-  const description = guide.description
-    ? getLocalizedText(guide.description, locale).substring(0, 160)
-    : `Read ${title} on ENBOSS. Expert guides and tutorials for extreme sports.`;
-
-  const image =
-    guide.metaImage && String(guide.metaImage).trim()
-      ? guide.metaImage
-      : (guide.coverImage || '/og-guide-default.jpg');
-  const readTime = guide.readTime ? ` ${guide.readTime} min read` : '';
-  const author = guide.authorName ? ` by ${guide.authorName}` : '';
-
-  return genMeta({
-    title: `${title}${author}${readTime}`,
-    description,
-    image,
-    url: `/${locale}/guides/${slug}`,
-    type: 'article',
-    locale,
-    alternateLocales: locale === 'en' ? ['he'] : ['en'],
-    publishedTime: guide.publishedAt,
-    modifiedTime: guide.updatedAt,
-    author: guide.authorName,
-  });
 }
 
 export async function generateFormMetadata(params: {
