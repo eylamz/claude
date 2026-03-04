@@ -417,8 +417,12 @@ export async function generateGuideMetadata(params: {
       type: 'article',
       locale,
       alternateLocales: locale === 'en' ? ['he'] : ['en'],
-      publishedTime: guide.publishedAt,
-      modifiedTime: guide.updatedAt,
+      publishedTime: guide.publishedAt
+        ? new Date(guide.publishedAt).toISOString()
+        : undefined,
+      modifiedTime: guide.updatedAt
+        ? new Date(guide.updatedAt).toISOString()
+        : undefined,
       author: guide.authorName,
     });
   } catch (error) {
