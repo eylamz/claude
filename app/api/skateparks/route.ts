@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     // If only version is requested, return it without fetching skateparks
     if (versionOnly) {
       const settings = await Settings.findOrCreate();
-      const version = settings.skateparksVersion || 1;
+      const version = Math.floor(Number(settings.skateparksVersion) || 1);
       return NextResponse.json({ version });
     }
 
@@ -182,9 +182,9 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Get cache version
+    // Get cache version (integer only)
     const settings = await Settings.findOrCreate();
-    const version = settings.skateparksVersion || 1;
+    const version = Math.floor(Number(settings.skateparksVersion) || 1);
 
     return NextResponse.json({
       skateparks: formattedSkateparks,

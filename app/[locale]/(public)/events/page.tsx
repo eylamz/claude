@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, memo, useRef, Suspense } from 'react'
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { X, TrendingUp } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button, TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { SearchInput } from '@/components/common/SearchInput';
@@ -829,14 +829,14 @@ function EventsPageContent() {
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
               <div className="flex items-center justify-end gap-2 text-sm w-1/2">
-                <Icon name="bellBold" className="w-3 h-3 text-purple dark:text-purple-dark" />
+                <Icon name="bellBold" className="w-3.5 h-3.5 text-purple dark:text-purple-dark" />
                 <span className="text-gray-600 dark:text-gray-400">
                   {tr('Stay Tuned', 'הישארו מעודכנים')}
                 </span>
               </div>
               <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
               <div className="flex items-center gap-2 text-sm w-1/2">
-                <TrendingUp className="w-4 h-4 text-purple dark:text-purple-dark" />
+              <Icon name="calendarBold" className="w-4 h-4 text-purple dark:text-purple-dark" />
 
                 <span className="text-gray-600 dark:text-gray-400">
                   {totalEventsCount} {totalEventsCount === 1 ? t('event') : t('events')}
@@ -1053,7 +1053,7 @@ function EventsPageContent() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Button
-                    variant="secondary"
+                    variant="gray"
                     size="sm"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage === 1}
@@ -1078,7 +1078,7 @@ function EventsPageContent() {
                     )}
                   </div>
                   <Button
-                    variant="secondary"
+                    variant="gray"
                     size="sm"
                     onClick={() => setPage((p) => p + 1)}
                     disabled={currentPage === totalPages}

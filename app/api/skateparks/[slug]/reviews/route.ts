@@ -286,8 +286,8 @@ export async function POST(
     // Increment skateparks version to invalidate client caches
     try {
       const settings = await Settings.findOrCreate();
-      const currentVersion = settings.skateparksVersion || 1;
-      settings.skateparksVersion = currentVersion + 0.00001;
+      const currentVersion = Math.floor(Number(settings.skateparksVersion) || 1);
+      settings.skateparksVersion = currentVersion + 1;
       await settings.save();
     } catch (versionError) {
       // Log error but don't fail the review submission

@@ -277,7 +277,7 @@ export default function SkateparksPage() {
         const response = await fetch('/api/admin/settings');
         if (response.ok) {
           const data = await response.json();
-          setSkateparksVersion(data.settings?.skateparksVersion || 1);
+          setSkateparksVersion(Math.floor(Number(data.settings?.skateparksVersion)) || 1);
         }
       } catch (error) {
         console.error('Error fetching settings:', error);
@@ -293,7 +293,7 @@ export default function SkateparksPage() {
       const response = await fetch('/api/admin/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skateparksVersion }),
+        body: JSON.stringify({ skateparksVersion: Math.floor(Number(skateparksVersion)) || 1 }),
       });
       if (!response.ok) throw new Error('Failed to save version');
       alert('Version saved successfully!');
@@ -428,15 +428,27 @@ export default function SkateparksPage() {
               const versionResponse = await fetch('/api/skateparks?versionOnly=true');
               if (versionResponse.ok) {
                 const versionData = await versionResponse.json();
-                const currentVersion = versionData.version || 1;
-                const storedVersion = cachedVersion ? parseInt(cachedVersion) : 0;
+                const currentVersion = Math.floor(Number(versionData.version)) || 1;
+                let storedVersion = 0;
+                if (cachedVersion) {
+                  try {
+                    const parsed = JSON.parse(cachedVersion);
+                    const v = typeof parsed === 'object' && parsed != null && 'version' in parsed
+                      ? parsed.version
+                      : Number(cachedVersion);
+                    storedVersion = Number.isFinite(v) ? Math.floor(Number(v)) : 0;
+                  } catch {
+                    const v = Number(cachedVersion);
+                    storedVersion = Number.isFinite(v) ? Math.floor(v) : 0;
+                  }
+                }
 
                 // If versions don't match, update cache
                 if (storedVersion !== currentVersion) {
                   const publicResponse = await fetch('/api/skateparks');
                   if (publicResponse.ok) {
                     const publicData = await publicResponse.json();
-                    const newVersion = publicData.version || 1;
+                    const newVersion = Math.floor(Number(publicData.version)) || 1;
                     
                     localStorage.setItem(cacheKey, JSON.stringify(publicData.skateparks || []));
                     localStorage.setItem(versionKey, newVersion.toString());
@@ -507,7 +519,7 @@ export default function SkateparksPage() {
         const publicResponse = await fetch('/api/skateparks');
         if (publicResponse.ok) {
           const publicData = await publicResponse.json();
-          const currentVersion = publicData.version || 1;
+          const currentVersion = Math.floor(Number(publicData.version)) || 1;
           
           localStorage.setItem(cacheKey, JSON.stringify(publicData.skateparks || []));
           localStorage.setItem(versionKey, currentVersion.toString());
@@ -984,7 +996,20 @@ export default function SkateparksPage() {
               </label>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-mono font-semibold text-gray-900 dark:text-white min-w-[4rem]">
-                  {cacheVersionFromStorage ?? '—'}
+                  {cacheVersionFromStorage != null
+                    ? (() => {
+                        try {
+                          const parsed = JSON.parse(cacheVersionFromStorage);
+                          const v = typeof parsed === 'object' && parsed != null && 'version' in parsed
+                            ? parsed.version
+                            : Number(cacheVersionFromStorage);
+                          return Number.isFinite(v) ? Math.floor(Number(v)) : cacheVersionFromStorage;
+                        } catch {
+                          const v = Number(cacheVersionFromStorage);
+                          return Number.isFinite(v) ? Math.floor(v) : cacheVersionFromStorage;
+                        }
+                      })()
+                    : '—'}
                 </span>
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {cacheVersionFromStorage ? 'Stored in this browser' : 'No cache yet'}
@@ -997,9 +1022,10 @@ export default function SkateparksPage() {
               </label>
               <div className="flex items-center gap-2">
                 <NumberInput
-                  value={skateparksVersion}
-                  onChange={(e) => setSkateparksVersion(parseInt(e.target.value) || 1)}
+                  value={Math.floor(Number(skateparksVersion)) || 1}
+                  onChange={(e) => setSkateparksVersion(Math.floor(Number(e.target.value)) || 1)}
                   min={1}
+                  step={1}
                   className="w-32"
                 />
                 <Button

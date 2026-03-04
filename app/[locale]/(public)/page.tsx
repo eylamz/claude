@@ -436,10 +436,10 @@ export default function HomePage() {
             {t('whyEnbossSubtitle')}
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
+          <div className="flex md:grid overflow-x-auto md:overflow-visible snap-x md:snap-none gap-4 md:gap-8 lg:gap-10 md:grid-cols-6 pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
             <Link
               href={`/${locale}/skateparks`}
-              className="h-full group block bg-transparent transition-all duration-300"
+              className="flex-shrink-0 md:flex-shrink md:col-span-2 w-[min(85vw,320px)] md:w-full snap-center h-full group block bg-transparent transition-all duration-300"
             >
               <div className=" card-gradient card-anim-1 rounded-[22px] overflow-hidden relative min-h-full">
                 <div className="gradient-0" aria-hidden />
@@ -482,7 +482,7 @@ export default function HomePage() {
 
             <Link
               href={`/${locale}/guides`}
-              className="h-full group block bg-transparent transition-all duration-300"
+              className="flex-shrink-0 md:flex-shrink md:col-span-2 w-[min(85vw,320px)] md:w-full snap-center h-full group block bg-transparent transition-all duration-300"
             >
               <div className=" card-gradient card-anim-2 rounded-[22px] overflow-hidden relative min-h-full">
                 <div className="gradient-0" aria-hidden />
@@ -524,8 +524,8 @@ export default function HomePage() {
             </Link>
 
             <Link
-              href={`/${locale}/skateparks`}
-              className="h-full group block  bg-transparent transition-all duration-300"
+              href={`/${locale}/events`}
+              className="flex-shrink-0 md:flex-shrink md:col-span-2 w-[min(85vw,320px)] md:w-full snap-center h-full group block bg-transparent transition-all duration-300"
             >
               <div className=" card-gradient card-anim-3 rounded-[22px] overflow-hidden relative min-h-full">
                 <div className="gradient-0" aria-hidden />
@@ -543,6 +543,49 @@ export default function HomePage() {
                 </div>
                 <div className="card-content relative z-10 p-8 lg:p-10 text-white">
                   <div className="card-icon-gradient card-icon-anim-3 mb-6 shadow-xl">
+                    <div className="gradient-0" aria-hidden />
+                    <div className="gradient-1" aria-hidden />
+                    <div className="glass" aria-hidden />
+                    <div className="gradient-2" aria-hidden>
+                      <div className="color-1 color" />
+                      <div className="color-2 color" />
+                      <div className="color-3 color" />
+                      <div className="color-4 color" />
+                      <div className="color-5 color" />
+                      <div className="color-6 color" />
+                      <div className="color-7 color" />
+                      <div className="color-8 color" />
+                    </div>
+                    <div className="card-content">
+                      <Icon name="calendarBold" className="w-8 h-8 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">{t('featureEventsTitle')}</h3>
+                  <p className="text-white/90 leading-relaxed">{t('featureEventsDesc')}</p>
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              href={`/${locale}/skateparks`}
+              className="flex-shrink-0 md:flex-shrink md:col-span-3 w-[min(85vw,320px)] md:w-full snap-center h-full group block  bg-transparent transition-all duration-300"
+            >
+              <div className=" card-gradient card-anim-4 rounded-[22px] overflow-hidden relative min-h-full">
+                <div className="gradient-0" aria-hidden />
+                <div className="gradient-1" aria-hidden />
+                <div className="glass" aria-hidden />
+                <div className="gradient-2" aria-hidden>
+                  <div className="color-1 color" />
+                  <div className="color-2 color" />
+                  <div className="color-3 color" />
+                  <div className="color-4 color" />
+                  <div className="color-5 color" />
+                  <div className="color-6 color" />
+                  <div className="color-7 color" />
+                  <div className="color-8 color" />
+                </div>
+                <div className="card-content relative z-10 p-8 lg:p-10 text-white">
+                  <div className="card-icon-gradient card-icon-anim-4 mb-6 shadow-xl">
                     <div className="gradient-0" aria-hidden />
                     <div className="gradient-1" aria-hidden />
                     <div className="glass" aria-hidden />
@@ -590,9 +633,9 @@ export default function HomePage() {
                   navigator.clipboard.writeText(url);
                 }
               }}
-              className="h-full group block bg-transparent transition-all duration-300 text-left w-full cursor-pointer"
+              className="flex-shrink-0 md:flex-shrink md:col-span-3 w-[min(85vw,320px)] md:w-full snap-center h-full group block bg-transparent transition-all duration-300 text-left w-full cursor-pointer"
             >
-              <div className="card-gradient card-anim-4 rounded-[22px] overflow-hidden relative min-h-full">
+              <div className="card-gradient card-anim-5 rounded-[22px] overflow-hidden relative min-h-full">
                 <div className="gradient-0" aria-hidden />
                 <div className="gradient-1" aria-hidden />
                 <div className="glass" aria-hidden />
@@ -607,7 +650,7 @@ export default function HomePage() {
                   <div className="color-8 color" />
                 </div>
                 <div className="card-content relative z-10 p-8 lg:p-10 text-white text-start">
-                  <div className="card-icon-gradient card-icon-anim-4 mb-6">
+                  <div className="card-icon-gradient card-icon-anim-5 mb-6">
                     <div className="gradient-0" aria-hidden />
                     <div className="gradient-1" aria-hidden />
                     <div className="glass" aria-hidden />

@@ -3,7 +3,7 @@
 import { FC, ReactNode, useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocale } from 'next-intl';
-import { Icon } from '@/components/icons/Icon';
+import { X } from 'lucide-react';
 
 interface DrawerProps {
   isOpen: boolean;
@@ -160,7 +160,7 @@ export const Drawer: FC<DrawerProps> = ({ isOpen, onClose, children, title }) =>
             className="h-14 p-2"
             aria-label="Close drawer"
           >
-            <Icon name="X" className="w-6 h-6 text-gray/75 dark:text-gray-dark/75" />
+            <X className="w-6 h-6 text-gray/75 dark:text-gray-dark/75" />
           </button>
           <h2 className="me-5 text-xl font-semibold text-text dark:text-text-dark ">
             {title}

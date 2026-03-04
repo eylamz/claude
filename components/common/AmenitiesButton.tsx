@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/client';
 import { Icon } from '@/components/icons';
+import { X } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -141,54 +142,56 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                 className="h-8 w-8 p-0 shrink-0"
                 aria-label={tCommon('close') || 'Close'}
               >
-                <Icon name="X" className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
           <Separator className="bg-popover-border dark:bg-popover-border-dark" />
         </>
       )}
-      {isMobile && selectedAmenities.length > 0 && (
-        <>
-          <div className={`flex ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'} justify-end`}>
-            <Button
-              variant="red"
-              size="sm"
-              onClick={clearAll}
-              className="h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
-            >
-              {tCommon('clear') || 'Clear'}
-              <Icon 
-                name="trash" 
-                className="h-3 w-3"
-              />
-            </Button>
-          </div>
-          <Separator className="bg-popover-border dark:bg-popover-border-dark" />
-        </>
-      )}
       {isMobile ? (
-        <div className={`flex flex-col gap-1 ${locale === 'he' ? 'items-end' : 'items-start'}`}>
-          {amenityOptions.map((amenity) => (
-            <Button
-              key={amenity.key}
-              variant={selectedAmenities.includes(amenity.key) ? "blue" : "none"}
-              size="sm"
-              className={`flex gap-2 font-medium w-full justify-start min-w-0 ${
-                selectedAmenities.includes(amenity.key) ? '' : 'text-gray dark:text-gray-dark'
-              } ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
-              onClick={() => toggleAmenity(amenity.key)}
-            >
-              <Icon 
-                name={AMENITY_ICON_MAP[amenity.key] as any || 'filter'}
-                className={`w-4 h-4 shrink-0 transition-all duration-200 ${
-                  selectedAmenities.includes(amenity.key) ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'
-                }`}
-              />
-              {tSkateparks(amenity.label)}
-            </Button>
-          ))}
-        </div>
+        <>
+          <div className={`flex flex-col gap-1 ${locale === 'he' ? 'items-end' : 'items-start'}`}>
+            {amenityOptions.map((amenity) => (
+              <Button
+                key={amenity.key}
+                variant={selectedAmenities.includes(amenity.key) ? "blue" : "none"}
+                size="sm"
+                className={`flex gap-2 font-medium w-full justify-start min-w-0 ${
+                  selectedAmenities.includes(amenity.key) ? '' : 'text-gray dark:text-gray-dark'
+                } ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
+                onClick={() => toggleAmenity(amenity.key)}
+              >
+                <Icon 
+                  name={AMENITY_ICON_MAP[amenity.key] as any || 'filter'}
+                  className={`w-4 h-4 shrink-0 transition-all duration-200 ${
+                    selectedAmenities.includes(amenity.key) ? 'text-blue dark:text-blue-dark' : 'text-gray/75 dark:text-gray-dark/75'
+                  }`}
+                />
+                {tSkateparks(amenity.label)}
+              </Button>
+            ))}
+          </div>
+          {selectedAmenities.length > 0 && (
+            <>
+              <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+              <div className={`flex ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'} justify-end`}>
+                <Button
+                  variant="red"
+                  size="sm"
+                  onClick={clearAll}
+                  className="h-8 px-2 text-xs flex flex-row-reverse gap-1 items-center"
+                >
+                  {tCommon('clear') || 'Clear'}
+                  <Icon 
+                    name="trash" 
+                    className="h-3 w-3"
+                  />
+                </Button>
+              </div>
+            </>
+          )}
+        </>
       ) : (
         <table className="w-full border-collapse">
           <tbody>
@@ -226,12 +229,12 @@ const AmenitiesButton = ({ selectedAmenities, onAmenitiesChange, className, styl
                     className="w-1/2 px-1 py-0.5"
                     style={{ textAlign: locale === 'he' ? 'right' : 'left' }}
                   >
-                    <div className={`inline-flex ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <div className={`w-full inline-flex justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}>
                       {rightAmenity && (
                         <Button
                           variant={selectedAmenities.includes(rightAmenity.key) ? "blue" : "none"}
                           size="sm"
-                          className={`flex gap-2 w-fit text-nowrap ${
+                          className={`flex justify-start gap-2 w-full text-nowrap ${
                             selectedAmenities.includes(rightAmenity.key) ? '' : 'text-text dark:text-text-dark/90'
                           } ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           onClick={() => toggleAmenity(rightAmenity.key)}

@@ -84,7 +84,7 @@ const FormCard = memo(({
   const formDescription = form.description ? getLocalizedText(form.description, locale) : '';
 
   // Truncate description
-  const truncateDescription = (text: string, maxLength: number = 100): string => {
+  const truncateDescription = (text: string, maxLength: number = 120): string => {
     if (!text) return '';
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + '...';
@@ -114,7 +114,7 @@ const FormCard = memo(({
           </div>
         )}
         {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-purple/20 via-brand-main/10 to-brand-blue/20 dark:from-brand-purple/10 dark:via-brand-dark/10 dark:to-brand-blue/10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-purple/20 via-brand-orange/10 to-brand-red/20 dark:from-brand-purple/10 dark:via-orange-dark/10 dark:to-red-dark/10" />
         
         {/* Submissions Badge */}
         <div className="absolute top-2 right-2 z-10 flex flex-col gap-2">
@@ -136,8 +136,8 @@ const FormCard = memo(({
         {/* Form Icon/Content */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center space-y-2 p-6">
-            <div className="w-16 h-16 mx-auto bg-brand-main/20 dark:bg-brand-dark/20 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-brand-text dark:text-brand-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 mx-auto bg-orange/20 dark:bg-orange-dark/20 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-orange dark:text-orange-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
@@ -351,14 +351,14 @@ export default function GrowingTogetherPage() {
             {/* Stats Bar */}
             <div className="flex items-center justify-center gap-6 pt-4">
               <div className="flex items-center gap-2 text-sm">
-                  <Icon name="clipboardBold" className="w-3 h-3 text-brand-text dark:text-brand-dark" />
+                  <Icon name="clipboardBold" className="w-3.5 h-3.5 text-orange dark:text-orange-dark" />
                 <span className="text-gray-600 dark:text-gray-400">
                 {tr('Rotating surveys', 'סקרים משתנים')}
                 </span>
               </div>
               <div className="w-px h-4 bg-gray-300 dark:bg-gray-700" />
               <div className="flex items-center gap-2 text-sm">
-              <Icon name="plantBold" className="w-3.5 h-3.5 text-brand-text dark:text-brand-dark" />
+              <Icon name="plantBold" className="w-3.5 h-3.5 text-orange dark:text-orange-dark" />
               <span className="text-gray-600 dark:text-gray-400">
                   {tr('Major upgrades', 'שדרוגים גדולים')}
                 </span>

@@ -6,8 +6,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
 import { Icon, type IconName } from '@/components/icons/Icon';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useTheme } from '@/context/ThemeProvider';
 import { SearchInput } from '@/components/common/SearchInput';
 import Image from 'next/image';
@@ -99,6 +100,72 @@ export default function MobileSidebar({
   const searchAnalyticsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  /** Nav link click feedback: show brand icon 0.3s then spinner until navigation (same as HeaderNav) */
+  const [linkClickState, setLinkClickState] = useState<{
+    href: string;
+    phase: 'brand' | 'spinner';
+  } | null>(null);
+  const linkClickPhaseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevPathnameRef = useRef(pathname);
+
+  /** Map regular icon name to bold for click feedback */
+  const getBoldIcon = (icon: IconName): IconName => {
+    const map: Record<string, IconName> = {
+      house: 'houseBold',
+      trees: 'treesBold',
+      book: 'bookBold',
+      calendar: 'calendarBold',
+      shop: 'shopBold',
+      plant: 'plantBold',
+      target: 'targetBold',
+      messages: 'messagesBold',
+      trainersBold: 'trainersBold',
+    };
+    return (map[icon] ?? icon) as IconName;
+  };
+
+  type NavTheme = 'brand' | 'green' | 'purple' | 'yellow' | 'orange';
+
+  const getNavThemeForHref = (href: string): NavTheme => {
+    if (href.endsWith('/skateparks')) return 'green';
+    if (href.endsWith('/events')) return 'purple';
+    if (href.endsWith('/guides')) return 'yellow';
+    if (href.endsWith('/growth-lab')) return 'orange';
+    return 'brand';
+  };
+
+  const getNavActiveLinkClasses = (theme: NavTheme): string => {
+    switch (theme) {
+      case 'green':
+        return 'ps-4 pe-6 bg-green-bg dark:bg-green-bg-dark text-green dark:text-green-dark';
+      case 'purple':
+        return 'ps-4 pe-6 bg-purple-bg dark:bg-purple-bg-dark text-purple dark:text-purple-dark';
+      case 'yellow':
+        return 'ps-4 pe-6 bg-yellow-bg dark:bg-yellow-bg-dark text-yellow dark:text-yellow-dark';
+      case 'orange':
+        return 'ps-4 pe-6 bg-orange-bg dark:bg-orange-bg-dark text-orange dark:text-orange-dark';
+      case 'brand':
+      default:
+        return 'ps-4 pe-6 bg-brand-main/20 dark:bg-brand-main/5 text-brand-text dark:text-brand-dark';
+    }
+  };
+
+  const getNavIconActiveColorClasses = (theme: NavTheme): string => {
+    switch (theme) {
+      case 'green':
+        return 'text-green dark:text-green-dark';
+      case 'purple':
+        return 'text-purple dark:text-purple-dark';
+      case 'yellow':
+        return 'text-yellow dark:text-yellow-dark';
+      case 'orange':
+        return 'text-orange dark:text-orange-dark';
+      case 'brand':
+      default:
+        return 'text-brand-text dark:text-brand-dark';
+    }
+  };
+
   const isAdmin = session?.user?.role === 'admin';
   const ecommerceEnabled = isEcommerceEnabled();
   const trainersEnabled = isTrainersEnabled();
@@ -145,7 +212,7 @@ export default function MobileSidebar({
       ? [
           {
             href: `/${locale}/growth-lab`,
-            icon: 'plantBold' as IconName,
+            icon: 'plant' as IconName,
             label: tMobileNav('forms'),
             description: tMobileNav('growthLabDesc'),
           },
@@ -153,7 +220,7 @@ export default function MobileSidebar({
       : []),
     {
       href: `/${locale}/about`,
-      icon: 'targetBold',
+      icon: 'target',
       label: tCommon('about'),
       description: tCommon('aboutDesc'),
     },
@@ -225,6 +292,32 @@ export default function MobileSidebar({
       setIsSearchOpen(true);
     }
   }, [isOpen, openWithSearch]);
+
+  // Clear nav link loading state and close sidebar when route changes (page started loading)
+  useEffect(() => {
+    const hasPathnameChanged = prevPathnameRef.current !== pathname;
+    if (hasPathnameChanged) {
+      if (isOpen) {
+        onClose();
+      }
+      prevPathnameRef.current = pathname;
+    }
+
+    setLinkClickState(null);
+    if (linkClickPhaseTimeoutRef.current) {
+      clearTimeout(linkClickPhaseTimeoutRef.current);
+      linkClickPhaseTimeoutRef.current = null;
+    }
+  }, [pathname, isOpen, onClose]);
+
+  const handleNavLinkPress = (href: string) => {
+    if (linkClickPhaseTimeoutRef.current) clearTimeout(linkClickPhaseTimeoutRef.current);
+    setLinkClickState({ href, phase: 'brand' });
+    linkClickPhaseTimeoutRef.current = setTimeout(() => {
+      setLinkClickState((prev) => (prev && prev.href === href ? { ...prev, phase: 'spinner' } : prev));
+      linkClickPhaseTimeoutRef.current = null;
+    }, 300);
+  };
 
   // Resolve display name/title for search (locale-aware; handles name as object)
   const getResultDisplayName = (result: SearchResult): string => {
@@ -693,7 +786,6 @@ export default function MobileSidebar({
                 <Link
                   href={`/${locale}/login`}
                   className={`p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200 w-full ${locale === 'he' ? 'max-w-[58px]' : 'max-w-[65px]'}`}
-                  onClick={onClose}
                 >
                   <Icon name="account" className="w-4 h-4" />
                   <span>{tCommon('login') || 'Login'}</span>
@@ -705,7 +797,6 @@ export default function MobileSidebar({
                 <Link
                   href={`/${locale}/account`}
                   className={`p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200 w-full ${locale === 'he' ? 'max-w-[58px]' : 'max-w-[65px]'}`}
-                  onClick={onClose}
                 >
                   <Icon name="account" className="w-4 h-4" />
                   <span>{tCommon('profile') || 'Profile'}</span>
@@ -716,7 +807,6 @@ export default function MobileSidebar({
                 <Link
                   href={`/${locale}/account`}
                   className={`p-2 flex flex-col items-center gap-3 text-xs text-sidebar-text dark:text-sidebar-text-dark hover:text-sidebar-brand dark:hover:text-sidebar-brand-dark hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors duration-200 w-full ${locale === 'he' ? 'max-w-[58px]' : 'max-w-[65px]'}`}
-                  onClick={onClose}
                 >
                   <Icon name="admin" className="w-5 h-5" />
                   <span className="-mt-0.5">{tCommon('profile') || 'Profile'}</span>
@@ -774,7 +864,7 @@ export default function MobileSidebar({
               className="h-14 p-2 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200"
               aria-label="Close menu"
             >
-              <Icon name="X" className="w-6 h-6" />
+              <X className="w-6 h-6" />
             </button>
           </div>
 
@@ -816,7 +906,6 @@ export default function MobileSidebar({
             <div className="flex flex-col gap-6 -mt-3 px-3">
               <Link
                 href={`/${locale}/search`}
-                onClick={onClose}
                 className={`w-fit absolute top-[143px] ${locale === 'he' ? 'left-2' : 'right-2'} flex items-center gap-1 py-1 px-2 rounded-md text-sidebar-text-brand dark:text-sidebar-text-brand-dark hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200`}
               >
                 <Icon name="sparksBold" className="w-3 h-3" />
@@ -909,7 +998,6 @@ export default function MobileSidebar({
                                     source: 'sidebar',
                                     locale,
                                   });
-                                  onClose();
                                 }}
                                 className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-bg dark:hover:bg-white/[2.5%] transition-colors duration-200 group"
                               >
@@ -969,6 +1057,13 @@ export default function MobileSidebar({
                   const isActive =
                     pathname === card.href ||
                     (card.href !== `/${locale}` && pathname.startsWith(card.href));
+                  const isClickFeedback = linkClickState?.href === card.href;
+                  const showBrandPhase = isClickFeedback && linkClickState.phase === 'brand';
+                  const showSpinnerPhase = isClickFeedback && linkClickState.phase === 'spinner';
+                  const boldIcon = getBoldIcon(card.icon);
+                  const navTheme = getNavThemeForHref(card.href);
+                  const activeLinkClasses = getNavActiveLinkClasses(navTheme);
+                  const activeIconColorClasses = getNavIconActiveColorClasses(navTheme);
 
                   return (
                     <div
@@ -977,17 +1072,32 @@ export default function MobileSidebar({
                     >
                       <Link
                         href={card.href}
-                        onClick={onClose}
-                        className={`flex items-center gap-5 px-2 py-3 text-3xl ${
-                          isActive
-                            ? 'ps-4 pe-6 bg-brand-main/20 dark:bg-brand-main/5 text-brand-text dark:text-brand-dark'
-                            : 'ms-2 text-black/80 dark:text-white/90'
-                        }`}
+                        onMouseDown={() => handleNavLinkPress(card.href)}
+                        className={`group flex items-center gap-5 px-2 py-3 text-3xl ${
+                          isActive ? activeLinkClasses : 'ms-2 text-black/80 dark:text-white/90'
+                        } ${isClickFeedback ? 'text-brand-text dark:text-brand-dark' : ''}`}
                       >
-                        <Icon
-                          name={card.icon}
-                          className={`flex-shrink-0 w-4 h-4 -mb-0.5 overflow-visible ${isActive ? 'text-brand-text dark:text-brand-dark' : 'text-black/80 dark:text-white/90'}`}
-                        />
+                        <span className="relative w-4 h-4 shrink-0 flex items-center justify-center">
+                          <Icon
+                            name={card.icon}
+                            className={`flex-shrink-0 absolute inset-0 w-4 h-4 -mb-0.5 overflow-visible transition-opacity ${
+                              isClickFeedback || isActive ? 'opacity-0' : 'opacity-100'
+                            } text-black/80 dark:text-white/90`}
+                          />
+                          <Icon
+                            name={boldIcon}
+                            className={`flex-shrink-0 absolute inset-0 w-4 h-4 -mb-0.5 overflow-visible ${activeIconColorClasses} transition-opacity ${
+                              showBrandPhase || (isActive && !isClickFeedback)
+                                ? 'opacity-100'
+                                : 'opacity-0'
+                            }`}
+                          />
+                          {showSpinnerPhase && (
+                            <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                              <LoadingSpinner variant={navTheme} size={16} className="!h-4 !w-4" />
+                            </span>
+                          )}
+                        </span>
                         <span className="font-medium">{card.label}</span>
                       </Link>
                     </div>
@@ -1080,7 +1190,6 @@ export default function MobileSidebar({
                         <li key={item.href}>
                           <Link
                             href={item.href}
-                            onClick={onClose}
                             className={`block transition-colors duration-200 ${
                               isActive
                                 ? 'text-[#16641a] dark:text-[#85ef8a] font-semibold'

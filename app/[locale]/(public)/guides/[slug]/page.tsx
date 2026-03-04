@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ExternalLink, ChevronLeft } from 'lucide-react';
 import { Icon } from '@/components/icons';
 import { Button, Skeleton } from '@/components/ui';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { generateArticleStructuredData, getGuideMetaFromData } from '@/lib/seo/utils';
 import type { GuideData } from '@/lib/api/guides';
 import { sanitizeUrl } from '@/lib/utils/sanitizeUrl';
@@ -435,6 +436,8 @@ export default function GuidePage() {
   const [error, setError] = useState<string | null>(null);
   const [cacheInitialized, setCacheInitialized] = useState(false);
   const [, setCurrentVersion] = useState<number | null>(null);
+  const [isNavigatingBack, setIsNavigatingBack] = useState(false);
+  const router = useRouter();
 
   // Check version and cache on mount (refetch only after 1 hour from last fetch)
   useEffect(() => {
@@ -505,71 +508,89 @@ export default function GuidePage() {
     setLoading(true);
     setError(null);
 
-    // Try to find guide in cache first
     const cacheKey = 'guides_cache';
-    const cachedData = localStorage.getItem(cacheKey);
-    let foundInCache = false;
-    
-    if (cachedData) {
+    const versionKey = 'guides_version';
+
+    const getCachedGuide = (): GuideData | null => {
       try {
-        const allCachedGuides: GuideData[] = JSON.parse(cachedData);
-        const cachedGuide = allCachedGuides.find((g: GuideData) => g.slug === slug);
-        
-        if (cachedGuide) {
-          foundInCache = true;
-          // Found in cache - use it for initial display (but we still need full data with contentBlocks)
-          // Convert GuideData to Guide format for initial display
-          // Handle tags conversion
-          let tags: string[] | { en: string[]; he: string[] } = { en: [], he: [] };
-          if (cachedGuide.tags) {
-            if (Array.isArray(cachedGuide.tags)) {
-              tags = cachedGuide.tags;
-            } else if (typeof cachedGuide.tags === 'object' && 'en' in cachedGuide.tags) {
-              tags = cachedGuide.tags;
-            }
-          }
-          
-          const initialGuide: Guide = {
-            _id: cachedGuide.id,
-            slug: cachedGuide.slug,
-            title: cachedGuide.title,
-            description: cachedGuide.description || { en: '', he: '' },
-            coverImage: cachedGuide.coverImage || '',
-            relatedSports: cachedGuide.relatedSports || [],
-            contentBlocks: { en: [], he: [] }, // Will be filled from API
-            tags: tags,
-            viewsCount: cachedGuide.viewsCount || 0,
-            likesCount: 0,
-            rating: cachedGuide.rating || 0,
-            ratingCount: cachedGuide.ratingCount || 0,
-            status: 'published',
-            isFeatured: false,
-            authorId: '',
-            authorName: 'Unknown',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          
-          // Set initial guide from cache (for fast display)
-          setGuide(initialGuide);
-          // Don't set loading to false yet - we still need to fetch full data
-        }
-      } catch (e) {
-        console.warn('Failed to parse cached guides data', e);
+        const raw = localStorage.getItem(cacheKey);
+        if (!raw) return null;
+        const allCachedGuides: GuideData[] = JSON.parse(raw);
+        return allCachedGuides.find((g: GuideData) => g.slug === slug) ?? null;
+      } catch {
+        return null;
       }
+    };
+
+    const refreshGuidesCache = async (): Promise<void> => {
+      const response = await fetch('/api/guides?limit=100');
+      if (!response.ok) return;
+      const data = await response.json();
+      const currentVersion = data.version || 1;
+      const allGuides = data.guides || [];
+      localStorage.setItem(cacheKey, JSON.stringify(allGuides));
+      localStorage.setItem(
+        versionKey,
+        JSON.stringify({ version: currentVersion, fetchedAt: getGuidesFetchedAtReadable() })
+      );
+    };
+
+    // 1) Try to find guide in cache
+    let cachedGuide = getCachedGuide();
+    let foundInCache = !!cachedGuide;
+
+    // 2) If not in cache, refresh guides_cache then look again
+    if (!cachedGuide) {
+      await refreshGuidesCache();
+      cachedGuide = getCachedGuide();
+      foundInCache = !!cachedGuide;
     }
 
-    // Always fetch full guide data from API (for contentBlocks and other full data)
-    // This ensures we have complete data even if guide was found in cache
+    // 3) If still no data for this guide after refresh, show 404
+    if (!cachedGuide) {
+      setError('Guide not found');
+      setLoading(false);
+      return;
+    }
+
+    // Found in cache (or after refresh) – optional fast display from cache
+    let tags: string[] | { en: string[]; he: string[] } = { en: [], he: [] };
+    if (cachedGuide.tags) {
+      if (Array.isArray(cachedGuide.tags)) {
+        tags = cachedGuide.tags;
+      } else if (typeof cachedGuide.tags === 'object' && 'en' in cachedGuide.tags) {
+        tags = cachedGuide.tags;
+      }
+    }
+    const initialGuide: Guide = {
+      _id: cachedGuide.id,
+      slug: cachedGuide.slug,
+      title: cachedGuide.title,
+      description: cachedGuide.description || { en: '', he: '' },
+      coverImage: cachedGuide.coverImage || '',
+      relatedSports: cachedGuide.relatedSports || [],
+      contentBlocks: { en: [], he: [] },
+      tags,
+      viewsCount: cachedGuide.viewsCount || 0,
+      likesCount: 0,
+      rating: cachedGuide.rating || 0,
+      ratingCount: cachedGuide.ratingCount || 0,
+      status: 'published',
+      isFeatured: false,
+      authorId: '',
+      authorName: 'Unknown',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setGuide(initialGuide);
+
+    // 4) Fetch full guide data from API (contentBlocks etc.)
     try {
       const response = await fetch(`/api/guides/${slug}?locale=${locale}`);
       if (!response.ok) {
         if (response.status === 404) {
-          // If guide was found in cache but API returns 404, it might have been unpublished
-          // Keep the cached data but show a warning or handle appropriately
-          if (!foundInCache) {
-            setError('Guide not found');
-          }
+          setGuide(null);
+          setError('Guide not found');
         } else {
           setError('Failed to load guide');
         }
@@ -579,15 +600,11 @@ export default function GuidePage() {
 
       const data = await response.json();
       setGuide(data.guide);
-      setLoading(false);
     } catch (err) {
       console.error('Error fetching guide:', err);
-      // If we have cached data, keep showing it even if API fails
-      if (!foundInCache) {
-        setError('Failed to load guide');
-      }
-      setLoading(false);
+      setError('Failed to load guide');
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -786,19 +803,31 @@ export default function GuidePage() {
 
   // Error state
   if (error || !guide) {
+    const backHref = `/${locale}/guides`;
     return (
       <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center px-5">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            {error || 'Guide not found'}
+            {locale === 'he' ? 'מדריך לא נמצא' : 'Guide not found'}
           </h1>
-          <Link
-            href={`/${locale}/guides`}
-            className="inline-flex items-center gap-2 text-brand-main hover:text-brand-main/80 dark:text-brand-dark font-medium"
+          <Button
+            variant="primary"
+            disabled={isNavigatingBack}
+            className={`inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-full flex-shrink-0 min-w-[110px] ${locale === 'he' ? 'flex-row' : 'flex-row'}`}
+            onClick={() => {
+              setIsNavigatingBack(true);
+              router.push(backHref);
+            }}
           >
-            <ChevronLeft className="w-4 h-4" />
-            Back to Guides
-          </Link>
+            {isNavigatingBack ? (
+              <LoadingSpinner size={20} variant="brandText" className="!h-5 !w-5" />
+            ) : (
+              <>
+                <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
+                {locale === 'he' ? 'חזרה למדריכים' : 'Back to Guides'}
+              </>
+            )}
+          </Button>
         </div>
       </div>
     );

@@ -4,8 +4,20 @@ import { defaultLocale } from '@/i18n';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'ENBOSS - No Rider Left Behind',
+  title: 'ENBOSS - Unite & Ride',
   description: 'Find the best skateparks near you',
+  openGraph: {
+    images: [
+      {
+        url: 'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772474412/huuauefsaumesy5fsitc.jpg',
+        secureUrl: 'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772474412/huuauefsaumesy5fsitc.jpg',
+        width: 1424,
+        height: 752,
+        alt: 'ENBOSS - Unite & Ride',
+        type: 'image/jpeg',
+      },
+    ],
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

@@ -63,7 +63,7 @@ export async function PUT(request: NextRequest) {
       settings.maintenance = { ...settings.maintenance, ...body.maintenance };
     }
     if (body.skateparksVersion !== undefined) {
-      settings.skateparksVersion = body.skateparksVersion;
+      settings.skateparksVersion = Math.floor(Number(body.skateparksVersion)) || 1;
     }
     if (body.guidesVersion !== undefined) {
       settings.guidesVersion = body.guidesVersion;

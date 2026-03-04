@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, memo, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { X, TrendingUp } from 'lucide-react';
+import { TrendingUp, X } from 'lucide-react';
 import {
   Button,
   Select,
@@ -1085,7 +1085,7 @@ export default function GuidesPageClient({ initialData }: GuidesPageProps) {
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {tr('Rating', 'דירוג')} ≥ {minRating.toFixed(1)}
                     </span>
-                    <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                   </button>
                 )}
 

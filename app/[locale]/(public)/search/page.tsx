@@ -16,6 +16,7 @@ import { Drawer } from '@/components/ui/drawer';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils/cn';
+import { X } from 'lucide-react';
 import {
   searchFromCache,
   readFromCacheSync,
@@ -1736,7 +1737,7 @@ function SearchPageContent() {
                                   className="h-8 w-8 p-0 shrink-0"
                                   aria-label={tr('Close', 'סגור')}
                                 >
-                                  <Icon name="X" className="h-4 w-4" />
+                                  <X className="h-4 w-4" />
                                 </Button>
                               </div>
                             </div>
@@ -1921,7 +1922,7 @@ function SearchPageContent() {
                     <span className="text-sm text-gray-700 dark:text-gray-300">
                       "{query.trim()}"
                     </span>
-                    <Icon name="X" className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                    <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                   </button>
                 )}
 
@@ -1971,7 +1972,7 @@ function SearchPageContent() {
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {tab.label}
                       </span>
-                      <Icon name="X" className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                     </button>
                   );
                 })}
@@ -2000,7 +2001,7 @@ function SearchPageContent() {
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {label}
                       </span>
-                      <Icon name="X" className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                     </button>
                   );
                 })}
@@ -2027,7 +2028,7 @@ function SearchPageContent() {
                       <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         {label}
                       </span>
-                      <Icon name="X" className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                      <X className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                     </button>
                   );
                 })}
@@ -2040,7 +2041,7 @@ function SearchPageContent() {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-transparent text-gray dark:text-gray-dark hover:text-red dark:hover:text-red-dark hover:bg-red-bg dark:hover:bg-red-bg-dark hover:border-red-border dark:hover:border-red-border-dark rounded-full transition-colors duration-200 animate-fadeIn"
                     style={{ animationDelay: '400ms' }}
                   >
-                    <Icon name="X" className="w-3.5 h-3.5" />
+                    <X className="w-3.5 h-3.5" />
                     {tr('Clear All', 'נקה הכל')}
                   </button>
                 )}

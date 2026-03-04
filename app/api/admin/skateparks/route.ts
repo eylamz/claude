@@ -379,8 +379,8 @@ export async function POST(request: NextRequest) {
     // Bump skateparks version so client caches (localStorage skateparks_cache) refetch
     try {
       const settings = await Settings.findOrCreate();
-      const currentVersion = settings.skateparksVersion || 1;
-      settings.skateparksVersion = currentVersion + 0.00001;
+      const currentVersion = Math.floor(Number(settings.skateparksVersion) || 1);
+      settings.skateparksVersion = currentVersion + 1;
       await settings.save();
     } catch (versionError) {
       console.error('Failed to increment skateparks version:', versionError);

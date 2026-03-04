@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useTranslations, useLocale } from 'next-intl';
 import { Separator } from '@/components/ui/separator';
+import { X } from 'lucide-react';
+
 
 interface DailyForecast {
   date: string;
@@ -319,7 +321,7 @@ export default function ParkWeatherForecast({ slug, closingYear }: ParkWeatherFo
             <div className="flex items-center justify-between p-4">
               <h3 className="text-lg font-semibold">{new Date(selectedDay.date).toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
               <button onClick={() => setSelectedDay(null)} className="p-1 rounded-full">
-                <Icon name="X" className="w-6 h-6" />
+                <X className="w-6 h-6" />
                 </button>
             </div>
             <Separator />

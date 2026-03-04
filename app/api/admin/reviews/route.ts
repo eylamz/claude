@@ -133,8 +133,8 @@ export async function PATCH(request: NextRequest) {
           // Increment skateparks version to invalidate client caches
           try {
             const settings = await Settings.findOrCreate();
-            const currentVersion = settings.skateparksVersion || 1;
-            settings.skateparksVersion = currentVersion + 0.00001;
+            const currentVersion = Math.floor(Number(settings.skateparksVersion) || 1);
+            settings.skateparksVersion = currentVersion + 1;
             await settings.save();
           } catch (versionError) {
             console.error('Failed to increment skateparks version:', versionError);
@@ -169,8 +169,8 @@ export async function PATCH(request: NextRequest) {
           // Increment skateparks version to invalidate client caches
           try {
             const settings = await Settings.findOrCreate();
-            const currentVersion = settings.skateparksVersion || 1;
-            settings.skateparksVersion = currentVersion + 0.00001;
+            const currentVersion = Math.floor(Number(settings.skateparksVersion) || 1);
+            settings.skateparksVersion = currentVersion + 1;
             await settings.save();
           } catch (versionError) {
             console.error('Failed to increment skateparks version:', versionError);

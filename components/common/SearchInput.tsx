@@ -2,9 +2,9 @@
 
 import React, { forwardRef, useRef, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
-import { X } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Icon } from '@/components/icons';
+import { X } from 'lucide-react';
 
 interface SearchInputProps {
   value: string;
@@ -48,7 +48,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(({
     ? `${defaultIconColor} group-focus-within:!text-white/80`
     : variant === 'error'
     ? `${defaultIconColor} group-focus-within:!text-error`
-    : `${defaultIconColor} group-focus-within:text-brand-main/80`;
+    : `${defaultIconColor} group-focus-within:text-brand-text dark:group-focus-within:text-brand-dark`;
 
   const inputRoundedClass = variant === 'header' || variant === 'error' ? '!rounded-full' : '';
   const inputBgClass = variant === 'header' 

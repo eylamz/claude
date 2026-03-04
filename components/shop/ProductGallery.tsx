@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { X, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 interface ProductImage {
   id: string;

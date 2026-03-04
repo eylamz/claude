@@ -171,7 +171,7 @@ export default function CookieConsentBanner() {
                   className="h-10 p-2 -me-2 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors duration-200 shrink-0"
                   aria-label={t('close')}
                 >
-                  <Icon name="X" className="w-5 h-5" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
               <div className="max-w-[95%] md:max-w-[700px] text-sm text-gray-600 dark:text-gray-dark space-y-2">

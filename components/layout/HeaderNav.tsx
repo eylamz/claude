@@ -143,6 +143,10 @@ export default function HeaderNav() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   /** Only run cache version check / searchFromCache once per session; after that use sync cache only (same as search page). */
   const versionCheckDoneRef = useRef(false);
+  /** Refs for background merge: cache and API results when version/API complete. */
+  const searchCacheProcessedRef = useRef<SearchResult[]>([]);
+  const searchApiResultsRef = useRef<SearchResult[]>([]);
+  const searchRunIdRef = useRef(0);
 
   // Top 5 most clicked search results (from analytics), cached per locale (1 week TTL)
   const [popularClicks, setPopularClicks] = useState<
@@ -165,6 +169,12 @@ export default function HeaderNav() {
   const [_scrollY, setScrollY] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevScrollYRef = useRef(0);
+  /** Nav link click feedback: show brand icon 0.3s then spinner until navigation */
+  const [linkClickState, setLinkClickState] = useState<{
+    href: string;
+    phase: 'brand' | 'spinner';
+  } | null>(null);
+  const linkClickPhaseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -212,6 +222,15 @@ export default function HeaderNav() {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
+  }, [pathname]);
+
+  // Clear nav link loading state when route changes (page started loading)
+  useEffect(() => {
+    setLinkClickState(null);
+    if (linkClickPhaseTimeoutRef.current) {
+      clearTimeout(linkClickPhaseTimeoutRef.current);
+      linkClickPhaseTimeoutRef.current = null;
+    }
   }, [pathname]);
 
   // Update meta theme-color when theme changes
@@ -400,124 +419,136 @@ export default function HeaderNav() {
     return list;
   }, [ecommerceEnabled, trainersEnabled]);
 
-  // Fetch search results: cache (skateparks, events, guides) + API (products, trainers) — same as search page
+  // Fetch search results: show cache first, then version check + API in background
   useEffect(() => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
       setSearchLoading(false);
       return;
     }
-    setSearchLoading(true);
-    // Instant first paint from sync cache (same as search page)
+    // Show cached results immediately (no loading bar)
     const syncResults = readFromCacheSync(searchQuery, locale, cacheCategories).map(
       mapCacheResultToSearchResult
     );
     setSearchResults(syncResults);
+    setSearchLoading(false);
 
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
     const controller = new AbortController();
+    const runId = ++searchRunIdRef.current;
+    const flippedQuery = flipLanguage(searchQuery);
+    const q = searchQuery.toLowerCase().trim();
+    const flippedLower = flippedQuery ? flippedQuery.toLowerCase().trim() : null;
+    const queryContainsHebrew = /\p{Script=Hebrew}/u.test(searchQuery.trim());
 
-    searchDebounceRef.current = setTimeout(async () => {
-      try {
-        const flippedQuery = flipLanguage(searchQuery);
-        const q = searchQuery.toLowerCase().trim();
-        const flippedLower = flippedQuery ? flippedQuery.toLowerCase().trim() : null;
-        const queryContainsHebrew = /\p{Script=Hebrew}/u.test(searchQuery.trim());
+    const matchesQueryOrFlipped = (result: SearchResult): boolean => {
+      const name = getResultDisplayName(result).toLowerCase();
+      if ('matchBy' in result && result.matchBy === 'area') return true;
+      if (result.type === 'events' && queryMatchesCategory(searchQuery, 'events')) return true;
+      if (result.type === 'skateparks' && queryMatchesCategory(searchQuery, 'skateparks'))
+        return true;
+      if (result.type === 'guides' && queryMatchesCategory(searchQuery, 'guides')) return true;
+      if (!name) return false;
+      if (
+        name.includes(q) ||
+        (flippedLower != null && flippedLower !== '' && name.includes(flippedLower))
+      )
+        return true;
+      if (queryContainsHebrew) return true;
+      return false;
+    };
 
-        const rawResults: SearchResult[] = [];
-        // Same as search page: only call searchFromCache (may hit DB) once per session; after that use sync cache only
-        if (cacheCategories.length > 0) {
-          if (!versionCheckDoneRef.current) {
-            const cacheResults = await searchFromCache(searchQuery, locale, cacheCategories);
-            rawResults.push(...cacheResults.map(mapCacheResultToSearchResult));
+    const processCacheResults = (rawResults: SearchResult[]): SearchResult[] => {
+      const filtered = rawResults.filter((r) => matchesQueryOrFlipped(r));
+      type ScoredResult = SearchResult & { _score: number };
+      const scored: ScoredResult[] = filtered.map((result) => ({
+        ...result,
+        _score: calculateSearchScore(result, searchQuery, flippedQuery),
+      }));
+      const sorted = scored.sort((a, b) => {
+        const aAreaLast = 'matchBy' in a && a.matchBy === 'area' ? 1 : 0;
+        const bAreaLast = 'matchBy' in b && b.matchBy === 'area' ? 1 : 0;
+        if (aAreaLast !== bAreaLast) return aAreaLast - bAreaLast;
+        if (b._score !== a._score) return b._score - a._score;
+        const aName = getResultDisplayName(a).toLowerCase();
+        const bName = getResultDisplayName(b).toLowerCase();
+        const aStartsQ = aName.startsWith(q);
+        const bStartsQ = bName.startsWith(q);
+        if (aStartsQ && !bStartsQ) return -1;
+        if (!aStartsQ && bStartsQ) return 1;
+        if (flippedLower) {
+          const aStartsF = aName.startsWith(flippedLower);
+          const bStartsF = bName.startsWith(flippedLower);
+          if (aStartsF && !bStartsF) return -1;
+          if (!aStartsF && bStartsF) return 1;
+        }
+        return aName.localeCompare(bName);
+      });
+      return sorted
+        .map(({ _score, ...r }) => r)
+        .filter((r) => (r.type === 'products' && !ecommerceEnabled ? false : true));
+    };
+
+    const mergeAndSet = (cacheFinal: SearchResult[], apiResults: SearchResult[]) => {
+      if (runId !== searchRunIdRef.current) return;
+      const merged = [...cacheFinal, ...apiResults];
+      const order = categoryOrder;
+      const sortedMerged = merged.sort((a, b) => {
+        const i = order.indexOf(a.type);
+        const j = order.indexOf(b.type);
+        if (i !== j) return i - j;
+        return getResultDisplayName(a).localeCompare(getResultDisplayName(b));
+      });
+      setSearchResults(sortedMerged);
+    };
+
+    // Initialize refs with sync cache so API completion can merge immediately
+    searchCacheProcessedRef.current = processCacheResults(syncResults);
+    searchApiResultsRef.current = [];
+
+    searchDebounceRef.current = setTimeout(() => {
+      // Background: version check + refill cache (no await)
+      if (cacheCategories.length > 0 && !versionCheckDoneRef.current) {
+        searchFromCache(searchQuery, locale, cacheCategories)
+          .then((cacheResults) => {
+            if (runId !== searchRunIdRef.current) return;
             versionCheckDoneRef.current = true;
-          } else {
-            const fromSync = readFromCacheSync(searchQuery, locale, cacheCategories).map(
-              mapCacheResultToSearchResult
-            );
-            rawResults.push(...fromSync);
-          }
-        }
-
-        const matchesQueryOrFlipped = (result: SearchResult): boolean => {
-          const name = getResultDisplayName(result).toLowerCase();
-          if ('matchBy' in result && result.matchBy === 'area') return true;
-          if (result.type === 'events' && queryMatchesCategory(searchQuery, 'events')) return true;
-          if (result.type === 'skateparks' && queryMatchesCategory(searchQuery, 'skateparks'))
-            return true;
-          if (result.type === 'guides' && queryMatchesCategory(searchQuery, 'guides')) return true;
-          if (!name) return false;
-          if (
-            name.includes(q) ||
-            (flippedLower != null && flippedLower !== '' && name.includes(flippedLower))
-          )
-            return true;
-          if (queryContainsHebrew) return true;
-          return false;
-        };
-        const filtered = rawResults.filter((r) => matchesQueryOrFlipped(r));
-
-        type ScoredResult = SearchResult & { _score: number };
-        const scored: ScoredResult[] = filtered.map((result) => ({
-          ...result,
-          _score: calculateSearchScore(result, searchQuery, flippedQuery),
-        }));
-        const sorted = scored.sort((a, b) => {
-          const aAreaLast = 'matchBy' in a && a.matchBy === 'area' ? 1 : 0;
-          const bAreaLast = 'matchBy' in b && b.matchBy === 'area' ? 1 : 0;
-          if (aAreaLast !== bAreaLast) return aAreaLast - bAreaLast;
-          if (b._score !== a._score) return b._score - a._score;
-          const aName = getResultDisplayName(a).toLowerCase();
-          const bName = getResultDisplayName(b).toLowerCase();
-          const aStartsQ = aName.startsWith(q);
-          const bStartsQ = bName.startsWith(q);
-          if (aStartsQ && !bStartsQ) return -1;
-          if (!aStartsQ && bStartsQ) return 1;
-          if (flippedLower) {
-            const aStartsF = aName.startsWith(flippedLower);
-            const bStartsF = bName.startsWith(flippedLower);
-            if (aStartsF && !bStartsF) return -1;
-            if (!aStartsF && bStartsF) return 1;
-          }
-          return aName.localeCompare(bName);
-        });
-        let cacheFinal = sorted
-          .map(({ _score, ...r }) => r)
-          .filter((r) => (r.type === 'products' && !ecommerceEnabled ? false : true));
-
-        // Fetch products/trainers from API (same as search page)
-        let apiResults: SearchResult[] = [];
-        if (apiCategories.length > 0) {
-          const params = new URLSearchParams();
-          if (searchQuery.trim()) params.set('q', searchQuery.trim());
-          params.set('types', apiCategories.join(','));
-          params.set('page', '1');
-          params.set('locale', String(locale));
-          const res = await fetch(`/api/search?${params.toString()}`, {
-            signal: controller.signal,
+            const mapped = cacheResults.map(mapCacheResultToSearchResult);
+            searchCacheProcessedRef.current = processCacheResults(mapped);
+            mergeAndSet(searchCacheProcessedRef.current, searchApiResultsRef.current);
+          })
+          .catch((e) => {
+            if ((e as { name?: string }).name !== 'AbortError') console.error(e);
+            if (runId === searchRunIdRef.current) {
+              mergeAndSet(searchCacheProcessedRef.current, searchApiResultsRef.current);
+            }
           });
-          if (res.ok) {
-            const data = await res.json();
-            apiResults = (data.results || []) as SearchResult[];
-          }
-        }
+      }
 
-        const merged = [...cacheFinal, ...apiResults];
-        const order = categoryOrder;
-        const sortedMerged = merged.sort((a, b) => {
-          const i = order.indexOf(a.type);
-          const j = order.indexOf(b.type);
-          if (i !== j) return i - j;
-          return getResultDisplayName(a).localeCompare(getResultDisplayName(b));
-        });
-        setSearchResults(sortedMerged);
-      } catch (e) {
-        if ((e as { name?: string }).name !== 'AbortError') console.error(e);
-        setSearchResults(syncResults);
-      } finally {
-        setSearchLoading(false);
+      // Background: products/trainers API
+      if (apiCategories.length > 0) {
+        const params = new URLSearchParams();
+        if (searchQuery.trim()) params.set('q', searchQuery.trim());
+        params.set('types', apiCategories.join(','));
+        params.set('page', '1');
+        params.set('locale', String(locale));
+        fetch(`/api/search?${params.toString()}`, { signal: controller.signal })
+          .then((res) => (res.ok ? res.json() : { results: [] }))
+          .then((data: { results?: SearchResult[] }) => {
+            if (runId !== searchRunIdRef.current) return;
+            const apiResults = (data?.results || []) as SearchResult[];
+            searchApiResultsRef.current = apiResults;
+            mergeAndSet(searchCacheProcessedRef.current, searchApiResultsRef.current);
+          })
+          .catch((e) => {
+            if ((e as { name?: string }).name !== 'AbortError') console.error(e);
+            if (runId === searchRunIdRef.current) {
+              mergeAndSet(searchCacheProcessedRef.current, searchApiResultsRef.current);
+            }
+          });
       }
     }, 300);
+
     return () => {
       controller.abort();
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
@@ -711,6 +742,15 @@ export default function HeaderNav() {
     return pathname.startsWith(href);
   };
 
+  const handleNavLinkPress = useCallback((href: string) => {
+    if (linkClickPhaseTimeoutRef.current) clearTimeout(linkClickPhaseTimeoutRef.current);
+    setLinkClickState({ href, phase: 'brand' });
+    linkClickPhaseTimeoutRef.current = setTimeout(() => {
+      setLinkClickState((prev) => (prev && prev.href === href ? { ...prev, phase: 'spinner' } : prev));
+      linkClickPhaseTimeoutRef.current = null;
+    }, 300);
+  }, []);
+
   const isAdmin = session?.user?.role === 'admin';
   const tHomepage = useTranslations('common.homepage');
 
@@ -745,10 +785,29 @@ export default function HeaderNav() {
               {/* Skateparks */}
               <Link
                 href={`/${locale}/skateparks`}
-                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
+                data-brand-highlight={String(linkClickState?.href === `/${locale}/skateparks`)}
+                onMouseDown={() => handleNavLinkPress(`/${locale}/skateparks`)}
+                className={`group flex items-center gap-1.5 px-2 lg:px-3 py-2 rounded-lg transition-all duration-300 text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                   isActive(`/${locale}/skateparks`) ? 'text-black dark:text-white' : ''
-                }`}
+                } ${linkClickState?.href === `/${locale}/skateparks` ? 'text-brand-text dark:text-brand-dark' : ''}`}
               >
+                <span className="relative w-[18px] h-[18px] shrink-0 flex items-center justify-center">
+                  <Icon
+                    name="trees"
+                    className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 group-active:opacity-0 group-data-[brand-highlight=true]:opacity-0"
+                    size={18}
+                  />
+                  <Icon
+                    name="treesBold"
+                    className={`absolute inset-0 transition-opacity group-active:opacity-100 text-green dark:text-green-dark ${linkClickState?.href === `/${locale}/skateparks` && linkClickState.phase === 'brand' ? 'opacity-100' : 'opacity-0'}`}
+                    size={18}
+                  />
+                  {linkClickState?.href === `/${locale}/skateparks` && linkClickState.phase === 'spinner' && (
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <LoadingSpinner variant="green" size={18} className="!h-[18px] !w-[18px]" />
+                    </span>
+                  )}
+                </span>
                 {tAdmin('skateparks')}
               </Link>
 
@@ -756,10 +815,29 @@ export default function HeaderNav() {
               {trainersEnabled && (
                 <Link
                   href={`/${locale}/trainers`}
-                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
+                  data-brand-highlight={String(linkClickState?.href === `/${locale}/trainers`)}
+                  onMouseDown={() => handleNavLinkPress(`/${locale}/trainers`)}
+                  className={`group flex items-center gap-1.5 px-2 lg:px-3 py-2 rounded-lg transition-all duration-300 text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                     isActive(`/${locale}/trainers`) ? 'text-black dark:text-white' : ''
-                  }`}
+                  } ${linkClickState?.href === `/${locale}/trainers` ? 'text-brand-text dark:text-brand-dark' : ''}`}
                 >
+                  <span className="relative w-[18px] h-[18px] shrink-0 flex items-center justify-center">
+                    <Icon
+                      name="trainers"
+                      className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 group-active:opacity-0 group-data-[brand-highlight=true]:opacity-0"
+                      size={18}
+                    />
+                    <Icon
+                      name="trainersBold"
+                      className={`absolute inset-0 transition-opacity group-active:opacity-100 text-brand-text dark:text-brand-dark ${linkClickState?.href === `/${locale}/trainers` && linkClickState.phase === 'brand' ? 'opacity-100' : 'opacity-0'}`}
+                      size={18}
+                    />
+                    {linkClickState?.href === `/${locale}/trainers` && linkClickState.phase === 'spinner' && (
+                      <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <LoadingSpinner variant="brand" size={18} className="!h-[18px] !w-[18px]" />
+                      </span>
+                    )}
+                  </span>
                   {tAdmin('trainers')}
                   {/* "Featured" badge for premium trainers */}
                   <span className="absolute -top-1 -right-1 flex h-2 w-2"></span>
@@ -769,20 +847,58 @@ export default function HeaderNav() {
               {/* Events */}
               <Link
                 href={`/${locale}/events`}
-                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
+                data-brand-highlight={String(linkClickState?.href === `/${locale}/events`)}
+                onMouseDown={() => handleNavLinkPress(`/${locale}/events`)}
+                className={`group flex items-center gap-1.5 px-2 lg:px-3 py-2 rounded-lg transition-all duration-300 text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                   isActive(`/${locale}/events`) ? 'text-black dark:text-white' : ''
-                }`}
+                } ${linkClickState?.href === `/${locale}/events` ? 'text-brand-text dark:text-brand-dark' : ''}`}
               >
+                <span className="relative w-[18px] h-[18px] shrink-0 flex items-center justify-center">
+                  <Icon
+                    name="calendar"
+                    className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 group-active:opacity-0 group-data-[brand-highlight=true]:opacity-0"
+                    size={18}
+                  />
+                  <Icon
+                    name="calendarBold"
+                    className={`absolute inset-0 transition-opacity group-active:opacity-100 text-purple dark:text-purple-dark ${linkClickState?.href === `/${locale}/events` && linkClickState.phase === 'brand' ? 'opacity-100' : 'opacity-0'}`}
+                    size={18}
+                  />
+                  {linkClickState?.href === `/${locale}/events` && linkClickState.phase === 'spinner' && (
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <LoadingSpinner variant="purple" size={18} className="!h-[18px] !w-[18px]" />
+                    </span>
+                  )}
+                </span>
                 {tEvents('title')}
               </Link>
 
               {/* Guides */}
               <Link
                 href={`/${locale}/guides`}
-                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
+                data-brand-highlight={String(linkClickState?.href === `/${locale}/guides`)}
+                onMouseDown={() => handleNavLinkPress(`/${locale}/guides`)}
+                className={`group flex items-center gap-1.5 px-2 lg:px-3 py-2 rounded-lg transition-all duration-300 text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                   isActive(`/${locale}/guides`) ? 'text-black dark:text-white' : ''
-                }`}
+                } ${linkClickState?.href === `/${locale}/guides` ? 'text-brand-text dark:text-brand-dark' : ''}`}
               >
+                <span className="relative w-[18px] h-[18px] shrink-0 flex items-center justify-center">
+                  <Icon
+                    name="book"
+                    className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 group-active:opacity-0 group-data-[brand-highlight=true]:opacity-0"
+                    size={18}
+                  />
+                  <Icon
+                    name="bookBold"
+                    className={`absolute inset-0 transition-opacity group-active:opacity-100 text-yellow dark:text-yellow-dark ${linkClickState?.href === `/${locale}/guides` && linkClickState.phase === 'brand' ? 'opacity-100' : 'opacity-0'}`}
+                    size={18}
+                  />
+                  {linkClickState?.href === `/${locale}/guides` && linkClickState.phase === 'spinner' && (
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <LoadingSpinner variant="yellow" size={18} className="!h-[18px] !w-[18px]" />
+                    </span>
+                  )}
+                </span>
                 {tAdmin('guides')}
               </Link>
 
@@ -790,10 +906,29 @@ export default function HeaderNav() {
               {growthLabEnabled && (
                 <Link
                   href={`/${locale}/growth-lab`}
-                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
+                  data-brand-highlight={String(linkClickState?.href === `/${locale}/growth-lab`)}
+                  onMouseDown={() => handleNavLinkPress(`/${locale}/growth-lab`)}
+                  className={`group flex items-center gap-1.5 px-2 lg:px-3 py-2 rounded-lg transition-all duration-300 text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                     isActive(`/${locale}/growth-lab`) ? 'text-black dark:text-white' : ''
-                  }`}
+                  } ${linkClickState?.href === `/${locale}/growth-lab` ? 'text-brand-text dark:text-brand-dark' : ''}`}
                 >
+                  <span className="relative w-[18px] h-[18px] shrink-0 flex items-center justify-center">
+                    <Icon
+                      name="plant"
+                      className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 group-active:opacity-0 group-data-[brand-highlight=true]:opacity-0"
+                      size={18}
+                    />
+                    <Icon
+                      name="plantBold"
+                      className={`absolute inset-0 transition-opacity group-active:opacity-100 text-orange dark:text-orange-dark ${linkClickState?.href === `/${locale}/growth-lab` && linkClickState.phase === 'brand' ? 'opacity-100' : 'opacity-0'}`}
+                      size={18}
+                    />
+                    {linkClickState?.href === `/${locale}/growth-lab` && linkClickState.phase === 'spinner' && (
+                      <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <LoadingSpinner variant="orange" size={18} className="!h-[18px] !w-[18px]" />
+                      </span>
+                    )}
+                  </span>
                   {locale === 'en' ? 'Growth Lab' : 'המרחב'}
                 </Link>
               )}
@@ -802,7 +937,7 @@ export default function HeaderNav() {
               {communityEnabled && (
                 <Link
                   href={`/${locale}/community`}
-                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
+                  className={`flex items-center gap-1.5 px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                     isActive(`/${locale}/community`) ? 'text-black dark:text-white' : ''
                   }`}
                 >
@@ -813,10 +948,29 @@ export default function HeaderNav() {
               {/* About */}
               <Link
                 href={`/${locale}/about`}
-                className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
+                data-brand-highlight={String(linkClickState?.href === `/${locale}/about`)}
+                onMouseDown={() => handleNavLinkPress(`/${locale}/about`)}
+                className={`group flex items-center gap-1.5 px-2 lg:px-3 py-2 rounded-lg transition-all duration-300 text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                   isActive(`/${locale}/about`) ? 'text-black dark:text-white' : ''
-                }`}
+                } ${linkClickState?.href === `/${locale}/about` ? 'text-brand-text dark:text-brand-dark' : ''}`}
               >
+                <span className="relative w-[18px] h-[18px] shrink-0 flex items-center justify-center">
+                  <Icon
+                    name="target"
+                    className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 group-active:opacity-0 group-data-[brand-highlight=true]:opacity-0"
+                    size={18}
+                  />
+                  <Icon
+                    name="targetBold"
+                    className={`absolute inset-0 transition-opacity group-active:opacity-100 text-brand-text dark:text-brand-dark ${linkClickState?.href === `/${locale}/about` && linkClickState.phase === 'brand' ? 'opacity-100' : 'opacity-0'}`}
+                    size={18}
+                  />
+                  {linkClickState?.href === `/${locale}/about` && linkClickState.phase === 'spinner' && (
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <LoadingSpinner variant="brand" size={18} className="!h-[18px] !w-[18px]" />
+                    </span>
+                  )}
+                </span>
                 {tCommon('about')}
               </Link>
 
@@ -824,10 +978,29 @@ export default function HeaderNav() {
               {ecommerceEnabled && (
                 <Link
                   href={`/${locale}/shop`}
-                  className={`px-2 lg:px-3 py-2 rounded-lg transition-all duration-200  text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
+                  data-brand-highlight={String(linkClickState?.href === `/${locale}/shop`)}
+                  onMouseDown={() => handleNavLinkPress(`/${locale}/shop`)}
+                  className={`group flex items-center gap-1.5 px-2 lg:px-3 py-2 rounded-lg transition-all duration-300 text-black/80 dark:text-white/70 hover:scale-105 hover:text-black dark:hover:text-white relative ${locale === 'he' ? 'font-semibold' : 'font-medium'} ${
                     isActive(`/${locale}/shop`) ? 'text-black dark:text-white' : ''
-                  }`}
+                  } ${linkClickState?.href === `/${locale}/shop` ? 'text-brand-text dark:text-brand-dark' : ''}`}
                 >
+                  <span className="relative w-[18px] h-[18px] shrink-0 flex items-center justify-center">
+                    <Icon
+                      name="shop"
+                      className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100 group-active:opacity-0 group-data-[brand-highlight=true]:opacity-0"
+                      size={18}
+                    />
+                    <Icon
+                      name="shopBold"
+                      className={`absolute inset-0 transition-opacity group-active:opacity-100 text-brand-text dark:text-brand-dark ${linkClickState?.href === `/${locale}/shop` && linkClickState.phase === 'brand' ? 'opacity-100' : 'opacity-0'}`}
+                      size={18}
+                    />
+                    {linkClickState?.href === `/${locale}/shop` && linkClickState.phase === 'spinner' && (
+                      <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <LoadingSpinner variant="brand" size={18} className="!h-[18px] !w-[18px]" />
+                      </span>
+                    )}
+                  </span>
                   {tShop('title')}
                   {/* "Featured" badge for shop */}
                   <span className="absolute top-2 right-1 flex h-2 w-2">
@@ -1098,7 +1271,7 @@ export default function HeaderNav() {
                       type="button"
                     >
                       <span className="inline-flex items-center justify-center w-5 h-5">
-                        <Icon
+                        <NavIcons
                           name="settingsBold"
                           className="w-5 h-5 group-hover:rotate-[46deg] transition-transform duration-500"
                         />

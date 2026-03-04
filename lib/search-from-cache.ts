@@ -78,10 +78,10 @@ export function getAreaFromQuery(query: string): 'north' | 'center' | 'south' | 
   return null;
 }
 
-/** Max age for skateparks/events/guides cache before refetch (1 hour). */
+/** Max age for skateparks/events cache before refetch (1 hour) and guides cache (24 hours). */
 export const SKATEPARKS_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
 export const EVENTS_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
-export const GUIDES_CACHE_MAX_AGE_MS = 60 * 60 * 1000;
+export const GUIDES_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 /** Parse skateparks_version from localStorage: may be legacy number string or { version, fetchedAt }. fetchedAt can be number (ms) or human-readable ISO date string. */
 export function parseSkateparksVersion(
@@ -178,7 +178,9 @@ export function parseGuidesVersion(
       }
       return {
         version: typeof parsed.version === 'number' ? parsed.version : Number(parsed.version) || undefined,
-        fetchedAt: fetchedAtMs,
+        // If fetchedAt is missing/invalid but a version exists, treat it as "just fetched" now
+        // so we don't spam ?versionOnly requests for legacy entries.
+        fetchedAt: fetchedAtMs ?? Date.now(),
       };
     }
   } catch {

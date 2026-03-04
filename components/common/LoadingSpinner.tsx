@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeProvider';
 
 export const LoadingSpinner: React.FC<{
   className?: string;
-  variant?: 'default' | 'error' | 'brand' | 'brandText' | 'info' | 'success' | 'warning' | 'header' | 'blue';
+  variant?: 'default' | 'error' | 'brand' | 'brandText' | 'info' | 'success' | 'warning' | 'header' | 'blue' | 'purple' | 'yellow' | 'green' | 'orange';
   size?: number;
 }> = ({ className, variant = 'default', size = 48 }) => {
   const { theme } = useTheme();
@@ -17,7 +17,25 @@ export const LoadingSpinner: React.FC<{
           ? { active: '#f3394c', track: 'transparent' }
           : { active: '#cc2a2a', track: 'transparent' };
       case 'brand':
-        return { active: '#143116', track: 'transparent' };
+        return theme === 'dark'
+          ? { active: 'hsl(83, 100%, 50%)', track: 'transparent' }
+          : { active: 'hsl(109, 95%, 16%)', track: 'transparent' };
+          case 'purple':
+        return theme === 'dark'
+          ? { active: '#c5b6fd', track: 'transparent' }
+          : { active: '#915bf5', track: 'transparent' };
+          case 'yellow':
+        return theme === 'dark'
+          ? { active: 'hsl(60, 69%, 55%)', track: 'transparent' }
+          : { active: 'hsl(60, 66%, 36%)', track: 'transparent' };
+          case 'green':
+            return theme === 'dark'
+              ? { active: 'hsl(123, 44%, 50%)', track: 'transparent' }
+              : { active: 'hsl(123, 48%, 45%)', track: 'transparent' };
+          case 'orange':
+            return theme === 'dark'
+              ? { active: '#f39d39', track: 'transparent' }
+              : { active: '#e49a43', track: 'transparent' };
       case 'brandText':
         return { active: 'hsl(122, 100%, 12%)', track: 'transparent' };
       case 'info':

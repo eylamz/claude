@@ -75,14 +75,18 @@ html:not(.dark) .card-gradient.card-anim-1 > .gradient-0 {
   transition: background 0.2s ease;
 }
 html:not(.dark) .card-gradient.card-anim-2 > .gradient-0 {
-  background: hsl(224, 40%, 29%);
+  background: hsl(60, 66%, 28%);
   transition: background 0.2s ease;
 }
 html:not(.dark) .card-gradient.card-anim-3 > .gradient-0 {
-  background: hsl(48, 59%, 34%);
+  background: hsl(261, 54%, 28%);
   transition: background 0.2s ease;
 }
 html:not(.dark) .card-gradient.card-anim-4 > .gradient-0 {
+  background: hsl(83, 100%, 22%);
+  transition: background 0.2s ease;
+}
+html:not(.dark) .card-gradient.card-anim-5 > .gradient-0 {
   background: hsl(4, 51%, 31%);
   transition: background 0.2s ease;
 }
@@ -179,54 +183,79 @@ html:not(.dark) .card-gradient.card-anim-4 > .gradient-0 {
 .card-gradient.card-anim-2:hover > .gradient-2 .color-8 {
   animation-duration: 20.8s;
 }
-/* Card 3: faster base → 4x on hover */
+/* Card 3: medium speed → 4x on hover */
 .card-gradient.card-anim-3:hover > .gradient-2 .color-1 {
-  animation-duration: 14.4s;
-}
-.card-gradient.card-anim-3:hover > .gradient-2 .color-2 {
-  animation-duration: 15.6s;
-}
-.card-gradient.card-anim-3:hover > .gradient-2 .color-3 {
-  animation-duration: 12.8s;
-}
-.card-gradient.card-anim-3:hover > .gradient-2 .color-4 {
-  animation-duration: 14s;
-}
-.card-gradient.card-anim-3:hover > .gradient-2 .color-5 {
-  animation-duration: 16s;
-}
-.card-gradient.card-anim-3:hover > .gradient-2 .color-6 {
-  animation-duration: 13.6s;
-}
-.card-gradient.card-anim-3:hover > .gradient-2 .color-7 {
-  animation-duration: 15.2s;
-}
-.card-gradient.card-anim-3:hover > .gradient-2 .color-8 {
-  animation-duration: 12.8s;
-}
-/* Card 4: medium speed, reverse → 4x on hover (direction unchanged) */
-.card-gradient.card-anim-4:hover > .gradient-2 .color-1 {
-  animation-duration: 19.2s;
-}
-.card-gradient.card-anim-4:hover > .gradient-2 .color-2 {
-  animation-duration: 20.4s;
-}
-.card-gradient.card-anim-4:hover > .gradient-2 .color-3 {
-  animation-duration: 16.8s;
-}
-.card-gradient.card-anim-4:hover > .gradient-2 .color-4 {
   animation-duration: 18s;
 }
-.card-gradient.card-anim-4:hover > .gradient-2 .color-5 {
-  animation-duration: 20.8s;
+.card-gradient.card-anim-3:hover > .gradient-2 .color-2 {
+  animation-duration: 19.2s;
 }
-.card-gradient.card-anim-4:hover > .gradient-2 .color-6 {
+.card-gradient.card-anim-3:hover > .gradient-2 .color-3 {
+  animation-duration: 16.8s;
+}
+.card-gradient.card-anim-3:hover > .gradient-2 .color-4 {
   animation-duration: 17.6s;
 }
-.card-gradient.card-anim-4:hover > .gradient-2 .color-7 {
+.card-gradient.card-anim-3:hover > .gradient-2 .color-5 {
+  animation-duration: 20s;
+}
+.card-gradient.card-anim-3:hover > .gradient-2 .color-6 {
   animation-duration: 18.4s;
 }
+.card-gradient.card-anim-3:hover > .gradient-2 .color-7 {
+  animation-duration: 19s;
+}
+.card-gradient.card-anim-3:hover > .gradient-2 .color-8 {
+  animation-duration: 16.4s;
+}
+/* Card 4: faster base → 4x on hover */
+.card-gradient.card-anim-4:hover > .gradient-2 .color-1 {
+  animation-duration: 14.4s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-2 {
+  animation-duration: 15.6s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-3 {
+  animation-duration: 12.8s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-4 {
+  animation-duration: 14s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-5 {
+  animation-duration: 16s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-6 {
+  animation-duration: 13.6s;
+}
+.card-gradient.card-anim-4:hover > .gradient-2 .color-7 {
+  animation-duration: 15.2s;
+}
 .card-gradient.card-anim-4:hover > .gradient-2 .color-8 {
+  animation-duration: 12.8s;
+}
+/* Card 5: medium speed, reverse → 4x on hover (direction unchanged) */
+.card-gradient.card-anim-5:hover > .gradient-2 .color-1 {
+  animation-duration: 19.2s;
+}
+.card-gradient.card-anim-5:hover > .gradient-2 .color-2 {
+  animation-duration: 20.4s;
+}
+.card-gradient.card-anim-5:hover > .gradient-2 .color-3 {
+  animation-duration: 16.8s;
+}
+.card-gradient.card-anim-5:hover > .gradient-2 .color-4 {
+  animation-duration: 18s;
+}
+.card-gradient.card-anim-5:hover > .gradient-2 .color-5 {
+  animation-duration: 20.8s;
+}
+.card-gradient.card-anim-5:hover > .gradient-2 .color-6 {
+  animation-duration: 17.6s;
+}
+.card-gradient.card-anim-5:hover > .gradient-2 .color-7 {
+  animation-duration: 18.4s;
+}
+.card-gradient.card-anim-5:hover > .gradient-2 .color-8 {
   animation-duration: 16.4s;
 }
 
@@ -273,81 +302,107 @@ html:not(.dark) .card-gradient.card-anim-4 > .gradient-0 {
   background: hsl(123, 36%, 74%);
 }
 
-/* Card 2 (guides): #1d4ed8 – blue, wider shade range */
+/* Card 2 (guides): yellow from tailwind – wider shade range */
 .card-gradient.card-anim-2 .gradient-2 .color-1 {
-  background: hsl(224, 78%, 20%);
+  background: hsl(60, 64%, 13%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-2 {
-  background: hsl(224, 76%, 28%);
+  background: hsl(60, 65%, 22%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-3 {
-  background: hsl(224, 75%, 36%);
+  background: hsl(60, 66%, 30%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-4 {
-  background: hsl(224, 75%, 44%);
+  background: hsl(60, 66%, 36%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-5 {
-  background: hsl(224, 75%, 48%);
+  background: hsl(60, 67%, 42%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-6 {
-  background: hsl(224, 72%, 56%);
+  background: hsl(60, 69%, 55%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-7 {
-  background: hsl(224, 68%, 64%);
+  background: hsl(60, 73%, 70%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-8 {
-  background: hsl(224, 60%, 76%);
+  background: hsl(60, 83%, 85%);
 }
 
-/* Card 3 (review/skateparks): yellow-400 #facc15 – yellow, wider shade range */
+/* Card 3 (events): purple from tailwind – wider shade range */
 .card-gradient.card-anim-3 .gradient-2 .color-1 {
-  background: hsl(48, 98%, 28%);
+  background: hsl(261, 54%, 20%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-2 {
-  background: hsl(48, 97%, 36%);
+  background: hsl(261, 55%, 28%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-3 {
-  background: hsl(48, 96%, 44%);
+  background: hsl(261, 60%, 36%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-4 {
-  background: hsl(48, 96%, 50%);
+  background: hsl(261, 65%, 44%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-5 {
-  background: hsl(48, 96%, 53%);
+  background: hsl(261, 75%, 52%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-6 {
-  background: hsl(48, 94%, 60%);
+  background: hsl(261, 91%, 59%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-7 {
-  background: hsl(48, 90%, 68%);
+  background: hsl(261, 84%, 75%);
 }
 .card-gradient.card-anim-3 .gradient-2 .color-8 {
-  background: hsl(48, 85%, 78%);
+  background: hsl(259, 84%, 87%);
 }
 
-/* Card 4 (share): #cc2a2a – red, wider shade range */
+/* Card 4 (review/skateparks): lime from tailwind – wider shade range */
 .card-gradient.card-anim-4 .gradient-2 .color-1 {
-  background: hsl(0, 70%, 22%);
+  background: hsl(83, 100%, 12%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-2 {
-  background: hsl(0, 69%, 30%);
+  background: hsl(83, 100%, 20%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-3 {
-  background: hsl(0, 68%, 38%);
+  background: hsl(83, 100%, 28%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-4 {
-  background: hsl(0, 67%, 44%);
+  background: hsl(83, 100%, 36%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-5 {
-  background: hsl(0, 67%, 48%);
+  background: hsl(83, 100%, 44%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-6 {
-  background: hsl(0, 65%, 55%);
+  background: hsl(83, 100%, 50%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-7 {
-  background: hsl(0, 60%, 64%);
+  background: hsl(83, 96%, 68%);
 }
 .card-gradient.card-anim-4 .gradient-2 .color-8 {
+  background: hsl(83, 84%, 85%);
+}
+
+/* Card 5 (share): #cc2a2a – red, wider shade range */
+.card-gradient.card-anim-5 .gradient-2 .color-1 {
+  background: hsl(0, 70%, 22%);
+}
+.card-gradient.card-anim-5 .gradient-2 .color-2 {
+  background: hsl(0, 69%, 30%);
+}
+.card-gradient.card-anim-5 .gradient-2 .color-3 {
+  background: hsl(0, 68%, 38%);
+}
+.card-gradient.card-anim-5 .gradient-2 .color-4 {
+  background: hsl(0, 67%, 44%);
+}
+.card-gradient.card-anim-5 .gradient-2 .color-5 {
+  background: hsl(0, 67%, 48%);
+}
+.card-gradient.card-anim-5 .gradient-2 .color-6 {
+  background: hsl(0, 65%, 55%);
+}
+.card-gradient.card-anim-5 .gradient-2 .color-7 {
+  background: hsl(0, 60%, 64%);
+}
+.card-gradient.card-anim-5 .gradient-2 .color-8 {
   background: hsl(0, 52%, 74%);
 }
 
@@ -362,7 +417,7 @@ html:not(.dark) .card-gradient.card-anim-4 > .gradient-0 {
   transform: translate(-50%, -50%) scale(0.99);
 }
 
-/* Base orb animations – overridden by card-anim-1..4 */
+/* Base orb animations – overridden by card-anim-1..5 */
 .card-gradient .gradient-2 .color-1 {
   animation: gradient-orb-float-1 ease-in-out infinite;
   animation-duration: 4.6s;
@@ -472,77 +527,111 @@ html:not(.dark) .card-gradient.card-anim-4 > .gradient-0 {
   animation-delay: -2.8s;
 }
 
-/* Card 3: faster, snappier */
+/* Card 3: medium speed (events / purple) */
 .card-gradient.card-anim-3 .gradient-2 .color-1 {
+  animation-duration: 4.5s;
+  animation-delay: -0.2s;
+}
+.card-gradient.card-anim-3 .gradient-2 .color-2 {
+  animation-duration: 4.8s;
+  animation-delay: -0.6s;
+}
+.card-gradient.card-anim-3 .gradient-2 .color-3 {
+  animation-duration: 4.2s;
+  animation-delay: -1s;
+}
+.card-gradient.card-anim-3 .gradient-2 .color-4 {
+  animation-duration: 4.6s;
+  animation-delay: -0.4s;
+}
+.card-gradient.card-anim-3 .gradient-2 .color-5 {
+  animation-duration: 5s;
+  animation-delay: -0.8s;
+}
+.card-gradient.card-anim-3 .gradient-2 .color-6 {
+  animation-duration: 4.4s;
+  animation-delay: -1.2s;
+}
+.card-gradient.card-anim-3 .gradient-2 .color-7 {
+  animation-duration: 4.7s;
+  animation-delay: -0.3s;
+}
+.card-gradient.card-anim-3 .gradient-2 .color-8 {
+  animation-duration: 4.1s;
+  animation-delay: -0.9s;
+}
+
+/* Card 4: faster, snappier (lime / review) */
+.card-gradient.card-anim-4 .gradient-2 .color-1 {
   animation-duration: 3.6s;
   animation-delay: -0.5s;
 }
-.card-gradient.card-anim-3 .gradient-2 .color-2 {
+.card-gradient.card-anim-4 .gradient-2 .color-2 {
   animation-duration: 3.9s;
   animation-delay: -0.9s;
 }
-.card-gradient.card-anim-3 .gradient-2 .color-3 {
+.card-gradient.card-anim-4 .gradient-2 .color-3 {
   animation-duration: 3.2s;
   animation-delay: -1.2s;
 }
-.card-gradient.card-anim-3 .gradient-2 .color-4 {
+.card-gradient.card-anim-4 .gradient-2 .color-4 {
   animation-duration: 3.5s;
   animation-delay: -0.7s;
 }
-.card-gradient.card-anim-3 .gradient-2 .color-5 {
+.card-gradient.card-anim-4 .gradient-2 .color-5 {
   animation-duration: 4s;
   animation-delay: -1.4s;
 }
-.card-gradient.card-anim-3 .gradient-2 .color-6 {
+.card-gradient.card-anim-4 .gradient-2 .color-6 {
   animation-duration: 3.4s;
   animation-delay: -1.6s;
 }
-.card-gradient.card-anim-3 .gradient-2 .color-7 {
+.card-gradient.card-anim-4 .gradient-2 .color-7 {
   animation-duration: 3.8s;
   animation-delay: -0.4s;
 }
-.card-gradient.card-anim-3 .gradient-2 .color-8 {
+.card-gradient.card-anim-4 .gradient-2 .color-8 {
   animation-duration: 3.2s;
   animation-delay: -1.2s;
 }
 
-/* Card 4: reverse direction, medium speed */
-.card-gradient.card-anim-4 .gradient-2 .color-1 {
+/* Card 5: reverse direction, medium speed (red / share) */
+.card-gradient.card-anim-5 .gradient-2 .color-1 {
   animation-duration: 4.8s;
   animation-delay: -0.3s;
   animation-direction: reverse;
 }
-.card-gradient.card-anim-4 .gradient-2 .color-2 {
+.card-gradient.card-anim-5 .gradient-2 .color-2 {
   animation-duration: 5.1s;
   animation-delay: -0.7s;
   animation-direction: reverse;
 }
-.card-gradient.card-anim-4 .gradient-2 .color-3 {
+.card-gradient.card-anim-5 .gradient-2 .color-3 {
   animation-duration: 4.2s;
   animation-delay: -1.1s;
   animation-direction: reverse;
 }
-.card-gradient.card-anim-4 .gradient-2 .color-4 {
+.card-gradient.card-anim-5 .gradient-2 .color-4 {
   animation-duration: 4.5s;
   animation-delay: -0.5s;
   animation-direction: reverse;
 }
-.card-gradient.card-anim-4 .gradient-2 .color-5 {
+.card-gradient.card-anim-5 .gradient-2 .color-5 {
   animation-duration: 5.2s;
   animation-delay: -0.9s;
   animation-direction: reverse;
 }
-.card-gradient.card-anim-4 .gradient-2 .color-6 {
+.card-gradient.card-anim-5 .gradient-2 .color-6 {
   animation-duration: 4.4s;
   animation-delay: -1.3s;
   animation-direction: reverse;
 }
-.card-gradient.card-anim-4 .gradient-2 .color-7 {
+.card-gradient.card-anim-5 .gradient-2 .color-7 {
   animation-duration: 4.6s;
   animation-delay: -0.5s;
   animation-direction: reverse;
 }
-.card-gradient.card-anim-4 .gradient-2 .color-8 {
+.card-gradient.card-anim-5 .gradient-2 .color-8 {
   animation-duration: 4.1s;
   animation-delay: -1s;
   animation-direction: reverse;
@@ -699,81 +788,107 @@ html:not(.dark) .card-gradient.card-anim-4 > .gradient-0 {
   background: hsl(123, 36%, 74%);
 }
 
-/* Icon card 2: blue shades (guides), wider range */
+/* Icon card 2: yellow shades (guides), from tailwind */
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-1 {
-  background: hsl(224, 78%, 20%);
+  background: hsl(60, 64%, 13%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-2 {
-  background: hsl(224, 76%, 28%);
+  background: hsl(60, 65%, 22%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-3 {
-  background: hsl(224, 75%, 36%);
+  background: hsl(60, 66%, 30%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-4 {
-  background: hsl(224, 75%, 44%);
+  background: hsl(60, 66%, 36%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-5 {
-  background: hsl(224, 75%, 48%);
+  background: hsl(60, 67%, 42%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-6 {
-  background: hsl(224, 72%, 56%);
+  background: hsl(60, 69%, 55%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-7 {
-  background: hsl(224, 68%, 64%);
+  background: hsl(60, 73%, 70%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-8 {
-  background: hsl(224, 60%, 76%);
+  background: hsl(60, 83%, 85%);
 }
 
-/* Icon card 3: yellow-400 shades (review), wider range */
+/* Icon card 3: purple shades (events), from tailwind */
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-1 {
-  background: hsl(48, 98%, 28%);
+  background: hsl(261, 54%, 20%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-2 {
-  background: hsl(48, 97%, 36%);
+  background: hsl(261, 55%, 28%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-3 {
-  background: hsl(48, 96%, 44%);
+  background: hsl(261, 60%, 36%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-4 {
-  background: hsl(48, 96%, 50%);
+  background: hsl(261, 65%, 44%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-5 {
-  background: hsl(48, 96%, 53%);
+  background: hsl(261, 75%, 52%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-6 {
-  background: hsl(48, 94%, 60%);
+  background: hsl(261, 91%, 59%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-7 {
-  background: hsl(48, 90%, 68%);
+  background: hsl(261, 84%, 75%);
 }
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-8 {
-  background: hsl(48, 85%, 78%);
+  background: hsl(259, 84%, 87%);
 }
 
-/* Icon card 4: red shades (share), wider range */
+/* Icon card 4: lime shades (review), from tailwind */
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-1 {
-  background: hsl(0, 70%, 22%);
+  background: hsl(83, 100%, 12%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-2 {
-  background: hsl(0, 69%, 30%);
+  background: hsl(83, 100%, 20%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-3 {
-  background: hsl(0, 68%, 38%);
+  background: hsl(83, 100%, 28%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-4 {
-  background: hsl(0, 67%, 44%);
+  background: hsl(83, 100%, 36%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-5 {
-  background: hsl(0, 67%, 48%);
+  background: hsl(83, 100%, 44%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-6 {
-  background: hsl(0, 65%, 55%);
+  background: hsl(83, 100%, 50%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-7 {
-  background: hsl(0, 60%, 64%);
+  background: hsl(83, 96%, 68%);
 }
 .card-icon-gradient.card-icon-anim-4 .gradient-2 .color-8 {
+  background: hsl(83, 84%, 85%);
+}
+
+/* Icon card 5: red shades (share), wider range */
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-1 {
+  background: hsl(0, 70%, 22%);
+}
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-2 {
+  background: hsl(0, 69%, 30%);
+}
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-3 {
+  background: hsl(0, 68%, 38%);
+}
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-4 {
+  background: hsl(0, 67%, 44%);
+}
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-5 {
+  background: hsl(0, 67%, 48%);
+}
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-6 {
+  background: hsl(0, 65%, 55%);
+}
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-7 {
+  background: hsl(0, 60%, 64%);
+}
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-8 {
   background: hsl(0, 52%, 74%);
 }
 
@@ -886,74 +1001,107 @@ html:not(.dark) .card-gradient.card-anim-4 > .gradient-0 {
 }
 
 .card-icon-gradient.card-icon-anim-3 .gradient-2 .color-1 {
+  animation-duration: 4.5s;
+  animation-delay: -0.2s;
+}
+.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-2 {
+  animation-duration: 4.8s;
+  animation-delay: -0.6s;
+}
+.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-3 {
+  animation-duration: 4.2s;
+  animation-delay: -1s;
+}
+.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-4 {
+  animation-duration: 4.6s;
+  animation-delay: -0.4s;
+}
+.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-5 {
+  animation-duration: 5s;
+  animation-delay: -0.8s;
+}
+.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-6 {
+  animation-duration: 4.4s;
+  animation-delay: -1.2s;
+}
+.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-7 {
+  animation-duration: 4.7s;
+  animation-delay: -0.3s;
+}
+.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-8 {
+  animation-duration: 4.1s;
+  animation-delay: -0.9s;
+}
+
+.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-1 {
   animation-duration: 3.6s;
   animation-delay: -0.5s;
 }
-.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-2 {
+.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-2 {
   animation-duration: 3.9s;
   animation-delay: -0.9s;
 }
-.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-3 {
+.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-3 {
   animation-duration: 3.2s;
   animation-delay: -1.2s;
 }
-.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-4 {
+.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-4 {
   animation-duration: 3.5s;
   animation-delay: -0.7s;
 }
-.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-5 {
+.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-5 {
   animation-duration: 4s;
   animation-delay: -1.4s;
 }
-.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-6 {
+.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-6 {
   animation-duration: 3.4s;
   animation-delay: -1.6s;
 }
-.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-7 {
+.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-7 {
   animation-duration: 3.8s;
   animation-delay: -0.4s;
 }
-.card-icon-gradient.card-icon-anim-3 .gradient-2 .color-8 {
+.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-8 {
   animation-duration: 3.2s;
   animation-delay: -1.2s;
 }
 
-.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-1 {
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-1 {
   animation-duration: 4.8s;
   animation-delay: -0.3s;
   animation-direction: reverse;
 }
-.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-2 {
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-2 {
   animation-duration: 5.1s;
   animation-delay: -0.7s;
   animation-direction: reverse;
 }
-.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-3 {
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-3 {
   animation-duration: 4.2s;
   animation-delay: -1.1s;
   animation-direction: reverse;
 }
-.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-4 {
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-4 {
   animation-duration: 4.5s;
   animation-delay: -0.5s;
   animation-direction: reverse;
 }
-.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-5 {
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-5 {
   animation-duration: 5.2s;
   animation-delay: -0.9s;
   animation-direction: reverse;
 }
-.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-6 {
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-6 {
   animation-duration: 4.4s;
   animation-delay: -1.3s;
   animation-direction: reverse;
 }
-.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-7 {
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-7 {
   animation-duration: 4.6s;
   animation-delay: -0.5s;
   animation-direction: reverse;
 }
-.card-icon-gradient.card-icon-anim-4 .gradient-2 .color-8 {
+.card-icon-gradient.card-icon-anim-5 .gradient-2 .color-8 {
   animation-duration: 4.1s;
   animation-delay: -1s;
   animation-direction: reverse;

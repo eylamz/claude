@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import Script from 'next/script';
+import { ChevronLeft } from 'lucide-react';
 import { Icon } from '@/components/icons';
 import { Button, Badge, Separator } from '@/components/ui';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
@@ -29,6 +30,7 @@ import {
 } from '@/lib/utils/hoursFormatter';
 import { generateLocalBusinessStructuredData, generateBreadcrumbStructuredData, getSkateparkMetaFromData } from '@/lib/seo/utils';
 import { PLACEHOLDER_SKATEPARK_IMAGE } from '@/lib/constants/placeholders';
+import { getSkateparksFetchedAtReadable } from '@/lib/search-from-cache';
 
 interface SkateparkImage {
   url: string;
@@ -728,6 +730,7 @@ export default function SkateparkPage() {
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
   const [amenitiesActive, setAmenitiesActive] = useState(false);
   const [clickedNearbyParkId, setClickedNearbyParkId] = useState<string | null>(null);
+  const [isNavigatingBack, setIsNavigatingBack] = useState(false);
 
   useEffect(() => {
     fetchSkatepark();
@@ -855,15 +858,63 @@ export default function SkateparkPage() {
   const fetchSkatepark = async () => {
     setLoading(true);
     try {
-      // Check localStorage for cached data
       const cacheKey = 'skateparks_cache';
       const versionKey = 'skateparks_version';
+
+      const getCachedPark = (): Skatepark | null => {
+        try {
+          const raw = localStorage.getItem(cacheKey);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+              const park = parsed.find((p: Skatepark) => p.slug === slug) || null;
+              if (park) return park;
+            }
+          }
+          const inactiveRaw = localStorage.getItem('skateparks_cache_inactive');
+          if (inactiveRaw) {
+            const inactive = JSON.parse(inactiveRaw);
+            if (Array.isArray(inactive)) {
+              return inactive.find((p: Skatepark) => p.slug === slug) || null;
+            }
+          }
+        } catch {
+          // ignore
+        }
+        return null;
+      };
+
+      const refreshSkateparksCache = async (): Promise<void> => {
+        const res = await fetch('/api/skateparks');
+        if (!res.ok) return;
+        const data = await res.json();
+        const version = data.version || 1;
+        const parks = data.skateparks || [];
+        localStorage.setItem(cacheKey, JSON.stringify(parks));
+        localStorage.setItem(
+          versionKey,
+          JSON.stringify({ version, fetchedAt: getSkateparksFetchedAtReadable() })
+        );
+      };
+
+      // 1) Try to find park in cache (active + inactive)
+      let cachedSkatepark: Skatepark | null = getCachedPark();
+
+      // 2) If not in cache, refresh skateparks_cache then look again
+      if (!cachedSkatepark) {
+        await refreshSkateparksCache();
+        cachedSkatepark = getCachedPark();
+      }
+
+      // 3) If still no data for this park after refresh, show 404
+      if (!cachedSkatepark) {
+        setSkatepark(null);
+        setLoading(false);
+        return;
+      }
+
       const cachedData = localStorage.getItem(cacheKey);
       const cachedVersion = localStorage.getItem(versionKey);
-
-      // Check cache first - if it exists and has the skatepark, use it immediately
-      // Also check inactive parks cache
-      let cachedSkatepark: Skatepark | null = null;
       let cachedSkateparks: Skatepark[] = [];
       
       if (cachedData && cachedVersion) {
@@ -871,22 +922,22 @@ export default function SkateparkPage() {
           const parsedData = JSON.parse(cachedData);
           if (Array.isArray(parsedData)) {
             cachedSkateparks = parsedData;
-            cachedSkatepark = parsedData.find((park: Skatepark) => park.slug === slug) || null;
+            // cachedSkatepark already set above from getCachedPark()
           }
         } catch (e) {
           // Failed to parse active parks cache
         }
       }
       
-      // If not found in active parks, check inactive parks cache
-      if (!cachedSkatepark) {
+      // If not found in active parks, ensure we have it from inactive (getCachedPark already did that)
+      if (!cachedSkateparks.find((p: Skatepark) => p.slug === slug)) {
         try {
           const inactiveCacheKey = 'skateparks_cache_inactive';
           const inactiveCachedData = localStorage.getItem(inactiveCacheKey);
           if (inactiveCachedData) {
             const inactiveParks = JSON.parse(inactiveCachedData);
             if (Array.isArray(inactiveParks)) {
-              cachedSkatepark = inactiveParks.find((park: Skatepark) => park.slug === slug) || null;
+              cachedSkateparks = [...cachedSkateparks, ...inactiveParks];
             }
           }
         } catch (e) {
@@ -1059,7 +1110,8 @@ export default function SkateparkPage() {
       const detailResponse = await fetch(`/api/skateparks/${slug}`);
       if (!detailResponse.ok) {
         if (detailResponse.status === 404) {
-          // Handle 404
+          setSkatepark(null);
+          setLoading(false);
           return;
         }
         throw new Error('Failed to fetch skatepark detail');
@@ -1497,15 +1549,31 @@ export default function SkateparkPage() {
   }
 
   if (!skatepark) {
+    const backHref = `/${locale}/skateparks`;
     return (
       <div className="min-h-screen  flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-base font-bold text-gray-900 dark:text-white mb-2">
             {t('notFound')}
           </h1>
-          <Link href={`/${locale}/skateparks`}>
-            <Button variant="primary">{t('backToSkateparks')}</Button>
-          </Link>
+          <Button
+            variant="primary"
+            disabled={isNavigatingBack}
+            className={`inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-full flex-shrink-0 min-w-[110px] ${locale === 'he' ? 'flex-row' : 'flex-row'}`}
+            onClick={() => {
+              setIsNavigatingBack(true);
+              router.push(backHref);
+            }}
+          >
+            {isNavigatingBack ? (
+              <LoadingSpinner size={20} variant="brandText" className="!h-5 !w-5" />
+            ) : (
+              <>
+                <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
+                {t('backToSkateparks')}
+              </>
+            )}
+          </Button>
         </div>
       </div>
     );
@@ -2697,7 +2765,7 @@ export default function SkateparkPage() {
                   className="p-2"
                   aria-label={t('closeModal')}
                 >
-                  <Icon name="X" className="w-5 h-5 text-text dark:text-text-dark" />
+                  <X className="w-5 h-5 text-text dark:text-text-dark" />
                 </button>
               </div>
               <Separator className="my-2"/>

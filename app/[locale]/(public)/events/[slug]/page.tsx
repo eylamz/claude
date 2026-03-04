@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { ChevronLeft } from 'lucide-react';
 import { Icon } from '@/components/icons';
 import { Skeleton, Button } from '@/components/ui';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import ParkImageGallery from '@/components/skateparks/ParkImageGallery';
 import { getMetaTitleWithFallback, DEFAULT_META_TITLE } from '@/lib/seo/utils';
 import { Separator } from '@/components/ui';
@@ -112,6 +113,8 @@ export default function EventPage() {
   const [error, setError] = useState<string | null>(null);
   const [cacheInitialized, setCacheInitialized] = useState(false);
   const [, setCurrentVersion] = useState<number | null>(null);
+  const [isNavigatingBack, setIsNavigatingBack] = useState(false);
+  const router = useRouter();
 
   const fetchEvent = async () => {
     if (!cacheInitialized) return;
@@ -122,7 +125,7 @@ export default function EventPage() {
     const cacheKey = 'events_cache';
     const versionKey = 'events_version';
 
-    const getEventFromCache = (): IEvent | null => {
+    const getCachedEvent = (): IEvent | null => {
       try {
         const raw = localStorage.getItem(cacheKey);
         if (!raw) return null;
@@ -135,57 +138,40 @@ export default function EventPage() {
       }
     };
 
-    // 1) Try cache first (full format has content)
-    let eventFromCache = getEventFromCache();
-    if (eventFromCache) {
-      setEvent(eventFromCache);
+    const refreshEventsCache = async (): Promise<void> => {
+      const res = await fetch(`/api/events?full=true`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const version = data.version ?? 1;
+      const allEvents = data.events || [];
+      if (!Array.isArray(allEvents) || allEvents.length === 0) return;
+      localStorage.setItem(cacheKey, JSON.stringify(allEvents));
+      localStorage.setItem(
+        versionKey,
+        JSON.stringify({ version, fetchedAt: getEventsFetchedAtReadable() })
+      );
+    };
+
+    // 1) Try cache first (full format with content)
+    let eventFromCache = getCachedEvent();
+
+    // 2) If not in cache, refresh events_cache then look again
+    if (!eventFromCache) {
+      await refreshEventsCache();
+      eventFromCache = getCachedEvent();
+    }
+
+    // 3) If still no data for this event after refresh, show 404
+    if (!eventFromCache) {
+      setEvent(null);
+      setError(locale === 'he' ? 'אירוע לא נמצא' : 'Event not found');
       setLoading(false);
       return;
     }
 
-    // 2) Cache miss or list-format cache: ensure full cache then try again (no locale – full has he/en)
-    try {
-      const fullRes = await fetch(`/api/events?full=true`);
-      if (fullRes.ok) {
-        const { events: allEvents = [], version } = await fullRes.json();
-        if (Array.isArray(allEvents) && allEvents.length > 0) {
-          localStorage.setItem(cacheKey, JSON.stringify(allEvents));
-          localStorage.setItem(
-            versionKey,
-            JSON.stringify({ version: version ?? 1, fetchedAt: getEventsFetchedAtReadable() })
-          );
-          eventFromCache = getEventFromCache();
-          if (eventFromCache) {
-            setEvent(eventFromCache);
-            setLoading(false);
-            return;
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('Failed to refresh events cache:', err);
-    }
-
-    // 3) Still not found (e.g. draft/deleted): fallback to slug API
-    try {
-      const response = await fetch(`/api/events/${slug}?locale=${locale}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError('Event not found');
-        } else {
-          setError('Failed to load event');
-        }
-        setLoading(false);
-        return;
-      }
-      const data = await response.json();
-      setEvent(data.event);
-    } catch (err) {
-      console.error('Error fetching event:', err);
-      setError('Failed to load event');
-    } finally {
-      setLoading(false);
-    }
+    // 4) Found in cache – use it (optional: could fetch slug API for latest; currently we use cache as source of truth)
+    setEvent(eventFromCache);
+    setLoading(false);
   };
 
   // Check version and cache on mount (refetch only after 1 hour from last fetch)
@@ -384,21 +370,31 @@ export default function EventPage() {
 
   // Error state
   if (error || !event) {
+    const backHref = `/${locale}/events`;
     return (
       <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center px-5">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             {error || (locale === 'he' ? 'אירוע לא נמצא' : 'Event not found')}
           </h1>
-          <Link href={`/${locale}/events`} className="">
-            <Button
-              variant="primary"
-              className={`inline-flex items-center gap-2 text-brand-text hover:text-brand-text/80 dark:hover:text-brand-dark/80 dark:text-brand-dark font-semibold ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
-            >
-              <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
-              {locale === 'he' ? 'חזרה לאירועים' : 'Back to Events'}
-            </Button>
-          </Link>
+          <Button
+            variant="primary"
+            disabled={isNavigatingBack}
+            className={`inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-full flex-shrink-0 min-w-[110px] ${locale === 'he' ? 'flex-row' : 'flex-row'}`}
+            onClick={() => {
+              setIsNavigatingBack(true);
+              router.push(backHref);
+            }}
+          >
+            {isNavigatingBack ? (
+              <LoadingSpinner size={20} variant="brandText" className="!h-5 !w-5" />
+            ) : (
+              <>
+                <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
+                {locale === 'he' ? 'חזרה לאירועים' : 'Back to Events'}
+              </>
+            )}
+          </Button>
         </div>
       </div>
     );

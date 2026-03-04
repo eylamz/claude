@@ -177,9 +177,9 @@ export async function GET(
       updatedAt: skatepark.updatedAt,
     };
 
-    // Get cache version
+    // Get cache version (integer only)
     const settings = await Settings.findOrCreate();
-    const version = settings.skateparksVersion || 1;
+    const version = Math.floor(Number(settings.skateparksVersion) || 1);
 
     return NextResponse.json({
       skatepark: formattedSkatepark,
