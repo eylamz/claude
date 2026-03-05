@@ -92,6 +92,7 @@ export default function NewSkateparkPage() {
   const [showImageEditor, setShowImageEditor] = useState(true);
   const [keywordInputEn, setKeywordInputEn] = useState('');
   const [keywordInputHe, setKeywordInputHe] = useState('');
+  const [newImageUrl, setNewImageUrl] = useState('');
 
   const [formData, setFormData] = useState<SkateparkFormData>({
     slug: '',
@@ -635,6 +636,47 @@ export default function NewSkateparkPage() {
           )}
           {showImageEditor && (
             <div className="space-y-4 mt-4">
+              {/* Add image by URL */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-text dark:text-text-dark mb-2">
+                  Add Image by URL
+                </h3>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Input
+                    placeholder="https://example.com/image.jpg"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={() => {
+                      const url = newImageUrl.trim();
+                      if (!url) return;
+
+                      const currentImages = formData.images || [];
+                      const nextIndex = currentImages.length;
+
+                      const addedImage = {
+                        url,
+                        isFeatured: nextIndex === 0,
+                        orderNumber: nextIndex,
+                        publicId: undefined,
+                      };
+
+                      setFormData({
+                        ...formData,
+                        images: [...currentImages, addedImage],
+                      });
+                      setNewImageUrl('');
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+
               {/* Image Uploader */}
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-text dark:text-text-dark mb-4">Upload Images to Cloudinary</h3>
@@ -645,20 +687,26 @@ export default function NewSkateparkPage() {
                     alt: `${formData.name.en || 'Skatepark'} image`,
                   }))}
                   onUpload={(uploadedImages) => {
+                    // Convert ImageUploader format to form images format
+                    // Preserve existing metadata where possible, but:
+                    // - Respect the new order from ImageUploader (drag & drop)
+                    // - Treat index 0 as the primary image (isFeatured = true, others false)
                     const newImages = uploadedImages.map((img, index) => {
-                      const existingIndex = formData.images.findIndex(existing => existing.publicId === img.publicId);
-                      if (existingIndex >= 0) {
+                      const existing = formData.images.find(existingImg => existingImg.publicId === img.publicId);
+                      if (existing) {
                         return {
-                          ...formData.images[existingIndex],
+                          ...existing,
                           url: img.url,
                           publicId: img.publicId,
+                          isFeatured: index === 0,
+                          orderNumber: index,
                         };
                       }
                       return {
                         url: img.url,
                         publicId: img.publicId,
-                        isFeatured: formData.images.length === 0 && index === 0,
-                        orderNumber: formData.images.length + index,
+                        isFeatured: index === 0,
+                        orderNumber: index,
                       };
                     });
                     setFormData({ ...formData, images: newImages });

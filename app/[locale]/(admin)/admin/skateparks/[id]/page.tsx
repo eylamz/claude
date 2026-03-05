@@ -113,6 +113,7 @@ export default function SkateparkDetailPage() {
   const [showImageEditor, setShowImageEditor] = useState(false);
   const [keywordInputEn, setKeywordInputEn] = useState('');
   const [keywordInputHe, setKeywordInputHe] = useState('');
+  const [newImageUrl, setNewImageUrl] = useState('');
 
   const fetchSkatepark = useCallback(async () => {
     if (!id) return;
@@ -946,6 +947,48 @@ export default function SkateparkDetailPage() {
           )}
           {showImageEditor && (
             <div className="space-y-4 mt-4">
+              {/* Add image by URL */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <h3 className="text-sm font-medium text-text dark:text-text-dark mb-2">
+                  Add Image by URL
+                </h3>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Input
+                    placeholder="https://example.com/image.jpg"
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={() => {
+                      if (!skatepark) return;
+                      const url = newImageUrl.trim();
+                      if (!url) return;
+
+                      const currentImages = skatepark.images || [];
+                      const nextIndex = currentImages.length;
+
+                      const addedImage = {
+                        url,
+                        isFeatured: nextIndex === 0,
+                        orderNumber: nextIndex,
+                        publicId: undefined,
+                      };
+
+                      setSkatepark({
+                        ...skatepark,
+                        images: [...currentImages, addedImage],
+                      });
+                      setNewImageUrl('');
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+
               {/* Image Uploader */}
               <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-text dark:text-text-dark mb-4">Upload Images to Cloudinary</h3>
@@ -957,23 +1000,25 @@ export default function SkateparkDetailPage() {
                   }))}
                   onUpload={(uploadedImages) => {
                     // Convert ImageUploader format to skatepark images format
+                    // Preserve existing metadata where possible, but:
+                    // - Respect the new order from ImageUploader (drag & drop)
+                    // - Treat index 0 as the primary image (isFeatured = true, others false)
                     const newImages = uploadedImages.map((img, index) => {
-                      // Find existing image with same publicId or create new
-                      const existingIndex = skatepark.images.findIndex(existing => existing.publicId === img.publicId);
-                      if (existingIndex >= 0) {
-                        // Update existing image
+                      const existing = skatepark.images.find(existingImg => existingImg.publicId === img.publicId);
+                      if (existing) {
                         return {
-                          ...skatepark.images[existingIndex],
+                          ...existing,
                           url: img.url,
                           publicId: img.publicId,
+                          isFeatured: index === 0,
+                          orderNumber: index,
                         };
                       }
-                      // New image
                       return {
                         url: img.url,
                         publicId: img.publicId,
-                        isFeatured: skatepark.images.length === 0 && index === 0,
-                        orderNumber: skatepark.images.length + index,
+                        isFeatured: index === 0,
+                        orderNumber: index,
                       };
                     });
                     setSkatepark({ ...skatepark, images: newImages });

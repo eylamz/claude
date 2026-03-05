@@ -96,9 +96,15 @@ export default function MobileSidebar({
   const [searchLoading, setSearchLoading] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [shouldAnimate, setShouldAnimate] = useState(false);
+  const [popularClicks, setPopularClicks] = useState<
+    Array<{ resultType: string; resultSlug: string; count: number; name?: string }>
+  >([]);
+  const [showPopularSearches, setShowPopularSearches] = useState(false);
+  const [popularExiting, setPopularExiting] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchAnalyticsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const popularAnimationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /** Nav link click feedback: show brand icon 0.3s then spinner until navigation (same as HeaderNav) */
   const [linkClickState, setLinkClickState] = useState<{
@@ -710,6 +716,100 @@ export default function MobileSidebar({
     ? ['skateparks', 'products', 'events', 'guides', 'trainers']
     : ['skateparks', 'events', 'guides', 'trainers'];
 
+  // Control mount/unmount of popular searches so we can animate in/out
+  useEffect(() => {
+    // If search is open and we have popular items, show after a 0.2s delay
+    // so the container doesn't take up space immediately.
+    if (isSearchOpen && popularClicks.length > 0) {
+      if (popularAnimationTimeoutRef.current) {
+        clearTimeout(popularAnimationTimeoutRef.current);
+        popularAnimationTimeoutRef.current = null;
+      }
+      setPopularExiting(false);
+      popularAnimationTimeoutRef.current = setTimeout(() => {
+        setShowPopularSearches(true);
+        popularAnimationTimeoutRef.current = null;
+      }, 200);
+      return;
+    }
+
+    // When search closes and the container is visible, play exit animation, then unmount
+    if (!isSearchOpen && showPopularSearches) {
+      setPopularExiting(true);
+      if (popularAnimationTimeoutRef.current) {
+        clearTimeout(popularAnimationTimeoutRef.current);
+      }
+      popularAnimationTimeoutRef.current = setTimeout(() => {
+        setShowPopularSearches(false);
+        setPopularExiting(false);
+        popularAnimationTimeoutRef.current = null;
+      }, 250); // match scaleFadeDown duration
+    }
+  }, [isSearchOpen, popularClicks.length, showPopularSearches]);
+
+  // Cleanup any pending popular animation timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (popularAnimationTimeoutRef.current) {
+        clearTimeout(popularAnimationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Top 5 most clicked search results (from analytics), cached per locale (1 week TTL)
+  useEffect(() => {
+    const CACHE_KEY = `search_popular_clicks_${locale}`;
+    const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
+
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { results?: unknown[]; fetchedAt?: number };
+        const fetchedAt = parsed?.fetchedAt;
+        if (
+          typeof fetchedAt === 'number' &&
+          Date.now() - fetchedAt <= CACHE_TTL_MS &&
+          Array.isArray(parsed?.results)
+        ) {
+          setPopularClicks(
+            parsed.results as Array<{
+              resultType: string;
+              resultSlug: string;
+              count: number;
+              name?: string;
+            }>
+          );
+          return;
+        }
+      }
+    } catch {
+      // ignore invalid cache
+    }
+
+    fetch(`/api/search/popular?locale=${encodeURIComponent(locale)}`)
+      .then((res) => res.json())
+      .then(
+        (data: {
+          results?: Array<{ resultType: string; resultSlug: string; count: number; name?: string }>;
+        }) => {
+          if (Array.isArray(data?.results)) {
+            setPopularClicks(data.results);
+            if (data.results.length > 0) {
+              try {
+                localStorage.setItem(
+                  CACHE_KEY,
+                  JSON.stringify({ results: data.results, fetchedAt: Date.now() })
+                );
+              } catch {
+                // ignore quota / private mode
+              }
+            }
+          }
+        }
+      )
+      .catch(() => {});
+  }, [locale]);
+
   // Theme toggle handler with animation
   const handleThemeToggle = () => {
     setShouldAnimate(true);
@@ -1051,6 +1151,67 @@ export default function MobileSidebar({
           ) : (
             // Regular Navigation Content
             <>
+              {/* Popular Searches (same as HeaderNav search modal), shown above nav when search is open */}
+              {showPopularSearches && (
+                <div
+                  className="px-6 -mt-3 mb-6"
+                  style={
+                    popularExiting
+                      ? {
+                          animation: 'scaleFadeDown 0.25s ease-in reverse forwards',
+                        }
+                      : {
+                          animation: 'scaleFadeDown 0.25s ease-out forwards',
+                        }
+                  }
+                >
+                  <div className="w-full flex items-center justify-between gap-2 mb-3">
+                    <h3 className="text-sm font-semibold text-text dark:text-text-dark">
+                      {locale === 'he' ? 'חיפושים נפוצים:' : 'Popular Searches:'}
+                    </h3>
+                    <Link
+                      href={`/${locale}/search`}
+                      onClick={() => {
+                        setIsSearchOpen(false);
+                      }}
+                      className="flex items-center gap-1 py-1 px-2 rounded-md text-sidebar-text-brand dark:text-sidebar-text-brand-dark hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-200"
+                    >
+                      <h3 className="text-sm font-semibold">
+                        {locale === 'he' ? 'חיפוש מתקדם' : 'Advanced Search'}
+                      </h3>
+                      <Icon name="sparksBold" className="w-3 h-3" />
+                    </Link>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {popularClicks.map((item) => {
+                      const pathPrefix = item.resultType === 'products' ? 'shop' : item.resultType;
+                      const href = `/${locale}/${pathPrefix}/${item.resultSlug}`;
+                      const label = item.name ?? item.resultSlug.replace(/-/g, ' ');
+
+                      return (
+                        <Link
+                          key={`${item.resultType}-${item.resultSlug}`}
+                          href={href}
+                          onClick={() => {
+                            trackSearchClick({
+                              query: label,
+                              resultType: item.resultType,
+                              resultSlug: item.resultSlug,
+                              href,
+                              source: 'sidebar',
+                              locale,
+                            });
+                          }}
+                          className="px-3 py-1.5 text-sm bg-sidebar-hover dark:bg-sidebar-hover-dark hover:bg-black/5 dark:hover:bg-white/5 border border-border dark:border-border-dark rounded-full transition-colors text-sidebar-text dark:text-sidebar-text-dark"
+                        >
+                          {label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Navigation Links */}
               <nav className="flex-1 overflow-y-auto pt-4 min-h-0">
                 {navCards.map((card) => {

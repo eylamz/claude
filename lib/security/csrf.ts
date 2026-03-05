@@ -5,15 +5,18 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const getAllowedOrigins = (): Set<string> => {
   const origins = new Set<string>();
 
-  const configuredUrl =
-    process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || '';
+  // Collect all explicitly configured site URLs and add their origins
+  const possibleUrls = [
+    process.env.NEXTAUTH_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+  ].filter(Boolean) as string[];
 
-  if (configuredUrl) {
+  for (const rawUrl of possibleUrls) {
     try {
-      const url = new URL(configuredUrl);
+      const url = new URL(rawUrl);
       origins.add(url.origin);
     } catch {
-      // Ignore invalid configured URL
+      // Ignore invalid configured URL values
     }
   }
 

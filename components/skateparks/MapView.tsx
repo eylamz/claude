@@ -280,6 +280,9 @@ function GoogleMapView({
           fullscreenControl: false, // Use custom control so fullscreen targets wrapper (map + card)
           language: locale === 'he' ? 'he' : 'en',
           region: locale === 'he' ? 'IL' : undefined,
+
+          gestureHandling: 'greedy', //3
+
           // Only apply dark theme styles if theme is dark
           styles: currentTheme === 'dark' ? darkThemeStyles : [],
         };
