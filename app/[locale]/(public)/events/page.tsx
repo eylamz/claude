@@ -1014,7 +1014,7 @@ function EventsPageContent() {
       {/* ========================================
           MAIN CONTENT AREA
       ======================================== */}
-      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8">
+      <div className="max-w-6xl mx-auto px-4 py-6 lg:py-8 overflow-hidden">
         {loading ? (
           /* Grid skeleton - matches EventCard structure (rounded-xl card, rounded-2xl image area, name section) */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
@@ -1092,7 +1092,7 @@ function EventsPageContent() {
         ) : (
           <div className="text-center py-16">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-bg dark:bg-gray-bg-dark mb-4">
-              <Icon name="searchQuest" className="w-8 h-8 text-gray dark:text-gray-dark" />
+              <Icon name="searchClose" className="w-8 h-8 text-gray dark:text-gray-dark" />
             </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               {searchQuery

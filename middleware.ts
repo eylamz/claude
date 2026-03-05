@@ -38,6 +38,13 @@ function isPublicRoute(pathname: string): boolean {
     return true;
   }
 
+  // Paths WITHOUT a locale prefix (e.g. /events, /guides) — allow so intl middleware can redirect to /en/events etc. using browser locale
+  const firstSegment = pathname.split('/').filter(Boolean)[0];
+  const hasLocalePrefix = firstSegment && locales.includes(firstSegment as (typeof locales)[number]);
+  if (!hasLocalePrefix && pathname.length > 1) {
+    return true;
+  }
+
   // Auth pages are public
   if (
     pathname.includes('/login') ||
@@ -182,9 +189,8 @@ export default withAuth(
           return !!token;
         }
 
-        // For all other routes, require authentication by default.
-        // New non-public pages must either be added to publicRoutes or placed under (public).
-        return !!token;
+        // Has locale but matches no known public/protected/admin pattern — allow so Next.js can serve 404
+        return true;
       },
     },
     // Use same cookie name as lib/auth/config so middleware finds the session (e.g. on HTTPS)
