@@ -15,6 +15,8 @@ import {
   Pie,
   Cell,
   Legend,
+  LineChart,
+  Line,
 } from 'recharts';
 import { toast } from '@/hooks/use-toast';
 import { Toaster } from '@/components/ui/toaster';
@@ -38,6 +40,8 @@ interface MetricsData {
   searchQueries?: Array<{ query: string; deviceCategory: string; count: number }>;
   searchClicks?: Array<{ resultType: string; resultSlug: string; deviceCategory: string; count: number }>;
   popularSearchHidden?: Array<{ resultType: string; resultSlug: string }>;
+  sessionsByDay?: Array<{ date: string; count: number }>;
+  pageViewsByDay?: Array<{ date: string; count: number }>;
 }
 
 const DEVICE_COLORS = ['#3caa41', '#1d4ed8', '#e49a43', '#8B5CF6', '#EC4899'];
@@ -60,6 +64,7 @@ export default function AdminMetricsPage() {
   const [data, setData] = useState<MetricsData | null>(null);
   const [days, setDays] = useState('30');
   const [updatingHidden, setUpdatingHidden] = useState<string | null>(null);
+  const [openGraph, setOpenGraph] = useState<'sessions' | 'pageViews' | null>(null);
 
   const hiddenSet = useMemo(
     () =>
@@ -200,6 +205,7 @@ export default function AdminMetricsPage() {
                 { value: '7', label: t('metrics.days7') },
                 { value: '30', label: t('metrics.days30') },
                 { value: '90', label: t('metrics.days90') },
+                { value: '365', label: t('metrics.days365') },
               ]}
             />
           </div>
@@ -253,6 +259,14 @@ export default function AdminMetricsPage() {
                   {data?.pageViewsByPath.reduce((s, p) => s + p.count, 0) ?? 0}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('metrics.lastDays', { days: data?.days ?? Number(days) ?? 30 })}</p>
+                <Button
+                  variant={openGraph === 'pageViews' ? 'red' : 'purple'}
+                  size="sm"
+                  className="mt-2 w-full"
+                  onClick={() => setOpenGraph((g) => (g === 'pageViews' ? null : 'pageViews'))}
+                >
+                  {openGraph === 'pageViews' ? t('metrics.hideGraph') : t('metrics.viewByDay')}
+                </Button>
               </CardContent>
             </Card>
             <Card className="bg-card dark:bg-card-dark">
@@ -262,6 +276,14 @@ export default function AdminMetricsPage() {
                   {data?.sessionsSummary?.totalSessions ?? 0}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('metrics.lastDays', { days: data?.days ?? Number(days) ?? 30 })}</p>
+                <Button
+                  variant={openGraph === 'sessions' ? 'red' : 'purple'}
+                  size="sm"
+                  className="mt-2 w-full"
+                  onClick={() => setOpenGraph((g) => (g === 'sessions' ? null : 'sessions'))}
+                >
+                  {openGraph === 'sessions' ? t('metrics.hideGraph') : t('metrics.viewByDay')}
+                </Button>
               </CardContent>
             </Card>
             <Card className="bg-card dark:bg-card-dark">
@@ -274,6 +296,94 @@ export default function AdminMetricsPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Sessions per day graph (opened by button in Total sessions card) */}
+          {openGraph === 'sessions' && (
+            <Card className="bg-card dark:bg-card-dark">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-gray-900 dark:text-white">{t('metrics.sessionsByDayTitle')}</CardTitle>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('metrics.sessionsByDayDescription')}</p>
+                </div>
+                <Button variant="gray" size="sm" onClick={() => setOpenGraph(null)}>
+                  {t('metrics.close')}
+                </Button>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                {data?.sessionsByDay?.length ? (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={data.sessionsByDay}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" className="dark:stroke-gray-700" />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 12, fill: 'currentColor' }}
+                        className="text-text-secondary dark:text-text-dark"
+                        tickFormatter={(value) => {
+                          const d = new Date(value);
+                          return `${d.getDate()}/${d.getMonth() + 1}`;
+                        }}
+                      />
+                      <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="text-text-secondary dark:text-text-secondary-dark" />
+                      <Tooltip
+                        labelFormatter={(label: string) => {
+                          const d = new Date(label);
+                          return d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                        }}
+                        formatter={(value: unknown) => [value, t('metrics.sessions')]}
+                      />
+                      <Line type="monotone" dataKey="count" stroke="#10B981" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name={t('metrics.sessions')} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noDataYet')}</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Page views per day graph (opened by button in Total page views card) */}
+          {openGraph === 'pageViews' && (
+            <Card className="bg-card dark:bg-card-dark">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-gray-900 dark:text-white">{t('metrics.pageViewsByDayTitle')}</CardTitle>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('metrics.pageViewsByDayDescription')}</p>
+                </div>
+                <Button variant="gray" size="sm" onClick={() => setOpenGraph(null)}>
+                  {t('metrics.close')}
+                </Button>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                {data?.pageViewsByDay?.length ? (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <LineChart data={data.pageViewsByDay}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" className="dark:stroke-gray-700" />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 12, fill: 'currentColor' }}
+                        className="text-text-secondary dark:text-text-dark"
+                        tickFormatter={(value) => {
+                          const d = new Date(value);
+                          return `${d.getDate()}/${d.getMonth() + 1}`;
+                        }}
+                      />
+                      <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="text-text-secondary dark:text-text-secondary-dark" />
+                      <Tooltip
+                        labelFormatter={(label: string) => {
+                          const d = new Date(label);
+                          return d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                        }}
+                        formatter={(value: unknown) => [value, t('metrics.views')]}
+                      />
+                      <Line type="monotone" dataKey="count" stroke="#47b84d" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name={t('metrics.views')} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noDataYet')}</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Top pages & Page views chart */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

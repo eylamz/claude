@@ -718,6 +718,7 @@ export default function SkateparkPage() {
   const [nearbyParks, setNearbyParks] = useState<NearbyPark[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [userHasReviewed, setUserHasReviewed] = useState<boolean | undefined>(undefined);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
   const [loading, setLoading] = useState(true);
 
   const [showAddReview, setShowAddReview] = useState(false);
@@ -909,6 +910,7 @@ export default function SkateparkPage() {
       // 3) If still no data for this park after refresh, show 404
       if (!cachedSkatepark) {
         setSkatepark(null);
+        setReviewsLoading(false);
         setLoading(false);
         return;
       }
@@ -1111,6 +1113,7 @@ export default function SkateparkPage() {
       if (!detailResponse.ok) {
         if (detailResponse.status === 404) {
           setSkatepark(null);
+          setReviewsLoading(false);
           setLoading(false);
           return;
         }
@@ -1258,8 +1261,10 @@ export default function SkateparkPage() {
   };
 
   const fetchReviews = async () => {
+    setReviewsLoading(true);
     try {
-      // false = show only reviews that have content for current locale (he → only he, en → only en)
+      // NEXT_PUBLIC_ENABLE_MULTILINGUAL_REVIEWS=true  → show all reviews (en + he) regardless of current locale
+      // NEXT_PUBLIC_ENABLE_MULTILINGUAL_REVIEWS=false → show only reviews that have content for the current locale
       const filterByLocale = process.env.NEXT_PUBLIC_ENABLE_MULTILINGUAL_REVIEWS !== 'true';
       const url = `/api/skateparks/${slug}/reviews?locale=${locale}${filterByLocale ? '&filterByLocale=1' : ''}`;
       const response = await fetch(url, { credentials: 'include' });
@@ -1272,6 +1277,8 @@ export default function SkateparkPage() {
       }
     } catch (error) {
       // Error fetching reviews
+    } finally {
+      setReviewsLoading(false);
     }
   };
 
@@ -1428,6 +1435,12 @@ export default function SkateparkPage() {
   const sortedReviews = [...reviews].sort((a, b) => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
+
+  /** True if the review's displayed content contains Hebrew script (use font-assistant). */
+  const reviewFontClass = (review: Review) =>
+    /[\u0590-\u05FF]/.test((review.userName || '') + (review.comment || ''))
+      ? 'font-assistant'
+      : 'font-poppins';
 
   const ratingDistribution = [5, 4, 3, 2, 1].map((rating) => {
     const count = reviews.filter((r) => r.rating === rating).length;
@@ -2470,13 +2483,9 @@ export default function SkateparkPage() {
                     return null;
                   }
                   
-                  // If loading, show spinner
+                  // While session is loading, hide the button (it will fade in when ready)
                   if (status === 'loading') {
-                    return (
-                      <div className="flex items-center justify-center">
-                        <LoadingSpinner className="h-5" />
-                      </div>
-                    );
+                    return null;
                   }
                   
                   // If user reviews enabled, require login
@@ -2485,13 +2494,14 @@ export default function SkateparkPage() {
                       // When multiple reviews disabled and user already reviewed, show message instead of button
                       if (!enableMultipleReviews && userHasReviewed) {
                         return (
-                          <span className="text-sm text-text-secondary dark:text-text-secondary-dark">
+                          <span className="opacity-0 animate-fadeIn text-sm text-text-secondary dark:text-text-secondary-dark">
                             {t('youAlreadyReviewed')}
                           </span>
                         );
                       }
                       return (
                         <Button 
+                          className="opacity-0 animate-fadeIn"
                           variant={'primary'}
                           onClick={() => setShowAddReview(true)}
                         >
@@ -2500,7 +2510,7 @@ export default function SkateparkPage() {
                       );
                     } else {
                       return (
-                        <Link href={`/${locale}/login`}>
+                        <Link href={`/${locale}/login`} className="opacity-0 animate-fadeIn inline-block">
                           <Button variant={skatepark.closingYear && skatepark.closingYear <= new Date().getFullYear() ? 'error' : 'primary'}>
                             {tCommon('signInToReview')}
                           </Button>
@@ -2513,6 +2523,7 @@ export default function SkateparkPage() {
                   if (allowAnonymousReviews) {
                     return (
                       <Button 
+                        className="opacity-0 animate-fadeIn"
                         variant={
                           'primary'}
                         onClick={() => setShowAddReview(true)}
@@ -2527,7 +2538,11 @@ export default function SkateparkPage() {
               </div>
             </CardHeader>
             <CardContent className="">
-              {reviews.length > 0 && (
+              {reviewsLoading ? (
+                <div className="py-12 flex items-center justify-center">
+                  <LoadingSpinner size={40} className="flex-shrink-0" />
+                </div>
+              ) : reviews.length > 0 ? (
                 <>
                   {/* 2-Column Layout: Rating Distribution + First 2 Reviews */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -2554,7 +2569,7 @@ export default function SkateparkPage() {
                       {sortedReviews.slice(0, 1).map((review) => (
                         <div
                           key={review._id}
-                          className=" h-full opacity-0 bg-card dark:bg-card-dark rounded-lg p-4 animate-fadeInDown"
+                          className={`h-full opacity-0 bg-card dark:bg-card-dark rounded-lg p-4 animate-fadeInDown ${reviewFontClass(review)}`}
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div>
@@ -2593,7 +2608,7 @@ export default function SkateparkPage() {
                       {sortedReviews.slice(2).map((review) => (
                         <div
                           key={review._id}
-                          className="opacity-0 bg-card dark:bg-card-dark rounded-lg p-4 animate-fadeInDown"
+                          className={`opacity-0 bg-card dark:bg-card-dark rounded-lg p-4 animate-fadeInDown ${reviewFontClass(review)}`}
                         >
                           <div className="flex items-start justify-between mb-2">
                             <div>
@@ -2643,9 +2658,7 @@ export default function SkateparkPage() {
                     </div>
                   )}
                 </>
-              )}
-
-              {reviews.length === 0 && (
+              ) : (
                 <div className="py-8 text-center text-text-secondary dark:text-text-secondary-dark transition-colors duration-200">
                   <Icon name="messages" className="w-12 h-12 mx-auto mb-3" />
                   <p className="text-base mb-4">

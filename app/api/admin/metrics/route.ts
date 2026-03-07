@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
         searchQueries: [],
         searchClicks: [],
         popularSearchHidden: [],
+        sessionsByDay: [],
+        pageViewsByDay: [],
       });
     }
 
@@ -88,6 +90,8 @@ export async function GET(request: NextRequest) {
       countryBreakdown,
       searchQueries,
       searchClicks,
+      sessionsByDayRaw,
+      pageViewsByDayRaw,
     ] = await Promise.all([
       AnalyticsEvent.aggregate<{ _id: string; count: number }>([
         { $match: matchPageView },
@@ -175,6 +179,41 @@ export async function GET(request: NextRequest) {
           },
         },
       ]),
+      // Sessions per day (unique sessionIds per day) for line chart
+      AnalyticsEvent.aggregate<{ date: string; count: number }>([
+        { $match: matchPageViewWithSession },
+        {
+          $addFields: {
+            day: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } },
+          },
+        },
+        {
+          $group: {
+            _id: '$day',
+            sessionIds: { $addToSet: '$sessionId' },
+          },
+        },
+        {
+          $project: {
+            date: '$_id',
+            count: { $size: '$sessionIds' },
+            _id: 0,
+          },
+        },
+        { $sort: { date: 1 } },
+      ]),
+      // Page views per day (count of page_view events per day) for line chart
+      AnalyticsEvent.aggregate<{ date: string; count: number }>([
+        { $match: matchPageView },
+        {
+          $addFields: {
+            day: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } },
+          },
+        },
+        { $group: { _id: '$day', count: { $sum: 1 } } },
+        { $project: { date: '$_id', count: 1, _id: 0 } },
+        { $sort: { date: 1 } },
+      ]),
     ]);
 
     const sessionsSummary = sessionDurations[0]
@@ -185,6 +224,39 @@ export async function GET(request: NextRequest) {
       : { totalSessions: 0, avgSessionDurationMs: 0 };
 
     const topPages = pageViewsByPath.slice(0, 20);
+
+    // Fill missing days with 0 so the chart is continuous
+    const sessionsByDayMap = new Map<string, number>();
+    for (const row of sessionsByDayRaw) {
+      sessionsByDayMap.set(row.date, row.count);
+    }
+    const sessionsByDay: Array<{ date: string; count: number }> = [];
+    const iter = new Date(from);
+    const toDate = new Date();
+    toDate.setHours(23, 59, 59, 999);
+    while (iter <= toDate) {
+      const dateStr = iter.toISOString().slice(0, 10);
+      sessionsByDay.push({
+        date: dateStr,
+        count: sessionsByDayMap.get(dateStr) ?? 0,
+      });
+      iter.setDate(iter.getDate() + 1);
+    }
+
+    const pageViewsByDayMap = new Map<string, number>();
+    for (const row of pageViewsByDayRaw) {
+      pageViewsByDayMap.set(row.date, row.count);
+    }
+    const pageViewsByDay: Array<{ date: string; count: number }> = [];
+    const iterPv = new Date(from);
+    while (iterPv <= toDate) {
+      const dateStr = iterPv.toISOString().slice(0, 10);
+      pageViewsByDay.push({
+        date: dateStr,
+        count: pageViewsByDayMap.get(dateStr) ?? 0,
+      });
+      iterPv.setDate(iterPv.getDate() + 1);
+    }
 
     const settings = await Settings.findOrCreate();
     const popularSearchHidden = settings.popularSearchHidden || [];
@@ -204,6 +276,8 @@ export async function GET(request: NextRequest) {
       searchQueries,
       searchClicks,
       popularSearchHidden,
+      sessionsByDay,
+      pageViewsByDay,
     });
   } catch (error) {
     console.error('[admin/metrics]', error);

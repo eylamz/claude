@@ -29,14 +29,19 @@ function getReviewError(key: string, locale: Locale): string {
   return REVIEW_ERROR_MESSAGES[locale]?.[key] ?? REVIEW_ERROR_MESSAGES.en[key] ?? key;
 }
 
-/** Resolve locale-keyed content to a single string for a given locale. Supports legacy plain strings. */
+/** Resolve locale-keyed content to a single string for a given locale.
+ * Prefer current locale if it has non-empty content; otherwise use the other locale.
+ * Supports legacy plain strings (treated as en). */
 function resolveContent(
   value: string | ReviewContentByLocale | undefined | null,
   locale: Locale
 ): string {
   if (value == null) return '';
-  if (typeof value === 'string') return value;
-  return value[locale] ?? value.en ?? value.he ?? '';
+  if (typeof value === 'string') return value.trim();
+  const current = (value[locale] ?? '').trim();
+  if (current.length > 0) return current;
+  const otherLocale = locale === 'en' ? 'he' : 'en';
+  return (value[otherLocale] ?? '').trim();
 }
 
 /** True if the review has any content (userName or comment) for the given locale. Legacy string = en only. */
@@ -91,7 +96,7 @@ export async function GET(
     let aggregates: any[];
 
     if (filterByLocale) {
-      // Fetch all approved reviews for this slug, filter by locale, then paginate in memory
+      // Only include reviews that have content for the current locale; resolve with locale then fallback
       const allRaw = await Review.find(query).sort(sortOpt).lean();
       const filtered = (allRaw as any[]).filter((r) => hasContentForLocale(r, locale));
       total = filtered.length;
