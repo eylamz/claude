@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
         referrerBreakdown: [],
         countryBreakdown: [],
         topPages: [],
-        topPages: [],
         searchQueries: [],
         searchClicks: [],
         popularSearchHidden: [],
