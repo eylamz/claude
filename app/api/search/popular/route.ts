@@ -3,10 +3,12 @@
  * Used by the search page "Popular" section. No auth required.
  * Returns [] when NEXT_PUBLIC_ENABLE_ANALYTICS is not true.
  * Accepts ?locale=en|he to return localized display names.
+ * Excludes items in Settings.popularSearchHidden (admin can hide from UI).
  */
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import AnalyticsEvent from '@/lib/models/AnalyticsEvent';
+import Settings from '@/lib/models/Settings';
 import Skatepark from '@/lib/models/Skatepark';
 import Product from '@/lib/models/Product';
 import Event from '@/lib/models/Event';
@@ -17,6 +19,7 @@ import { getLocalizedText } from '@/lib/seo/utils';
 const ENABLE_ANALYTICS = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true';
 const DEFAULT_DAYS = 30;
 const LIMIT = 5;
+const AGGREGATION_LIMIT = 30;
 
 async function getDisplayName(
   resultType: string,
@@ -81,7 +84,7 @@ export async function GET(request: NextRequest) {
         },
       },
       { $sort: { count: -1 } },
-      { $limit: LIMIT },
+      { $limit: AGGREGATION_LIMIT },
       {
         $project: {
           resultType: '$_id.resultType',
@@ -92,8 +95,18 @@ export async function GET(request: NextRequest) {
       },
     ]);
 
+    const settings = await Settings.findOrCreate();
+    const hiddenSet = new Set(
+      (settings.popularSearchHidden || []).map(
+        (h) => `${h.resultType}\0${h.resultSlug}`
+      )
+    );
+    const filtered = rawResults.filter(
+      (r) => !hiddenSet.has(`${r.resultType}\0${r.resultSlug}`)
+    ).slice(0, LIMIT);
+
     const results = await Promise.all(
-      rawResults.map(async (r) => {
+      filtered.map(async (r) => {
         const name = await getDisplayName(r.resultType, r.resultSlug, locale);
         return {
           resultType: r.resultType,

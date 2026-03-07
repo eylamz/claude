@@ -30,7 +30,7 @@ import {
 } from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 import { Separator } from '@/components/ui/separator';
-import { trackSearchQuery, trackSearchClick } from '@/lib/analytics/internal';
+import { trackSearchQuery, trackSearchClick, shouldTrackAnalytics } from '@/lib/analytics/internal';
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -88,6 +88,8 @@ export default function MobileSidebar({
   const tSearch = useTranslations('search');
   const tSkateparks = useTranslations('skateparks');
   const { theme, toggleTheme } = useTheme();
+
+  const skipAnalyticsTracking = !shouldTrackAnalytics(pathname, session?.user?.role === 'admin');
 
   // Search state
   const [searchQuery, setSearchQuery] = useState('');
@@ -660,7 +662,7 @@ export default function MobileSidebar({
     }
     if (searchAnalyticsDebounceRef.current) clearTimeout(searchAnalyticsDebounceRef.current);
     searchAnalyticsDebounceRef.current = setTimeout(() => {
-      trackSearchQuery({ query: searchQuery.trim(), source: 'sidebar', locale });
+      trackSearchQuery({ query: searchQuery.trim(), source: 'sidebar', locale, skipTracking: skipAnalyticsTracking });
       searchAnalyticsDebounceRef.current = null;
     }, 1500);
     return () => {
@@ -669,7 +671,7 @@ export default function MobileSidebar({
         searchAnalyticsDebounceRef.current = null;
       }
     };
-  }, [searchQuery, locale]);
+  }, [searchQuery, locale, skipAnalyticsTracking]);
 
   // Group results by category (now consumes the sorted results)
   const groupedResults = useMemo(() => {
@@ -1097,6 +1099,7 @@ export default function MobileSidebar({
                                     href,
                                     source: 'sidebar',
                                     locale,
+                                    skipTracking: skipAnalyticsTracking,
                                   });
                                 }}
                                 className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-bg dark:hover:bg-white/[2.5%] transition-colors duration-200 group"
@@ -1200,6 +1203,7 @@ export default function MobileSidebar({
                               href,
                               source: 'sidebar',
                               locale,
+                              skipTracking: skipAnalyticsTracking,
                             });
                           }}
                           className="px-3 py-1.5 text-sm bg-sidebar-hover dark:bg-sidebar-hover-dark hover:bg-black/5 dark:hover:bg-white/5 border border-border dark:border-border-dark rounded-full transition-colors text-sidebar-text dark:text-sidebar-text-dark"

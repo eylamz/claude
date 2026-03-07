@@ -61,7 +61,7 @@ import {
 } from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 import { flipLanguage } from '@/lib/utils/transliterate';
-import { trackSearchQuery, trackSearchClick } from '@/lib/analytics/internal';
+import { trackSearchQuery, trackSearchClick, shouldTrackAnalytics } from '@/lib/analytics/internal';
 
 // Search result types (match API / search page)
 type SearchResultType = 'products' | 'skateparks' | 'events' | 'guides' | 'trainers';
@@ -132,6 +132,8 @@ export default function HeaderNav() {
   const tSearch = useTranslations('search');
   const tSkateparks = useTranslations('skateparks');
   const { theme, toggleTheme } = useTheme();
+
+  const skipAnalyticsTracking = !shouldTrackAnalytics(pathname, session?.user?.role === 'admin');
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -576,7 +578,7 @@ export default function HeaderNav() {
     }
     if (searchAnalyticsDebounceRef.current) clearTimeout(searchAnalyticsDebounceRef.current);
     searchAnalyticsDebounceRef.current = setTimeout(() => {
-      trackSearchQuery({ query: searchQuery.trim(), source: 'header', locale });
+      trackSearchQuery({ query: searchQuery.trim(), source: 'header', locale, skipTracking: skipAnalyticsTracking });
       searchAnalyticsDebounceRef.current = null;
     }, 1500);
     return () => {
@@ -585,7 +587,7 @@ export default function HeaderNav() {
         searchAnalyticsDebounceRef.current = null;
       }
     };
-  }, [searchQuery, locale]);
+  }, [searchQuery, locale, skipAnalyticsTracking]);
 
   // Fetch top 5 most clicked search results for "Popular" in search modal; use localStorage per locale if fetched < 1 week ago
   useEffect(() => {
@@ -1668,6 +1670,7 @@ export default function HeaderNav() {
                                   href,
                                   source: 'header',
                                   locale,
+                                  skipTracking: skipAnalyticsTracking,
                                 });
                                 setIsSearchOpen(false);
                               }}
@@ -1769,6 +1772,7 @@ export default function HeaderNav() {
                                           href,
                                           source: 'header',
                                           locale,
+                                          skipTracking: skipAnalyticsTracking,
                                         });
                                         setIsSearchOpen(false);
                                       }}

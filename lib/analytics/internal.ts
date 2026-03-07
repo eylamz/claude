@@ -105,6 +105,8 @@ export interface PageViewPayload {
   sessionId?: string;
   /** When set (e.g. logged-in user), events are attributed to this user for "my metrics" */
   userId?: string;
+  /** When true, do not send (e.g. admin user or on /admin page). */
+  skipTracking?: boolean;
 }
 
 function sendToTrack(body: object): void {
@@ -119,8 +121,9 @@ function sendToTrack(body: object): void {
   });
 }
 
-export function trackConsent(choice: ConsentChoice): void {
+export function trackConsent(choice: ConsentChoice, options?: { skipTracking?: boolean }): void {
   if (!ENABLE_ANALYTICS) return;
+  if (options?.skipTracking) return;
   const sessionId = typeof sessionStorage !== 'undefined' ? getSessionId() : undefined;
   sendToTrack({
     type: 'consent',
@@ -131,6 +134,7 @@ export function trackConsent(choice: ConsentChoice): void {
 
 export function trackPageView(payload: PageViewPayload): void {
   if (!ENABLE_ANALYTICS) return;
+  if (payload.skipTracking) return;
   const sessionId = payload.sessionId ?? getSessionId();
   const { deviceType, deviceCategory } = getDeviceInfo();
   const currentHost = typeof window !== 'undefined' ? window.location.hostname : '';
@@ -156,14 +160,24 @@ export function isAnalyticsEnabled(): boolean {
   return ENABLE_ANALYTICS;
 }
 
+/** Do not track when user is admin or on any /admin/* page. */
+export function shouldTrackAnalytics(pathname: string | null, isAdmin: boolean): boolean {
+  if (isAdmin) return false;
+  if (pathname != null && pathname.includes('/admin')) return false;
+  return true;
+}
+
 export interface SearchQueryPayload {
   query: string;
   source: SearchEventSource;
   locale?: string;
+  /** When true, do not send (e.g. admin user or on /admin page). */
+  skipTracking?: boolean;
 }
 
 export function trackSearchQuery(payload: SearchQueryPayload): void {
   if (!ENABLE_ANALYTICS) return;
+  if (payload.skipTracking) return;
   if (typeof window !== 'undefined' && !hasConsent('analytics')) return;
   const sessionId = typeof sessionStorage !== 'undefined' ? getSessionId() : undefined;
   const { deviceType, deviceCategory } = getDeviceInfo();
@@ -186,10 +200,13 @@ export interface SearchClickPayload {
   href: string;
   source: SearchEventSource;
   locale?: string;
+  /** When true, do not send (e.g. admin user or on /admin page). */
+  skipTracking?: boolean;
 }
 
 export function trackSearchClick(payload: SearchClickPayload): void {
   if (!ENABLE_ANALYTICS) return;
+  if (payload.skipTracking) return;
   if (typeof window !== 'undefined' && !hasConsent('analytics')) return;
   const sessionId = typeof sessionStorage !== 'undefined' ? getSessionId() : undefined;
   const { deviceType, deviceCategory } = getDeviceInfo();

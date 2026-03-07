@@ -84,6 +84,8 @@ export interface ISettings extends Document {
   skateparksVersion: number;
   guidesVersion: number;
   eventsVersion: number;
+  /** (resultType, resultSlug) pairs to hide from public "Popular searches" */
+  popularSearchHidden: Array<{ resultType: string; resultSlug: string }>;
   createdAt: Date;
   updatedAt: Date;
   
@@ -240,6 +242,17 @@ const SettingsSchema: Schema<ISettings> = new Schema<ISettings>(
       default: 1,
       min: [1, 'Version must be at least 1'],
     },
+    eventsVersion: {
+      type: Number,
+      default: 1,
+      min: [1, 'Version must be at least 1'],
+    },
+    popularSearchHidden: [
+      {
+        resultType: { type: String, required: true },
+        resultSlug: { type: String, required: true },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -285,6 +298,7 @@ SettingsSchema.statics.findOrCreate = async function (): Promise<ISettings> {
       skateparksVersion: 1,
       guidesVersion: 1,
       eventsVersion: 1,
+      popularSearchHidden: [],
     });
   }
   return settings;

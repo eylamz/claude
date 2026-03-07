@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { hasConsent } from '@/lib/utils/cookie-consent';
-import { trackPageView, isAnalyticsEnabled } from '@/lib/analytics/internal';
+import { trackPageView, isAnalyticsEnabled, shouldTrackAnalytics } from '@/lib/analytics/internal';
 
 function getUserId(session: { user?: { id?: string } } | null): string | undefined {
   const id = session?.user?.id;
@@ -28,6 +28,8 @@ export default function InternalAnalytics() {
   useEffect(() => {
     if (!isAnalyticsEnabled() || !pathname) return;
     if (!hasConsent('analytics')) return;
+    const isAdmin = session?.user?.role === 'admin';
+    if (!shouldTrackAnalytics(pathname, isAdmin)) return;
 
     const now = Date.now();
     const previousPath = previousPathRef.current;
@@ -66,12 +68,14 @@ export default function InternalAnalytics() {
     lastTrackedAtRef.current = Date.now();
     previousPathRef.current = pathname;
     enterTimeRef.current = Date.now();
-  }, [pathname, locale]);
+  }, [pathname, locale, session?.user?.role]);
 
   // On leave (tab close / navigate away), send current page time
   useEffect(() => {
     if (!isAnalyticsEnabled() || !pathname) return;
     if (!hasConsent('analytics')) return;
+    const isAdmin = session?.user?.role === 'admin';
+    if (!shouldTrackAnalytics(pathname, isAdmin)) return;
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
@@ -102,7 +106,7 @@ export default function InternalAnalytics() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [pathname, locale]);
+  }, [pathname, locale, session?.user?.role]);
 
   return null;
 }

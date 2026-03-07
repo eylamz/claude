@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { Button } from './button';
 import { X } from 'lucide-react';
@@ -14,7 +16,7 @@ import {
   hasGivenConsent,
   type CookieCategory,
 } from '@/lib/utils/cookie-consent';
-import { trackConsent } from '@/lib/analytics/internal';
+import { trackConsent, shouldTrackAnalytics } from '@/lib/analytics/internal';
 import { Switch } from '@/components/ui/switch';
 
 const isIlCookiePolicy = process.env.NEXT_PUBLIC_SET_IL_COOKIE_POLICY === 'true';
@@ -26,6 +28,8 @@ const BANNER_LAYER_CLASS =
 export default function CookieConsentBanner() {
   const t = useTranslations('common');
   const locale = useLocale();
+  const pathname = usePathname();
+  const { data: session } = useSession();
   const [isVisible, setIsVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [preferences, setPreferences] = useState({
@@ -73,8 +77,10 @@ export default function CookieConsentBanner() {
     };
   }, [isVisible]);
 
+  const skipAnalyticsTracking = !shouldTrackAnalytics(pathname, session?.user?.role === 'admin');
+
   const handleAcceptAll = () => {
-    trackConsent('accept_all');
+    trackConsent('accept_all', { skipTracking: skipAnalyticsTracking });
     acceptAllCookies();
     setIsVisible(false);
     // Trigger analytics initialization if needed
@@ -84,7 +90,7 @@ export default function CookieConsentBanner() {
   };
 
   const handleRejectNonEssential = () => {
-    trackConsent('reject_non_essential');
+    trackConsent('reject_non_essential', { skipTracking: skipAnalyticsTracking });
     rejectNonEssentialCookies();
     setIsVisible(false);
     if (typeof window !== 'undefined') {
@@ -93,7 +99,7 @@ export default function CookieConsentBanner() {
   };
 
   const handleSavePreferences = () => {
-    trackConsent('save_preferences');
+    trackConsent('save_preferences', { skipTracking: skipAnalyticsTracking });
     setCookiePreferences({
       ...preferences,
       functional: true, // Always enabled, cannot be disabled
@@ -116,7 +122,7 @@ export default function CookieConsentBanner() {
 
   /** IL mode: close via X button – track and accept all */
   const handleIlClose = () => {
-    trackConsent('il_consent_x');
+    trackConsent('il_consent_x', { skipTracking: skipAnalyticsTracking });
     acceptAllCookies();
     setIsVisible(false);
     if (typeof window !== 'undefined') {
@@ -126,7 +132,7 @@ export default function CookieConsentBanner() {
 
   /** IL mode: confirm (Understand) button – track and accept all */
   const handleIlConfirm = () => {
-    trackConsent('il_consent_confirm');
+    trackConsent('il_consent_confirm', { skipTracking: skipAnalyticsTracking });
     acceptAllCookies();
     setIsVisible(false);
     if (typeof window !== 'undefined') {

@@ -1,3 +1,4 @@
+// lib/models/Skatepark.ts
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 /**

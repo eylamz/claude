@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth/config';
 import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import AnalyticsEvent from '@/lib/models/AnalyticsEvent';
+import Settings from '@/lib/models/Settings';
 
 const ENABLE_ANALYTICS = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true';
 const DEFAULT_DAYS = 30;
@@ -34,24 +35,23 @@ export async function GET(request: NextRequest) {
         referrerBreakdown: [],
         countryBreakdown: [],
         topPages: [],
+        topPages: [],
         searchQueries: [],
         searchClicks: [],
+        popularSearchHidden: [],
       });
     }
 
     const { searchParams } = new URL(request.url);
     const days = Math.min(365, Math.max(1, parseInt(searchParams.get('days') ?? String(DEFAULT_DAYS), 10) || DEFAULT_DAYS));
     const userParam = searchParams.get('user');
-    const excludeAdmins = searchParams.get('excludeAdmins') === 'true';
 
     const filterByCurrentUser = userParam === 'me';
-    const filterByAdminsOnly = userParam === 'admins';
 
+    // Always exclude admin users from metrics (do not track admin activity)
     let adminUserIds: string[] = [];
-    if (excludeAdmins || filterByAdminsOnly) {
-      const admins = await User.find({ role: 'admin' }).select('_id').lean();
-      adminUserIds = admins.map((u) => String(u._id));
-    }
+    const admins = await User.find({ role: 'admin' }).select('_id').lean();
+    adminUserIds = admins.map((u) => String(u._id));
 
     const currentUserId = filterByCurrentUser && session.user?.id ? String(session.user.id) : null;
 
@@ -62,11 +62,7 @@ export async function GET(request: NextRequest) {
     const matchPageView: Record<string, unknown> = { type: 'page_view', timestamp: { $gte: from } };
     if (currentUserId) {
       matchPageView.userId = currentUserId;
-    } else if (filterByAdminsOnly && adminUserIds.length > 0) {
-      matchPageView.userId = { $in: adminUserIds };
-    } else if (filterByAdminsOnly) {
-      matchPageView.userId = { $in: [] };
-    } else if (excludeAdmins && adminUserIds.length > 0) {
+    } else if (adminUserIds.length > 0) {
       matchPageView.$or = [
         { userId: { $exists: false } },
         { userId: null },
@@ -191,6 +187,9 @@ export async function GET(request: NextRequest) {
 
     const topPages = pageViewsByPath.slice(0, 20);
 
+    const settings = await Settings.findOrCreate();
+    const popularSearchHidden = settings.popularSearchHidden || [];
+
     return NextResponse.json({
       enabled: true,
       from: from.toISOString(),
@@ -205,6 +204,7 @@ export async function GET(request: NextRequest) {
       topPages,
       searchQueries,
       searchClicks,
+      popularSearchHidden,
     });
   } catch (error) {
     console.error('[admin/metrics]', error);

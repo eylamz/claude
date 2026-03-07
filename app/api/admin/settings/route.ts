@@ -71,7 +71,13 @@ export async function PUT(request: NextRequest) {
     if (body.eventsVersion !== undefined) {
       settings.eventsVersion = body.eventsVersion;
     }
-    
+    if (Array.isArray(body.popularSearchHidden)) {
+      settings.popularSearchHidden = body.popularSearchHidden.filter(
+        (item: any) =>
+          item && typeof item.resultType === 'string' && typeof item.resultSlug === 'string'
+      );
+    }
+
     await settings.save();
     
     return NextResponse.json({ 

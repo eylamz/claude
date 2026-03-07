@@ -17,15 +17,18 @@ const REFERRER_CATEGORIES: ReferrerCategory[] = ['direct', 'internal', 'google',
 const SEARCH_SOURCES: SearchEventSource[] = ['header', 'sidebar', 'search_page'];
 const SEARCH_RESULT_TYPES = ['skateparks', 'products', 'events', 'guides', 'trainers'];
 
-/** ISO 3166-1 alpha-2 country code from request IP. Vercel: x-vercel-ip-country, Cloudflare: cf-ipcountry. */
-function getCountryFromRequest(request: NextRequest): string | undefined {
+/** ISO 3166-1 alpha-2 country code from request IP.
+ * Set by the edge: Vercel sets x-vercel-ip-country, Cloudflare sets cf-ipcountry.
+ * In development we use "LOCAL" (no geo headers on localhost).
+ * In production, if the app is not behind Vercel/Cloudflare, no header is set and we return "unknown".
+ */
+function getCountryFromRequest(request: NextRequest): string {
   const vercel = request.headers.get('x-vercel-ip-country');
   if (vercel && /^[A-Z]{2}$/i.test(vercel.trim())) return vercel.trim().toUpperCase();
   const cf = request.headers.get('cf-ipcountry');
   if (cf && cf !== 'XX' && /^[A-Z]{2}$/i.test(cf.trim())) return cf.trim().toUpperCase();
-  // Localhost: no geo headers (they are set by Vercel/Cloudflare in production). Use "LOCAL" in dev so the chart is testable.
   if (process.env.NODE_ENV === 'development') return 'LOCAL';
-  return undefined;
+  return 'unknown';
 }
 
 function isValidString(v: unknown, maxLen = 2048): v is string {
@@ -72,6 +75,10 @@ export async function POST(request: NextRequest) {
       if (!isValidString(path, 1024)) {
         return NextResponse.json({ error: 'Invalid or missing path' }, { status: 400 });
       }
+      // Do not store analytics for admin pages or admin users (client should also skip; this is a safety net)
+      if (path.includes('/admin')) {
+        return new NextResponse(null, { status: 204 });
+      }
       const sessionId = body.sessionId != null && isValidString(body.sessionId, 128) ? body.sessionId : undefined;
       const locale = body.locale != null && isValidString(body.locale, 16) ? body.locale : undefined;
       const timeOnPageMs = body.timeOnPageMs != null && isValidNumber(body.timeOnPageMs) ? body.timeOnPageMs : undefined;
@@ -99,7 +106,7 @@ export async function POST(request: NextRequest) {
         ...(referrer !== undefined && { referrer }),
         ...(referrerCategory && { referrerCategory }),
         ...(userId && { userId }),
-        ...(country && { country }),
+        country: country,
       });
       return new NextResponse(null, { status: 204 });
     }

@@ -7,6 +7,10 @@ import {
   getMetaTitleWithFallback,
   DEFAULT_META_TITLE,
   DEFAULT_OG_IMAGE,
+  PRIMARY_OG_IMAGE,
+  EVENTS_OG_IMAGE,
+  EVENTS_OG_IMAGE_FALLBACK,
+  GUIDES_OG_IMAGE,
   getSiteUrl,
 } from './utils';
 import connectDB from '@/lib/db/mongodb';
@@ -130,13 +134,12 @@ export async function generateSkateparkMetadata(params: {
         ? notesText.substring(0, 160)
         : fallbackDescription;
 
-    // OG image: use seoMetadata.ogImage when set; when empty, use first skatepark image, then default
-    let image = '/og-skatepark-default.jpg';
-    if (seo?.ogImage && seo.ogImage.trim()) {
-      image = seo.ogImage;
-    } else if (skatepark.images && Array.isArray(skatepark.images) && skatepark.images.length > 0) {
-      image = skatepark.images[0]?.url || '/og-skatepark-default.jpg';
+    // OG image: seoMetadata.ogImage → skatepark.images[0] → PRIMARY_OG_IMAGE → DEFAULT_OG_IMAGE
+    let image = (seo?.ogImage && seo.ogImage.trim()) ? seo.ogImage.trim() : undefined;
+    if (!image && skatepark.images && Array.isArray(skatepark.images) && skatepark.images.length > 0) {
+      image = skatepark.images[0]?.url;
     }
+    const finalImage = (image && image.trim()) || PRIMARY_OG_IMAGE;
 
     // Localized title format (Skatepark has no metaTitle; use name + brand)
     const title = locale === 'he' ? `סקייטפארק ${name} | אנבוס` : `${name} Skatepark | ENBOSS`;
@@ -147,14 +150,27 @@ export async function generateSkateparkMetadata(params: {
         ? getLocalizedText(seo.keywords, locale).trim()
         : undefined;
 
+    // Article meta for LinkedIn/social: author ENBOSS, publish date = updatedAt
+    const updatedAt = (skatepark as any).updatedAt;
+    const publishedTime = updatedAt ? new Date(updatedAt).toISOString() : undefined;
+
     return genMeta({
       title,
       description,
-      image,
+      image: finalImage,
+      images: [
+        { url: finalImage },
+        { url: PRIMARY_OG_IMAGE },
+        { url: DEFAULT_OG_IMAGE },
+      ],
       url: `/${locale}/skateparks/${slug}`,
+      type: 'article',
       locale,
       alternateLocales: locale === 'en' ? ['he'] : ['en'],
       keywords,
+      author: 'ENBOSS',
+      publishedTime,
+      modifiedTime: publishedTime,
     });
   } catch (error) {
     console.error('Error generating skatepark metadata:', error);
@@ -222,7 +238,13 @@ export async function generateEventsListingMetadata(params: { locale: string }):
   return genMeta({
     title,
     description,
-    image: DEFAULT_OG_IMAGE,
+    image: EVENTS_OG_IMAGE,
+    images: [
+      { url: EVENTS_OG_IMAGE },
+      { url: EVENTS_OG_IMAGE_FALLBACK },
+      { url: PRIMARY_OG_IMAGE },
+      { url: DEFAULT_OG_IMAGE },
+    ],
     url: `/${locale}/events`,
     locale,
     alternateLocales: locale === 'en' ? ['he'] : ['en'],
@@ -252,7 +274,12 @@ export async function generateGuidesListingMetadata(params: { locale: string }):
     return genMeta({
       title,
       description,
-      image: DEFAULT_OG_IMAGE,
+      image: GUIDES_OG_IMAGE,
+      images: [
+        { url: GUIDES_OG_IMAGE },
+        { url: PRIMARY_OG_IMAGE },
+        { url: DEFAULT_OG_IMAGE },
+      ],
       url: `/${locale}/guides`,
       locale,
       alternateLocales: locale === 'en' ? ['he'] : ['en'],

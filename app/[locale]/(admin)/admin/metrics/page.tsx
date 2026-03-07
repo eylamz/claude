@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardContent, Button, SelectWrapper, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Skeleton } from '@/components/ui';
 import {
   BarChart,
@@ -38,6 +37,7 @@ interface MetricsData {
   topPages: Array<{ path: string; count: number }>;
   searchQueries?: Array<{ query: string; deviceCategory: string; count: number }>;
   searchClicks?: Array<{ resultType: string; resultSlug: string; deviceCategory: string; count: number }>;
+  popularSearchHidden?: Array<{ resultType: string; resultSlug: string }>;
 }
 
 const DEVICE_COLORS = ['#3caa41', '#1d4ed8', '#e49a43', '#8B5CF6', '#EC4899'];
@@ -55,22 +55,39 @@ function formatDuration(ms: number): string {
 
 export default function AdminMetricsPage() {
   const t = useTranslations('admin');
-  const { data: session } = useSession();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<MetricsData | null>(null);
   const [days, setDays] = useState('30');
-  const [showAdminMetrics, setShowAdminMetrics] = useState(false);
-  const [adminMetricsData, setAdminMetricsData] = useState<MetricsData | null>(null);
-  const [adminMetricsLoading, setAdminMetricsLoading] = useState(false);
+  const [updatingHidden, setUpdatingHidden] = useState<string | null>(null);
 
-  const isAdmin = session?.user?.role === 'admin';
+  const hiddenSet = useMemo(
+    () =>
+      new Set(
+        (data?.popularSearchHidden || []).map((h) => `${h.resultType}\0${h.resultSlug}`)
+      ),
+    [data?.popularSearchHidden]
+  );
+
+  const popularSearchesAggregated = useMemo(() => {
+    const map = new Map<string, { resultType: string; resultSlug: string; count: number }>();
+    for (const row of data?.searchClicks ?? []) {
+      const key = `${row.resultType}\0${row.resultSlug}`;
+      const cur = map.get(key);
+      if (!cur) {
+        map.set(key, { resultType: row.resultType, resultSlug: row.resultSlug, count: row.count });
+      } else {
+        cur.count += row.count;
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => b.count - a.count).slice(0, 25);
+  }, [data?.searchClicks]);
 
   const fetchMetrics = async () => {
     try {
       setError(null);
       setLoading(true);
-      const res = await fetch(`/api/admin/metrics?days=${days}&excludeAdmins=true`);
+      const res = await fetch(`/api/admin/metrics?days=${days}`);
       if (!res.ok) throw new Error('Failed to fetch metrics');
       const json = await res.json();
       setData(json);
@@ -85,31 +102,11 @@ export default function AdminMetricsPage() {
     fetchMetrics();
   }, [days]);
 
-  const fetchAdminMetrics = async () => {
-    try {
-      setAdminMetricsLoading(true);
-      const res = await fetch(`/api/admin/metrics?days=${days}&user=admins`);
-      if (!res.ok) throw new Error('Failed to fetch admin metrics');
-      const json = await res.json();
-      setAdminMetricsData(json);
-    } catch {
-      setAdminMetricsData(null);
-    } finally {
-      setAdminMetricsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (showAdminMetrics && isAdmin) {
-      fetchAdminMetrics();
-    }
-  }, [showAdminMetrics, days, isAdmin]);
-
   const handleRefresh = async () => {
     try {
       setError(null);
       setLoading(true);
-      const res = await fetch(`/api/admin/metrics?days=${days}&excludeAdmins=true`);
+      const res = await fetch(`/api/admin/metrics?days=${days}`);
       if (!res.ok) throw new Error('Failed to fetch metrics');
       const json = await res.json();
       setData(json);
@@ -122,6 +119,41 @@ export default function AdminMetricsPage() {
       setError(e instanceof Error ? e.message : 'Unknown error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTogglePopularHidden = async (
+    resultType: string,
+    resultSlug: string,
+    currentlyHidden: boolean
+  ) => {
+    const key = `${resultType}\0${resultSlug}`;
+    setUpdatingHidden(key);
+    try {
+      const current = data?.popularSearchHidden || [];
+      const next = currentlyHidden
+        ? current.filter((h) => h.resultType !== resultType || h.resultSlug !== resultSlug)
+        : [...current, { resultType, resultSlug }];
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ popularSearchHidden: next }),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      setData((prev) => (prev ? { ...prev, popularSearchHidden: next } : null));
+      toast({
+        title: t('metrics.toastSuccess'),
+        description: currentlyHidden ? t('metrics.popularRestored') : t('metrics.popularRemoved'),
+        variant: 'success',
+      });
+    } catch {
+      toast({
+        title: t('metrics.toastError'),
+        description: t('metrics.popularUpdateFailed'),
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdatingHidden(null);
     }
   };
 
@@ -145,6 +177,8 @@ export default function AdminMetricsPage() {
   }
 
   const disabled = !data?.enabled;
+
+  const isIlCookiePolicy = process.env.NEXT_PUBLIC_SET_IL_COOKIE_POLICY === 'true';
 
   return (
     <div className="pt-16 space-y-6 w-full max-w-6xl mx-auto">
@@ -188,168 +222,6 @@ export default function AdminMetricsPage() {
           </Button>
         </div>
       </div>
-
-      {/* Admin metrics (admin only, show when clicked) */}
-      {isAdmin && (
-        <Card className="bg-card dark:bg-card-dark">
-          <button
-            type="button"
-            onClick={() => setShowAdminMetrics((v) => !v)}
-            className="w-full text-left p-4 flex items-center justify-between gap-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-          >
-            <div>
-              <span className="font-medium text-gray-900 dark:text-white">{t('metrics.adminMetrics')}</span>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t('metrics.adminMetricsDescription')}</p>
-            </div>
-            <span className="text-sm text-gray-500 dark:text-gray-400 shrink-0">
-              {showAdminMetrics ? t('metrics.hideAdminMetrics') : t('metrics.showAdminMetrics')}
-            </span>
-            <svg
-              className={`w-5 h-5 text-gray-500 transition-transform ${showAdminMetrics ? 'rotate-180' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          {showAdminMetrics && (
-            <CardContent className="pt-0 pb-4 border-t border-border dark:border-border-dark">
-              {adminMetricsLoading ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-20 w-full rounded-lg" />
-                  ))}
-                </div>
-              ) : adminMetricsData?.enabled ? (
-                <div className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <Card className="bg-muted/50 dark:bg-muted-dark/50">
-                      <CardContent className="p-3">
-                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('metrics.totalPageViews')}</p>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white">
-                          {adminMetricsData.pageViewsByPath.reduce((s, p) => s + p.count, 0) ?? 0}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('metrics.lastDays', { days: adminMetricsData.days ?? Number(days) ?? 30 })}</p>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-muted/50 dark:bg-muted-dark/50">
-                      <CardContent className="p-3">
-                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('metrics.totalSessions')}</p>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white">{adminMetricsData.sessionsSummary?.totalSessions ?? 0}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('metrics.lastDays', { days: adminMetricsData.days ?? Number(days) ?? 30 })}</p>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-muted/50 dark:bg-muted-dark/50">
-                      <CardContent className="p-3">
-                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('metrics.avgTimeOnSite')}</p>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white">
-                          {formatDuration(adminMetricsData.sessionsSummary?.avgSessionDurationMs ?? 0)}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{t('metrics.perSession')}</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  {(adminMetricsData.deviceBreakdown?.byType?.length || adminMetricsData.referrerBreakdown?.length) ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {adminMetricsData.deviceBreakdown?.byType?.length ? (
-                        <Card className="bg-muted/50 dark:bg-muted-dark/50">
-                          <CardHeader className="py-2 px-4">
-                            <CardTitle className="text-sm font-medium">{t('metrics.operatingSystem')}</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-2 pt-0">
-                            <ResponsiveContainer width="100%" height={180}>
-                              <PieChart>
-                                <Pie
-                                  data={adminMetricsData.deviceBreakdown.byType.map((d) => ({
-                                    name: t(`metrics.os.${d.deviceType}` as const),
-                                    value: d.count,
-                                  }))}
-                                  cx="50%"
-                                  cy="50%"
-                                  innerRadius={40}
-                                  outerRadius={65}
-                                  paddingAngle={2}
-                                  dataKey="value"
-                                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                >
-                                  {adminMetricsData.deviceBreakdown.byType.map((_, i) => (
-                                    <Cell key={i} fill={DEVICE_COLORS[i % DEVICE_COLORS.length]} />
-                                  ))}
-                                </Pie>
-                                <Tooltip formatter={(value: unknown) => [value as React.ReactNode, t('metrics.sessions')]} />
-                                <Legend formatter={(value, entry) => `${value} (${entry?.payload?.value ?? 0})`} />
-                              </PieChart>
-                            </ResponsiveContainer>
-                          </CardContent>
-                        </Card>
-                      ) : null}
-                      {adminMetricsData.referrerBreakdown?.length ? (
-                        <Card className="bg-muted/50 dark:bg-muted-dark/50">
-                          <CardHeader className="py-2 px-4">
-                            <CardTitle className="text-sm font-medium">{t('metrics.trafficSources')}</CardTitle>
-                          </CardHeader>
-                          <CardContent className="p-2 pt-0">
-                            <ResponsiveContainer width="100%" height={180}>
-                              <PieChart>
-                                <Pie
-                                  data={adminMetricsData.referrerBreakdown.map((r) => ({ name: t(`metrics.referrer.${r.referrerCategory}` as const), value: r.count }))}
-                                  cx="50%"
-                                  cy="50%"
-                                  innerRadius={40}
-                                  outerRadius={65}
-                                  paddingAngle={2}
-                                  dataKey="value"
-                                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                >
-                                  {adminMetricsData.referrerBreakdown.map((_, i) => (
-                                    <Cell key={i} fill={REFERRER_COLORS[i % REFERRER_COLORS.length]} />
-                                  ))}
-                                </Pie>
-                                <Tooltip formatter={(value: unknown) => [value as React.ReactNode, t('metrics.views')]} />
-                                <Legend formatter={(value, entry) => `${value} (${entry?.payload?.value ?? 0})`} />
-                              </PieChart>
-                            </ResponsiveContainer>
-                          </CardContent>
-                        </Card>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {adminMetricsData.topPages?.length ? (
-                    <Card className="bg-muted/50 dark:bg-muted-dark/50">
-                      <CardHeader className="py-2 px-4">
-                        <CardTitle className="text-sm font-medium">{t('metrics.topPages')}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-2 pt-0">
-                        <div className="max-h-48 overflow-y-auto">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead className="text-xs">{t('metrics.path')}</TableHead>
-                                <TableHead className="text-right text-xs">{t('metrics.views')}</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {adminMetricsData.topPages.slice(0, 10).map((row) => (
-                                <TableRow key={row.path}>
-                                  <TableCell className="font-mono text-xs truncate max-w-[180px]" title={row.path}>{row.path}</TableCell>
-                                  <TableCell className="text-right text-xs">{row.count}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ) : null}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">{t('metrics.noDataYet')}</p>
-              )}
-            </CardContent>
-          )}
-        </Card>
-      )}
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -458,6 +330,63 @@ export default function AdminMetricsPage() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Popular searches (shown to users in header/sidebar/search page) – manage visibility */}
+          <Card className="bg-card dark:bg-card-dark">
+            <CardHeader>
+              <CardTitle className="text-gray-900 dark:text-white">{t('metrics.popularSearchesTitle')}</CardTitle>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {t('metrics.popularSearchesDescription')}
+              </p>
+            </CardHeader>
+            <CardContent className="p-4 pt-0">
+              {popularSearchesAggregated.length > 0 ? (
+                <div className="overflow-x-auto max-h-80 overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('metrics.resultType')}</TableHead>
+                        <TableHead>{t('metrics.path')}</TableHead>
+                        <TableHead className="text-right">{t('metrics.views')}</TableHead>
+                        <TableHead className="text-right w-32">{t('metrics.actions')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {popularSearchesAggregated.map((row) => {
+                        const key = `${row.resultType}\0${row.resultSlug}`;
+                        const isHidden = hiddenSet.has(key);
+                        const isUpdating = updatingHidden === key;
+                        return (
+                          <TableRow key={key}>
+                            <TableCell className="text-xs text-gray-900 dark:text-white">{row.resultType}</TableCell>
+                            <TableCell className="font-mono text-xs text-gray-900 dark:text-white truncate max-w-[200px]" title={row.resultSlug}>
+                              {row.resultSlug || '—'}
+                              {isHidden && (
+                                <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">({t('metrics.hiddenFromPopular')})</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right text-gray-700 dark:text-gray-300">{row.count}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant={isHidden ? 'blue' : 'red'}
+                                size="sm"
+                                disabled={isUpdating}
+                                onClick={() => handleTogglePopularHidden(row.resultType, row.resultSlug, isHidden)}
+                              >
+                                {isUpdating ? t('metrics.saving') : isHidden ? t('metrics.restore') : t('metrics.remove')}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noSearchData')}</p>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Search results */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -596,6 +525,7 @@ export default function AdminMetricsPage() {
               </CardContent>
             </Card>
 
+            {!isIlCookiePolicy && (
             <Card className="bg-card dark:bg-card-dark">
               <CardHeader>
                 <CardTitle className="text-gray-900 dark:text-white">{t('metrics.cookieConsent')}</CardTitle>
@@ -627,6 +557,7 @@ export default function AdminMetricsPage() {
                 )}
               </CardContent>
             </Card>
+            )}
 
             {/* IL Cookie consent: X button vs Confirm button */}
             <Card className="bg-card dark:bg-card-dark">
@@ -678,6 +609,9 @@ export default function AdminMetricsPage() {
             <Card className="bg-card dark:bg-card-dark">
               <CardHeader>
                 <CardTitle className="text-gray-900 dark:text-white">{t('metrics.usersByCountry')}</CardTitle>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {t('metrics.usersByCountryHint')}
+                </p>
               </CardHeader>
               <CardContent className="p-4 pt-0">
                 {data?.countryBreakdown?.length ? (

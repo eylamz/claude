@@ -3,8 +3,9 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState, memo, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import { useSession } from 'next-auth/react';
 import { ProductCard, TrainerCard } from '@/components/shop';
 import { ParkCard } from '@/components/skateparks/ParkCard';
 import { SearchInput } from '@/components/common/SearchInput';
@@ -24,7 +25,7 @@ import {
 } from '@/lib/search-from-cache';
 import { highlightMatch } from '@/lib/search-highlight';
 import { isEcommerceEnabled, isTrainersEnabled } from '@/lib/utils/ecommerce';
-import { trackSearchQuery, trackSearchClick } from '@/lib/analytics/internal';
+import { trackSearchQuery, trackSearchClick, shouldTrackAnalytics } from '@/lib/analytics/internal';
 
 // Optimize image URLs for event/guide thumbnails (match events + guides pages)
 function getOptimizedImageUrl(originalUrl: string): string | null {
@@ -578,11 +579,15 @@ SearchGuideCard.displayName = 'SearchGuideCard';
 function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const locale = useLocale();
+  const { data: session } = useSession();
   const t = useTranslations('search');
   const tGuides = useTranslations('guides');
   const tSkateparks = useTranslations('skateparks');
   const isHebrew = locale === 'he';
+
+  const skipAnalyticsTracking = !shouldTrackAnalytics(pathname, session?.user?.role === 'admin');
 
   const getSportTranslation = useCallback(
     (sport: string): string => {
@@ -751,7 +756,7 @@ function SearchPageContent() {
     }
     if (searchAnalyticsDebounceRef.current) clearTimeout(searchAnalyticsDebounceRef.current);
     searchAnalyticsDebounceRef.current = setTimeout(() => {
-      trackSearchQuery({ query: query.trim(), source: 'search_page', locale });
+      trackSearchQuery({ query: query.trim(), source: 'search_page', locale, skipTracking: skipAnalyticsTracking });
       searchAnalyticsDebounceRef.current = null;
     }, 1500);
     return () => {
@@ -760,7 +765,7 @@ function SearchPageContent() {
         searchAnalyticsDebounceRef.current = null;
       }
     };
-  }, [query, locale]);
+  }, [query, locale, skipAnalyticsTracking]);
 
   // Cache-backed categories (localStorage first; fill cache if missing)
   const cacheCategories = useMemo((): ('skateparks' | 'events' | 'guides')[] => {
@@ -1143,6 +1148,7 @@ function SearchPageContent() {
                 href,
                 source: 'search_page',
                 locale,
+                skipTracking: skipAnalyticsTracking,
               })
             }
           >
@@ -1179,6 +1185,7 @@ function SearchPageContent() {
                 href,
                 source: 'search_page',
                 locale,
+                skipTracking: skipAnalyticsTracking,
               })
             }
           >
@@ -1212,6 +1219,7 @@ function SearchPageContent() {
                 href,
                 source: 'search_page',
                 locale,
+                skipTracking: skipAnalyticsTracking,
               })
             }
           />
@@ -1232,6 +1240,7 @@ function SearchPageContent() {
                 href,
                 source: 'search_page',
                 locale,
+                skipTracking: skipAnalyticsTracking,
               })
             }
           >
@@ -1268,6 +1277,7 @@ function SearchPageContent() {
                 href,
                 source: 'search_page',
                 locale,
+                skipTracking: skipAnalyticsTracking,
               })
             }
           />
@@ -1345,6 +1355,7 @@ function SearchPageContent() {
                           href,
                           source: 'search_page',
                           locale,
+                          skipTracking: skipAnalyticsTracking,
                         })
                       }
                       className="px-3 py-1.5 text-sm bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full transition-colors text-gray-700 dark:text-gray-300"

@@ -5,8 +5,25 @@ type LocalizedField = { en: string; he: string } | string;
 /** Default site meta title (same as root layout.tsx). Used as final fallback for page titles. */
 export const DEFAULT_META_TITLE = 'ENBOSS - Unite & Ride';
 
-/** Default OG image URL used for site-wide and listing pages (events, skateparks, guides, growth-lab). */
-export const DEFAULT_OG_IMAGE = 'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772636312/bd6cugckdsmod2abmxhw.png';
+/** Primary OG image for the site (root layout, first choice). */
+export const PRIMARY_OG_IMAGE =
+  'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772474412/huuauefsaumesy5fsitc.jpg';
+
+/** Default OG image URL used as site-wide fallback (root layout fallback, listing fallbacks). */
+export const DEFAULT_OG_IMAGE =
+  'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772636312/bd6cugckdsmod2abmxhw.png';
+
+/** Events listing: primary OG image. */
+export const EVENTS_OG_IMAGE =
+  'https://res.cloudinary.com/dr0rvohz9/image/upload/v1771769672/wcjoumbnl57r6aqe9nae.webp';
+
+/** Events listing: fallback OG image. */
+export const EVENTS_OG_IMAGE_FALLBACK =
+  'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772201360/m4njuep6fcpami4oph3v.png';
+
+/** Guides listing: primary OG image. */
+export const GUIDES_OG_IMAGE =
+  'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772210378/nmbijyydjsjmfase5sec.png';
 
 /**
  * Resolve the public site URL for absolute metadata (og:image, canonical, etc.).
@@ -61,6 +78,8 @@ export interface SEOConfig {
   title: string | LocalizedField;
   description: string | LocalizedField;
   image?: string;
+  /** Optional array of OG images (priority order). When set, used for openGraph.images; first entry used for twitter. */
+  images?: Array<{ url: string }>;
   url?: string;
   type?: 'website' | 'article' | 'product';
   locale?: string;
@@ -73,13 +92,31 @@ export interface SEOConfig {
 }
 
 export async function generateMetadata(config: SEOConfig): Promise<Metadata> {
-  const { title, description, image, url, type = 'website', locale = 'en', alternateLocales = [], publishedTime, modifiedTime, author, keywords } = config;
-  
+  const { title, description, image, images: imagesConfig, url, type = 'website', locale = 'en', alternateLocales = [], publishedTime, modifiedTime, author, keywords } = config;
+
   const titleText = getLocalizedText(title, locale);
   const descText = getLocalizedText(description, locale);
   const siteUrl = await getSiteUrl();
   const imageUrl = image ? (image.startsWith('http') ? image : `${siteUrl}${image}`) : DEFAULT_OG_IMAGE;
   const canonicalUrl = url ? `${siteUrl}${url}` : siteUrl;
+
+  // Resolve OG images: use explicit array if provided, else single image
+  const ogImages = imagesConfig?.length
+    ? imagesConfig.map((img) => ({
+        url: img.url.startsWith('http') ? img.url : `${siteUrl}${img.url}`,
+        width: 1200,
+        height: 630,
+        alt: titleText,
+      }))
+    : [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: titleText,
+        },
+      ];
+  const twitterImage = ogImages[0]?.url ?? imageUrl;
 
   // Handle alternate language URLs
   // If URL contains locale prefix, replace it; otherwise add locale prefix
@@ -102,6 +139,7 @@ export async function generateMetadata(config: SEOConfig): Promise<Metadata> {
     ...(keywords !== undefined && keywords !== '' && {
       keywords: Array.isArray(keywords) ? keywords : (typeof keywords === 'string' ? keywords.split(',').map(k => k.trim()).filter(Boolean) : [keywords]),
     }),
+    ...(author && { authors: [{ name: author }] }),
     alternates: {
       canonical: canonicalUrl,
       languages: {
@@ -115,14 +153,7 @@ export async function generateMetadata(config: SEOConfig): Promise<Metadata> {
       description: descText,
       url: canonicalUrl,
       siteName: 'ENBOSS',
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: titleText,
-        }
-      ],
+      images: ogImages,
       locale: locale === 'he' ? 'he_IL' : 'en_US',
       type: type === 'article' ? 'article' : 'website',
     },
@@ -130,7 +161,7 @@ export async function generateMetadata(config: SEOConfig): Promise<Metadata> {
       card: 'summary_large_image',
       title: titleText,
       description: descText,
-      images: [imageUrl],
+      images: [twitterImage],
     },
   };
 
@@ -200,11 +231,11 @@ export function getSkateparkMetaFromData(
         ? notesText.substring(0, 160)
         : fallbackDescription);
 
-  let image = '/og-skatepark-default.jpg';
+  let image = PRIMARY_OG_IMAGE;
   if (seo?.ogImage && seo.ogImage.trim()) {
     image = seo.ogImage;
   } else if (skatepark.images && skatepark.images.length > 0) {
-    image = skatepark.images[0]?.url ?? '/og-skatepark-default.jpg';
+    image = skatepark.images[0]?.url ?? PRIMARY_OG_IMAGE;
   }
 
   const title = locale === 'he'

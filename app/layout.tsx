@@ -1,7 +1,8 @@
+// app/layout.tsx
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { defaultLocale, locales, type Locale } from '@/i18n';
-import { DEFAULT_OG_IMAGE } from '@/lib/seo/utils';
+import { DEFAULT_OG_IMAGE, PRIMARY_OG_IMAGE } from '@/lib/seo/utils';
 import './globals.css';
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://enboss.co';
@@ -24,6 +25,14 @@ export const metadata: Metadata = {
     url: siteUrl,
     images: [
       {
+        url: PRIMARY_OG_IMAGE,
+        secureUrl: PRIMARY_OG_IMAGE,
+        width: 1200,
+        height: 630,
+        alt: 'ENBOSS - Unite & Ride',
+        type: 'image/jpeg',
+      },
+      {
         url: DEFAULT_OG_IMAGE,
         secureUrl: DEFAULT_OG_IMAGE,
         width: 1200,
@@ -37,7 +46,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'ENBOSS - Unite & Ride',
     description: 'The home your wheels deserve. Discover, connect, and progress.',
-    images: [DEFAULT_OG_IMAGE],
+    images: [PRIMARY_OG_IMAGE, DEFAULT_OG_IMAGE],
   },
 };
 
@@ -55,6 +64,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
+        {process.env.NEXT_PUBLIC_FACEBOOK_APP_ID && (
+          <meta property="fb:app_id" content={process.env.NEXT_PUBLIC_FACEBOOK_APP_ID} />
+        )}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
