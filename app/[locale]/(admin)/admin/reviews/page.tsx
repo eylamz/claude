@@ -62,6 +62,7 @@ export default function ReviewsPage() {
   const [editCommentEn, setEditCommentEn] = useState('');
   const [editCommentHe, setEditCommentHe] = useState('');
   const [editRating, setEditRating] = useState(5);
+  const [editHelpfulCount, setEditHelpfulCount] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -215,6 +216,7 @@ export default function ReviewsPage() {
     setEditCommentEn(resolveContent(review.comment, 'en'));
     setEditCommentHe(resolveContent(review.comment, 'he'));
     setEditRating(review.rating);
+    setEditHelpfulCount(review.helpfulCount ?? 0);
     setError(null);
   };
 
@@ -225,6 +227,7 @@ export default function ReviewsPage() {
     setEditCommentEn('');
     setEditCommentHe('');
     setEditRating(5);
+    setEditHelpfulCount(0);
     setError(null);
   };
 
@@ -245,6 +248,7 @@ export default function ReviewsPage() {
           userNameHe: editUserNameHe,
           commentEn: editCommentEn,
           commentHe: editCommentHe,
+          helpfulCount: editHelpfulCount,
         }),
       });
 
@@ -1286,6 +1290,19 @@ export default function ReviewsPage() {
                     ({editRating}/5)
                   </span>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Helpful count
+                </label>
+                <Input
+                  type="number"
+                  min={0}
+                  value={editHelpfulCount}
+                  onChange={(e) => setEditHelpfulCount(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                  placeholder="0"
+                />
               </div>
 
               {/* English (en) section */}

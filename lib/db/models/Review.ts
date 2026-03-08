@@ -16,6 +16,8 @@ export interface IReview extends Document {
   /** Comment by locale. Legacy: may be a plain string (treated as en). */
   comment: string | ReviewContentByLocale;
   helpfulCount: number;
+  /** User IDs who marked this review helpful (one vote per user). */
+  helpfulByUserIds: mongoose.Types.ObjectId[];
   reportsCount: number;
   status: ReviewStatus;
   createdAt: Date;
@@ -75,6 +77,11 @@ const ReviewSchema: Schema<IReview> = new Schema<IReview>(
       default: 0,
       min: 0,
       index: true,
+    },
+    helpfulByUserIds: {
+      type: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+      default: [],
+      select: true,
     },
     reportsCount: {
       type: Number,

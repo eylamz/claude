@@ -71,6 +71,8 @@ interface Review {
   rating: number;
   comment: string;
   createdAt: string;
+  helpfulCount?: number;
+  userHasMarkedHelpful?: boolean;
 }
 
 interface Skatepark {
@@ -729,6 +731,7 @@ export default function SkateparkPage() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
+  const [helpedReviewIds, setHelpedReviewIds] = useState<Set<string>>(new Set());
   const [amenitiesActive, setAmenitiesActive] = useState(false);
   const [clickedNearbyParkId, setClickedNearbyParkId] = useState<string | null>(null);
   const [isNavigatingBack, setIsNavigatingBack] = useState(false);
@@ -1271,6 +1274,11 @@ export default function SkateparkPage() {
       if (response.ok) {
         const data = await response.json();
         setReviews(data.reviews || []);
+        setHelpedReviewIds(
+          new Set(
+            (data.reviews || []).filter((r: Review) => r.userHasMarkedHelpful).map((r: Review) => r._id)
+          )
+        );
         if (typeof data.userHasReviewed === 'boolean') {
           setUserHasReviewed(data.userHasReviewed);
         }
@@ -1291,6 +1299,63 @@ export default function SkateparkPage() {
       thankYouPopupTimeoutRef.current = null;
     }, 3500);
     // Don't fetch reviews - they need admin approval first
+  };
+
+  const handleToggleHelpful = async (review: Review) => {
+    const reviewId = review._id;
+    const isCurrentlyHelpful = hasMarkedHelpful(review);
+    const method = isCurrentlyHelpful ? 'DELETE' : 'PATCH';
+    if (isCurrentlyHelpful) {
+      setHelpedReviewIds((prev) => {
+        const next = new Set(prev);
+        next.delete(reviewId);
+        return next;
+      });
+    } else {
+      setHelpedReviewIds((prev) => new Set(prev).add(reviewId));
+    }
+    try {
+      const res = await fetch(`/api/reviews/${reviewId}/helpful`, {
+        method,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setReviews((prev) =>
+          prev.map((r) =>
+            r._id === reviewId
+              ? {
+                  ...r,
+                  helpfulCount: data.helpfulCount ?? r.helpfulCount,
+                  userHasMarkedHelpful: !isCurrentlyHelpful,
+                }
+              : r
+          )
+        );
+      } else {
+        // Revert optimistic update
+        if (isCurrentlyHelpful) {
+          setHelpedReviewIds((prev) => new Set(prev).add(reviewId));
+        } else {
+          setHelpedReviewIds((prev) => {
+            const next = new Set(prev);
+            next.delete(reviewId);
+            return next;
+          });
+        }
+      }
+    } catch {
+      if (isCurrentlyHelpful) {
+        setHelpedReviewIds((prev) => new Set(prev).add(reviewId));
+      } else {
+        setHelpedReviewIds((prev) => {
+          const next = new Set(prev);
+          next.delete(reviewId);
+          return next;
+        });
+      }
+    }
   };
 
   const getLocalizedText = (text: { en: string; he: string } | string): string => {
@@ -1441,6 +1506,9 @@ export default function SkateparkPage() {
     /[\u0590-\u05FF]/.test((review.userName || '') + (review.comment || ''))
       ? 'font-assistant'
       : 'font-poppins';
+
+  const hasMarkedHelpful = (review: Review) =>
+    helpedReviewIds.has(review._id) || !!review.userHasMarkedHelpful;
 
   const ratingDistribution = [5, 4, 3, 2, 1].map((rating) => {
     const count = reviews.filter((r) => r.rating === rating).length;
@@ -2597,6 +2665,24 @@ export default function SkateparkPage() {
                           <p className="text-base text-gray-700 dark:text-gray-300 mt-2">
                             {review.comment}
                           </p>
+                          <div className="mt-3 flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleHelpful(review)}
+                              className="flex items-center justify-end gap-1.5 cursor-pointer text-text-secondary dark:text-text-secondary-dark hover:text-red dark:hover:text-red-dark transition-colors"
+                              aria-label={hasMarkedHelpful(review) ? (locale === 'he' ? 'מועיל' : 'Helpful') : (locale === 'he' ? 'סימון כמועיל' : 'Mark as helpful')}
+                            >
+                              {(review.helpfulCount ?? 0) > 0 && (
+                                <span className="text-sm font-medium tabular-nums">
+                                  {review.helpfulCount}
+                                </span>
+                              )}
+                              <Icon
+                                name={hasMarkedHelpful(review) ? 'heartBold' : 'heart'}
+                                className={`w-4 h-4 ${hasMarkedHelpful(review) ? 'text-red dark:text-red-dark' : ''}`}
+                              />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -2636,6 +2722,24 @@ export default function SkateparkPage() {
                           <p className="text-base text-gray-700 dark:text-gray-300 mt-2">
                             {review.comment}
                           </p>
+                          <div className="mt-3 flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleHelpful(review)}
+                              className="flex items-center justify-end gap-1.5 cursor-pointer text-text-secondary dark:text-text-secondary-dark hover:text-red dark:hover:text-red-dark transition-colors"
+                              aria-label={hasMarkedHelpful(review) ? (locale === 'he' ? 'מועיל' : 'Helpful') : (locale === 'he' ? 'סימון כמועיל' : 'Mark as helpful')}
+                            >
+                              <Icon
+                                name={hasMarkedHelpful(review) ? 'heartBold' : 'heart'}
+                                className={`w-4 h-4 ${hasMarkedHelpful(review) ? 'text-red dark:text-red-dark' : ''}`}
+                              />
+                              {(review.helpfulCount ?? 0) > 0 && (
+                                <span className="text-sm font-medium tabular-nums">
+                                  {review.helpfulCount}
+                                </span>
+                              )}
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>

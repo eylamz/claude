@@ -99,7 +99,7 @@ export async function PATCH(request: NextRequest) {
 
     await connectDB();
     const body = await request.json();
-    const { id, action, comment, rating, userName, userNameEn, userNameHe, commentEn, commentHe } = body as { 
+    const { id, action, comment, rating, userName, userNameEn, userNameHe, commentEn, commentHe, helpfulCount: helpfulCountBody } = body as { 
       id: string; 
       action?: 'approve' | 'reject';
       comment?: string;
@@ -109,6 +109,7 @@ export async function PATCH(request: NextRequest) {
       userNameHe?: string;
       commentEn?: string;
       commentHe?: string;
+      helpfulCount?: number;
     };
 
     const review = await Review.findById(id);
@@ -181,6 +182,11 @@ export async function PATCH(request: NextRequest) {
 
     // Handle content updates: per-locale (userNameEn/He, commentEn/He) or legacy (comment, userName)
     const hasLocaleUpdates = userNameEn !== undefined || userNameHe !== undefined || commentEn !== undefined || commentHe !== undefined;
+    if (helpfulCountBody !== undefined) {
+      const num = Math.max(0, Math.floor(Number(helpfulCountBody)));
+      review.helpfulCount = num;
+      await review.save();
+    }
     if (comment !== undefined || rating !== undefined || userName !== undefined || hasLocaleUpdates) {
       if (rating !== undefined) {
         if (rating < 1 || rating > 5) {

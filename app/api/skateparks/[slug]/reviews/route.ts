@@ -120,11 +120,20 @@ export async function GET(
     }
 
     // Resolve locale-keyed userName and comment for each review (supports legacy string values)
-    const reviews = (reviewsRaw as any[]).map((r) => ({
-      ...r,
-      userName: resolveContent(r.userName, locale),
-      comment: resolveContent(r.comment, locale),
-    }));
+    const currentUserId = session?.user?.id;
+    const reviews = (reviewsRaw as any[]).map((r) => {
+      const helpfulByUserIds = r.helpfulByUserIds || [];
+      const userHasMarkedHelpful = !!(
+        currentUserId && helpfulByUserIds.some((id: unknown) => String(id) === currentUserId)
+      );
+      const { helpfulByUserIds: _, ...rest } = r;
+      return {
+        ...rest,
+        userName: resolveContent(r.userName, locale),
+        comment: resolveContent(r.comment, locale),
+        userHasMarkedHelpful,
+      };
+    });
 
     // Build breakdown 1..5
     const breakdown: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } as any;
