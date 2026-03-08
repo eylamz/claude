@@ -6,6 +6,7 @@ import { useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import type { IMultilingualText } from '@/lib/models/Settings';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { optimizeCloudinaryUrl, HERO_CAROUSEL_WIDTHS } from '@/lib/cloudinary-utils';
 
 // Skeleton: same layout as carousel container, with 3 slide-like placeholders
 export function HeroCarouselSkeleton() {
@@ -345,16 +346,28 @@ export default function HeroCarousel({ images, autoSlideInterval = 3000 }: HeroC
   }
   
   const getImageUrl = (image: HeroCarouselImage): string | undefined => {
+    let url: string | undefined;
     switch (currentBreakpoint) {
       case 'mobile':
-        return image.mobileImageUrl || image.desktopImageUrl || image.tabletImageUrl;
+        url = image.mobileImageUrl || image.desktopImageUrl || image.tabletImageUrl;
+        break;
       case 'tablet':
-        return image.tabletImageUrl || image.desktopImageUrl || image.mobileImageUrl;
+        url = image.tabletImageUrl || image.desktopImageUrl || image.mobileImageUrl;
+        break;
       case 'desktop':
-        return image.desktopImageUrl || image.tabletImageUrl || image.mobileImageUrl;
+        url = image.desktopImageUrl || image.tabletImageUrl || image.mobileImageUrl;
+        break;
       default:
-        return image.desktopImageUrl || image.tabletImageUrl || image.mobileImageUrl;
+        url = image.desktopImageUrl || image.tabletImageUrl || image.mobileImageUrl;
     }
+    if (!url) return undefined;
+    const width =
+      currentBreakpoint === 'desktop'
+        ? HERO_CAROUSEL_WIDTHS.desktop
+        : currentBreakpoint === 'tablet'
+          ? HERO_CAROUSEL_WIDTHS.tablet
+          : HERO_CAROUSEL_WIDTHS.mobile;
+    return optimizeCloudinaryUrl(url, { width, crop: 'fill' });
   };
   
   const slideWidthPercent = 100; 

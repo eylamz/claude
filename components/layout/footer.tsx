@@ -14,7 +14,6 @@ import {
   isNewsletterEnabled,
   isGrowthLabEnabled,
 } from '@/lib/utils/ecommerce';
-import '@/app/[locale]/(public)/button-bg-animated.css';
 
 export function Footer() {
   const locale = useLocale();

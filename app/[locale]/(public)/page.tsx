@@ -1,19 +1,14 @@
 'use client';
 
-import '@/app/[locale]/(public)/button-bg-animated.css';
-import '@/app/[locale]/(public)/card-bg-animated.css';
 import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   HeroCarousel,
   HeroCarouselSkeleton,
-  FixedBanner,
   SkeletonSection,
-  ProductSection,
-  ParkSection,
-  GuideSection,
   ArrowRight,
 } from '@/components/home';
 import { Button } from '@/components/ui';
@@ -22,6 +17,32 @@ import { Icon } from '@/components/icons/Icon';
 import { Locale } from '@/i18n';
 import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
 import { parseSkateparksVersion, isSkateparksCacheFresh } from '@/lib/search-from-cache';
+import { optimizeCloudinaryUrl, COMMUNITY_TILE_WIDTH, CTA_BG_WIDTH } from '@/lib/cloudinary-utils';
+
+const ProductSection = dynamic(
+  () => import('@/components/home').then((m) => m.ProductSection),
+  { loading: () => <SkeletonSection />, ssr: true }
+);
+
+const ParkSection = dynamic(
+  () => import('@/components/home').then((m) => m.ParkSection),
+  { loading: () => <SkeletonSection />, ssr: true }
+);
+
+const GuideSection = dynamic(
+  () => import('@/components/home').then((m) => m.GuideSection),
+  { loading: () => <SkeletonSection />, ssr: true }
+);
+
+const FixedBanner = dynamic(
+  () => import('@/components/home').then((m) => m.FixedBanner),
+  {
+    loading: () => (
+      <div className="w-full h-[200px] sm:h-[220px] xl:rounded-2xl bg-card dark:bg-card-dark animate-pulse" aria-hidden />
+    ),
+    ssr: true,
+  }
+);
 
 interface HeroCarouselImage {
   desktopImageUrl?: string;
@@ -442,25 +463,13 @@ export default function HomePage() {
               className="flex-shrink-0 md:flex-shrink md:col-span-2 w-full snap-center h-full group block bg-transparent transition-all duration-300"
             >
               <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-green dark:bg-green-dark">
+                <div className="absolute inset-0 flex items-center justify-end overflow-visible pointer-events-none z-0" aria-hidden>
+                  <Icon
+                    name="mapBold"
+                    className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/15 translate-y-[8%] translate-x-[8%]"
+                  />
+                </div>
                 <div className="card-content relative z-10 flex flex-row items-center gap-4 md:block p-8 lg:p-10 text-white">
-                  <div className="card-icon-gradient card-icon-anim-1 flex-shrink-0 md:mb-6 shadow-xl">
-                    <div className="gradient-0" aria-hidden />
-                    <div className="gradient-1" aria-hidden />
-                    <div className="glass" aria-hidden />
-                    <div className="gradient-2" aria-hidden>
-                      <div className="color-1 color" />
-                      <div className="color-2 color" />
-                      <div className="color-3 color" />
-                      <div className="color-4 color" />
-                      <div className="color-5 color" />
-                      <div className="color-6 color" />
-                      <div className="color-7 color" />
-                      <div className="color-8 color" />
-                    </div>
-                    <div className="card-content">
-                      <Icon name="mapBold" className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
                   <div className="min-w-0 flex-1 md:flex-none">
                     <h3 className="text-white dark:text-green-bg-dark text-xl font-bold mb-3">{t('featureDiscoverTitle')}</h3>
                     <p className="text-white/80 dark:text-green-bg-dark/90 leading-relaxed">{t('featureDiscoverDesc')}</p>
@@ -473,29 +482,17 @@ export default function HomePage() {
               href={`/${locale}/guides`}
               className="flex-shrink-0 md:flex-shrink md:col-span-2 w-full snap-center h-full group block bg-transparent transition-all duration-300"
             >
-              <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-yellow dark:bg-yellow-dark">
-                <div className="card-content relative z-10 flex flex-row-reverse items-center gap-4 md:block p-8 lg:p-10 text-white shadow-xl">
-                  <div className="card-icon-gradient card-icon-anim-2 flex-shrink-0 md:mb-6">
-                    <div className="gradient-0" aria-hidden />
-                    <div className="gradient-1" aria-hidden />
-                    <div className="glass" aria-hidden />
-                    <div className="gradient-2" aria-hidden>
-                      <div className="color-1 color" />
-                      <div className="color-2 color" />
-                      <div className="color-3 color" />
-                      <div className="color-4 color" />
-                      <div className="color-5 color" />
-                      <div className="color-6 color" />
-                      <div className="color-7 color" />
-                      <div className="color-8 color" />
-                    </div>
-                    <div className="card-content">
-                      <Icon name="bookBold" className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
+              <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-blue dark:bg-blue-dark">
+                <div className="absolute inset-0 flex items-center justify-start overflow-visible pointer-events-none z-0" aria-hidden>
+                  <Icon
+                    name="bookBold"
+                    className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/15 -translate-y-[8%] -translate-x-[8%]"
+                  />
+                </div>
+                <div className="card-content relative z-10 flex flex-row-reverse items-center gap-4 md:block p-8 lg:p-10 text-white">
                   <div className="min-w-0 flex-1 md:flex-none">
-                    <h3 className="text-white dark:text-yellow-bg-dark text-xl font-bold mb-3">{t('featureLearnTitle')}</h3>
-                    <p className="text-white/80 dark:text-yellow-bg-dark/80 leading-relaxed">{t('featureLearnDesc')}</p>
+                    <h3 className="text-white dark:text-blue-bg-dark text-xl font-bold mb-3">{t('featureLearnTitle')}</h3>
+                    <p className="text-white/80 dark:text-blue-bg-dark/90 leading-relaxed">{t('featureLearnDesc')}</p>
                   </div>
                 </div>
               </div>
@@ -506,25 +503,13 @@ export default function HomePage() {
               className="flex-shrink-0 md:flex-shrink md:col-span-2 w-full snap-center h-full group block bg-transparent transition-all duration-300"
             >
               <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-purple dark:bg-purple-dark">
+                <div className="absolute inset-0 flex items-center justify-end overflow-visible pointer-events-none z-0" aria-hidden>
+                  <Icon
+                    name="calendarBold"
+                    className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/15 translate-y-[8%] translate-x-[8%]"
+                  />
+                </div>
                 <div className="card-content relative z-10 flex flex-row items-center gap-4 md:block p-8 lg:p-10 text-white">
-                  <div className="card-icon-gradient card-icon-anim-3 flex-shrink-0 md:mb-6 shadow-xl">
-                    <div className="gradient-0" aria-hidden />
-                    <div className="gradient-1" aria-hidden />
-                    <div className="glass" aria-hidden />
-                    <div className="gradient-2" aria-hidden>
-                      <div className="color-1 color" />
-                      <div className="color-2 color" />
-                      <div className="color-3 color" />
-                      <div className="color-4 color" />
-                      <div className="color-5 color" />
-                      <div className="color-6 color" />
-                      <div className="color-7 color" />
-                      <div className="color-8 color" />
-                    </div>
-                    <div className="card-content">
-                      <Icon name="calendarBold" className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
                   <div className="min-w-0 flex-1 md:flex-none">
                     <h3 className="text-white dark:text-purple-bg-dark text-xl font-bold mb-3">{t('featureEventsTitle')}</h3>
                     <p className="text-white/80 dark:text-purple-bg-dark/80 leading-relaxed">{t('featureEventsDesc')}</p>
@@ -538,25 +523,13 @@ export default function HomePage() {
               className="flex-shrink-0 md:flex-shrink md:col-span-3 w-full snap-center h-full group block  bg-transparent transition-all duration-300"
             >
               <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-lime dark:bg-lime-dark">
+                <div className="absolute inset-0 flex items-center justify-start overflow-visible pointer-events-none z-0" aria-hidden>
+                  <Icon
+                    name="reviewBold"
+                    className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/80 translate-y-[7.5%] -translate-x-[8%]"
+                  />
+                </div>
                 <div className="card-content relative z-10 flex flex-row-reverse items-center gap-4 md:block p-8 lg:p-10 text-white">
-                  <div className="card-icon-gradient card-icon-anim-4 flex-shrink-0 md:mb-6 shadow-xl">
-                    <div className="gradient-0" aria-hidden />
-                    <div className="gradient-1" aria-hidden />
-                    <div className="glass" aria-hidden />
-                    <div className="gradient-2" aria-hidden>
-                      <div className="color-1 color" />
-                      <div className="color-2 color" />
-                      <div className="color-3 color" />
-                      <div className="color-4 color" />
-                      <div className="color-5 color" />
-                      <div className="color-6 color" />
-                      <div className="color-7 color" />
-                      <div className="color-8 color" />
-                    </div>
-                    <div className="card-content">
-                      <Icon name="reviewBold" className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
                   <div className="min-w-0 flex-1 md:flex-none">
                     <h3 className="text-white dark:text-lime-bg-dark text-xl font-bold mb-3">{t('featureRateTitle')}</h3>
                     <p className="text-white/80 dark:text-lime-bg-dark/80 leading-relaxed">{t('featureRateDesc')}</p>
@@ -592,25 +565,13 @@ export default function HomePage() {
               className="flex-shrink-0 md:flex-shrink md:col-span-3 w-full snap-center h-full group block bg-transparent transition-all duration-300 text-left cursor-pointer"
             >
               <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-red dark:bg-red-dark">
+                <div className="absolute inset-0 flex items-center justify-end overflow-visible pointer-events-none z-0" aria-hidden>
+                  <Icon
+                    name="heartBold"
+                    className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/15 translate-y-[8%] translate-x-[8%]"
+                  />
+                </div>
                 <div className="card-content relative z-10 flex flex-row items-center gap-4 md:block p-8 lg:p-10 text-white text-start">
-                  <div className="card-icon-gradient card-icon-anim-5 flex-shrink-0 md:mb-6">
-                    <div className="gradient-0" aria-hidden />
-                    <div className="gradient-1" aria-hidden />
-                    <div className="glass" aria-hidden />
-                    <div className="gradient-2" aria-hidden>
-                      <div className="color-1 color" />
-                      <div className="color-2 color" />
-                      <div className="color-3 color" />
-                      <div className="color-4 color" />
-                      <div className="color-5 color" />
-                      <div className="color-6 color" />
-                      <div className="color-7 color" />
-                      <div className="color-8 color" />
-                    </div>
-                    <div className="card-content">
-                      <Icon name="heartBold" className="w-8 h-8 text-white" />
-                    </div>
-                  </div>
                   <div className="min-w-0 flex-1 md:flex-none">
                     <h3 className="text-white dark:text-red-bg-dark text-xl font-bold mb-3">{t('featureSpreadTitle')}</h3>
                     <p className="text-white/80 dark:text-red-bg-dark/90 leading-relaxed">{t('featureSpreadDesc')}</p>
@@ -626,8 +587,10 @@ export default function HomePage() {
       <section
         className="relative 4xl:rounded-2xl h-[400px] md:h-[500px] lg:h-[900px] max-w-[2000px] mx-auto py-20 sm:py-8 md:py-20 lg:py-20 px-4 sm:px-6 lg:px-8 text-center overflow-hidden bg-cover bg-bottom bg-no-repeat 4xl:shadow-lg "
         style={{
-          backgroundImage:
-            "url('https://res.cloudinary.com/dr0rvohz9/image/upload/v1771769672/wcjoumbnl57r6aqe9nae.webp')",
+          backgroundImage: `url('${optimizeCloudinaryUrl(
+            'https://res.cloudinary.com/dr0rvohz9/image/upload/v1771769672/wcjoumbnl57r6aqe9nae.webp',
+            { width: CTA_BG_WIDTH }
+          )}')`,
         }}
       >
         <div
@@ -683,22 +646,28 @@ export default function HomePage() {
                 label: t('communityProParks'),
                 href: `/${locale}/skateparks`,
                 gradient: 'from-[#32CD32] to-[#2ECC71]',
-                backgroundImage:
-                  'https://res.cloudinary.com/dr0rvohz9/image/upload/w_1700,q_100,c_fill/v1772201356/bxxxmy7bnrxdeirj6fed.png',
+                backgroundImage: optimizeCloudinaryUrl(
+                  'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772201356/bxxxmy7bnrxdeirj6fed.png',
+                  { width: COMMUNITY_TILE_WIDTH }
+                ),
               },
               {
                 label: t('communityGuides'),
                 href: `/${locale}/guides`,
                 gradient: 'from-[#14A3A8] to-[#32CD32]',
-                backgroundImage:
-                  'https://res.cloudinary.com/dr0rvohz9/image/upload/w_1700,q_100,c_fill/v1772210378/nmbijyydjsjmfase5sec.png',
+                backgroundImage: optimizeCloudinaryUrl(
+                  'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772210378/nmbijyydjsjmfase5sec.png',
+                  { width: COMMUNITY_TILE_WIDTH }
+                ),
               },
               {
                 label: t('communityEvents'),
                 href: `/${locale}/events`,
                 gradient: 'from-[#2ECC71] to-[#39FF14]',
-                backgroundImage:
-                  'https://res.cloudinary.com/dr0rvohz9/image/upload/w_1700,q_100,c_fill/v1772201360/m4njuep6fcpami4oph3v.png',
+                backgroundImage: optimizeCloudinaryUrl(
+                  'https://res.cloudinary.com/dr0rvohz9/image/upload/v1772201360/m4njuep6fcpami4oph3v.png',
+                  { width: COMMUNITY_TILE_WIDTH }
+                ),
               },
             ].map((item, index) => (
               <a

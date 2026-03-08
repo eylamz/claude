@@ -26,7 +26,24 @@ const getOptimizedImageUrl = (originalUrl: string): string | null => {
   if (originalUrl.includes('cloudinary.com')) {
     const urlParts = originalUrl.split('/upload/');
     if (urlParts.length === 2) {
-      return `${urlParts[0]}/upload/w_800,c_fill,q_auto:good,f_auto/${urlParts[1]}`;
+      // Thumbnail max width ~520px (card 260px * 2 for retina)
+      return `${urlParts[0]}/upload/w_520,c_fill,q_auto:good,f_auto/${urlParts[1]}`;
+    }
+  }
+  // placehold.co: request smaller size when possible (display is ~385px); keep aspect for text
+  if (originalUrl.includes('placehold.co')) {
+    try {
+      const u = new URL(originalUrl);
+      const dims = u.pathname.split('/')[1];
+      if (dims && /^\d+x\d+$/.test(dims)) {
+        const [w] = dims.split('x').map(Number);
+        if (w > 520) {
+          u.pathname = u.pathname.replace(/^\/\d+x\d+/, '/520x520');
+          return u.toString();
+        }
+      }
+    } catch {
+      // ignore
     }
   }
   return originalUrl;

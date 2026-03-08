@@ -313,19 +313,19 @@ html:not(.dark) .card-gradient.card-anim-5 > .gradient-0 {
 
 /* Card 2 (guides): yellow from tailwind – wider shade range */
 .card-gradient.card-anim-2 .gradient-2 .color-1 {
-  background: hsl(60, 64%, 13%);
+  background: hsl(224, 76%, 13%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-2 {
-  background: hsl(60, 65%, 22%);
+  background: hsl(224, 76%, 22%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-3 {
-  background: hsl(60, 66%, 30%);
+  background: hsl(224, 76%, 30%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-4 {
-  background: hsl(60, 66%, 36%);
+  background: hsl(224, 76%, 36%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-5 {
-  background: hsl(60, 67%, 42%);
+  background: hsl(224, 76%, 42%);
 }
 .card-gradient.card-anim-2 .gradient-2 .color-6 {
   background: hsl(60, 69%, 55%);
@@ -799,28 +799,28 @@ html:not(.dark) .card-gradient.card-anim-5 > .gradient-0 {
 
 /* Icon card 2: yellow shades (guides), from tailwind */
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-1 {
-  background: hsl(60, 64%, 13%);
+  background: hsl(224, 76%, 13%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-2 {
-  background: hsl(60, 65%, 22%);
+  background: hsl(224, 76%, 22%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-3 {
-  background: hsl(60, 66%, 30%);
+  background: hsl(224, 76%, 30%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-4 {
-  background: hsl(60, 66%, 36%);
+  background: hsl(224, 76%, 36%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-5 {
-  background: hsl(60, 67%, 42%);
+  background: hsl(224, 76%, 42%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-6 {
-  background: hsl(60, 69%, 55%);
+  background: hsl(224, 76%, 55%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-7 {
-  background: hsl(60, 73%, 70%);
+  background: hsl(224, 76%, 70%);
 }
 .card-icon-gradient.card-icon-anim-2 .gradient-2 .color-8 {
-  background: hsl(60, 83%, 85%);
+  background: hsl(224, 76%, 85%);
 }
 
 /* Icon card 3: purple shades (events), from tailwind */

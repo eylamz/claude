@@ -3,11 +3,15 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Icon } from '@/components/icons';
+import { optimizeCloudinaryUrl, FIXED_BANNER_WIDTH } from '@/lib/cloudinary-utils';
 
 interface FixedBannerProps {
   isRtl: boolean;
   locale: 'en' | 'he';
 }
+
+const FIXED_BANNER_IMAGE =
+  'https://res.cloudinary.com/dr0rvohz9/image/upload/v1747210546/mordechai-rimok-springjam-24.webp';
 
 export default function FixedBanner({ isRtl, locale }: FixedBannerProps) {
   const [isDark, setIsDark] = useState(false);
@@ -30,8 +34,7 @@ export default function FixedBanner({ isRtl, locale }: FixedBannerProps) {
     return () => observer.disconnect();
   }, []);
 
-  const fixedImage =
-    'https://res.cloudinary.com/dr0rvohz9/image/upload/w_auto,c_scale,q_auto,f_auto/v1747210546/mordechai-rimok-springjam-24.webp';
+  const fixedImage = optimizeCloudinaryUrl(FIXED_BANNER_IMAGE, { width: FIXED_BANNER_WIDTH, crop: 'scale' });
 
   const title = locale === 'he' ? 'לאחד ולגלוש' : 'Unite & Ride';
 
