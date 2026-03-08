@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, type ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { Card, CardHeader, CardTitle, CardContent, Button, SelectWrapper, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Skeleton } from '@/components/ui';
 import {
@@ -329,7 +329,7 @@ export default function AdminMetricsPage() {
                           const d = new Date(label);
                           return d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
                         }}
-                        formatter={(value: unknown) => [value, t('metrics.sessions')]}
+                        formatter={(value: unknown) => [value as ReactNode, t('metrics.sessions')]}
                       />
                       <Line type="monotone" dataKey="count" stroke="#10B981" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name={t('metrics.sessions')} />
                     </LineChart>
@@ -373,7 +373,7 @@ export default function AdminMetricsPage() {
                           const d = new Date(label);
                           return d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
                         }}
-                        formatter={(value: unknown) => [value, t('metrics.views')]}
+                        formatter={(value: unknown) => [value as ReactNode, t('metrics.views')]}
                       />
                       <Line type="monotone" dataKey="count" stroke="#47b84d" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name={t('metrics.views')} />
                     </LineChart>

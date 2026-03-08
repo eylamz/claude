@@ -19,6 +19,7 @@ import {
   MAX_SEARCH_RESULTS,
   SEARCH_PER_TYPE_LIMIT,
 } from '@/lib/config/api';
+import { escapeRegexForMongo } from '@/lib/security/regex';
 import { z } from 'zod';
 
 // Rate limiter: cap search traffic per IP
@@ -48,11 +49,12 @@ const searchQuerySchema = z.object({
 
 /** Build $or conditions for query and optional flippedQuery (keyboard-layout flip). */
 function searchOrConditions(query: string, flippedQuery: string | null): Array<{ $regex: string; $options: string }> {
+  const safeQuery = escapeRegexForMongo(query);
   const conditions: Array<{ $regex: string; $options: string }> = [
-    { $regex: query, $options: 'i' },
+    { $regex: safeQuery, $options: 'i' },
   ];
   if (flippedQuery && flippedQuery !== query) {
-    conditions.push({ $regex: flippedQuery, $options: 'i' });
+    conditions.push({ $regex: escapeRegexForMongo(flippedQuery), $options: 'i' });
   }
   return conditions;
 }
