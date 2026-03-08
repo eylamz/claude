@@ -5,19 +5,57 @@ import dynamic from 'next/dynamic';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  HeroCarousel,
-  HeroCarouselSkeleton,
-  SkeletonSection,
-  ArrowRight,
-} from '@/components/home';
+import { SkeletonSection } from '@/components/home/skeleton-section';
+import { ArrowRight } from '@/components/home/arrow-right';
 import { Button } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { Icon } from '@/components/icons/Icon';
 import { Locale } from '@/i18n';
 import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
 import { parseSkateparksVersion, isSkateparksCacheFresh } from '@/lib/search-from-cache';
 import { optimizeCloudinaryUrl, COMMUNITY_TILE_WIDTH, CTA_BG_WIDTH } from '@/lib/cloudinary-utils';
+
+interface HeroCarouselImage {
+  desktopImageUrl?: string;
+  tabletImageUrl?: string;
+  mobileImageUrl?: string;
+  link?: string;
+  title?: string;
+  subtitle?: string;
+  ctaText?: string;
+  textOverlay?: string;
+  order: number;
+}
+
+// Minimal placeholder to avoid loading full HeroCarousel on initial parse
+function HeroCarouselPlaceholder() {
+  return (
+    <div className="pt-[15px] bg-background dark:bg-background-dark w-full flex flex-col items-center" aria-hidden>
+      <div className="relative w-full h-screen max-h-[500px] min-h-[500px] md:min-h-[370px] md:max-h-[370px] overflow-hidden bg-background dark:bg-background-dark pt-10">
+        <div className="relative max-w-[2000px] mx-auto w-full h-full px-2 sm:px-4 md:px-6 flex items-end justify-center gap-5">
+          <div className="flex-none w-[275px] sm:w-[220px] md:w-[690px] h-[97%] min-h-[485px] md:min-h-[358px] bg-card dark:bg-card-dark opacity-90 animate-pulse" />
+          <div className="flex-none w-[275px] sm:w-[220px] md:w-[690px] h-[97%] min-h-[500px] md:min-h-[373px] bg-card dark:bg-card-dark animate-pulse" />
+          <div className="flex-none w-[275px] sm:w-[220px] md:w-[690px] h-[97%] min-h-[485px] md:min-h-[358px] bg-card dark:bg-card-dark opacity-90 animate-pulse" />
+        </div>
+      </div>
+      <div className="w-full flex gap-2 sm:gap-2.5 md:gap-3 items-center justify-center py-1 sm:py-2 md:py-3">
+        <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-gray-200 dark:bg-white/30 rounded-full" />
+        <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-gray-200 dark:bg-white/30 rounded-full" />
+        <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-gray-200 dark:bg-white/30 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+const HeroCarouselSection = dynamic<{ images: HeroCarouselImage[] }>(
+  () =>
+    import('@/components/home/hero-carousel').then((m) => {
+      function Section(props: { images: HeroCarouselImage[] }) {
+        return props.images?.length ? <m.default images={props.images} /> : <m.HeroCarouselSkeleton />;
+      }
+      return { default: Section };
+    }),
+  { loading: () => <HeroCarouselPlaceholder />, ssr: true }
+);
 
 const ProductSection = dynamic(
   () => import('@/components/home').then((m) => m.ProductSection),
@@ -44,17 +82,42 @@ const FixedBanner = dynamic(
   }
 );
 
-interface HeroCarouselImage {
-  desktopImageUrl?: string;
-  tabletImageUrl?: string;
-  mobileImageUrl?: string;
-  link?: string;
-  title?: string;
-  subtitle?: string;
-  ctaText?: string;
-  textOverlay?: string;
-  order: number;
-}
+/** Inline SVGs for feature cards to avoid loading the full Icon module (100+ SVGs) on the homepage. */
+const FeatureIconMap = ({
+  className = '',
+  name,
+}: {
+  className?: string;
+  name: 'mapBold' | 'bookBold' | 'calendarBold' | 'reviewBold' | 'heartBold';
+}) => {
+  const viewBox = name === 'reviewBold' ? '0 0 150 157' : '0 0 24 24';
+  const path =
+    name === 'mapBold'
+      ? <>
+          <path d="M7.62906 3.56969C7.80845 3.47184 7.99906 3.62237 7.99906 3.8267V17.3825C7.99906 17.6058 7.84665 17.7946 7.64926 17.8988C7.64249 17.9024 7.63576 17.906 7.62906 17.9097L5.27906 19.2497C3.63906 20.1897 2.28906 19.4097 2.28906 17.5097V7.77969C2.28906 7.14969 2.73906 6.36969 3.29906 6.04969L7.62906 3.56969Z" fill="currentColor" />
+          <path d="M14.7219 6.1029C14.8922 6.18725 15 6.36089 15 6.55096V19.7041C15 20.0726 14.615 20.3145 14.283 20.1546L10.033 18.107C9.85998 18.0236 9.75 17.8485 9.75 17.6565V4.4462C9.75 4.07534 10.1396 3.83355 10.4719 3.99814L14.7219 6.1029Z" fill="currentColor" />
+          <path d="M22 6.49006V16.2201C22 16.8501 21.55 17.6301 20.99 17.9501L17.4986 19.951C17.1653 20.1421 16.75 19.9014 16.75 19.5172V6.33038C16.75 6.15087 16.8462 5.98513 17.0021 5.89615L19.01 4.75006C20.65 3.81006 22 4.59006 22 6.49006Z" fill="currentColor" />
+        </>
+      : name === 'bookBold'
+        ? <>
+            <path d="M20.5 16V18.5C20.5 20.43 18.93 22 17 22H7C5.07 22 3.5 20.43 3.5 18.5V17.85C3.5 16.28 4.78 15 6.35 15H19.5C20.05 15 20.5 15.45 20.5 16Z" fill="currentColor" />
+            <path d="M15.5 2H8.5C4.5 2 3.5 3 3.5 7V14.58C4.26 13.91 5.26 13.5 6.35 13.5H19.5C20.05 13.5 20.5 13.05 20.5 12.5V7C20.5 3 19.5 2 15.5 2ZM13 10.75H8C7.59 10.75 7.25 10.41 7.25 10C7.25 9.59 7.59 9.25 8 9.25H13C13.41 9.25 13.75 9.59 13.75 10C13.75 10.41 13.41 10.75 13 10.75ZM16 7.25H8C7.59 7.25 7.25 6.91 7.25 6.5C7.25 6.09 7.59 5.75 8 5.75H16C16.41 5.75 16.75 6.09 16.75 6.5C16.75 6.91 16.41 7.25 16 7.25Z" fill="currentColor" />
+          </>
+        : name === 'calendarBold'
+          ? <>
+              <path d="M16.7502 3.56V2C16.7502 1.59 16.4102 1.25 16.0002 1.25C15.5902 1.25 15.2502 1.59 15.2502 2V3.5H8.75023V2C8.75023 1.59 8.41023 1.25 8.00023 1.25C7.59023 1.25 7.25023 1.59 7.25023 2V3.56C4.55023 3.81 3.24023 5.42 3.04023 7.81C3.02023 8.1 3.26023 8.34 3.54023 8.34H20.4602C20.7502 8.34 20.9902 8.09 20.9602 7.81C20.7602 5.42 19.4502 3.81 16.7502 3.56Z" fill="CurrentColor"></path> <path d="M20 9.83984H4C3.45 9.83984 3 10.2898 3 10.8398V16.9998C3 19.9998 4.5 21.9998 8 21.9998H16C19.5 21.9998 21 19.9998 21 16.9998V10.8398C21 10.2898 20.55 9.83984 20 9.83984ZM9.21 18.2098C9.16 18.2498 9.11 18.2998 9.06 18.3298C9 18.3698 8.94 18.3998 8.88 18.4198C8.82 18.4498 8.76 18.4698 8.7 18.4798C8.63 18.4898 8.57 18.4998 8.5 18.4998C8.37 18.4998 8.24 18.4698 8.12 18.4198C7.99 18.3698 7.89 18.2998 7.79 18.2098C7.61 18.0198 7.5 17.7598 7.5 17.4998C7.5 17.2398 7.61 16.9798 7.79 16.7898C7.89 16.6998 7.99 16.6298 8.12 16.5798C8.3 16.4998 8.5 16.4798 8.7 16.5198C8.76 16.5298 8.82 16.5498 8.88 16.5798C8.94 16.5998 9 16.6298 9.06 16.6698C9.11 16.7098 9.16 16.7498 9.21 16.7898C9.39 16.9798 9.5 17.2398 9.5 17.4998C9.5 17.7598 9.39 18.0198 9.21 18.2098ZM9.21 14.7098C9.02 14.8898 8.76 14.9998 8.5 14.9998C8.24 14.9998 7.98 14.8898 7.79 14.7098C7.61 14.5198 7.5 14.2598 7.5 13.9998C7.5 13.7398 7.61 13.4798 7.79 13.2898C8.07 13.0098 8.51 12.9198 8.88 13.0798C9.01 13.1298 9.12 13.1998 9.21 13.2898C9.39 13.4798 9.5 13.7398 9.5 13.9998C9.5 14.2598 9.39 14.5198 9.21 14.7098ZM12.71 18.2098C12.52 18.3898 12.26 18.4998 12 18.4998C11.74 18.4998 11.48 18.3898 11.29 18.2098C11.11 18.0198 11 17.7598 11 17.4998C11 17.2398 11.11 16.9798 11.29 16.7898C11.66 16.4198 12.34 16.4198 12.71 16.7898C12.89 16.9798 13 17.2398 13 17.4998C13 17.7598 12.89 18.0198 12.71 18.2098ZM12.71 14.7098C12.66 14.7498 12.61 14.7898 12.56 14.8298C12.5 14.8698 12.44 14.8998 12.38 14.9198C12.32 14.9498 12.26 14.9698 12.2 14.9798C12.13 14.9898 12.07 14.9998 12 14.9998C11.74 14.9998 11.48 14.8898 11.29 14.7098C11.11 14.5198 11 14.2598 11 13.9998C11 13.7398 11.11 13.4798 11.29 13.2898C11.38 13.1998 11.49 13.1298 11.62 13.0798C11.99 12.9198 12.43 13.0098 12.71 13.2898C12.89 13.4798 13 13.7398 13 13.9998C13 14.2598 12.89 14.5198 12.71 14.7098ZM16.21 18.2098C16.02 18.3898 15.76 18.4998 15.5 18.4998C15.24 18.4998 14.98 18.3898 14.79 18.2098C14.61 18.0198 14.5 17.7598 14.5 17.4998C14.5 17.2398 14.61 16.9798 14.79 16.7898C15.16 16.4198 15.84 16.4198 16.21 16.7898C16.39 16.9798 16.5 17.2398 16.5 17.4998C16.5 17.7598 16.39 18.0198 16.21 18.2098ZM16.21 14.7098C16.16 14.7498 16.11 14.7898 16.06 14.8298C16 14.8698 15.94 14.8998 15.88 14.9198C15.82 14.9498 15.76 14.9698 15.7 14.9798C15.63 14.9898 15.56 14.9998 15.5 14.9998C15.24 14.9998 14.98 14.8898 14.79 14.7098C14.61 14.5198 14.5 14.2598 14.5 13.9998C14.5 13.7398 14.61 13.4798 14.79 13.2898C14.89 13.1998 14.99 13.1298 15.12 13.0798C15.3 12.9998 15.5 12.9798 15.7 13.0198C15.76 13.0298 15.82 13.0498 15.88 13.0798C15.94 13.0998 16 13.1298 16.06 13.1698C16.11 13.2098 16.16 13.2498 16.21 13.2898C16.39 13.4798 16.5 13.7398 16.5 13.9998C16.5 14.2598 16.39 14.5198 16.21 14.7098Z" fill="CurrentColor"></path>
+            </>
+          : name === 'reviewBold'
+            ? <path d="M71.32,15.2c50.4-5.53,84.36,47.54,56.05,89.85-18.01,26.92-54.46,33.04-81.21,15.2l-16.84,3.96-1.12-2.07c.55-4.12,4.08-12.6,3.59-16.25-.29-2.15-5.49-9.82-6.73-13.21C12.66,58.75,34.91,19.19,71.32,15.2ZM104.05,60.87c-2.07-1.95-9.32-.8-13.18-3.21-4.78-2.98-4.76-12.54-10.97-12.93-7.17-.45-6.88,10.4-12.42,13.32-4.68,2.46-15.99-.24-14.67,8.8.56,3.84,7.73,7.47,8.58,10.36,1.57,5.31-2.33,11.68.14,15.77,4.56,7.55,12.13-1.41,17.47-1.63,5.95-.25,10.73,7.2,16.3,3.51,6.17-4.09.45-10.84,2.5-17.4,1.44-4.61,13.46-9.8,6.26-16.58Z" fill="currentColor" />
+            : (
+              <path d="M16.44 3.10156C14.63 3.10156 13.01 3.98156 12 5.33156C10.99 3.98156 9.37 3.10156 7.56 3.10156C4.49 3.10156 2 5.60156 2 8.69156C2 9.88156 2.19 10.9816 2.52 12.0016C4.1 17.0016 8.97 19.9916 11.38 20.8116C11.72 20.9316 12.28 20.9316 12.62 20.8116C15.03 19.9916 19.9 17.0016 21.48 12.0016C21.81 10.9816 22 9.88156 22 8.69156C22 5.60156 19.51 3.10156 16.44 3.10156Z" fill="currentColor" />
+            );
+  return (
+    <svg className={className} viewBox={viewBox} fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      {path}
+    </svg>
+  );
+};
 
 interface HomepageSettings {
   heroCarouselImages: HeroCarouselImage[];
@@ -258,7 +321,7 @@ export default function HomePage() {
         <div className="relative z-10 text-center px-4 sm:px-5 max-w-[1000px] w-full">
           {/* Main title - scales with viewport, stays readable at 150% zoom */}
           <h1
-            className="hero-title-gradient font-extrabold mb-4 sm:mb-6 leading-[1.1] tracking-[-0.02em]"
+            className={`hero-title-gradient mb-4 sm:mb-6 leading-[1.1] tracking-[-0.02em] ${locale === 'he' ? 'font-bold' : 'font-extrabold'}`}
             style={{
               fontSize: 'clamp(2rem, 5.5vw + 1rem, 4rem)',
               animation: 'fadeInUp 0.7s ease-out',
@@ -349,11 +412,7 @@ export default function HomePage() {
       </section>
 
       {/* Hero Carousel Section */}
-      {homepageSettings?.heroCarouselImages && homepageSettings.heroCarouselImages.length > 0 ? (
-        <HeroCarousel images={homepageSettings.heroCarouselImages} />
-      ) : (
-        <HeroCarouselSkeleton />
-      )}
+      <HeroCarouselSection images={homepageSettings?.heroCarouselImages ?? []} />
 
       {/* Featured Products Section - only show if ecommerce is enabled */}
       {ecommerceEnabled && (
@@ -450,7 +509,7 @@ export default function HomePage() {
       {/* Features Section */}
       <section className="mb-24 sm:mb-32 px-4 ">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-4 text-text dark:text-text-dark">
+          <h2 className={`text-3xl sm:text-4xl md:text-5xl ${locale === 'he' ? 'font-bold' : 'font-extrabold'} text-center mb-4 text-text dark:text-text-dark`}>
             {t('whyEnboss')}
           </h2>
           <p className="text-lg sm:text-xl text-center text-text-secondary dark:text-text-dark/70 mb-16 max-w-2xl mx-auto">
@@ -462,9 +521,9 @@ export default function HomePage() {
               href={`/${locale}/skateparks`}
               className="flex-shrink-0 md:flex-shrink md:col-span-2 w-full snap-center h-full group block bg-transparent transition-all duration-300"
             >
-              <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-green dark:bg-green-dark">
+              <div className="rounded-[22px] overflow-hidden relative min-h-full bg-green dark:bg-green-dark">
                 <div className="absolute inset-0 flex items-center justify-end overflow-visible pointer-events-none z-0" aria-hidden>
-                  <Icon
+                  <FeatureIconMap
                     name="mapBold"
                     className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/15 translate-y-[8%] translate-x-[8%]"
                   />
@@ -482,9 +541,9 @@ export default function HomePage() {
               href={`/${locale}/guides`}
               className="flex-shrink-0 md:flex-shrink md:col-span-2 w-full snap-center h-full group block bg-transparent transition-all duration-300"
             >
-              <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-blue dark:bg-blue-dark">
+              <div className="rounded-[22px] overflow-hidden relative min-h-full bg-blue dark:bg-blue-dark">
                 <div className="absolute inset-0 flex items-center justify-start overflow-visible pointer-events-none z-0" aria-hidden>
-                  <Icon
+                  <FeatureIconMap
                     name="bookBold"
                     className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/15 -translate-y-[8%] -translate-x-[8%]"
                   />
@@ -502,17 +561,17 @@ export default function HomePage() {
               href={`/${locale}/events`}
               className="flex-shrink-0 md:flex-shrink md:col-span-2 w-full snap-center h-full group block bg-transparent transition-all duration-300"
             >
-              <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-purple dark:bg-purple-dark">
+              <div className="rounded-[22px] overflow-hidden relative min-h-full bg-purple dark:bg-purple-dark">
                 <div className="absolute inset-0 flex items-center justify-end overflow-visible pointer-events-none z-0" aria-hidden>
-                  <Icon
+                  <FeatureIconMap
                     name="calendarBold"
-                    className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/15 translate-y-[8%] translate-x-[8%]"
+                    className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/25 translate-y-[20%] translate-x-[20%]"
                   />
                 </div>
                 <div className="card-content relative z-10 flex flex-row items-center gap-4 md:block p-8 lg:p-10 text-white">
                   <div className="min-w-0 flex-1 md:flex-none">
                     <h3 className="text-white dark:text-purple-bg-dark text-xl font-bold mb-3">{t('featureEventsTitle')}</h3>
-                    <p className="text-white/80 dark:text-purple-bg-dark/80 leading-relaxed">{t('featureEventsDesc')}</p>
+                    <p className="text-white/80 dark:text-purple-bg-dark leading-relaxed">{t('featureEventsDesc')}</p>
                   </div>
                 </div>
               </div>
@@ -522,17 +581,17 @@ export default function HomePage() {
               href={`/${locale}/skateparks`}
               className="flex-shrink-0 md:flex-shrink md:col-span-3 w-full snap-center h-full group block  bg-transparent transition-all duration-300"
             >
-              <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-lime dark:bg-lime-dark">
+              <div className="rounded-[22px] overflow-hidden relative min-h-full bg-lime dark:bg-lime-dark">
                 <div className="absolute inset-0 flex items-center justify-start overflow-visible pointer-events-none z-0" aria-hidden>
-                  <Icon
+                  <FeatureIconMap
                     name="reviewBold"
-                    className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/80 translate-y-[7.5%] -translate-x-[8%]"
+                    className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/50 translate-y-[17%] -translate-x-[80%]  md:-translate-x-[-105%]"
                   />
                 </div>
                 <div className="card-content relative z-10 flex flex-row-reverse items-center gap-4 md:block p-8 lg:p-10 text-white">
                   <div className="min-w-0 flex-1 md:flex-none">
-                    <h3 className="text-white dark:text-lime-bg-dark text-xl font-bold mb-3">{t('featureRateTitle')}</h3>
-                    <p className="text-white/80 dark:text-lime-bg-dark/80 leading-relaxed">{t('featureRateDesc')}</p>
+                    <h3 className="text-white dark:text-background-dark text-xl font-bold mb-3">{t('featureRateTitle')}</h3>
+                    <p className="text-white/80 dark:text-background-dark leading-relaxed">{t('featureRateDesc')}</p>
                   </div>
                 </div>
               </div>
@@ -564,17 +623,17 @@ export default function HomePage() {
               }}
               className="flex-shrink-0 md:flex-shrink md:col-span-3 w-full snap-center h-full group block bg-transparent transition-all duration-300 text-left cursor-pointer"
             >
-              <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-red dark:bg-red-dark">
+              <div className="rounded-[22px] overflow-hidden relative min-h-full bg-red dark:bg-red-dark">
                 <div className="absolute inset-0 flex items-center justify-end overflow-visible pointer-events-none z-0" aria-hidden>
-                  <Icon
+                  <FeatureIconMap
                     name="heartBold"
                     className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/15 translate-y-[8%] translate-x-[8%]"
                   />
                 </div>
                 <div className="card-content relative z-10 flex flex-row items-center gap-4 md:block p-8 lg:p-10 text-white text-start">
                   <div className="min-w-0 flex-1 md:flex-none">
-                    <h3 className="text-white dark:text-red-bg-dark text-xl font-bold mb-3">{t('featureSpreadTitle')}</h3>
-                    <p className="text-white/80 dark:text-red-bg-dark/90 leading-relaxed">{t('featureSpreadDesc')}</p>
+                    <h3 className="text-white dark:text-background-dark text-xl font-bold mb-3">{t('featureSpreadTitle')}</h3>
+                    <p className="text-white/80 dark:text-black leading-relaxed">{t('featureSpreadDesc')}</p>
                   </div>
                 </div>
               </div>
@@ -598,7 +657,7 @@ export default function HomePage() {
           aria-hidden="true"
         />
         <div className="relative z-10 max-w-4xl mx-auto">
-          <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-4 md:mb-8  [text-shadow:_0px_0px_25px_rgba(0,0,0,1)] leading-tight text-white dark:text-text-dark sm:translate-x-8 lg:translate-x-0 xl:translate-x-[8rem]">
+          <h2 className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl ${locale === 'he' ? 'font-bold' : 'font-extrabold'} mb-4 md:mb-8  [text-shadow:_0px_0px_25px_rgba(0,0,0,1)] leading-tight text-white dark:text-text-dark sm:translate-x-8 lg:translate-x-0 xl:translate-x-[8rem]`}>
             {t('nextSessionAwaits')
               .split('<br/>')
               .map((line, i, arr) => (
@@ -633,7 +692,7 @@ export default function HomePage() {
       {/* Community Section */}
       <section className="py-24 sm:py-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-4 text-text dark:text-text-dark">
+          <h2 className={`text-3xl sm:text-4xl md:text-5xl ${locale === 'he' ? 'font-bold' : 'font-extrabold'} text-center mb-4 text-text dark:text-text-dark`}>
             {t('togetherWeRide')}
           </h2>
           <p className="text-lg sm:text-xl text-center text-text-secondary dark:text-text-dark/70 mb-16 max-w-2xl mx-auto">

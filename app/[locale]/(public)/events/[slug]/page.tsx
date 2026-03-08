@@ -554,7 +554,7 @@ export default function EventPage() {
           </div>
 
           {/* Title - Large and bold */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mb-4">
+          <h1 className={`text-3xl sm:text-4xl md:text-5xl ${locale === 'he' ? 'font-bold' : 'font-extrabold'} text-gray-900 dark:text-white leading-tight mb-4`}>
             {getLocalizedTitle()}
           </h1>
 
@@ -759,7 +759,7 @@ export default function EventPage() {
                     const HeadingTag =
                       section.level === 1 ? 'h2' : section.level === 2 ? 'h3' : 'h4';
                     const headingClasses = {
-                      h2: 'text-[1.225rem] sm:text-3xl font-extrabold mt-12 mb-4 text-gray-900 dark:text-white',
+                      h2: `text-[1.225rem] sm:text-3xl ${locale === 'he' ? 'font-bold' : 'font-extrabold'} mt-12 mb-4 text-gray-900 dark:text-white`,
                       h3: 'text-xl sm:text-[1.225rem] font-bold mt-10 mb-3 text-gray-900 dark:text-white',
                       h4: 'text-lg sm:text-xl font-bold mt-8 mb-2 text-gray-900 dark:text-white',
                     };

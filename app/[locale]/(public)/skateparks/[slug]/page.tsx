@@ -732,6 +732,7 @@ export default function SkateparkPage() {
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
   const [helpedReviewIds, setHelpedReviewIds] = useState<Set<string>>(new Set());
+  const pendingHelpfulRef = useRef<Map<string, { method: 'PATCH' | 'DELETE'; timeoutId: ReturnType<typeof setTimeout> }>>(new Map());
   const [amenitiesActive, setAmenitiesActive] = useState(false);
   const [clickedNearbyParkId, setClickedNearbyParkId] = useState<string | null>(null);
   const [isNavigatingBack, setIsNavigatingBack] = useState(false);
@@ -744,6 +745,8 @@ export default function SkateparkPage() {
     return () => {
       if (thankYouPopupTimeoutRef.current) clearTimeout(thankYouPopupTimeoutRef.current);
       if (reviewModalCloseTimeoutRef.current) clearTimeout(reviewModalCloseTimeoutRef.current);
+      pendingHelpfulRef.current.forEach(({ timeoutId }) => clearTimeout(timeoutId));
+      pendingHelpfulRef.current.clear();
     };
   }, []);
 
@@ -1301,10 +1304,23 @@ export default function SkateparkPage() {
     // Don't fetch reviews - they need admin approval first
   };
 
-  const handleToggleHelpful = async (review: Review) => {
+  const DEFERRED_HELPFUL_DELAY_MS = 2500;
+
+  const handleToggleHelpful = (review: Review) => {
     const reviewId = review._id;
     const isCurrentlyHelpful = hasMarkedHelpful(review);
     const method = isCurrentlyHelpful ? 'DELETE' : 'PATCH';
+    const currentCount = Math.max(0, review.helpfulCount ?? 0);
+    const nextCount = isCurrentlyHelpful ? Math.max(0, currentCount - 1) : currentCount + 1;
+
+    // Clear any pending request for this review
+    const pending = pendingHelpfulRef.current.get(reviewId);
+    if (pending) {
+      clearTimeout(pending.timeoutId);
+      pendingHelpfulRef.current.delete(reviewId);
+    }
+
+    // 1. Optimistic UI: update state immediately (no server call yet)
     if (isCurrentlyHelpful) {
       setHelpedReviewIds((prev) => {
         const next = new Set(prev);
@@ -1314,48 +1330,69 @@ export default function SkateparkPage() {
     } else {
       setHelpedReviewIds((prev) => new Set(prev).add(reviewId));
     }
-    try {
-      const res = await fetch(`/api/reviews/${reviewId}/helpful`, {
+    setReviews((prev) =>
+      prev.map((r) =>
+        r._id === reviewId
+          ? {
+              ...r,
+              helpfulCount: nextCount,
+              userHasMarkedHelpful: !isCurrentlyHelpful,
+            }
+          : r
+      )
+    );
+
+    // 2. Send to server after a delay
+    const timeoutId = setTimeout(() => {
+      pendingHelpfulRef.current.delete(reviewId);
+      fetch(`/api/reviews/${reviewId}/helpful`, {
         method,
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setReviews((prev) =>
-          prev.map((r) =>
-            r._id === reviewId
-              ? {
-                  ...r,
-                  helpfulCount: data.helpfulCount ?? r.helpfulCount,
-                  userHasMarkedHelpful: !isCurrentlyHelpful,
-                }
-              : r
-          )
-        );
-      } else {
-        // Revert optimistic update
-        if (isCurrentlyHelpful) {
-          setHelpedReviewIds((prev) => new Set(prev).add(reviewId));
-        } else {
-          setHelpedReviewIds((prev) => {
-            const next = new Set(prev);
-            next.delete(reviewId);
-            return next;
-          });
-        }
-      }
-    } catch {
-      if (isCurrentlyHelpful) {
-        setHelpedReviewIds((prev) => new Set(prev).add(reviewId));
-      } else {
-        setHelpedReviewIds((prev) => {
-          const next = new Set(prev);
-          next.delete(reviewId);
-          return next;
+      })
+        .then((res) => {
+          if (res.ok) return res.json();
+          throw new Error('Helpful request failed');
+        })
+        .then((data) => {
+          setReviews((prev) =>
+            prev.map((r) =>
+              r._id === reviewId
+                ? {
+                    ...r,
+                    helpfulCount: data.helpfulCount ?? r.helpfulCount,
+                    userHasMarkedHelpful: !isCurrentlyHelpful,
+                  }
+                : r
+            )
+          );
+        })
+        .catch(() => {
+          // Revert optimistic update on failure
+          if (isCurrentlyHelpful) {
+            setHelpedReviewIds((prev) => new Set(prev).add(reviewId));
+          } else {
+            setHelpedReviewIds((prev) => {
+              const next = new Set(prev);
+              next.delete(reviewId);
+              return next;
+            });
+          }
+          setReviews((prev) =>
+            prev.map((r) =>
+              r._id === reviewId
+                ? {
+                    ...r,
+                    helpfulCount: currentCount,
+                    userHasMarkedHelpful: isCurrentlyHelpful,
+                  }
+                : r
+            )
+          );
         });
-      }
-    }
+    }, DEFERRED_HELPFUL_DELAY_MS);
+
+    pendingHelpfulRef.current.set(reviewId, { method, timeoutId });
   };
 
   const getLocalizedText = (text: { en: string; he: string } | string): string => {
@@ -2107,7 +2144,7 @@ export default function SkateparkPage() {
             }`}>
               {/* Notes Section */}
               {notes && notes.trim() !== '' && (
-                <div className="md:p-4">
+                <div className="sm:px-2 md:p-4">
                   <div className="flex items-center mb-3 text-text dark:text-text-dark">
                     <h2 className="text-base sm:text-xl font-semibold flex items-center gap-2">
                       <Icon name="infoBold" className={`w-5 h-5`} />
@@ -2233,7 +2270,7 @@ export default function SkateparkPage() {
                 <section 
                   aria-labelledby="directions-heading "
                   key={`map-links-${locale}`}
-                  className="space-y-4 sm:px-0 md:p-4"
+                  className="space-y-4 sm:px-2 md:p-4"
                 >
                   <h3 id="directions-heading" className="sr-only">{t('getDirections')}</h3>
                   <div className="flex flex-col space-y-4 !mt-0">

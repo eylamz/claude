@@ -832,7 +832,7 @@ export default function EditGuidePage() {
             {/* Article Header */}
             <header className="mb-8">
               {/* Title - Large and bold */}
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight mb-4">
+              <h1 className={`text-3xl sm:text-4xl md:text-5xl ${activeTab === 'he' ? 'font-bold' : 'font-extrabold'} text-gray-900 dark:text-white leading-tight mb-4`}>
                 {formData.title[activeTab] || 'Untitled Guide'}
               </h1>
 
@@ -1974,7 +1974,7 @@ function RenderContentBlock({ block, lang }: { block: ContentBlock; lang: 'en' |
 
       // Duolingo-style heading classes - clean and bold
       const headingClasses = {
-        h2: 'text-[1.225rem] sm:text-3xl font-extrabold mt-12 mb-4 text-gray-900 dark:text-white',
+        h2: `text-[1.225rem] sm:text-3xl ${lang === 'he' ? 'font-bold' : 'font-extrabold'} mt-12 mb-4 text-gray-900 dark:text-white`,
         h3: 'text-xl sm:text-[1.225rem] font-bold mt-10 mb-3 text-gray-900 dark:text-white',
         h4: 'text-lg sm:text-xl font-bold mt-8 mb-2 text-gray-900 dark:text-white',
       };
