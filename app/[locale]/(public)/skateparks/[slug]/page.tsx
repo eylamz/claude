@@ -2328,7 +2328,7 @@ export default function SkateparkPage() {
                             className="sm:p-3 rounded-xl sm:bg-white/30 sm:dark:bg-gray-800/5 flex items-center justify-center transition-transform duration-200 hover:scale-110"
                           >
                             <Icon 
-                              name="newGoogleMaps" 
+                              name="newestGoogleMaps" 
                               className="w-[3.15rem] h-[3.15rem] -mt-[2px] sm:w-[2.65rem] sm:h-[2.65rem] text-white dark:text-[#1a1a1a] overflow-visible"
                               style={{
                                 filter: 'drop-shadow(0 1px 1px #66666612) drop-shadow(0 2px 2px #5e5e5e12) drop-shadow(0 4px 4px #7a5d4413) drop-shadow(0 8px 8px #5e5e5e12) drop-shadow(0 16px 16px #5e5e5e12)'

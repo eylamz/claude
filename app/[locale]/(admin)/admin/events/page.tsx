@@ -487,7 +487,7 @@ export default function EventsPage() {
   };
 
   return (
-    <div className="pt-16 space-y-6">
+    <div className="pt-16 space-y-6 max-w-6xl mx-auto">
       <Toaster />
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -762,7 +762,7 @@ export default function EventsPage() {
                   <div>
                     <button
                       onClick={() => router.push(`/${locale}/admin/events/${event.id}/edit`)}
-                      className="text-sm font-medium text-brand-main dark:text-brand-dark hover:underline"
+                      className="text-sm font-medium text-brand-text dark:text-brand-dark hover:underline"
                     >
                       {event.title.en}
                     </button>
@@ -770,7 +770,7 @@ export default function EventsPage() {
                     <button
                       type="button"
                       onClick={() => router.push(`/${locale}/admin/events/${event.id}/signup-form`)}
-                      className="text-xs text-brand-main dark:text-brand-dark hover:underline mt-0.5"
+                      className="text-xs text-purple dark:text-purple-dark hover:underline mt-0.5"
                     >
                       Signup form
                     </button>

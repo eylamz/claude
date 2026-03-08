@@ -432,31 +432,18 @@ export default function HomePage() {
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-4 text-text dark:text-text-dark">
             {t('whyEnboss')}
           </h2>
-          <p className="text-lg sm:text-xl text-center text-text-secondary dark:text-text-secondary-dark mb-16 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-center text-text-secondary dark:text-text-dark/70 mb-16 max-w-2xl mx-auto">
             {t('whyEnbossSubtitle')}
           </p>
 
           <div className="flex flex-col justify-center items-center md:grid md:overflow-visible snap-x md:snap-none gap-4 md:gap-8 lg:gap-10 md:grid-cols-6 pb-2 md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
             <Link
               href={`/${locale}/skateparks`}
-              className="flex-shrink-0 md:flex-shrink md:col-span-2 w-[min(85vw,320px)] md:w-full snap-center h-full group block bg-transparent transition-all duration-300"
+              className="flex-shrink-0 md:flex-shrink md:col-span-2 w-full snap-center h-full group block bg-transparent transition-all duration-300"
             >
-              <div className=" card-gradient card-anim-1 rounded-[22px] overflow-hidden relative min-h-full">
-                <div className="gradient-0" aria-hidden />
-                <div className="gradient-1" aria-hidden />
-                <div className="glass" aria-hidden />
-                <div className="gradient-2" aria-hidden>
-                  <div className="color-1 color" />
-                  <div className="color-2 color" />
-                  <div className="color-3 color" />
-                  <div className="color-4 color" />
-                  <div className="color-5 color" />
-                  <div className="color-6 color" />
-                  <div className="color-7 color" />
-                  <div className="color-8 color" />
-                </div>
-                <div className="card-content relative z-10 p-8 lg:p-10 text-white">
-                  <div className="card-icon-gradient card-icon-anim-1 mb-6 shadow-xl">
+              <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-green dark:bg-green-dark">
+                <div className="card-content relative z-10 flex flex-row items-center gap-4 md:block p-8 lg:p-10 text-white">
+                  <div className="card-icon-gradient card-icon-anim-1 flex-shrink-0 md:mb-6 shadow-xl">
                     <div className="gradient-0" aria-hidden />
                     <div className="gradient-1" aria-hidden />
                     <div className="glass" aria-hidden />
@@ -474,32 +461,21 @@ export default function HomePage() {
                       <Icon name="mapBold" className="w-8 h-8 text-white" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3">{t('featureDiscoverTitle')}</h3>
-                  <p className="text-white/90 leading-relaxed">{t('featureDiscoverDesc')}</p>
+                  <div className="min-w-0 flex-1 md:flex-none">
+                    <h3 className="text-white dark:text-green-bg-dark text-xl font-bold mb-3">{t('featureDiscoverTitle')}</h3>
+                    <p className="text-white/80 dark:text-green-bg-dark/90 leading-relaxed">{t('featureDiscoverDesc')}</p>
+                  </div>
                 </div>
               </div>
             </Link>
 
             <Link
               href={`/${locale}/guides`}
-              className="flex-shrink-0 md:flex-shrink md:col-span-2 w-[min(85vw,320px)] md:w-full snap-center h-full group block bg-transparent transition-all duration-300"
+              className="flex-shrink-0 md:flex-shrink md:col-span-2 w-full snap-center h-full group block bg-transparent transition-all duration-300"
             >
-              <div className=" card-gradient card-anim-2 rounded-[22px] overflow-hidden relative min-h-full">
-                <div className="gradient-0" aria-hidden />
-                <div className="gradient-1" aria-hidden />
-                <div className="glass" aria-hidden />
-                <div className="gradient-2" aria-hidden>
-                  <div className="color-1 color" />
-                  <div className="color-2 color" />
-                  <div className="color-3 color" />
-                  <div className="color-4 color" />
-                  <div className="color-5 color" />
-                  <div className="color-6 color" />
-                  <div className="color-7 color" />
-                  <div className="color-8 color" />
-                </div>
-                <div className="card-content relative z-10 p-8 lg:p-10 text-white shadow-xl">
-                  <div className="card-icon-gradient card-icon-anim-2 mb-6">
+              <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-yellow dark:bg-yellow-dark">
+                <div className="card-content relative z-10 flex flex-row-reverse items-center gap-4 md:block p-8 lg:p-10 text-white shadow-xl">
+                  <div className="card-icon-gradient card-icon-anim-2 flex-shrink-0 md:mb-6">
                     <div className="gradient-0" aria-hidden />
                     <div className="gradient-1" aria-hidden />
                     <div className="glass" aria-hidden />
@@ -517,32 +493,21 @@ export default function HomePage() {
                       <Icon name="bookBold" className="w-8 h-8 text-white" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3">{t('featureLearnTitle')}</h3>
-                  <p className="text-white/90 leading-relaxed">{t('featureLearnDesc')}</p>
+                  <div className="min-w-0 flex-1 md:flex-none">
+                    <h3 className="text-white dark:text-yellow-bg-dark text-xl font-bold mb-3">{t('featureLearnTitle')}</h3>
+                    <p className="text-white/80 dark:text-yellow-bg-dark/80 leading-relaxed">{t('featureLearnDesc')}</p>
+                  </div>
                 </div>
               </div>
             </Link>
 
             <Link
               href={`/${locale}/events`}
-              className="flex-shrink-0 md:flex-shrink md:col-span-2 w-[min(85vw,320px)] md:w-full snap-center h-full group block bg-transparent transition-all duration-300"
+              className="flex-shrink-0 md:flex-shrink md:col-span-2 w-full snap-center h-full group block bg-transparent transition-all duration-300"
             >
-              <div className=" card-gradient card-anim-3 rounded-[22px] overflow-hidden relative min-h-full">
-                <div className="gradient-0" aria-hidden />
-                <div className="gradient-1" aria-hidden />
-                <div className="glass" aria-hidden />
-                <div className="gradient-2" aria-hidden>
-                  <div className="color-1 color" />
-                  <div className="color-2 color" />
-                  <div className="color-3 color" />
-                  <div className="color-4 color" />
-                  <div className="color-5 color" />
-                  <div className="color-6 color" />
-                  <div className="color-7 color" />
-                  <div className="color-8 color" />
-                </div>
-                <div className="card-content relative z-10 p-8 lg:p-10 text-white">
-                  <div className="card-icon-gradient card-icon-anim-3 mb-6 shadow-xl">
+              <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-purple dark:bg-purple-dark">
+                <div className="card-content relative z-10 flex flex-row items-center gap-4 md:block p-8 lg:p-10 text-white">
+                  <div className="card-icon-gradient card-icon-anim-3 flex-shrink-0 md:mb-6 shadow-xl">
                     <div className="gradient-0" aria-hidden />
                     <div className="gradient-1" aria-hidden />
                     <div className="glass" aria-hidden />
@@ -560,32 +525,21 @@ export default function HomePage() {
                       <Icon name="calendarBold" className="w-8 h-8 text-white" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3">{t('featureEventsTitle')}</h3>
-                  <p className="text-white/90 leading-relaxed">{t('featureEventsDesc')}</p>
+                  <div className="min-w-0 flex-1 md:flex-none">
+                    <h3 className="text-white dark:text-purple-bg-dark text-xl font-bold mb-3">{t('featureEventsTitle')}</h3>
+                    <p className="text-white/80 dark:text-purple-bg-dark/80 leading-relaxed">{t('featureEventsDesc')}</p>
+                  </div>
                 </div>
               </div>
             </Link>
 
             <Link
               href={`/${locale}/skateparks`}
-              className="flex-shrink-0 md:flex-shrink md:col-span-3 w-[min(85vw,320px)] md:w-full snap-center h-full group block  bg-transparent transition-all duration-300"
+              className="flex-shrink-0 md:flex-shrink md:col-span-3 w-full snap-center h-full group block  bg-transparent transition-all duration-300"
             >
-              <div className=" card-gradient card-anim-4 rounded-[22px] overflow-hidden relative min-h-full">
-                <div className="gradient-0" aria-hidden />
-                <div className="gradient-1" aria-hidden />
-                <div className="glass" aria-hidden />
-                <div className="gradient-2" aria-hidden>
-                  <div className="color-1 color" />
-                  <div className="color-2 color" />
-                  <div className="color-3 color" />
-                  <div className="color-4 color" />
-                  <div className="color-5 color" />
-                  <div className="color-6 color" />
-                  <div className="color-7 color" />
-                  <div className="color-8 color" />
-                </div>
-                <div className="card-content relative z-10 p-8 lg:p-10 text-white">
-                  <div className="card-icon-gradient card-icon-anim-4 mb-6 shadow-xl">
+              <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-lime dark:bg-lime-dark">
+                <div className="card-content relative z-10 flex flex-row-reverse items-center gap-4 md:block p-8 lg:p-10 text-white">
+                  <div className="card-icon-gradient card-icon-anim-4 flex-shrink-0 md:mb-6 shadow-xl">
                     <div className="gradient-0" aria-hidden />
                     <div className="gradient-1" aria-hidden />
                     <div className="glass" aria-hidden />
@@ -603,8 +557,10 @@ export default function HomePage() {
                       <Icon name="reviewBold" className="w-8 h-8 text-white" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3">{t('featureRateTitle')}</h3>
-                  <p className="text-white/90 leading-relaxed">{t('featureRateDesc')}</p>
+                  <div className="min-w-0 flex-1 md:flex-none">
+                    <h3 className="text-white dark:text-lime-bg-dark text-xl font-bold mb-3">{t('featureRateTitle')}</h3>
+                    <p className="text-white/80 dark:text-lime-bg-dark/80 leading-relaxed">{t('featureRateDesc')}</p>
+                  </div>
                 </div>
               </div>
             </Link>
@@ -633,24 +589,11 @@ export default function HomePage() {
                   navigator.clipboard.writeText(url);
                 }
               }}
-              className="flex-shrink-0 md:flex-shrink md:col-span-3 w-[min(85vw,320px)] md:w-full snap-center h-full group block bg-transparent transition-all duration-300 text-left cursor-pointer"
+              className="flex-shrink-0 md:flex-shrink md:col-span-3 w-full snap-center h-full group block bg-transparent transition-all duration-300 text-left cursor-pointer"
             >
-              <div className="card-gradient card-anim-5 rounded-[22px] overflow-hidden relative min-h-full">
-                <div className="gradient-0" aria-hidden />
-                <div className="gradient-1" aria-hidden />
-                <div className="glass" aria-hidden />
-                <div className="gradient-2" aria-hidden>
-                  <div className="color-1 color" />
-                  <div className="color-2 color" />
-                  <div className="color-3 color" />
-                  <div className="color-4 color" />
-                  <div className="color-5 color" />
-                  <div className="color-6 color" />
-                  <div className="color-7 color" />
-                  <div className="color-8 color" />
-                </div>
-                <div className="card-content relative z-10 p-8 lg:p-10 text-white text-start">
-                  <div className="card-icon-gradient card-icon-anim-5 mb-6">
+              <div className="feature-card rounded-[22px] overflow-hidden relative min-h-full bg-red dark:bg-red-dark">
+                <div className="card-content relative z-10 flex flex-row items-center gap-4 md:block p-8 lg:p-10 text-white text-start">
+                  <div className="card-icon-gradient card-icon-anim-5 flex-shrink-0 md:mb-6">
                     <div className="gradient-0" aria-hidden />
                     <div className="gradient-1" aria-hidden />
                     <div className="glass" aria-hidden />
@@ -668,8 +611,10 @@ export default function HomePage() {
                       <Icon name="heartBold" className="w-8 h-8 text-white" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold mb-3">{t('featureSpreadTitle')}</h3>
-                  <p className="text-white/90 leading-relaxed">{t('featureSpreadDesc')}</p>
+                  <div className="min-w-0 flex-1 md:flex-none">
+                    <h3 className="text-white dark:text-red-bg-dark text-xl font-bold mb-3">{t('featureSpreadTitle')}</h3>
+                    <p className="text-white/80 dark:text-red-bg-dark/90 leading-relaxed">{t('featureSpreadDesc')}</p>
+                  </div>
                 </div>
               </div>
             </button>
@@ -728,7 +673,7 @@ export default function HomePage() {
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-4 text-text dark:text-text-dark">
             {t('togetherWeRide')}
           </h2>
-          <p className="text-lg sm:text-xl text-center text-text-secondary dark:text-text-secondary-dark mb-16 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-center text-text-secondary dark:text-text-dark/70 mb-16 max-w-2xl mx-auto">
             {t('togetherWeRideSubtitle')}
           </p>
 

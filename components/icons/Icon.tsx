@@ -72,6 +72,7 @@ import Plant from './plant.svg';
 import PlantBold from './plantBold.svg';
 import GoogleMaps from './googleMaps.svg';
 import newGoogleMaps from './newGoogleMaps.svg';
+import newestGoogleMaps from './newestGoogleMaps.svg';
 import newAppleMaps from './newAppleMaps.svg';
 import newAppleMapsDark from './newAppleMapsDark.svg';
 import Waze from './wazeMaps.svg';
@@ -286,6 +287,7 @@ const iconMap: Record<string, SvgComponent> = {
   heartLike: HeartLiked,
   googleMaps: GoogleMaps,
   newGoogleMaps: newGoogleMaps,
+  newestGoogleMaps: newestGoogleMaps,
   newAppleMaps: newAppleMaps,
   newAppleMapsDark: newAppleMapsDark,
   wazeMaps: Waze,
@@ -568,6 +570,7 @@ export type IconName =
   | 'house' | 'houseBold'
   | 'trees' | 'treesBold'
   | 'newGoogleMaps'
+  | 'newestGoogleMaps'
   | 'newAppleMaps'
   | 'newAppleMapsDark'
   | 'moovit'

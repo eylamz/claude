@@ -209,6 +209,7 @@ const iconRegistry: Record<string, () => Promise<IconModule>> = {
   wind: () => import('./wind.svg'),
 
   newGoogleMaps: () => import('./newGoogleMaps.svg'),
+  newestGoogleMaps: () => import('./newestGoogleMaps.svg'),
   newAppleMaps: () => import('./newAppleMaps.svg'),
   newAppleMapsDark: () => import('./newAppleMapsDark.svg'),
   moovit: () => import('./moovit.svg'),

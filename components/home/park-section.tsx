@@ -134,11 +134,13 @@ export const ParkSection = ({ parks, t: _t }: ParkSectionProps) => {
       <div className="relative">
         {showStartButton && (
           <button
+            type="button"
             onClick={() => scroll('left')}
             className="absolute ltr:left-[5px] rtl:right-[5px] top-1/2 -translate-y-1/2 z-10 transition-all duration-200 bg-white/80 hover:bg-white/90 dark:bg-black/80 dark:hover:bg-black/90 rounded-full p-2 shadow-lg opacity-0 animate-popFadeIn"
             style={{ animationDelay: '900ms' }}
+            aria-label="Previous parks"
           >
-            <ArrowRight className="h-6 w-6 ltr:rotate-180" />
+            <ArrowRight className="h-6 w-6 ltr:rotate-180" aria-hidden />
           </button>
         )}
         <div
@@ -156,11 +158,13 @@ export const ParkSection = ({ parks, t: _t }: ParkSectionProps) => {
         </div>
         {hasOverflow && (
           <button
+            type="button"
             onClick={() => scroll('right')}
             className="absolute ltr:right-[5px] rtl:left-[5px] top-1/2 -translate-y-1/2 z-10 transition-all duration-200 bg-white/80 hover:bg-white/90 dark:bg-black/80 dark:hover:bg-black/90 rounded-full p-2 shadow-lg opacity-0 animate-popFadeIn"
             style={{ animationDelay: '900ms' }}
+            aria-label="Next parks"
           >
-            <ArrowRight className="h-6 w-6 rtl:rotate-180" />
+            <ArrowRight className="h-6 w-6 rtl:rotate-180" aria-hidden />
           </button>
         )}
       </div>

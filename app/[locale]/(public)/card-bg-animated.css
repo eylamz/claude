@@ -1,4 +1,13 @@
 /* Gradient card – same gradient bg and text shadow as footer subscribe button */
+/* Solid feature cards: container uses Tailwind bg-*; only content text shadow here */
+.feature-card .card-content {
+  position: relative;
+  z-index: 20;
+}
+html:not(.dark) .feature-card .card-content h3 {
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+}
+
 .card-gradient {
   --card-bg: 18, 18, 18;
   background: rgba(var(--card-bg), 1);

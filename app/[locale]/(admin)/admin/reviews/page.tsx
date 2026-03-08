@@ -632,7 +632,7 @@ export default function ReviewsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="pt-16 space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -648,14 +648,14 @@ export default function ReviewsPage() {
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-4">
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show reviews with content in:</span>
-            <div className="flex rounded-lg border border-border dark:border-border-dark p-0.5 bg-card dark:bg-card-dark">
+            <div className="flex gap-2 rounded-lg border border-border dark:border-border-dark p-0.5 bg-card dark:bg-card-dark">
               <button
                 type="button"
                 onClick={() => setContentLocale('en')}
                 className={cn(
                   'px-4 py-2 text-sm font-medium rounded-md transition-colors',
                   contentLocale === 'en'
-                    ? 'bg-brand-main text-white dark:bg-brand-dark dark:text-white'
+                    ? 'bg-brand-text dark:bg-brand-dark text-white dark:text-brand-stroke'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark'
                 )}
               >

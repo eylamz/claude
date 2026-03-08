@@ -8,10 +8,14 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com",
-      "connect-src 'self' https://res.cloudinary.com https://api.cloudinary.com",
-      "img-src 'self' data: blob: https://res.cloudinary.com https://placehold.co",
-      "style-src 'self' 'unsafe-inline'",
+      // In development, Next.js React Refresh (HMR) uses eval(); allow it only then.
+      process.env.NODE_ENV === 'development'
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://maps.googleapis.com"
+        : "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://maps.googleapis.com",
+      "connect-src 'self' https://res.cloudinary.com https://api.cloudinary.com https://maps.googleapis.com",
+      "img-src 'self' data: blob: https://res.cloudinary.com https://placehold.co https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://*.google.com",
+      "frame-src 'self' https://www.google.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
     ].join('; '),
   },
@@ -29,6 +33,7 @@ const nextConfig: NextConfig = {
     turbopackUseSystemTlsCerts: true,
   },
   images: {
+    qualities: [60, 75],
     remotePatterns: [
       {
         protocol: 'https',
