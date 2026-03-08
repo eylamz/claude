@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { sanitizeSvg } from '@/lib/utils/sanitizeSvg';
 
 // Direct SVG imports - Next.js will bundle these at build time
 import Helmet from './helmet.svg';
@@ -816,7 +817,7 @@ export const Icon = React.forwardRef<HTMLSpanElement, IconProps>(
     .replace(/\s+overflow=["'][^"']*["']/gi, '')
     .replace('<svg ', '<svg overflow="visible" ');
 
-  const finalSvg = `${newSvgAttrs}${svgInner}</svg>`;
+  const finalSvg = sanitizeSvg(`${newSvgAttrs}${svgInner}</svg>`);
 
   return (
     <span
