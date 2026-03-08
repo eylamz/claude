@@ -6,6 +6,7 @@ import User from '@/lib/models/User';
 import Guide from '@/lib/models/Guide';
 import { MAX_ADMIN_PAGE_SIZE } from '@/lib/config/api';
 import { validateCsrf } from '@/lib/security/csrf';
+import { internalError } from '@/lib/api/errors';
 
 export async function GET(request: Request) {
   try {
@@ -316,15 +317,12 @@ export async function POST(request: NextRequest) {
     // Handle validation errors
     if (error.name === 'ValidationError') {
       return NextResponse.json(
-        { error: error.message || 'Validation failed' },
+        { error: 'Validation failed' },
         { status: 400 }
       );
     }
-    
-    return NextResponse.json(
-      { error: error.message || 'Failed to create guide' },
-      { status: 500 }
-    );
+
+    return internalError(error, 'admin/guides POST');
   }
 }
 

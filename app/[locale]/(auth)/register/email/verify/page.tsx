@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { useTranslation } from '@/hooks';
 import { Button } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { sendPasswordResetEmailJS } from '@/lib/email/emailjs-service';
 
 interface VerifyEmailErrors {
   general?: string;
@@ -80,12 +79,9 @@ function VerifyEmailPageContent() {
 
       if (!response.ok) {
         if (response.status === 429) {
-          // Rate limited
           const retryAfter = data.retryAfter || 60;
           setResendCooldown(retryAfter);
           setErrors({ general: data.error || t('verify.errors.tooManyRequests') });
-        } else if (response.status === 404 && data.error?.toLowerCase().includes('no account')) {
-          setErrors({ general: t('verify.errors.emailNotFound') });
         } else {
           setErrors({ general: data.error || t('verify.errors.somethingWentWrong') });
         }
@@ -93,38 +89,16 @@ function VerifyEmailPageContent() {
         return;
       }
 
-      // If we got a verification URL, send email via EmailJS (client-side)
-      if (data.success && data.verificationUrl && data.email) {
-        try {
-          await sendPasswordResetEmailJS({
-            toEmail: data.email,
-            resetUrl: data.verificationUrl,
-            locale: locale,
-            type: 'email_verification',
-          });
-          
-          // Update resend count and set cooldown
-          const newCount = resendCount + 1;
-          setResendCount(newCount);
-          
-          // Set cooldown: 10 seconds for second time, then 1 minute
-          if (newCount === 1) {
-            setResendCooldown(10); // 10 seconds for second request
-          } else {
-            setResendCooldown(60); // 1 minute for subsequent requests
-          }
-          
-          setIsLoading(false);
-        } catch (emailError: any) {
-          console.error('Failed to send email via EmailJS:', emailError);
-          setErrors({ 
-            general: emailError.message || t('verify.errors.somethingWentWrong')
-          });
-          setIsLoading(false);
+      if (data.success) {
+        const newCount = resendCount + 1;
+        setResendCount(newCount);
+        if (newCount === 1) {
+          setResendCooldown(10);
+        } else {
+          setResendCooldown(60);
         }
-      } else {
-        setIsLoading(false);
       }
+      setIsLoading(false);
     } catch (error) {
       console.error('Resend email error:', error);
       setErrors({ general: t('verify.errors.somethingWentWrong') });

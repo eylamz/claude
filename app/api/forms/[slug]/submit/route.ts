@@ -169,7 +169,7 @@ export async function POST(
     }
 
     return NextResponse.json(
-      { error: error.message || 'Failed to submit form' },
+      { error: 'Failed to submit form' },
       { status: 500 }
     );
   }

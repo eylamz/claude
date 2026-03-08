@@ -3,6 +3,10 @@ import { connectDB } from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import crypto from 'crypto';
 import { getRateLimiter } from '@/lib/redis';
+import { sendPasswordResetEmailJSServer } from '@/lib/email/emailjs-service';
+
+// Generic message to avoid leaking whether the account exists (no email enumeration)
+const GENERIC_SUCCESS_MESSAGE = 'If the account exists, a reset email was sent.';
 
 // Shared rate limiter: 1 request per minute per IP/email combination
 const rateLimiter = getRateLimiter(60000, 1);
@@ -39,15 +43,15 @@ export async function POST(request: NextRequest) {
     // Connect to database
     await connectDB();
 
-    // Find user by email - confirm email is associated with an account
+    // Find user by email - do not reveal whether account exists (no email enumeration)
     const user = await User.findOne({ email: email.toLowerCase() });
 
-    // Return error if email is not associated with an account
     if (!user) {
-      return NextResponse.json(
-        { error: 'No account found with this email address.' },
-        { status: 404 }
-      );
+      // Same generic response whether account exists or not
+      return NextResponse.json({
+        success: true,
+        message: GENERIC_SUCCESS_MESSAGE,
+      });
     }
 
     // Generate reset token
@@ -65,15 +69,25 @@ export async function POST(request: NextRequest) {
     user.resetTokenIP = ip; // Store IP for optional IP binding
     await user.save();
 
-    // Generate reset URL - client will send email via EmailJS
+    // Build reset URL and send email from server only - never expose token/link to client
     const locale = requestLocale || request.headers.get('accept-language')?.split(',')[0]?.split('-')[0] || 'en';
     const resetUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/${locale}/reset-password/${resetToken}`;
 
-    // Return reset URL to client so it can send email via EmailJS
+    try {
+      await sendPasswordResetEmailJSServer({
+        toEmail: user.email,
+        resetUrl,
+        locale,
+        type: 'password_reset',
+      });
+    } catch (emailError) {
+      console.error('Password reset email send error:', emailError);
+      // Still return generic success to avoid leaking that the account exists
+    }
+
     return NextResponse.json({
       success: true,
-      resetUrl,
-      email: user.email,
+      message: GENERIC_SUCCESS_MESSAGE,
     });
   } catch (error) {
     console.error('Password reset request error:', error);

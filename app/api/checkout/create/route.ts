@@ -111,7 +111,7 @@ async function validateCartItems(items: CartItem[]): Promise<{
       });
     } catch (error) {
       console.error(`Error validating item ${item.id}:`, error);
-      errors.push(`Error validating ${item.productName}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      errors.push(`Validation failed for ${item.productName}.`);
     }
   }
 
@@ -346,23 +346,16 @@ export async function POST(request: NextRequest) {
       await redis.del(`inventory:reservation:${reservationId}`);
       
       console.error('Shopify checkout creation error:', shopifyError);
-      
+
       return NextResponse.json(
-        {
-          error: 'Failed to create checkout',
-          message: shopifyError instanceof Error ? shopifyError.message : 'Unknown error',
-        },
+        { error: 'Failed to create checkout' },
         { status: 500 }
       );
     }
   } catch (error) {
     console.error('Checkout creation error:', error);
-    
     return NextResponse.json(
-      {
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

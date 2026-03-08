@@ -291,15 +291,13 @@ export const authOptions: NextAuthOptions = {
     },
 
     /**
-     * Handle redirects - let middleware handle locale prefix
+     * Handle redirects - same-origin only to prevent open redirect.
+     * Let middleware handle locale prefix for relative paths.
      */
     async redirect({ url, baseUrl }) {
-      // If the URL is relative, return it as-is and let middleware handle locale
-      if (url.startsWith('/')) {
-        return `${baseUrl}${url}`;
-      }
-      // If the URL is absolute, return as is
-      return url;
+      const target = new URL(url, baseUrl);
+      if (target.origin !== new URL(baseUrl).origin) return baseUrl;
+      return target.toString();
     },
   },
 

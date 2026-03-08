@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Order, { OrderStatus } from '@/lib/db/models/Order';
 import { AuthError, requireUser } from '@/lib/auth/server';
+import { authErrorResponse, internalError } from '@/lib/api/errors';
 
 /**
  * Orders API Route
@@ -87,16 +88,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     if (error instanceof AuthError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.status }
-      );
+      return authErrorResponse(error.status);
     }
-    console.error('Error fetching orders:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return internalError(error, 'orders');
   }
 }
 

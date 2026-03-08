@@ -6,6 +6,7 @@ import User from '@/lib/models/User';
 import Form from '@/lib/models/Form';
 import FormSubmission from '@/lib/models/FormSubmission';
 import mongoose from 'mongoose';
+import { internalError } from '@/lib/api/errors';
 
 export async function GET(
   request: Request,
@@ -81,10 +82,6 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    console.error('Get form submissions error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to fetch submissions' },
-      { status: 500 }
-    );
+    return internalError(error, 'admin/forms/[id]/submissions');
   }
 }

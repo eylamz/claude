@@ -3,6 +3,10 @@ import { connectDB } from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import crypto from 'crypto';
 import { getRateLimiter } from '@/lib/redis';
+import { sendPasswordResetEmailJSServer } from '@/lib/email/emailjs-service';
+
+// Generic message to avoid leaking whether the account exists (no email enumeration)
+const GENERIC_SUCCESS_MESSAGE = 'If the account exists, a verification email was sent.';
 
 // Shared rate limiter: allow small bursts, then enforce 1-minute window per IP/email
 const rateLimiter = getRateLimiter(60000, 3);
@@ -38,15 +42,14 @@ export async function POST(request: NextRequest) {
     // Connect to database
     await connectDB();
 
-    // Find user by email
+    // Find user by email - do not reveal whether account exists (no email enumeration)
     const user = await User.findOne({ email: email.toLowerCase() });
 
-    // Return error if email is not associated with an account
     if (!user) {
-      return NextResponse.json(
-        { error: 'No account found with this email address.' },
-        { status: 404 }
-      );
+      return NextResponse.json({
+        success: true,
+        message: GENERIC_SUCCESS_MESSAGE,
+      });
     }
 
     // Generate verification token (reuse resetToken fields for email verification)
@@ -64,15 +67,25 @@ export async function POST(request: NextRequest) {
     user.resetTokenIP = ip;
     await user.save();
 
-    // Generate verification URL - client will send email via EmailJS
+    // Build verification URL and send email from server only - never expose token/link to client
     const locale = requestLocale || request.headers.get('accept-language')?.split(',')[0]?.split('-')[0] || 'en';
     const verificationUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/${locale}/register/email/verify/${verificationToken}`;
 
-    // Return verification URL to client so it can send email via EmailJS
+    try {
+      await sendPasswordResetEmailJSServer({
+        toEmail: user.email,
+        resetUrl: verificationUrl,
+        locale,
+        type: 'email_verification',
+      });
+    } catch (emailError) {
+      console.error('Email verification send error:', emailError);
+      // Still return generic success to avoid leaking that the account exists
+    }
+
     return NextResponse.json({
       success: true,
-      verificationUrl,
-      email: user.email,
+      message: GENERIC_SUCCESS_MESSAGE,
     });
   } catch (error) {
     console.error('Email verification request error:', error);

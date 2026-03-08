@@ -8,7 +8,6 @@ import { useTranslation } from '@/hooks';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { sendPasswordResetEmailJS } from '@/lib/email/emailjs-service';
 
 interface RegisterEmailErrors {
   general?: string;
@@ -65,43 +64,17 @@ function RegisterEmailPageContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Check if it's an email not found error (404)
-        if (response.status === 404 && data.error?.toLowerCase().includes('no account')) {
-          setErrors({ general: t('reset.errors.emailNotFound') || 'No account found with this email address.' });
-        } else {
-          setErrors({ general: data.error || t('reset.errors.somethingWentWrong') || 'Something went wrong' });
-        }
+        setErrors({ general: data.error || t('reset.errors.somethingWentWrong') || 'Something went wrong' });
         setIsLoading(false);
         return;
       }
 
-      // If we got a verification URL, send email via EmailJS (client-side)
-      if (data.success && data.verificationUrl && data.email) {
-        try {
-          await sendPasswordResetEmailJS({
-            toEmail: data.email,
-            resetUrl: data.verificationUrl,
-            locale: locale,
-            type: 'email_verification',
-          });
-          
-          // Success - redirect to verify page
-          startTransition(() => {
-            router.push(`/${locale}/register/email/verify?email=${encodeURIComponent(email)}`);
-          });
-        } catch (emailError: any) {
-          console.error('Failed to send email via EmailJS:', emailError);
-          setErrors({ 
-            general: emailError.message || t('reset.errors.somethingWentWrong') || 'Something went wrong'
-          });
-          setIsLoading(false);
-        }
-      } else {
-        // Fallback if API doesn't return expected data
+      if (data.success) {
         startTransition(() => {
           router.push(`/${locale}/register/email/verify?email=${encodeURIComponent(email)}`);
         });
       }
+      setIsLoading(false);
     } catch (error) {
       console.error('Email verification error:', error);
       setErrors({ general: t('reset.errors.somethingWentWrong') || 'Something went wrong' });

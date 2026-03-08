@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Create trainer error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to create trainer' },
+      { error: 'Failed to create trainer' },
       { status: 500 }
     );
   }
@@ -187,7 +187,7 @@ export async function PATCH(request: NextRequest) {
   } catch (error: any) {
     console.error('Update trainer error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to update trainer' },
+      { error: 'Failed to update trainer' },
       { status: 500 }
     );
   }

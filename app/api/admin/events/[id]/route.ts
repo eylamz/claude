@@ -9,6 +9,7 @@ import Settings from '@/lib/models/Settings';
 import { validateCsrf } from '@/lib/security/csrf';
 import type { IEvent } from '@/lib/models/Event';
 import mongoose from 'mongoose';
+import { internalError } from '@/lib/api/errors';
 
 /** Lean event document that may include legacy flat fields */
 type EventLean = IEvent & Record<string, unknown>;
@@ -154,11 +155,7 @@ export async function GET(
 
     return NextResponse.json({ event: formattedEvent });
   } catch (error: any) {
-    console.error('Get event error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to fetch event' },
-      { status: 500 }
-    );
+    return internalError(error, 'admin/events/[id] GET');
   }
 }
 
@@ -481,13 +478,13 @@ export async function PUT(
     // Handle validation errors
     if (error.name === 'ValidationError') {
       return NextResponse.json(
-        { error: error.message || 'Validation failed' },
+        { error: 'Validation failed' },
         { status: 400 }
       );
     }
-    
+
     return NextResponse.json(
-      { error: error.message || 'Failed to update event' },
+      { error: 'Failed to update event' },
       { status: 500 }
     );
   }
@@ -539,10 +536,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Event deleted successfully' });
   } catch (error: any) {
-    console.error('Delete event error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to delete event' },
-      { status: 500 }
-    );
+    return internalError(error, 'admin/events/[id] DELETE');
   }
 }

@@ -4,6 +4,7 @@ import User from '@/lib/models/User';
 import Product from '@/lib/models/Product';
 import { validateCsrf } from '@/lib/security/csrf';
 import { AuthError, requireUser } from '@/lib/auth/server';
+import { authErrorResponse, internalError } from '@/lib/api/errors';
 
 /**
  * Wishlist API Route
@@ -72,16 +73,9 @@ export async function GET(_request: NextRequest) {
     });
   } catch (error: any) {
     if (error instanceof AuthError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.status }
-      );
+      return authErrorResponse(error.status);
     }
-    console.error('Error fetching wishlist:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return internalError(error, 'wishlist/GET');
   }
 }
 
@@ -136,16 +130,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     if (error instanceof AuthError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.status }
-      );
+      return authErrorResponse(error.status);
     }
-    console.error('Error adding to wishlist:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return internalError(error, 'wishlist/POST');
   }
 }
 
@@ -197,16 +184,9 @@ export async function DELETE(request: NextRequest) {
     }
   } catch (error: any) {
     if (error instanceof AuthError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.status }
-      );
+      return authErrorResponse(error.status);
     }
-    console.error('Error removing from wishlist:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return internalError(error, 'wishlist/DELETE');
   }
 }
 

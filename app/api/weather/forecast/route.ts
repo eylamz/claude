@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Skatepark from '@/lib/models/Skatepark';
 import { getOrFetchForecast } from '@/lib/services/weather';
+import { internalError } from '@/lib/api/errors';
 
 /**
  * Weather Forecast API Route
@@ -106,11 +107,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ forecast: response });
   } catch (error: any) {
-    console.error('Error fetching weather forecast:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', message: error.message },
-      { status: 500 }
-    );
+    return internalError(error, 'weather/forecast');
   }
 }
 

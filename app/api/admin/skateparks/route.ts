@@ -392,8 +392,8 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error('Create skatepark error:', error);
-    
-    if (error.message?.includes('duplicate key')) {
+
+    if ((error as any).code === 11000) {
       return NextResponse.json(
         { error: 'A skatepark with this slug already exists' },
         { status: 400 }
@@ -401,7 +401,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: error.message || 'Failed to create skatepark' },
+      { error: 'Failed to create skatepark' },
       { status: 500 }
     );
   }

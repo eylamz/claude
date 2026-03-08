@@ -5,6 +5,7 @@ import connectDB from '@/lib/db/mongodb';
 import Form from '@/lib/models/Form';
 import FormSubmission from '@/lib/models/FormSubmission';
 import crypto from 'crypto';
+import { internalError } from '@/lib/api/errors';
 
 /**
  * Get client IP from request
@@ -53,10 +54,6 @@ export async function GET(
       submitted: !!existingSubmission,
     });
   } catch (error: any) {
-    console.error('Check submission error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to check submission status' },
-      { status: 500 }
-    );
+    return internalError(error, 'forms/check-submission');
   }
 }

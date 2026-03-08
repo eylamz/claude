@@ -6,6 +6,7 @@ import { AuthError, requireAdmin } from '@/lib/auth/server';
 import { MAX_ADMIN_PAGE_SIZE } from '@/lib/config/api';
 import { validateCsrf } from '@/lib/security/csrf';
 import { escapeRegexForMongo } from '@/lib/security/regex';
+import { authErrorResponse, internalError } from '@/lib/api/errors';
 
 export async function GET(request: Request) {
   try {
@@ -199,13 +200,9 @@ export async function GET(request: Request) {
     });
   } catch (error: any) {
     if (error instanceof AuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return authErrorResponse(error.status);
     }
-    console.error('Events API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch events' },
-      { status: 500 }
-    );
+    return internalError(error, 'admin/events GET');
   }
 }
 
@@ -329,13 +326,9 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     if (error instanceof AuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return authErrorResponse(error.status);
     }
-    console.error('Create event error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to create event' },
-      { status: 500 }
-    );
+    return internalError(error, 'admin/events POST');
   }
 }
 

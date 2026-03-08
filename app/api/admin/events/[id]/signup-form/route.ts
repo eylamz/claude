@@ -5,6 +5,7 @@ import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import Event from '@/lib/models/Event';
 import mongoose from 'mongoose';
+import { validateCsrf } from '@/lib/security/csrf';
 
 /**
  * PATCH /api/admin/events/[id]/signup-form
@@ -29,6 +30,9 @@ export async function PATCH(
     if (!user || user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) return csrfResponse;
 
     await connectDB();
 

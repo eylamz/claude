@@ -5,6 +5,8 @@ import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import Guide from '@/lib/models/Guide';
 import mongoose from 'mongoose';
+import { validateCsrf } from '@/lib/security/csrf';
+import { internalError } from '@/lib/api/errors';
 
 export async function GET(
   _request: Request,
@@ -80,11 +82,7 @@ export async function GET(
 
     return NextResponse.json({ guide: formattedGuide });
   } catch (error: any) {
-    console.error('Get guide error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to fetch guide' },
-      { status: 500 }
-    );
+    return internalError(error, 'admin/guides/[id] GET');
   }
 }
 
@@ -111,6 +109,9 @@ export async function PUT(
     if (!user || user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) return csrfResponse;
 
     await connectDB();
 
@@ -345,20 +346,17 @@ export async function PUT(
     // Handle validation errors
     if (error.name === 'ValidationError') {
       return NextResponse.json(
-        { error: error.message || 'Validation failed' },
+        { error: 'Validation failed' },
         { status: 400 }
       );
     }
-    
-    return NextResponse.json(
-      { error: error.message || 'Failed to update guide' },
-      { status: 500 }
-    );
+
+    return internalError(error, 'admin/guides/[id] PUT');
   }
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -381,6 +379,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) return csrfResponse;
+
     await connectDB();
 
     const guide = await Guide.findById(id);
@@ -392,11 +393,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Guide deleted successfully' });
   } catch (error: any) {
-    console.error('Delete guide error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to delete guide' },
-      { status: 500 }
-    );
+    return internalError(error, 'admin/guides/[id] DELETE');
   }
 }
 

@@ -5,6 +5,7 @@ import { isBlocked, record404, recordSuccess } from '@/lib/utils/circuitBreaker'
 import { AuthError, requireAdmin } from '@/lib/auth/server';
 import { validateCsrf } from '@/lib/security/csrf';
 import { MAX_ADMIN_PAGE_SIZE } from '@/lib/config/api';
+import { authErrorResponse, internalError } from '@/lib/api/errors';
 
 const ENDPOINT = '/api/admin/users';
 
@@ -116,13 +117,9 @@ export async function GET(request: Request) {
     });
   } catch (error: any) {
     if (error instanceof AuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return authErrorResponse(error.status);
     }
-    console.error('Users API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch users' },
-      { status: 500 }
-    );
+    return internalError(error, 'admin/users GET');
   }
 }
 
@@ -188,13 +185,9 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ user: updatedUser });
   } catch (error: any) {
     if (error instanceof AuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return authErrorResponse(error.status);
     }
-    console.error('Update user error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to update user' },
-      { status: 500 }
-    );
+    return internalError(error, 'admin/users PATCH');
   }
 }
 
@@ -220,13 +213,9 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ message: 'User deleted successfully' });
   } catch (error: any) {
     if (error instanceof AuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return authErrorResponse(error.status);
     }
-    console.error('Delete user error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to delete user' },
-      { status: 500 }
-    );
+    return internalError(error, 'admin/users DELETE');
   }
 }
 

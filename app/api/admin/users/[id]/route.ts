@@ -5,6 +5,7 @@ import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import mongoose from 'mongoose';
 import { isBlocked, record404, recordSuccess } from '@/lib/utils/circuitBreaker';
+import { validateCsrf } from '@/lib/security/csrf';
 
 const ENDPOINT = '/api/admin/users/[id]';
 
@@ -118,6 +119,9 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) return csrfResponse;
+
     // Connect to database
     await connectDB();
 
@@ -169,7 +173,7 @@ export async function PUT(
   } catch (error: any) {
     console.error('Update user error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to update user' },
+      { error: 'Failed to update user' },
       { status: 500 }
     );
   }

@@ -20,6 +20,23 @@ export function unauthorized(message = 'Unauthorized') { return errorResponse(me
 export function forbidden(message = 'Forbidden') { return errorResponse(message, 403); }
 export function notFound(message = 'Not found') { return errorResponse(message, 404); }
 
+/** For AuthError: return generic message by status (never expose error.message). */
+export function authErrorResponse(status: number): NextResponse {
+  const message = status === 401 ? 'Unauthorized' : 'Forbidden';
+  return NextResponse.json({ error: message }, { status });
+}
+
+/**
+ * Use in catch blocks: logs full error server-side, returns generic message to client.
+ * Prevents leaking infrastructure/DB/SDK details via error.message.
+ */
+export function internalError(error: unknown, context?: string): NextResponse {
+  const prefix = context ? `[${context}] ` : '';
+  // eslint-disable-next-line no-console
+  console.error(prefix + 'Internal error:', error);
+  return errorResponse('Internal server error', 500);
+}
+
 export function withApiHandler<T extends (...args: any[]) => Promise<Response>>(handler: T) {
   return async (...args: Parameters<T>) => {
     try {

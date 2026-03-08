@@ -5,6 +5,8 @@ import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import Form from '@/lib/models/Form';
 import mongoose from 'mongoose';
+import { validateCsrf } from '@/lib/security/csrf';
+import { internalError } from '@/lib/api/errors';
 
 export async function GET(
   _request: Request,
@@ -74,11 +76,7 @@ export async function GET(
 
     return NextResponse.json({ form: formattedForm });
   } catch (error: any) {
-    console.error('Get form error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to fetch form' },
-      { status: 500 }
-    );
+    return internalError(error, 'admin/forms/[id] GET');
   }
 }
 
@@ -105,6 +103,9 @@ export async function PUT(
     if (!user || user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) return csrfResponse;
 
     await connectDB();
 
@@ -238,20 +239,20 @@ export async function PUT(
     // Handle validation errors
     if (error.name === 'ValidationError') {
       return NextResponse.json(
-        { error: error.message || 'Validation failed' },
+        { error: 'Validation failed' },
         { status: 400 }
       );
     }
 
     return NextResponse.json(
-      { error: error.message || 'Failed to update form' },
+      { error: 'Failed to update form' },
       { status: 500 }
     );
   }
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -274,6 +275,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) return csrfResponse;
+
     await connectDB();
 
     const form = await Form.findById(id);
@@ -285,10 +289,6 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Form deleted successfully' });
   } catch (error: any) {
-    console.error('Delete form error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to delete form' },
-      { status: 500 }
-    );
+    return internalError(error, 'admin/forms/[id] DELETE');
   }
 }

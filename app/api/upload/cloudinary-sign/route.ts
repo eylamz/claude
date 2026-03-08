@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, AuthError } from '@/lib/auth/server';
 import crypto from 'crypto';
+import { authErrorResponse } from '@/lib/api/errors';
 
 /** Allowed upload folders (must match image-uploader contexts) */
 const ALLOWED_FOLDERS = ['skateparks', 'guideAssets', 'eventAssets'] as const;
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
     await requireAdmin();
   } catch (error) {
     if (error instanceof AuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return authErrorResponse(error.status);
     }
     throw error;
   }
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
 
   if (!cloudName || !apiKey || !apiSecret) {
     return NextResponse.json(
-      { error: 'Cloudinary server credentials not configured (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET)' },
+      { error: 'Service unavailable' },
       { status: 503 }
     );
   }

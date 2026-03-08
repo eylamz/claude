@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -38,7 +38,7 @@ const getAllowedOrigins = (): Set<string> => {
  * or null when the request is allowed to proceed.
  */
 export const validateCsrf = (
-  request: NextRequest
+  request: Request
 ): NextResponse | null => {
   if (SAFE_METHODS.has(request.method.toUpperCase())) {
     return null;

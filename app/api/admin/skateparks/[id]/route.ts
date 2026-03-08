@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 import { isBlocked, record404, recordSuccess } from '@/lib/utils/circuitBreaker';
 import { revalidatePath } from 'next/cache';
 import { locales } from '@/i18n';
+import { validateCsrf } from '@/lib/security/csrf';
 
 const ENDPOINT = '/api/admin/skateparks/[id]';
 
@@ -146,6 +147,9 @@ export async function PUT(
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) return csrfResponse;
 
     // Connect to database
     await connectDB();
@@ -548,7 +552,7 @@ export async function PUT(
   } catch (error: any) {
     console.error('Update skatepark error:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to update skatepark' },
+      { error: 'Failed to update skatepark' },
       { status: 500 }
     );
   }
@@ -559,7 +563,7 @@ export async function PUT(
  * Delete a skatepark by ID
  */
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -583,6 +587,9 @@ export async function DELETE(
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const csrfResponse = validateCsrf(request);
+    if (csrfResponse) return csrfResponse;
 
     // Connect to database
     await connectDB();

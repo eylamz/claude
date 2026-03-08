@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getIsraelWeatherSummary } from '@/lib/services/weather';
+import { internalError } from '@/lib/api/errors';
 
 /**
  * Israel Weather Summary API Route
@@ -47,11 +48,7 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json({ summary: response });
   } catch (error: any) {
-    console.error('Error fetching Israel weather summary:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', message: error.message },
-      { status: 500 }
-    );
+    return internalError(error, 'weather/israel');
   }
 }
 

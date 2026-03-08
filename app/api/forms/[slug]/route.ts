@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import Form from '@/lib/models/Form';
+import { internalError } from '@/lib/api/errors';
 
 export async function GET(
   _request: Request,
@@ -42,10 +43,6 @@ export async function GET(
 
     return NextResponse.json({ form: formattedForm });
   } catch (error: any) {
-    console.error('Get form error:', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to fetch form' },
-      { status: 500 }
-    );
+    return internalError(error, 'forms/[slug] GET');
   }
 }

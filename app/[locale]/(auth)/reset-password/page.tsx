@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { useTranslation } from '@/hooks';
 import { Button } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { sendPasswordResetEmailJS } from '@/lib/email/emailjs-service';
 
 interface ResetErrors {
   general?: string;
@@ -84,41 +83,15 @@ function ResetPasswordContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Check if it's an email not found error (404)
-        if (response.status === 404 && data.error?.toLowerCase().includes('no account')) {
-          setErrors({ general: t('reset.errors.emailNotFound') });
-        } else {
-          setErrors({ general: data.error || t('reset.errors.somethingWentWrong') });
-        }
+        setErrors({ general: data.error || t('reset.errors.somethingWentWrong') });
         setIsLoading(false);
         return;
       }
 
-      // If we got a reset URL, send email via EmailJS (client-side)
-      if (data.success && data.resetUrl && data.email) {
-        try {
-          await sendPasswordResetEmailJS({
-            toEmail: data.email,
-            resetUrl: data.resetUrl,
-            locale: locale,
-            type: 'password_reset',
-          });
-          
-          // Success
-          setIsSuccess(true);
-          setIsLoading(false);
-        } catch (emailError: any) {
-          console.error('Failed to send email via EmailJS:', emailError);
-          setErrors({ 
-            general: emailError.message || t('reset.errors.somethingWentWrong')
-          });
-          setIsLoading(false);
-        }
-      } else {
-        // Fallback if API doesn't return expected data
+      if (data.success) {
         setIsSuccess(true);
-        setIsLoading(false);
       }
+      setIsLoading(false);
     } catch (error) {
       console.error('Reset password error:', error);
       setErrors({ general: t('reset.errors.somethingWentWrong') });
@@ -153,49 +126,21 @@ function ResetPasswordContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Check if it's an email not found error (404)
-        if (response.status === 404 && data.error?.toLowerCase().includes('no account')) {
-          setErrors({ general: t('reset.errors.emailNotFound') });
-        } else {
-          setErrors({ general: data.error || t('reset.errors.somethingWentWrong') });
-        }
+        setErrors({ general: data.error || t('reset.errors.somethingWentWrong') });
         setIsLoading(false);
         return;
       }
 
-      // If we got a reset URL, send email via EmailJS (client-side)
-      if (data.success && data.resetUrl && data.email) {
-        try {
-          await sendPasswordResetEmailJS({
-            toEmail: data.email,
-            resetUrl: data.resetUrl,
-            locale: locale,
-            type: 'password_reset',
-          });
-          
-          // Update resend count and set cooldown
-          const newCount = resendCount + 1;
-          setResendCount(newCount);
-          
-          // Set cooldown: 20 seconds for first resend, then 1 minute
-          if (newCount === 1) {
-            setResendCooldown(20); // 20 seconds for first resend
-          } else {
-            setResendCooldown(60); // 1 minute for subsequent resends
-          }
-          
-          setIsLoading(false);
-        } catch (emailError: any) {
-          console.error('Failed to send email via EmailJS:', emailError);
-          setErrors({ 
-            general: emailError.message || t('reset.errors.somethingWentWrong')
-          });
-          setIsLoading(false);
+      if (data.success) {
+        const newCount = resendCount + 1;
+        setResendCount(newCount);
+        if (newCount === 1) {
+          setResendCooldown(20);
+        } else {
+          setResendCooldown(60);
         }
-      } else {
-        // Fallback if API doesn't return expected data
-        setIsLoading(false);
       }
+      setIsLoading(false);
     } catch (error) {
       console.error('Resend email error:', error);
       setErrors({ general: t('reset.errors.somethingWentWrong') });
