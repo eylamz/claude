@@ -29,6 +29,8 @@ export default getRequestConfig(async ({ locale }) => {
 
   return {
     locale: currentLocale,
+    timeZone: 'Asia/Jerusalem', // Required for date/time formatting during static generation (avoids ENVIRONMENT_FALLBACK)
+    now: new Date(), // Reference for relative time formatting during build
     messages: {
       common,
       shop,
