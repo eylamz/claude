@@ -238,6 +238,17 @@ function LoginPasswordContent() {
           setIsLoading(false);
           return;
         }
+        // Rate limit (too many login attempts)
+        if (result.error === 'TOO_MANY_ATTEMPTS' || result.error.includes('TOO_MANY_ATTEMPTS')) {
+          toast({
+            title: t('login.cooldown.tooManyAttempts'),
+            description: t('login.cooldown.tryAgainInMinute') || 'Too many attempts. Please try again in a minute.',
+            variant: 'destructive',
+          });
+          setErrors({ general: t('login.errors.tooManyAttempts') || 'Too many login attempts. Please try again later.' });
+          setIsLoading(false);
+          return;
+        }
         // Invalid credentials: count failed attempt and apply cooldown after 4 failures
         const rawCount = typeof window !== 'undefined' ? sessionStorage.getItem(LOGIN_PASSWORD_FAIL_KEY) : null;
         const count = (rawCount ? parseInt(rawCount, 10) : 0) + 1;

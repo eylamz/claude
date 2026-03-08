@@ -4,6 +4,7 @@ import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { MongoClient } from 'mongodb';
 import User from '@/lib/models/User';
 import { connectDB, isDBConnected } from '@/lib/db/mongodb';
+import { RateLimiter } from '@/lib/redis';
 
 /**
  * Resolve a safe NextAuth secret.
@@ -88,6 +89,9 @@ const getMongoClientPromise = (): Promise<MongoClient> => {
   return clientPromise;
 };
 
+/** Rate limiter for login attempts: 5 attempts per minute per email (brute-force protection) */
+const loginRateLimiter = new RateLimiter(60000, 5);
+
 /**
  * NextAuth configuration
  */
@@ -108,6 +112,13 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Please enter email and password');
+        }
+
+        // Rate limit login attempts per email (brute-force protection)
+        const loginKey = `login:${credentials.email.toLowerCase()}`;
+        const rate = await loginRateLimiter.isAllowed(loginKey);
+        if (!rate.allowed) {
+          throw new Error('TOO_MANY_ATTEMPTS');
         }
 
         try {

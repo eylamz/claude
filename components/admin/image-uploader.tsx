@@ -8,7 +8,8 @@ interface ImageData {
 }
 
 /** Resolves upload preset and public_id so uploads go to the correct folder with no prefix.
- * Cloudinary: preset's folder overrides the request folder. So we use a dedicated preset per context when set.
+ * Prefer signed upload via /api/upload/cloudinary-sign (admin-only, no preset exposed).
+ * Fallback: Cloudinary unsigned preset per context when signed upload is not available.
  * - Skateparks: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_SKATEPARKS (preset folder = skateparks), else default + folder param.
  * - Guides: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_GUIDES (preset folder = guideAssets). If not set, use default + folder param
  *   (works only if default preset has no folder set; otherwise create a preset with folder=guideAssets and set _GUIDES).
@@ -56,15 +57,16 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
   const dragCounter = useRef(0);
 
   const validateFile = (file: File): string | null => {
-    // Check file size (10MB max)
-    if (file.size > 10 * 1024 * 1024) {
-      return 'File size exceeds 10MB limit';
+    // Strict size limit (5MB) to reduce abuse risk when using unsigned preset fallback
+    const MAX_SIZE_BYTES = 5 * 1024 * 1024;
+    if (file.size > MAX_SIZE_BYTES) {
+      return `File size exceeds ${MAX_SIZE_BYTES / (1024 * 1024)}MB limit`;
     }
 
-    // Check file type
+    // Image types only (no raw, video, or other)
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      return 'Invalid file type. Please upload JPG, PNG, or WebP files';
+      return 'Invalid file type. Only JPG, PNG, or WebP images are allowed';
     }
 
     return null;
@@ -130,96 +132,114 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
     return new Promise((resolve, reject) => {
       const cloudName = (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || '').trim();
 
-      if (!cloudName) {
-        const errorMsg =
-          'Cloudinary cloud name is not configured.\n\n' +
-          'Please add to your .env.local file:\n' +
-          'NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=dr0rvohz9\n\n' +
-          'Note: The NEXT_PUBLIC_ prefix is required for client-side access.\n' +
-          'After adding, restart your Next.js development server.';
-        console.error('❌', errorMsg);
-        reject(new Error(errorMsg));
-        return;
-      }
-
-      if (!preset) {
-        const isGuides = folderParam === 'guideAssets';
-        const errorMsg = isGuides
-          ? 'Guide uploads require a dedicated Cloudinary preset so images go to the guideAssets folder.\n\n' +
-            '1. In Cloudinary Dashboard → Settings → Upload, create a new unsigned preset.\n' +
-            '2. Set its Folder to: guideAssets\n' +
-            '3. In .env.local add: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_GUIDES=your-new-preset-name\n' +
-            '4. Restart the Next.js dev server.'
-          : 'Cloudinary upload preset is not configured.\n\n' +
-            'Please add to your .env.local file:\n' +
-            'NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=your-upload-preset-name\n\n' +
-            'For guides (folder guideAssets) also set:\n' +
-            'NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_GUIDES=preset-with-folder-guideAssets';
-        console.error('❌', errorMsg);
-        reject(new Error(errorMsg));
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', preset);
-      if (sendFolderInRequest) {
-        formData.append('folder', folderParam);
-      }
-      formData.append('public_id', publicId);
-
-      const xhr = new XMLHttpRequest();
-
-      xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = (e.loaded / e.total) * 100;
-          setUploadProgress((prev) => ({ ...prev, [publicId]: percentComplete }));
-        }
-      });
-
-      xhr.addEventListener('load', () => {
-        if (xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
-          resolve({
-            url: response.secure_url,
-            publicId: response.public_id,
-          });
-        } else {
-          // Try to parse error response for better error message
-          let errorMessage = 'Upload failed';
-          try {
-            const errorResponse = JSON.parse(xhr.responseText);
-            errorMessage = errorResponse.error?.message || errorResponse.error || errorMessage;
-          } catch {
-            errorMessage = `Upload failed with status ${xhr.status}: ${xhr.statusText}`;
+      const doUpload = (formData: FormData, cloudNameForUrl: string) => {
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            setUploadProgress((prev) => ({ ...prev, [publicId]: percentComplete }));
           }
-          console.error('Cloudinary upload error:', {
-            status: xhr.status,
-            statusText: xhr.statusText,
-            response: xhr.responseText,
-            cloudName: cloudName,
-            uploadPreset: preset,
+        });
+        xhr.addEventListener('load', () => {
+          if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            resolve({
+              url: response.secure_url,
+              publicId: response.public_id,
+            });
+          } else {
+            let errorMessage = 'Upload failed';
+            try {
+              const errorResponse = JSON.parse(xhr.responseText);
+              errorMessage = errorResponse.error?.message || errorResponse.error || errorMessage;
+            } catch {
+              errorMessage = `Upload failed with status ${xhr.status}: ${xhr.statusText}`;
+            }
+            console.error('Cloudinary upload error:', { status: xhr.status, response: xhr.responseText });
+            reject(new Error(errorMessage));
+          }
+          setUploadProgress((prev) => {
+            const next = { ...prev };
+            delete next[publicId];
+            return next;
           });
-          reject(new Error(errorMessage));
+        });
+        xhr.addEventListener('error', () => {
+          reject(new Error('Upload error'));
+          setUploadProgress((prev) => {
+            const next = { ...prev };
+            delete next[publicId];
+            return next;
+          });
+        });
+        xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudNameForUrl}/image/upload`);
+        xhr.send(formData);
+      };
+
+      const buildFormDataSigned = (sig: { signature: string; timestamp: number; apiKey: string; folder: string; public_id: string }) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('api_key', sig.apiKey);
+        formData.append('timestamp', String(sig.timestamp));
+        formData.append('signature', sig.signature);
+        formData.append('folder', sig.folder);
+        formData.append('public_id', sig.public_id);
+        return formData;
+      };
+
+      const buildFormDataUnsigned = () => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', preset);
+        if (sendFolderInRequest) formData.append('folder', folderParam);
+        formData.append('public_id', publicId);
+        return formData;
+      };
+
+      (async () => {
+        if (!cloudName) {
+          const errorMsg =
+            'Cloudinary cloud name is not configured.\n\n' +
+            'Please add to your .env.local file:\n' +
+            'NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name\n\n' +
+            'After adding, restart your Next.js development server.';
+          reject(new Error(errorMsg));
+          return;
         }
-        setUploadProgress((prev) => {
-          const newProgress = { ...prev };
-          delete newProgress[publicId];
-          return newProgress;
-        });
-      });
 
-      xhr.addEventListener('error', () => {
-        reject(new Error('Upload error'));
-        setUploadProgress((prev) => {
-          const newProgress = { ...prev };
-          delete newProgress[publicId];
-          return newProgress;
-        });
-      });
+        // Prefer signed upload (admin-only, no preset exposed)
+        try {
+          const signRes = await fetch('/api/upload/cloudinary-sign', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ folder: folderParam, public_id: publicId }),
+          });
+          if (signRes.ok) {
+            const sig = await signRes.json();
+            doUpload(buildFormDataSigned(sig), sig.cloudName);
+            return;
+          }
+        } catch {
+          // Fall through to unsigned
+        }
 
-      xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`);
-      xhr.send(formData);
+        // Fallback: unsigned preset (preset is visible in client; restrict in Cloudinary dashboard)
+        if (!preset) {
+          const isGuides = folderParam === 'guideAssets';
+          const errorMsg = isGuides
+            ? 'Guide uploads require a dedicated Cloudinary preset so images go to the guideAssets folder.\n\n' +
+              '1. In Cloudinary Dashboard → Settings → Upload, create a new unsigned preset.\n' +
+              '2. Set its Folder to: guideAssets\n' +
+              '3. In .env.local add: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_GUIDES=your-new-preset-name'
+            : 'Cloudinary upload preset is not configured.\n\n' +
+              'Add NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET (and per-folder presets if needed) to .env.local, or configure server credentials (CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) for signed uploads.';
+          reject(new Error(errorMsg));
+          return;
+        }
+
+        doUpload(buildFormDataUnsigned(), cloudName);
+      })();
     });
   };
 
@@ -398,7 +418,7 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
               {uploading ? 'Uploading...' : 'Drop images here or click to upload'}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              PNG, JPG, WebP up to 10MB each • Max {maxImages} images
+              PNG, JPG, WebP up to 5MB each • Max {maxImages} images
             </p>
           </div>
         </div>

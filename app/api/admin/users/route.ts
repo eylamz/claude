@@ -8,6 +8,9 @@ import { MAX_ADMIN_PAGE_SIZE } from '@/lib/config/api';
 
 const ENDPOINT = '/api/admin/users';
 
+/** Whitelist of fields admins are allowed to update (prevents mass assignment) */
+const ALLOWED_UPDATES = ['fullName', 'role', 'emailVerified', 'status'] as const;
+
 export async function GET(request: Request) {
   try {
     await requireAdmin();
@@ -141,6 +144,23 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
+    // Prevent mass assignment: only allow whitelisted fields
+    const safeUpdates =
+      updates && typeof updates === 'object' && !Array.isArray(updates)
+        ? Object.fromEntries(
+            Object.entries(updates).filter(([k]) =>
+              (ALLOWED_UPDATES as readonly string[]).includes(k)
+            )
+          )
+        : {};
+
+    if (Object.keys(safeUpdates).length === 0) {
+      return NextResponse.json(
+        { error: 'No valid fields to update. Allowed: ' + ALLOWED_UPDATES.join(', ') },
+        { status: 400 }
+      );
+    }
+
     // Check circuit breaker - if blocked, return early without database call
     if (isBlocked(ENDPOINT, userId)) {
       return NextResponse.json(
@@ -152,7 +172,7 @@ export async function PATCH(request: NextRequest) {
     // Update user
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { $set: updates },
+      { $set: safeUpdates },
       { new: true }
     ).select('-password');
 
