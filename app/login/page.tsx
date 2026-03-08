@@ -8,15 +8,16 @@ type SearchParams = {
 export default async function LoginRedirectPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
   const cookieStore = await cookies();
   const requestHeaders = await headers();
+  const resolved = await searchParams;
 
   // Prefer locale from callbackUrl path, then NEXT_LOCALE cookie, then Accept-Language, fallback to 'en'
   let locale: 'en' | 'he' = 'en';
 
-  const callbackUrl = searchParams?.callbackUrl;
+  const callbackUrl = resolved?.callbackUrl;
   if (callbackUrl) {
     try {
       const base = process.env.NEXTAUTH_URL || 'http://localhost:3000';
