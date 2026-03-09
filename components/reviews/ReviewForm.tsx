@@ -36,10 +36,10 @@ export default function ReviewForm({
     // Prevent submission if already submitting
     if (submitting) return;
 
-    const trimmedName = userName.trim();
-    // Validate: rating is required; full name must be non-empty and contain a space
+    const trimmedName = (user?.name?.trim() ?? userName.trim()).trim();
+    // Validate: rating is required; full name must be non-empty and contain a space (unless authenticated user)
     const hasRatingError = rating == null || rating === undefined || rating < 1;
-    const hasNameError = trimmedName.length === 0 || !trimmedName.includes(' ');
+    const hasNameError = !user && (trimmedName.length === 0 || !trimmedName.includes(' '));
 
     // Set all relevant errors
     if (hasRatingError) {
@@ -116,7 +116,8 @@ export default function ReviewForm({
         </div>
       )}
 
-      {/* Full name input - required for all users */}
+      {/* Full name input - required when not authenticated; hidden when user is set */}
+      {!user && (
       <div className="mb-3 ">
         <Input
           id="reviewer-name"
@@ -140,6 +141,7 @@ export default function ReviewForm({
           <p className="mt-1 text-sm text-red dark:text-red-dark">{nameError}</p>
         )}
       </div>
+      )}
 
       {/* Rating - Required */}
       <div className="mb-3">

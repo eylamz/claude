@@ -732,7 +732,8 @@ export default function SkateparkPage() {
   const [isMapLoading, setIsMapLoading] = useState(true);
   const [reviewsExpanded, setReviewsExpanded] = useState(false);
   const [helpedReviewIds, setHelpedReviewIds] = useState<Set<string>>(new Set());
-  const pendingHelpfulRef = useRef<Map<string, { method: 'PATCH' | 'DELETE'; timeoutId: ReturnType<typeof setTimeout> }>>(new Map());
+  const helpedReviewIdsRef = useRef<Set<string>>(new Set());
+  const pendingHelpfulRef = useRef<Map<string, { method: 'PATCH' | 'DELETE'; timeoutId: ReturnType<typeof setTimeout>; intendedHelpful: boolean }>>(new Map());
   const [amenitiesActive, setAmenitiesActive] = useState(false);
   const [clickedNearbyParkId, setClickedNearbyParkId] = useState<string | null>(null);
   const [isNavigatingBack, setIsNavigatingBack] = useState(false);
@@ -1308,7 +1309,7 @@ export default function SkateparkPage() {
     }
   };
 
-  const DEFERRED_HELPFUL_DELAY_MS = 2500;
+  const DEFERRED_HELPFUL_DELAY_MS = 3500;
 
   const handleToggleHelpful = (review: Review) => {
     const reviewId = review._id;
@@ -1318,10 +1319,34 @@ export default function SkateparkPage() {
     const nextCount = isCurrentlyHelpful ? Math.max(0, currentCount - 1) : currentCount + 1;
 
     // Clear any pending request for this review
+    const hadPending = pendingHelpfulRef.current.has(reviewId);
     const pending = pendingHelpfulRef.current.get(reviewId);
     if (pending) {
       clearTimeout(pending.timeoutId);
       pendingHelpfulRef.current.delete(reviewId);
+    }
+
+    // If user reverted (un-marked helpful) before the initial PATCH was sent, don't send anything
+    if (method === 'DELETE' && hadPending) {
+      // Optimistic UI only; no server request
+      setHelpedReviewIds((prev) => {
+        const next = new Set(prev);
+        next.delete(reviewId);
+        helpedReviewIdsRef.current = next;
+        return next;
+      });
+      setReviews((prev) =>
+        prev.map((r) =>
+          r._id === reviewId
+            ? {
+                ...r,
+                helpfulCount: nextCount,
+                userHasMarkedHelpful: false,
+              }
+            : r
+        )
+      );
+      return;
     }
 
     // 1. Optimistic UI: update state immediately (no server call yet)
@@ -1329,10 +1354,15 @@ export default function SkateparkPage() {
       setHelpedReviewIds((prev) => {
         const next = new Set(prev);
         next.delete(reviewId);
+        helpedReviewIdsRef.current = next;
         return next;
       });
     } else {
-      setHelpedReviewIds((prev) => new Set(prev).add(reviewId));
+      setHelpedReviewIds((prev) => {
+        const next = new Set(prev).add(reviewId);
+        helpedReviewIdsRef.current = next;
+        return next;
+      });
     }
     setReviews((prev) =>
       prev.map((r) =>
@@ -1347,8 +1377,14 @@ export default function SkateparkPage() {
     );
 
     // 2. Send to server after a delay
+    const intendedHelpful = method === 'PATCH';
     const timeoutId = setTimeout(() => {
+      const pendingEntry = pendingHelpfulRef.current.get(reviewId);
       pendingHelpfulRef.current.delete(reviewId);
+      // User reverted (or toggled again) before this ran — don't send
+      if (pendingEntry && helpedReviewIdsRef.current.has(reviewId) !== pendingEntry.intendedHelpful) {
+        return;
+      }
       fetch(`/api/reviews/${reviewId}/helpful`, {
         method,
         credentials: 'include',
@@ -1374,11 +1410,16 @@ export default function SkateparkPage() {
         .catch(() => {
           // Revert optimistic update on failure
           if (isCurrentlyHelpful) {
-            setHelpedReviewIds((prev) => new Set(prev).add(reviewId));
+            setHelpedReviewIds((prev) => {
+              const next = new Set(prev).add(reviewId);
+              helpedReviewIdsRef.current = next;
+              return next;
+            });
           } else {
             setHelpedReviewIds((prev) => {
               const next = new Set(prev);
               next.delete(reviewId);
+              helpedReviewIdsRef.current = next;
               return next;
             });
           }
@@ -1396,7 +1437,7 @@ export default function SkateparkPage() {
         });
     }, DEFERRED_HELPFUL_DELAY_MS);
 
-    pendingHelpfulRef.current.set(reviewId, { method, timeoutId });
+    pendingHelpfulRef.current.set(reviewId, { method, timeoutId, intendedHelpful });
   };
 
   const getLocalizedText = (text: { en: string; he: string } | string): string => {
