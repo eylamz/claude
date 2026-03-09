@@ -16,7 +16,7 @@ const securityHeaders = [
       "img-src 'self' data: blob: https://res.cloudinary.com https://placehold.co https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://*.google.com",
       "frame-src 'self' https://www.google.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
+      "font-src 'self' https://fonts.gstatic.com https://r2cdn.perplexity.ai",
     ].join('; '),
   },
   { key: 'X-Frame-Options', value: 'DENY' },

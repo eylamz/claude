@@ -5,7 +5,33 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const getAllowedOrigins = (): Set<string> => {
   const origins = new Set<string>();
 
-  // Collect all explicitly configured site URLs and add their origins
+  // Helper: add an origin and its www / non-www variant so both work
+  const addOriginAndVariant = (rawOrigin: string) => {
+    try {
+      const url = new URL(rawOrigin);
+      origins.add(url.origin);
+      const host = url.hostname;
+      if (host.startsWith('www.')) {
+        const withoutWww = host.slice(4);
+        if (withoutWww) {
+          const u = new URL(rawOrigin);
+          u.hostname = withoutWww;
+          origins.add(u.origin);
+        }
+      } else if (!host.includes('.')) {
+        // localhost etc – no variant
+      } else {
+        const withWww = `www.${host}`;
+        const u = new URL(rawOrigin);
+        u.hostname = withWww;
+        origins.add(u.origin);
+      }
+    } catch {
+      // Ignore invalid URL
+    }
+  };
+
+  // Collect all explicitly configured site URLs and add their origins (and www/non-www variant)
   const possibleUrls = [
     process.env.NEXTAUTH_URL,
     process.env.NEXT_PUBLIC_SITE_URL,
@@ -14,7 +40,7 @@ const getAllowedOrigins = (): Set<string> => {
   for (const rawUrl of possibleUrls) {
     try {
       const url = new URL(rawUrl);
-      origins.add(url.origin);
+      addOriginAndVariant(url.origin);
     } catch {
       // Ignore invalid configured URL values
     }
