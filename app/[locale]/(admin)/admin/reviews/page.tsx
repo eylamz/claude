@@ -34,7 +34,7 @@ interface Review {
   comment: string | ReviewContentByLocale;
   helpfulCount: number;
   reportsCount: number;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'auto-approved' | 'rejected';
   createdAt: string;
   updatedAt: string;
 }
@@ -68,6 +68,7 @@ export default function ReviewsPage() {
   const t = useTranslations('admin.reviews');
   const [pendingReviews, setPendingReviews] = useState<Review[]>([]);
   const [approvedReviews, setApprovedReviews] = useState<Review[]>([]);
+  const [autoApprovedReviews, setAutoApprovedReviews] = useState<Review[]>([]);
   const [rejectedReviews, setRejectedReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingRejected, setLoadingRejected] = useState(false);
@@ -128,7 +129,9 @@ export default function ReviewsPage() {
       }
 
       const approvedData = await approvedRes.json();
-      setApprovedReviews(approvedData.reviews || []);
+      const all = approvedData.reviews || [];
+      setApprovedReviews(all.filter((r: Review) => r.status === 'approved'));
+      setAutoApprovedReviews(all.filter((r: Review) => r.status === 'auto-approved'));
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to fetch approved reviews';
       setError(errorMessage);
@@ -181,9 +184,15 @@ export default function ReviewsPage() {
       const filteredReviews = data.reviews || [];
       
       if (status === 'approved') {
+        const approvedOnly = filteredReviews.filter((r: Review) => r.status === 'approved');
+        const autoApprovedOnly = filteredReviews.filter((r: Review) => r.status === 'auto-approved');
         setApprovedReviews(prev => {
           const otherTypes = prev.filter(r => r.entityType?.toLowerCase() !== entityType.toLowerCase());
-          return [...otherTypes, ...filteredReviews];
+          return [...otherTypes, ...approvedOnly];
+        });
+        setAutoApprovedReviews(prev => {
+          const otherTypes = prev.filter(r => r.entityType?.toLowerCase() !== entityType.toLowerCase());
+          return [...otherTypes, ...autoApprovedOnly];
         });
       } else {
         setRejectedReviews(prev => {
@@ -222,7 +231,7 @@ export default function ReviewsPage() {
       // Refresh pending reviews
       fetchReviews();
       // If approved/rejected reviews are loaded, refresh them too
-      if (approvedReviews.length > 0 || Object.keys(loadedEntityTypes).some(k => k.includes('approved'))) {
+      if (approvedReviews.length > 0 || autoApprovedReviews.length > 0 || Object.keys(loadedEntityTypes).some(k => k.includes('approved'))) {
         fetchApprovedReviews();
       }
       if (rejectedReviews.length > 0 || Object.keys(loadedEntityTypes).some(k => k.includes('rejected'))) {
@@ -283,7 +292,7 @@ export default function ReviewsPage() {
 
       closeEditModal();
       fetchReviews();
-      if (approvedReviews.length > 0 || Object.keys(loadedEntityTypes).some(k => k.includes('approved'))) {
+      if (approvedReviews.length > 0 || autoApprovedReviews.length > 0 || Object.keys(loadedEntityTypes).some(k => k.includes('approved'))) {
         fetchApprovedReviews();
       }
       if (rejectedReviews.length > 0 || Object.keys(loadedEntityTypes).some(k => k.includes('rejected'))) {
@@ -558,19 +567,35 @@ export default function ReviewsPage() {
                   </Button>
                 </>
               )}
-              {review.status === 'approved' && (
-                <Button
-                  variant="red"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleStatusChange(review._id, 'reject');
-                  }}
-                  className="flex items-center gap-1"
-                >
-                  <X className="w-4 h-4" />
-                  <span>{t('reject')}</span>
-                </Button>
+              {(review.status === 'approved' || review.status === 'auto-approved') && (
+                <>
+                  {review.status === 'auto-approved' && (
+                    <Button
+                      variant="green"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStatusChange(review._id, 'approve');
+                      }}
+                      className="flex items-center gap-1"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>{t('markAsApproved')}</span>
+                    </Button>
+                  )}
+                  <Button
+                    variant="red"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStatusChange(review._id, 'reject');
+                    }}
+                    className="flex items-center gap-1"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>{t('reject')}</span>
+                  </Button>
+                </>
               )}
               {review.status === 'rejected' && (
                 <Button
@@ -633,6 +658,13 @@ export default function ReviewsPage() {
         : approvedReviews.filter((r) => reviewHasContentForLocale(r, contentLocale)),
     [approvedReviews, contentLocale]
   );
+  const filteredAutoApprovedReviews = useMemo(
+    () =>
+      contentLocale === 'all'
+        ? autoApprovedReviews
+        : autoApprovedReviews.filter((r) => reviewHasContentForLocale(r, contentLocale)),
+    [autoApprovedReviews, contentLocale]
+  );
   const filteredRejectedReviews = useMemo(
     () =>
       contentLocale === 'all'
@@ -642,12 +674,18 @@ export default function ReviewsPage() {
   );
 
   const groupedApproved = groupApprovedByEntityType(filteredApprovedReviews);
+  const groupedAutoApproved = groupApprovedByEntityType(filteredAutoApprovedReviews);
   const groupedRejected = groupRejectedByEntityType(filteredRejectedReviews);
   const skateparksByArea = groupSkateparksByAreaAndPark(groupedApproved.skatepark);
+  const skateparksByAreaAutoApproved = groupSkateparksByAreaAndPark(groupedAutoApproved.skatepark);
   const eventsByEntity = groupByEntity(groupedApproved.event);
   const guidesByEntity = groupByEntity(groupedApproved.guide);
   const productsByEntity = groupByEntity(groupedApproved.product);
   const trainersByEntity = groupByEntity(groupedApproved.trainer);
+  const eventsByEntityAutoApproved = groupByEntity(groupedAutoApproved.event);
+  const guidesByEntityAutoApproved = groupByEntity(groupedAutoApproved.guide);
+  const productsByEntityAutoApproved = groupByEntity(groupedAutoApproved.product);
+  const trainersByEntityAutoApproved = groupByEntity(groupedAutoApproved.trainer);
 
   // Accordion state
   const [openSkateparks, setOpenSkateparks] = useState<boolean>(true); // Default to open
@@ -659,6 +697,7 @@ export default function ReviewsPage() {
 
   /** Which approved entity type tab is selected (events / skateparks / guides / products / trainers) */
   const [approvedEntityTab, setApprovedEntityTab] = useState<'event' | 'skatepark' | 'guide' | 'product' | 'trainer'>('skatepark');
+  const [autoApprovedEntityTab, setAutoApprovedEntityTab] = useState<'event' | 'skatepark' | 'guide' | 'product' | 'trainer'>('skatepark');
 
   const areaLabels: Record<string, string> = {
     north: t('areaNorth'),
@@ -1210,6 +1249,224 @@ export default function ReviewsPage() {
                 )}
               </div>
             </div>
+        </CardContent>
+      </Card>
+
+      {/* Auto-approved Reviews Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {t('autoApprovedReviews')} {filteredAutoApprovedReviews.length > 0 && `(${filteredAutoApprovedReviews.length})`}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <div className="md:p-6 space-y-4">
+              <div className="flex flex-wrap items-center gap-4">
+                <SegmentedControls
+                  name="auto-approved-reviews-entity"
+                  value={autoApprovedEntityTab}
+                  onValueChange={(v) => setAutoApprovedEntityTab(v as typeof autoApprovedEntityTab)}
+                  hideLabelBelow="sm"
+                  options={[
+                    { value: 'skatepark', label: t('skateparks'), icon: <Icon name="parkBold" className="w-4 h-4" />, variant: 'green' },
+                    { value: 'event', label: t('events'), icon: <Icon name="calendarBold" className="w-4 h-4" />, variant: 'purple' },
+                    { value: 'guide', label: t('guides'), icon: <Icon name="bookBold" className="w-4 h-4" />, variant: 'yellow' },
+                    { value: 'product', label: t('products'), icon: <Icon name="shopBold" className="w-4 h-4" />, variant: 'lime' },
+                    { value: 'trainer', label: t('trainers'), icon: <Icon name="trainersBold" className="w-4 h-4" />, variant: 'lime' },
+                  ]}
+                  className="min-w-0 flex-1"
+                />
+              </div>
+
+              {autoApprovedEntityTab === 'skatepark' && (
+                <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+                  <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {t('skateparks')} ({groupedAutoApproved.skatepark.length})
+                      </h3>
+                      {groupedAutoApproved.skatepark.length === 0 && !loadingEntityType['skatepark-approved'] && (
+                        <Button
+                          variant="gray"
+                          size="sm"
+                          onClick={() => fetchEntityTypeReviews('skatepark', 'approved')}
+                          disabled={loadingEntityType['skatepark-approved']}
+                          className="ml-4"
+                        >
+                          {loadingEntityType['skatepark-approved'] ? t('loading') : t('fetch')}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  {loadingEntityType['skatepark-approved'] ? (
+                    <div className="p-6">
+                      <Skeleton className="h-32 w-full" />
+                    </div>
+                  ) : !loadedEntityTypes['skatepark-approved'] ? (
+                    <div className="overflow-hidden max-h-0 opacity-0" aria-hidden />
+                  ) : groupedAutoApproved.skatepark.length > 0 ? (
+                    <div className="p-2 md:p-6">
+                      {(['north', 'center', 'south'] as const).map((area) => {
+                        const areaParks = skateparksByAreaAutoApproved[area] || {};
+                        const areaReviews = Object.values(areaParks).flat();
+                        if (areaReviews.length === 0) return null;
+                        return (
+                          <div key={area} className="mb-4">
+                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              {locale === 'he' ? `${t('areaSuffix')} ${areaLabels[area]}` : `${areaLabels[area]} ${t('areaSuffix')}`}
+                            </h4>
+                            <div className="space-y-2">
+                              {Object.entries(areaParks).map(([parkSlug, parkReviews]) => {
+                                const parkName = parkReviews[0]?.entityId?.name?.[locale as 'en' | 'he'] || parkReviews[0]?.entityId?.name?.en || parkReviews[0]?.entityId?.name?.he || parkSlug;
+                                return (
+                                  <div key={parkSlug} className="border border-border dark:border-border-dark rounded-lg overflow-hidden bg-card dark:bg-card-dark">
+                                    <div className="px-4 py-2 bg-sidebar dark:bg-sidebar-dark border-b border-border dark:border-border-dark">
+                                      <span className="text-sm font-medium">{parkName}</span>
+                                      <span className="text-xs text-gray dark:text-gray-dark ms-2">
+                                        ({parkReviews.length} {parkReviews.length === 1 ? t('review') : t('reviewsCount')})
+                                      </span>
+                                    </div>
+                                    <div className="divide-y divide-border dark:divide-border-dark">
+                                      {parkReviews.map(renderReviewItem)}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center">
+                      <p className="text-gray dark:text-gray-dark">{t('noAutoApprovedSkateparkReviews')}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {autoApprovedEntityTab === 'event' && (
+                <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+                  <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {t('events')} ({groupedAutoApproved.event.length})
+                    </h3>
+                    {groupedAutoApproved.event.length === 0 && !loadingEntityType['event-approved'] && (
+                      <Button variant="gray" size="sm" onClick={() => fetchEntityTypeReviews('event', 'approved')} disabled={loadingEntityType['event-approved']}>
+                        {loadingEntityType['event-approved'] ? t('loading') : t('fetch')}
+                      </Button>
+                    )}
+                  </div>
+                  {loadingEntityType['event-approved'] ? (
+                    <div className="p-6"><Skeleton className="h-32 w-full" /></div>
+                  ) : !loadedEntityTypes['event-approved'] ? (
+                    <div className="overflow-hidden max-h-0 opacity-0" aria-hidden />
+                  ) : groupedAutoApproved.event.length > 0 ? (
+                    <div className="divide-y divide-border-dark dark:divide-border-dark">
+                      {Object.entries(eventsByEntityAutoApproved).map(([eventSlug, eventReviews]) => (
+                        <div key={eventSlug} className="px-6 pb-4">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {eventReviews[0]?.entityId?.name?.[locale as 'en' | 'he'] || eventSlug}
+                          </p>
+                          {eventReviews.map(renderReviewItem)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center"><p className="text-gray dark:text-gray-dark">{t('noAutoApprovedEventReviews')}</p></div>
+                  )}
+                </div>
+              )}
+
+              {autoApprovedEntityTab === 'guide' && (
+                <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+                  <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('guides')} ({groupedAutoApproved.guide.length})</h3>
+                    {groupedAutoApproved.guide.length === 0 && !loadingEntityType['guide-approved'] && (
+                      <Button variant="gray" size="sm" onClick={() => fetchEntityTypeReviews('guide', 'approved')} disabled={loadingEntityType['guide-approved']}>
+                        {loadingEntityType['guide-approved'] ? t('loading') : t('fetch')}
+                      </Button>
+                    )}
+                  </div>
+                  {loadingEntityType['guide-approved'] ? (
+                    <div className="p-6"><Skeleton className="h-32 w-full" /></div>
+                  ) : !loadedEntityTypes['guide-approved'] ? (
+                    <div className="overflow-hidden max-h-0 opacity-0" aria-hidden />
+                  ) : groupedAutoApproved.guide.length > 0 ? (
+                    <div className="divide-y divide-border-dark dark:divide-border-dark">
+                      {Object.entries(guidesByEntityAutoApproved).map(([slug, revs]) => (
+                        <div key={slug} className="px-6 pb-4">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{revs[0]?.entityId?.name?.[locale as 'en' | 'he'] || slug}</p>
+                          {revs.map(renderReviewItem)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center"><p className="text-gray dark:text-gray-dark">{t('noAutoApprovedGuideReviews')}</p></div>
+                  )}
+                </div>
+              )}
+
+              {autoApprovedEntityTab === 'product' && (
+                <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+                  <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('products')} ({groupedAutoApproved.product.length})</h3>
+                    {groupedAutoApproved.product.length === 0 && !loadingEntityType['product-approved'] && (
+                      <Button variant="gray" size="sm" onClick={() => fetchEntityTypeReviews('product', 'approved')} disabled={loadingEntityType['product-approved']}>
+                        {loadingEntityType['product-approved'] ? t('loading') : t('fetch')}
+                      </Button>
+                    )}
+                  </div>
+                  {loadingEntityType['product-approved'] ? (
+                    <div className="p-6"><Skeleton className="h-32 w-full" /></div>
+                  ) : !loadedEntityTypes['product-approved'] ? (
+                    <div className="overflow-hidden max-h-0 opacity-0" aria-hidden />
+                  ) : groupedAutoApproved.product.length > 0 ? (
+                    <div className="divide-y divide-border-dark dark:divide-border-dark">
+                      {Object.entries(productsByEntityAutoApproved).map(([slug, revs]) => (
+                        <div key={slug} className="px-6 pb-4">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{revs[0]?.entityId?.name?.[locale as 'en' | 'he'] || slug}</p>
+                          {revs.map(renderReviewItem)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center"><p className="text-gray dark:text-gray-dark">{t('noAutoApprovedProductReviews')}</p></div>
+                  )}
+                </div>
+              )}
+
+              {autoApprovedEntityTab === 'trainer' && (
+                <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
+                  <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('trainers')} ({groupedAutoApproved.trainer.length})</h3>
+                    {groupedAutoApproved.trainer.length === 0 && !loadingEntityType['trainer-approved'] && (
+                      <Button variant="gray" size="sm" onClick={() => fetchEntityTypeReviews('trainer', 'approved')} disabled={loadingEntityType['trainer-approved']}>
+                        {loadingEntityType['trainer-approved'] ? t('loading') : t('fetch')}
+                      </Button>
+                    )}
+                  </div>
+                  {loadingEntityType['trainer-approved'] ? (
+                    <div className="p-6"><Skeleton className="h-32 w-full" /></div>
+                  ) : !loadedEntityTypes['trainer-approved'] ? (
+                    <div className="overflow-hidden max-h-0 opacity-0" aria-hidden />
+                  ) : groupedAutoApproved.trainer.length > 0 ? (
+                    <div className="divide-y divide-border-dark dark:divide-border-dark">
+                      {Object.entries(trainersByEntityAutoApproved).map(([slug, revs]) => (
+                        <div key={slug} className="px-6 pb-4">
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{revs[0]?.entityId?.name?.[locale as 'en' | 'he'] || slug}</p>
+                          {revs.map(renderReviewItem)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center"><p className="text-gray dark:text-gray-dark">{t('noAutoApprovedTrainerReviews')}</p></div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
 

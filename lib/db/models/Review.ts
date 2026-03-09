@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export type ReviewStatus = 'pending' | 'approved' | 'rejected';
+export type ReviewStatus = 'pending' | 'approved' | 'auto-approved' | 'rejected';
 
 /** Locale-keyed content (en/he). Legacy docs may have plain strings. */
 export type ReviewContentByLocale = { en?: string; he?: string };
@@ -90,7 +90,7 @@ const ReviewSchema: Schema<IReview> = new Schema<IReview>(
     },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
+      enum: ['pending', 'approved', 'auto-approved', 'rejected'],
       default: 'pending',
       index: true,
     },
@@ -102,7 +102,7 @@ const ReviewSchema: Schema<IReview> = new Schema<IReview>(
 
 ReviewSchema.statics.forSkatepark = function (slug: string, onlyApproved: boolean = true) {
   const q: any = { slug: slug.toLowerCase(), entityType: 'skatepark' };
-  if (onlyApproved) q.status = 'approved';
+  if (onlyApproved) q.status = { $in: ['approved', 'auto-approved'] };
   return this.find(q).sort({ createdAt: -1 });
 };
 

@@ -1296,12 +1296,16 @@ export default function SkateparkPage() {
   const handleReviewSubmitted = async () => {
     setShowAddReview(false);
     setShowThankYouPopup(true);
+    const autoApprove = process.env.NEXT_PUBLIC_ENABLE_AUTO_APPROVE_REVIEWS === 'true';
+    const popupDurationMs = autoApprove ? 1750 : 3500;
     if (thankYouPopupTimeoutRef.current) clearTimeout(thankYouPopupTimeoutRef.current);
     thankYouPopupTimeoutRef.current = setTimeout(() => {
       setShowThankYouPopup(false);
       thankYouPopupTimeoutRef.current = null;
-    }, 3500);
-    // Don't fetch reviews - they need admin approval first
+    }, popupDurationMs);
+    if (autoApprove) {
+      await fetchReviews();
+    }
   };
 
   const DEFERRED_HELPFUL_DELAY_MS = 2500;
@@ -3077,9 +3081,11 @@ export default function SkateparkPage() {
               <p className="text-base font-medium text-text dark:text-text-dark">
                 {t('thankYouForReview')}
               </p>
-              <p className="mt-2 text-sm text-text-secondary dark:text-text-secondary-dark">
-                {t('reviewPendingApproval')}
-              </p>
+              {process.env.NEXT_PUBLIC_ENABLE_AUTO_APPROVE_REVIEWS !== 'true' && (
+                <p className="mt-2 text-sm text-text-secondary dark:text-text-secondary-dark">
+                  {t('reviewPendingApproval')}
+                </p>
+              )}
             </div>
           </motion.div>
         )}

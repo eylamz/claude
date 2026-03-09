@@ -32,16 +32,15 @@ export default function ReviewForm({
   const [ratingError, setRatingError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
 
-  const isAuthenticated = !!user;
-
   const handleSubmit = async () => {
     // Prevent submission if already submitting
     if (submitting) return;
-    
-    // Validate: rating always required; name required only for unauthenticated
+
+    const trimmedName = userName.trim();
+    // Validate: rating is required; full name must be non-empty and contain a space
     const hasRatingError = rating == null || rating === undefined || rating < 1;
-    const hasNameError = !isAuthenticated && (!userName || userName.trim().length === 0);
-    
+    const hasNameError = trimmedName.length === 0 || !trimmedName.includes(' ');
+
     // Set all relevant errors
     if (hasRatingError) {
       setRatingError(t('reviewForm.ratingRequiredError'));
@@ -49,7 +48,7 @@ export default function ReviewForm({
     if (hasNameError) {
       setNameError(t('reviewForm.fullNameRequiredError'));
     }
-    
+
     // If any validation failed, show toast and return
     if (hasRatingError || hasNameError) {
       const errorMessages: string[] = [];
@@ -59,7 +58,7 @@ export default function ReviewForm({
       if (hasNameError) {
         errorMessages.push(t('reviewForm.fullNameRequiredError'));
       }
-      
+
       toast({
         title: t('reviewForm.validationError'),
         description: errorMessages.join(', '),
@@ -72,11 +71,8 @@ export default function ReviewForm({
     setRatingError(null);
     setNameError(null);
     try {
-      const body: any = { rating, comment, locale };
-      if (!isAuthenticated) {
-        body.userName = userName.trim();
-      }
-      
+      const body: any = { rating, comment, locale, userName: trimmedName };
+
       const res = await fetch(`/api/skateparks/${slug}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -120,30 +116,30 @@ export default function ReviewForm({
         </div>
       )}
 
-      {/* Full name input - only for unauthenticated users; authenticated use session name */}
-      {!isAuthenticated && (
-        <div className="mb-3 ">
-          <Input
-            id="reviewer-name"
-            type="text"
-            label={t('reviewForm.yourFullName')}
-            value={userName}
-            onChange={(e) => {
-              setUserName(e.target.value);
-              if (e.target.value.trim().length > 0 && nameError) {
-                setNameError(null);
-              }
-            }}
-            placeholder={t('reviewForm.enterYourFullName')}
-            maxLength={80}
-            required
-            variant="default"
-          />
-          {nameError && (
-            <p className="mt-1 text-sm text-red dark:text-red-dark">{nameError}</p>
-          )}
-        </div>
-      )}
+      {/* Full name input - required for all users */}
+      <div className="mb-3 ">
+        <Input
+          id="reviewer-name"
+          type="text"
+          label={t('reviewForm.yourFullName')}
+          value={userName}
+          onChange={(e) => {
+            const nextValue = e.target.value;
+            setUserName(nextValue);
+            const trimmedNext = nextValue.trim();
+            if (trimmedNext.length > 0 && trimmedNext.includes(' ') && nameError) {
+              setNameError(null);
+            }
+          }}
+          placeholder={t('reviewForm.enterYourFullName')}
+          maxLength={80}
+          required
+          variant="default"
+        />
+        {nameError && (
+          <p className="mt-1 text-sm text-red dark:text-red-dark">{nameError}</p>
+        )}
+      </div>
 
       {/* Rating - Required */}
       <div className="mb-3">

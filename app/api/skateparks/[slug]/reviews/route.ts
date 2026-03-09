@@ -76,7 +76,11 @@ export async function GET(
     const park = await Skatepark.findOne({ slug: slug.toLowerCase(), status: 'active' }).lean();
     if (!park) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-    const query: any = { slug: slug.toLowerCase(), entityType: 'skatepark', status: 'approved' };
+    const query: any = {
+      slug: slug.toLowerCase(),
+      entityType: 'skatepark',
+      status: { $in: ['approved', 'auto-approved'] },
+    };
     if (ratingFilter >= 1 && ratingFilter <= 5) {
       query.rating = ratingFilter;
     }
@@ -113,7 +117,13 @@ export async function GET(
         Review.find(query).sort(sortOpt).skip(skip).limit(limit).lean(),
         Review.countDocuments(query),
         Review.aggregate([
-          { $match: { slug: slug.toLowerCase(), entityType: 'skatepark', status: 'approved' } },
+          {
+            $match: {
+              slug: slug.toLowerCase(),
+              entityType: 'skatepark',
+              status: { $in: ['approved', 'auto-approved'] },
+            },
+          },
           { $group: { _id: '$rating', count: { $sum: 1 } } },
         ]),
       ]);
@@ -152,7 +162,7 @@ export async function GET(
       const existing = await Review.exists({
         slug: slug.toLowerCase(),
         userId: session.user.id,
-        status: { $in: ['pending', 'approved'] },
+        status: { $in: ['pending', 'approved', 'auto-approved'] },
       });
       userHasReviewed = !!existing;
     }
@@ -229,15 +239,22 @@ export async function POST(
     }
     
     const locale: Locale = (typeof bodyLocale === 'string' && isLocale(bodyLocale)) ? bodyLocale : 'en';
-    // Authenticated: use session name; anonymous: require name from body
+    // Prefer provided full name; authenticated users can override their account name
+    const providedName = typeof userName === 'string' ? userName.trim() : '';
+    const hasProvidedFullName = providedName.length > 0 && providedName.includes(' ');
     let displayName: string;
     if (isAnonymous) {
-      if (!userName || !userName.trim()) {
+      if (!hasProvidedFullName) {
         return NextResponse.json({ error: 'Full name is required' }, { status: 400 });
       }
-      displayName = userName.trim();
+      displayName = providedName;
     } else {
-      displayName = (session?.user?.name ?? session?.user?.email ?? 'User').trim() || 'User';
+      if (providedName && !hasProvidedFullName) {
+        return NextResponse.json({ error: 'Full name is required' }, { status: 400 });
+      }
+      displayName =
+        (hasProvidedFullName ? providedName : (session?.user?.name ?? session?.user?.email ?? 'User'))?.trim() ||
+        'User';
     }
 
     const park = await Skatepark.findOne({ slug: slug.toLowerCase(), status: 'active' });
@@ -251,7 +268,7 @@ export async function POST(
         const existing = await Review.findOne({
           slug: slug.toLowerCase(),
           userId: { $exists: false },
-          status: { $in: ['pending', 'approved'] },
+          status: { $in: ['pending', 'approved', 'auto-approved'] },
           $or: [
             { 'userName.en': displayName },
             { 'userName.he': displayName },
@@ -280,7 +297,8 @@ export async function POST(
       entityId: park._id,
       slug: slug.toLowerCase(),
       rating,
-      status: 'pending',
+      status:
+        process.env.NEXT_PUBLIC_ENABLE_AUTO_APPROVE_REVIEWS === 'true' ? 'auto-approved' : 'pending',
     };
 
     if (isAnonymous) {

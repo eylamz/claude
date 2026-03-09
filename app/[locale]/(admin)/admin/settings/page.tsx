@@ -28,6 +28,7 @@ const ENV_FLAGS: { key: string; description: string }[] = [
   { key: 'NEXT_PUBLIC_ENABLE_USERREVIEWS', description: 'Only logged-in users can add reviews' },
   { key: 'NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS', description: 'Everyone can add reviews' },
   { key: 'NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS', description: 'Allow multiple reviews from same user' },
+  { key: 'NEXT_PUBLIC_ENABLE_AUTO_APPROVE_REVIEWS', description: 'Auto approve reviews' },
   { key: 'NEXT_PUBLIC_ENABLE_NEWSLETTER', description: 'Newsletter (footer + admin newsletter page)' },
   { key: 'NEXT_PUBLIC_ENABLE_WEATHER_FORECAST', description: 'Weather forecast' },
 ];
@@ -46,6 +47,7 @@ const ENV_FLAG_VALUES: Record<string, boolean> = {
   NEXT_PUBLIC_ENABLE_USERREVIEWS: process.env.NEXT_PUBLIC_ENABLE_USERREVIEWS === 'true',
   NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS: process.env.NEXT_PUBLIC_ENABLE_EVERYONEREVIEWS === 'true',
   NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS: process.env.NEXT_PUBLIC_ENABLE_MULTIPLE_REVIEWS === 'true',
+  NEXT_PUBLIC_ENABLE_AUTO_APPROVE_REVIEWS: process.env.NEXT_PUBLIC_ENABLE_AUTO_APPROVE_REVIEWS === 'true',
   NEXT_PUBLIC_ENABLE_NEWSLETTER: process.env.NEXT_PUBLIC_ENABLE_NEWSLETTER === 'true',
   NEXT_PUBLIC_ENABLE_WEATHER_FORECAST: process.env.NEXT_PUBLIC_ENABLE_WEATHER_FORECAST === 'true',
 };

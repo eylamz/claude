@@ -28,7 +28,11 @@ export async function GET(request: NextRequest) {
     // Build query
     const query: any = {};
     if (status && status !== 'all') {
-      query.status = status;
+      if (status === 'approved') {
+        query.status = { $in: ['approved', 'auto-approved'] };
+      } else {
+        query.status = status;
+      }
     }
     if (entityType) {
       query.entityType = entityType.toLowerCase();
@@ -117,7 +121,7 @@ export async function PATCH(request: NextRequest) {
 
     // Handle approve/reject action
     if (action === 'approve') {
-      const wasApproved = review.status === 'approved';
+      const wasApproved = review.status === 'approved' || review.status === 'auto-approved';
       review.status = 'approved';
       await review.save();
 
@@ -156,7 +160,7 @@ export async function PATCH(request: NextRequest) {
             // Recalculate average
             const allApprovedReviews = await Review.find({ 
               entityId: review.entityId, 
-              status: 'approved',
+              status: { $in: ['approved', 'auto-approved'] },
               _id: { $ne: review._id }
             });
             const totalRating = allApprovedReviews.reduce((sum, r) => sum + r.rating, 0);
