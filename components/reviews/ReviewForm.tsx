@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Star, X } from 'lucide-react';
 import { Button, Input, Textarea } from '@/components/ui';
 import { useTranslations, useLocale } from 'next-intl';
@@ -17,8 +17,8 @@ export default function ReviewForm({
   onSubmitted?: () => void;
   onCancel?: () => void;
   inModal?: boolean;
-  /** When set (authenticated user), name field is hidden and review uses this user's name */
-  user?: { name?: string | null; email?: string | null } | null;
+  /** When set (authenticated user), name field is pre-filled with user name; if role is 'admin', a button to use a different name is shown */
+  user?: { name?: string | null; email?: string | null; role?: string } | null;
 }) {
   const t = useTranslations('skateparks');
   const locale = useLocale();
@@ -31,15 +31,23 @@ export default function ReviewForm({
   const [error, setError] = useState<string | null>(null);
   const [ratingError, setRatingError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Pre-fill name when user is logged in
+  useEffect(() => {
+    if (user?.name?.trim()) {
+      setUserName(user.name.trim());
+    }
+  }, [user?.name]);
 
   const handleSubmit = async () => {
     // Prevent submission if already submitting
     if (submitting) return;
 
-    const trimmedName = (user?.name?.trim() ?? userName.trim()).trim();
-    // Validate: rating is required; full name must be non-empty and contain a space (unless authenticated user)
+    const trimmedName = userName.trim();
+    // Validate: rating is required; full name must be non-empty and contain a space
     const hasRatingError = rating == null || rating === undefined || rating < 1;
-    const hasNameError = !user && (trimmedName.length === 0 || !trimmedName.includes(' '));
+    const hasNameError = trimmedName.length === 0 || !trimmedName.includes(' ');
 
     // Set all relevant errors
     if (hasRatingError) {
@@ -86,7 +94,7 @@ export default function ReviewForm({
       if (onSubmitted) onSubmitted();
       setRating(0);
       setComment('');
-      setUserName('');
+      setUserName(user?.name?.trim() ?? '');
       setRatingError(null);
       setNameError(null);
     } catch (e: any) {
@@ -116,32 +124,58 @@ export default function ReviewForm({
         </div>
       )}
 
-      {/* Full name input - required when not authenticated; hidden when user is set */}
-      {!user && (
+      {/* Full name input - always shown; when logged in pre-filled with user name and optional "use different name" button */}
       <div className="mb-3 ">
-        <Input
-          id="reviewer-name"
-          type="text"
-          label={t('reviewForm.yourFullName')}
-          value={userName}
-          onChange={(e) => {
-            const nextValue = e.target.value;
-            setUserName(nextValue);
-            const trimmedNext = nextValue.trim();
-            if (trimmedNext.length > 0 && trimmedNext.includes(' ') && nameError) {
-              setNameError(null);
-            }
-          }}
-          placeholder={t('reviewForm.enterYourFullName')}
-          maxLength={80}
-          required
-          variant="default"
-        />
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex-1 min-w-0">
+            <Input
+              ref={nameInputRef}
+              id="reviewer-name"
+              type="text"
+              label={t('reviewForm.yourFullName')}
+              value={userName}
+              onChange={(e) => {
+                const nextValue = e.target.value;
+                setUserName(nextValue);
+                const trimmedNext = nextValue.trim();
+                if (trimmedNext.length > 0 && trimmedNext.includes(' ') && nameError) {
+                  setNameError(null);
+                }
+              }}
+              placeholder={t('reviewForm.enterYourFullName')}
+              maxLength={80}
+              required
+              variant="default"
+            />
+          </div>
+          {user?.name?.trim() && user?.role === 'admin' && (
+            <Button
+              type="button"
+              variant="gray"
+              size="sm"
+              className="shrink-0 self-end mb-0.5"
+              onClick={() => {
+                const currentTrimmed = userName.trim();
+                const userTrimmed = user.name?.trim() ?? '';
+                if (currentTrimmed === userTrimmed) {
+                  setUserName('');
+                  nameInputRef.current?.focus();
+                } else {
+                  setUserName(userTrimmed);
+                }
+                if (nameError) setNameError(null);
+              }}
+            >
+              {userName.trim() === (user?.name?.trim() ?? '')
+                ? t('reviewForm.useDifferentName')
+                : t('reviewForm.useMyName')}
+            </Button>
+          )}
+        </div>
         {nameError && (
           <p className="mt-1 text-sm text-red dark:text-red-dark">{nameError}</p>
         )}
       </div>
-      )}
 
       {/* Rating - Required */}
       <div className="mb-3">

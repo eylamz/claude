@@ -91,6 +91,8 @@
     "nameRequired": "שם נדרש",
     "nameRequiredError": "אנא הכנס את שמך",
     "fullNameRequiredError": "אנא הכנס את שמך המלא",
+    "useDifferentName": "השתמש בשם אחר",
+    "useMyName": "השתמש בשמי",
     "validationError": "שגיאת אימות",
     "pleaseFillRequiredFields": "אנא מלא את כל השדות הנדרשים",
     "comment": "תגובה",

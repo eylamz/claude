@@ -206,6 +206,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role as string;
         token.email = user.email as string;
+        token.name = user.name as string;
         token.preferences = (user as any).preferences || {
           language: 'en',
           colorMode: 'system',
@@ -253,9 +254,10 @@ export const authOptions: NextAuthOptions = {
               await connectDB();
             }
 
-            const dbUser = await User.findById(token.id).select('role preferences');
+            const dbUser = await User.findById(token.id).select('role preferences fullName');
             if (dbUser) {
               token.role = dbUser.role;
+              if (dbUser.fullName) token.name = dbUser.fullName;
               token.roleRefreshedAt = now;
               if (dbUser.preferences) {
                 token.preferences = {
@@ -280,6 +282,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.name = token.name as string;
         session.user.role = token.role as string;
         session.user.email = token.email as string;
         session.user.preferences = (token.preferences as any) || {

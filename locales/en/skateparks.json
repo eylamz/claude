@@ -91,6 +91,8 @@
     "nameRequired": "Name is required",
     "nameRequiredError": "Please enter your name",
     "fullNameRequiredError": "Please enter your full name",
+    "useDifferentName": "Use a different name",
+    "useMyName": "Use my name",
     "validationError": "Validation Error",
     "pleaseFillRequiredFields": "Please fill in all required fields",
     "comment": "Comment",
