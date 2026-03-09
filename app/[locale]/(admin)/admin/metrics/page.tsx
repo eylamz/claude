@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { Card, CardHeader, CardTitle, CardContent, Button, SelectWrapper, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Skeleton } from '@/components/ui';
+import { Card, CardHeader, CardTitle, CardContent, Button, SelectWrapper, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Skeleton, Input } from '@/components/ui';
 import {
   BarChart,
   Bar,
@@ -25,7 +25,9 @@ interface MetricsData {
   enabled: boolean;
   message?: string;
   from?: string;
+  to?: string;
   days?: number;
+  groupBy?: 'day' | 'hour';
   pageViewsByPath: Array<{ path: string; count: number }>;
   avgTimeOnPageByPath: Array<{ path: string; avgTimeOnPageMs: number }>;
   sessionsSummary: { totalSessions: number; avgSessionDurationMs: number };
@@ -53,20 +55,50 @@ const LineChartTooltip = ({
   active,
   payload,
   valueLabel,
+  byHour,
 }: {
   active?: boolean;
   payload?: Array<{ value: number; payload: { date: string } }>;
   valueLabel: string;
+  byHour?: boolean;
 }) => {
   if (!active || !payload?.length) return null;
   const dateStr = payload[0].payload?.date;
   const value = payload[0].value ?? 0;
   const label = dateStr
-    ? new Date(dateStr).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+    ? byHour && dateStr.includes('T')
+      ? new Date(dateStr + ':00:00').toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+      : new Date(dateStr).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
     : dateStr;
   return (
     <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4">
       <div className="font-semibold text-gray-900 dark:text-white mb-1">{label}</div>
+      <div className="text-sm text-gray-700 dark:text-gray-300">
+        {value} {valueLabel}
+      </div>
+    </div>
+  );
+};
+
+// Custom tooltip for bar charts (e.g. top pages) – light/dark mode
+const BarChartTooltip = ({
+  active,
+  payload,
+  labelKey = 'path',
+  valueLabel,
+}: {
+  active?: boolean;
+  payload?: Array<{ value: number; payload: Record<string, unknown> }>;
+  labelKey?: string;
+  valueLabel: string;
+}) => {
+  if (!active || !payload?.length) return null;
+  const row = payload[0].payload;
+  const label = row ? String(row[labelKey] ?? payload[0].value) : '';
+  const value = payload[0].value ?? 0;
+  return (
+    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4">
+      <div className="font-semibold text-gray-900 dark:text-white mb-1 break-all max-w-xs">{label}</div>
       <div className="text-sm text-gray-700 dark:text-gray-300">
         {value} {valueLabel}
       </div>
@@ -89,6 +121,9 @@ export default function AdminMetricsPage() {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<MetricsData | null>(null);
   const [days, setDays] = useState('30');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+  const [showUnknownCountry, setShowUnknownCountry] = useState(false);
   const [updatingHidden, setUpdatingHidden] = useState<string | null>(null);
   const [openGraph, setOpenGraph] = useState<'sessions' | 'pageViews' | null>(null);
 
@@ -118,7 +153,12 @@ export default function AdminMetricsPage() {
     try {
       setError(null);
       setLoading(true);
-      const res = await fetch(`/api/admin/metrics?days=${days}`);
+      const isCustom = days === 'custom';
+      const url =
+        isCustom && customStart && customEnd
+          ? `/api/admin/metrics?days=custom&from=${encodeURIComponent(customStart)}&to=${encodeURIComponent(customEnd)}`
+          : `/api/admin/metrics?days=${days}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch metrics');
       const json = await res.json();
       setData(json);
@@ -130,14 +170,23 @@ export default function AdminMetricsPage() {
   };
 
   useEffect(() => {
-    fetchMetrics();
-  }, [days]);
+    if (days !== 'custom') {
+      fetchMetrics();
+    } else if (customStart && customEnd) {
+      fetchMetrics();
+    }
+  }, [days, customStart, customEnd]);
 
   const handleRefresh = async () => {
     try {
       setError(null);
       setLoading(true);
-      const res = await fetch(`/api/admin/metrics?days=${days}`);
+      const isCustom = days === 'custom';
+      const url =
+        isCustom && customStart && customEnd
+          ? `/api/admin/metrics?days=custom&from=${encodeURIComponent(customStart)}&to=${encodeURIComponent(customEnd)}`
+          : `/api/admin/metrics?days=${days}`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch metrics');
       const json = await res.json();
       setData(json);
@@ -230,14 +279,43 @@ export default function AdminMetricsPage() {
                 { value: '30', label: t('metrics.days30') },
                 { value: '90', label: t('metrics.days90') },
                 { value: '365', label: t('metrics.days365') },
+                { value: 'custom', label: t('metrics.daysCustom') },
               ]}
             />
           </div>
+          {days === 'custom' && (
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1">
+                <label htmlFor="metrics-from" className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                  {t('metrics.dateFrom')}
+                </label>
+                <Input
+                  id="metrics-from"
+                  type="date"
+                  value={customStart}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+              <div className="flex items-center gap-1">
+                <label htmlFor="metrics-to" className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+                  {t('metrics.dateTo')}
+                </label>
+                <Input
+                  id="metrics-to"
+                  type="date"
+                  value={customEnd}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  className="w-40"
+                />
+              </div>
+            </div>
+          )}
           <Button
             variant="gray"
             className="flex items-center gap-1"
             onClick={handleRefresh}
-            disabled={loading}
+            disabled={loading || (days === 'custom' && (!customStart || !customEnd))}
             title={t('metrics.refreshTitle')}
           >
             <svg
@@ -344,12 +422,14 @@ export default function AdminMetricsPage() {
                         tick={{ fontSize: 12, fill: 'currentColor' }}
                         className="text-text-secondary dark:text-text-dark"
                         tickFormatter={(value) => {
-                          const d = new Date(value);
-                          return `${d.getDate()}/${d.getMonth() + 1}`;
+                          const d = new Date(value.includes('T') ? value + ':00:00' : value);
+                          return data?.groupBy === 'hour'
+                            ? d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                            : `${d.getDate()}/${d.getMonth() + 1}`;
                         }}
                       />
                       <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="text-text-secondary dark:text-text-secondary-dark" />
-                      <Tooltip content={<LineChartTooltip valueLabel={t('metrics.sessions')} />} />
+                      <Tooltip content={<LineChartTooltip valueLabel={t('metrics.sessions')} byHour={data?.groupBy === 'hour'} />} />
                       <Line type="monotone" dataKey="count" stroke="#9dff00" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name={t('metrics.sessions')} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -382,12 +462,14 @@ export default function AdminMetricsPage() {
                         tick={{ fontSize: 12, fill: 'currentColor' }}
                         className="text-text-secondary dark:text-text-dark"
                         tickFormatter={(value) => {
-                          const d = new Date(value);
-                          return `${d.getDate()}/${d.getMonth() + 1}`;
+                          const d = new Date(value.includes('T') ? value + ':00:00' : value);
+                          return data?.groupBy === 'hour'
+                            ? d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                            : `${d.getDate()}/${d.getMonth() + 1}`;
                         }}
                       />
                       <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="text-text-secondary dark:text-text-secondary-dark" />
-                      <Tooltip content={<LineChartTooltip valueLabel={t('metrics.views')} />} />
+                      <Tooltip content={<LineChartTooltip valueLabel={t('metrics.views')} byHour={data?.groupBy === 'hour'} />} />
                       <Line type="monotone" dataKey="count" stroke="#47b84d" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name={t('metrics.views')} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -411,7 +493,7 @@ export default function AdminMetricsPage() {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border dark:stroke-border-dark" />
                       <XAxis type="number" tick={{ fill: 'currentColor', fontSize: 12 }} />
                       <YAxis type="category" dataKey="path" width={120} tick={{ fill: 'currentColor', fontSize: 11 }} tickFormatter={(v) => (v.length > 30 ? v.slice(0, 28) + '…' : v)} />
-                      <Tooltip formatter={(value: unknown) => [Number(value), t('metrics.views')]} labelFormatter={(label: unknown) => String(label)} />
+                      <Tooltip content={<BarChartTooltip labelKey="path" valueLabel={t('metrics.views')} />} />
                       <Bar dataKey="count" fill="#47b84d" radius={[0, 4, 4, 0]} name={t('metrics.views')} />
                     </BarChart>
                   </ResponsiveContainer>
@@ -728,40 +810,80 @@ export default function AdminMetricsPage() {
               </CardContent>
             </Card>
 
-            {/* Users by country (from IP) */}
+            {/* Users by country (from IP) – LOCAL excluded by API; unknown hidden until "Show unknown" */}
             <Card className="bg-card dark:bg-card-dark">
-              <CardHeader>
-                <CardTitle className="text-gray-900 dark:text-white">{t('metrics.usersByCountry')}</CardTitle>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {t('metrics.usersByCountryHint')}
-                </p>
+              <CardHeader className="flex flex-row items-start justify-between gap-2">
+                <div>
+                  <CardTitle className="text-gray-900 dark:text-white">{t('metrics.usersByCountry')}</CardTitle>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {t('metrics.usersByCountryHint')}
+                  </p>
+                </div>
+                {(() => {
+                  const unknownEntry = data?.countryBreakdown?.find((c) => c.country === 'unknown');
+                  const unknownCount = unknownEntry?.count ?? 0;
+                  if (unknownCount === 0) return null;
+                  return (
+                    <Button
+                      variant="gray"
+                      size="sm"
+                      onClick={() => setShowUnknownCountry((v) => !v)}
+                      className="shrink-0"
+                    >
+                      {showUnknownCountry
+                        ? t('metrics.hideUnknown')
+                        : t('metrics.showUnknownCount', { count: unknownCount })}
+                    </Button>
+                  );
+                })()}
               </CardHeader>
               <CardContent className="p-4 pt-0">
-                {data?.countryBreakdown?.length ? (
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart
-                      data={data.countryBreakdown.slice(0, 15)}
-                      layout="vertical"
-                      margin={{ left: 20, right: 20 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border dark:stroke-border-dark" />
-                      <XAxis type="number" tick={{ fill: 'currentColor', fontSize: 12 }} />
-                      <YAxis
-                        type="category"
-                        dataKey="country"
-                        width={48}
-                        tick={{ fill: 'currentColor', fontSize: 11 }}
-                      />
-                      <Tooltip
-                        formatter={(value: unknown) => [value as React.ReactNode, t('metrics.sessions')]}
-                        labelFormatter={(label: unknown) => `${t('metrics.country')}: ${String(label)}`}
-                      />
-                      <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} name={t('metrics.sessions')} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noCountryData')}</p>
-                )}
+                {(() => {
+                  const full = data?.countryBreakdown ?? [];
+                  const countryData = showUnknownCountry
+                    ? [...full.filter((c) => c.country !== 'unknown').slice(0, 14), ...full.filter((c) => c.country === 'unknown')].slice(0, 15)
+                    : full.filter((c) => c.country !== 'unknown').slice(0, 15);
+                  if (!countryData.length) {
+                    return (
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noCountryData')}</p>
+                    );
+                  }
+                  return (
+                    <>
+                      {showUnknownCountry && (() => {
+                        const unknownEntry = data?.countryBreakdown?.find((c) => c.country === 'unknown');
+                        const n = unknownEntry?.count ?? 0;
+                        if (n === 0) return null;
+                        return (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            {t('metrics.unknownCountryCount', { count: n })}
+                          </p>
+                        );
+                      })()}
+                      <ResponsiveContainer width="100%" height={260}>
+                        <BarChart data={countryData} layout="vertical" margin={{ left: 20, right: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-border dark:stroke-border-dark" />
+                          <XAxis type="number" tick={{ fill: 'currentColor', fontSize: 12 }} />
+                          <YAxis
+                            type="category"
+                            dataKey="country"
+                            width={48}
+                            tick={{ fill: 'currentColor', fontSize: 11 }}
+                          />
+                          <Tooltip
+                            content={
+                              <BarChartTooltip
+                                labelKey="country"
+                                valueLabel={t('metrics.sessions')}
+                              />
+                            }
+                          />
+                          <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} name={t('metrics.sessions')} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </>
+                  );
+                })()}
               </CardContent>
             </Card>
           </div>

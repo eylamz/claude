@@ -7,6 +7,13 @@ import { useSession } from 'next-auth/react';
 import { hasConsent } from '@/lib/utils/cookie-consent';
 import { trackPageView, isAnalyticsEnabled, shouldTrackAnalytics } from '@/lib/analytics/internal';
 
+/** Max time on a single page we record (15 min). Prevents "tab left open" from inflating metrics. */
+const MAX_TIME_ON_PAGE_MS = 15 * 60 * 1000;
+
+function capTimeOnPageMs(ms: number): number {
+  return Math.min(Math.round(ms), MAX_TIME_ON_PAGE_MS);
+}
+
 function getUserId(session: { user?: { id?: string } } | null): string | undefined {
   const id = session?.user?.id;
   return typeof id === 'string' && id ? id : undefined;
@@ -38,7 +45,7 @@ export default function InternalAnalytics() {
 
     // Send previous page with time on page (if we had one)
     if (previousPath != null && previousPath !== pathname) {
-      const timeOnPageMs = Math.round(now - enterTime);
+      const timeOnPageMs = capTimeOnPageMs(now - enterTime);
       trackPageView({
         path: previousPath,
         ...payload,
@@ -79,7 +86,7 @@ export default function InternalAnalytics() {
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
-        const timeOnPageMs = Math.round(Date.now() - enterTimeRef.current);
+        const timeOnPageMs = capTimeOnPageMs(Date.now() - enterTimeRef.current);
         trackPageView({
           path: pathname,
           locale,
@@ -90,7 +97,7 @@ export default function InternalAnalytics() {
     };
 
     const handleBeforeUnload = () => {
-      const timeOnPageMs = Math.round(Date.now() - enterTimeRef.current);
+      const timeOnPageMs = capTimeOnPageMs(Date.now() - enterTimeRef.current);
       trackPageView({
         path: pathname,
         locale,

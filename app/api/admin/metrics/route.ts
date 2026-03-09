@@ -8,6 +8,8 @@ import Settings from '@/lib/models/Settings';
 
 const ENABLE_ANALYTICS = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true';
 const DEFAULT_DAYS = 30;
+/** Cap time-on-page in aggregations (30 min) so old/uncapped data doesn't inflate metrics. */
+const MAX_TIME_ON_PAGE_MS = 30 * 60 * 1000;
 
 export async function GET(request: NextRequest) {
   try {
@@ -67,13 +69,10 @@ export async function GET(request: NextRequest) {
 
     const currentUserId = filterByCurrentUser && session.user?.id ? String(session.user.id) : null;
 
-    const from = new Date();
-    from.setDate(from.getDate() - days);
-    from.setHours(0, 0, 0, 0);
-
     const matchPageView: Record<string, unknown> = {
       type: 'page_view',
       timestamp: { $gte: from, $lte: toDate },
+      path: { $not: { $regex: '/admin' } },
     };
     if (currentUserId) {
       matchPageView.userId = currentUserId;
@@ -124,13 +123,15 @@ export async function GET(request: NextRequest) {
       ]),
       AnalyticsEvent.aggregate<{ _id: string; avgMs: number }>([
         { $match: { ...matchPageView, timeOnPageMs: { $exists: true, $gt: 0 } } },
-        { $group: { _id: '$path', avgMs: { $avg: '$timeOnPageMs' } } },
+        { $addFields: { timeOnPageMsCapped: { $min: [{ $ifNull: ['$timeOnPageMs', 0] }, MAX_TIME_ON_PAGE_MS] } } },
+        { $group: { _id: '$path', avgMs: { $avg: '$timeOnPageMsCapped' } } },
         { $sort: { avgMs: -1 } },
         { $project: { path: '$_id', avgTimeOnPageMs: { $round: ['$avgMs', 0] }, _id: 0 } },
       ]),
       AnalyticsEvent.aggregate<{ avgSessionDurationMs: number; totalSessions: number }>([
         { $match: matchPageView },
-        { $group: { _id: '$sessionId', totalMs: { $sum: { $ifNull: ['$timeOnPageMs', 0] } } } },
+        { $addFields: { timeOnPageMsCapped: { $min: [{ $ifNull: ['$timeOnPageMs', 0] }, MAX_TIME_ON_PAGE_MS] } } },
+        { $group: { _id: '$sessionId', totalMs: { $sum: '$timeOnPageMsCapped' } } },
         { $group: { _id: null, avgSessionMs: { $avg: '$totalMs' }, count: { $sum: 1 } } },
         { $project: { _id: 0, avgSessionDurationMs: { $round: ['$avgSessionMs', 0] }, totalSessions: '$count' } },
       ]),
@@ -168,7 +169,7 @@ export async function GET(request: NextRequest) {
         { $project: { referrerCategory: '$_id', count: 1, _id: 0 } },
       ]),
       // Country (from IP): one count per session (first page view determines country)
-      AnalyticsEvent.aggregate<{ _id: string; count: number }>([
+      AnalyticsEvent.aggregate<{ country: string; count: number }>([
         { $match: matchPageViewWithSession },
         { $sort: { sessionId: 1, timestamp: 1 } },
         { $group: { _id: '$sessionId', country: { $first: '$country' } } },
@@ -258,22 +259,32 @@ export async function GET(request: NextRequest) {
 
     const topPages = pageViewsByPath.slice(0, 20);
 
-    // Fill missing days with 0 so the chart is continuous
+    // Fill missing days/hours with 0 so the chart is continuous
     const sessionsByDayMap = new Map<string, number>();
     for (const row of sessionsByDayRaw) {
       sessionsByDayMap.set(row.date, row.count);
     }
     const sessionsByDay: Array<{ date: string; count: number }> = [];
-    const iter = new Date(from);
-    const toDate = new Date();
-    toDate.setHours(23, 59, 59, 999);
-    while (iter <= toDate) {
-      const dateStr = iter.toISOString().slice(0, 10);
-      sessionsByDay.push({
-        date: dateStr,
-        count: sessionsByDayMap.get(dateStr) ?? 0,
-      });
-      iter.setDate(iter.getDate() + 1);
+    if (groupBy === 'hour') {
+      const iter = new Date(from);
+      while (iter <= toDate) {
+        const dateStr = iter.toISOString().slice(0, 13); // YYYY-MM-DDTHH
+        sessionsByDay.push({
+          date: dateStr,
+          count: sessionsByDayMap.get(dateStr) ?? 0,
+        });
+        iter.setHours(iter.getHours() + 1);
+      }
+    } else {
+      const iter = new Date(from);
+      while (iter <= toDate) {
+        const dateStr = iter.toISOString().slice(0, 10);
+        sessionsByDay.push({
+          date: dateStr,
+          count: sessionsByDayMap.get(dateStr) ?? 0,
+        });
+        iter.setDate(iter.getDate() + 1);
+      }
     }
 
     const pageViewsByDayMap = new Map<string, number>();
@@ -281,31 +292,48 @@ export async function GET(request: NextRequest) {
       pageViewsByDayMap.set(row.date, row.count);
     }
     const pageViewsByDay: Array<{ date: string; count: number }> = [];
-    const iterPv = new Date(from);
-    while (iterPv <= toDate) {
-      const dateStr = iterPv.toISOString().slice(0, 10);
-      pageViewsByDay.push({
-        date: dateStr,
-        count: pageViewsByDayMap.get(dateStr) ?? 0,
-      });
-      iterPv.setDate(iterPv.getDate() + 1);
+    if (groupBy === 'hour') {
+      const iterPv = new Date(from);
+      while (iterPv <= toDate) {
+        const dateStr = iterPv.toISOString().slice(0, 13);
+        pageViewsByDay.push({
+          date: dateStr,
+          count: pageViewsByDayMap.get(dateStr) ?? 0,
+        });
+        iterPv.setHours(iterPv.getHours() + 1);
+      }
+    } else {
+      const iterPv = new Date(from);
+      while (iterPv <= toDate) {
+        const dateStr = iterPv.toISOString().slice(0, 10);
+        pageViewsByDay.push({
+          date: dateStr,
+          count: pageViewsByDayMap.get(dateStr) ?? 0,
+        });
+        iterPv.setDate(iterPv.getDate() + 1);
+      }
     }
 
     const settings = await Settings.findOrCreate();
     const popularSearchHidden = settings.popularSearchHidden || [];
 
+    // Exclude local dev (LOCAL) from country breakdown so it is not shown
+    const countryBreakdownFiltered = countryBreakdown.filter((c) => c.country !== 'LOCAL');
+
     return NextResponse.json({
       enabled: ENABLE_ANALYTICS,
       ...(ENABLE_ANALYTICS ? {} : { message: 'Analytics is disabled. Set NEXT_PUBLIC_ENABLE_ANALYTICS=true in .env.local.' }),
       from: from.toISOString(),
+      to: toDate.toISOString(),
       days,
+      groupBy,
       pageViewsByPath,
       avgTimeOnPageByPath: avgTimeByPath,
       sessionsSummary,
       deviceBreakdown: { byCategory: deviceByCategory, byType: deviceByType },
       consentBreakdown,
       referrerBreakdown,
-      countryBreakdown,
+      countryBreakdown: countryBreakdownFiltered,
       topPages,
       searchQueries,
       searchClicks,
