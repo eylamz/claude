@@ -12,6 +12,8 @@ export type SegmentedControlVariant =
   | 'gray'
   | 'orange'
   | 'purple'
+  | 'yellow'
+  | 'lime'
   | 'pink';
 
 export interface SegmentedControlOption {
@@ -29,6 +31,8 @@ export interface SegmentedControlsProps {
   onValueChange?: (value: string) => void;
   name?: string;
   className?: string;
+  /** Hide option labels below this breakpoint (icons only on small screens). */
+  hideLabelBelow?: 'sm' | 'md' | 'lg';
 }
 
 const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProps>(
@@ -40,6 +44,7 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
       onValueChange,
       name = 'segmentedControls',
       className,
+      hideLabelBelow,
       ...props
     },
     ref
@@ -108,6 +113,14 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
         bg: { light: '#e7defc', dark: 'hsl(261, 54%, 20%)' },
         border: { light: 'hsl(259, 84%, 87%)', dark: '#6e40c4' },
       },
+      yellow: {
+        bg: { light: 'hsl(60, 83%, 93%)', dark: 'hsl(60, 64%, 13%)' },
+        border: { light: 'hsl(60, 73%, 83%)', dark: 'hsl(60, 62%, 25%)' },
+      },
+      lime: {
+        bg: { light: 'hsl(83, 84%, 85%)', dark: 'hsl(261, 54%, 20%)' },
+        border: { light: 'hsl(83, 96%, 68%)', dark: '#6e40c4' },
+      },
       pink: {
         bg: { light: '#fde6f2', dark: 'hsl(314, 27%, 15%)' },
         border: { light: 'hsl(314, 96%, 89%)', dark: 'hsl(314, 56%, 32%)' },
@@ -168,7 +181,7 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
               position: absolute;
               z-index: -3;
               top: 0.5rem;
-              left: 0;
+              inset-inline-start: 0;
               bottom: 0.5rem;
               width: 1px;
               background: rgba(0,0,0,0.15);
@@ -181,6 +194,8 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
             #${controlsId} input:checked + label + input + label::before {
               opacity: 0;
             }
+              @media (min-width: 768px) {
+
             @media (pointer: coarse) {
             #${controlsId}:focus-within {
               box-shadow: 0 0 0 0.2rem rgba(0,122,255,0.75);
@@ -188,6 +203,7 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
             .dark #${controlsId}:focus-within {
               box-shadow: 0 0 0 0.2rem rgba(0,122,255,0.5);
             }
+          }
         }
           `,
           }}
@@ -224,6 +240,8 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
                   red: 'text-red dark:text-red-dark',
                   orange: 'text-orange dark:text-orange-dark',
                   purple: 'text-purple dark:text-purple-dark',
+                  yellow: 'text-yellow dark:text-yellow-dark',
+                  lime: 'text-lime dark:text-lime-dark',
                   pink: 'text-pink dark:text-pink-dark',
                 };
                 return variantColorMap[variant] || 'text-gray dark:text-gray-dark';
@@ -249,7 +267,10 @@ const SegmentedControls = React.forwardRef<HTMLDivElement, SegmentedControlsProp
                       'font-sans', // -apple-system, BlinkMacSystemFont, sans-serif
                       isSelected && 'text-[0.875rem] font-semibold',
                       option.icon && 'ms-2',
-                      textColorClass
+                      textColorClass,
+                      hideLabelBelow === 'sm' && 'hidden sm:inline',
+                      hideLabelBelow === 'md' && 'hidden md:inline',
+                      hideLabelBelow === 'lg' && 'hidden lg:inline'
                     )}
                   >
                     {option.label}

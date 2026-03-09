@@ -1,10 +1,24 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input, Textarea, Skeleton } from '@/components/ui';
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Input,
+  Textarea,
+  Skeleton,
+  SegmentedControls,
+} from '@/components/ui';
+import { NumberInput } from '@/components/ui/number-input';
+import { SearchInput } from '@/components/common/SearchInput';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Star, Edit2, Check, X } from 'lucide-react';
+import { Icon } from '@/components/icons';
 import { cn } from '@/lib/utils';
 
 type ReviewContentByLocale = { en?: string; he?: string };
@@ -31,6 +45,13 @@ function resolveContent(value: string | ReviewContentByLocale | undefined | null
   return value[locale] ?? value.en ?? value.he ?? '';
 }
 
+/** Returns only the content for the given locale (no fallback). Use for edit form so each section shows only its own locale. */
+function getContentForLocale(value: string | ReviewContentByLocale | undefined | null, locale: 'en' | 'he'): string {
+  if (value == null) return '';
+  if (typeof value === 'string') return locale === 'en' ? value : '';
+  return value[locale] ?? '';
+}
+
 /** True if the review has any content (userName or comment) for the given locale. Legacy string = en only. */
 function reviewHasContentForLocale(review: Review, locale: 'en' | 'he'): boolean {
   const hasValue = (v: string | ReviewContentByLocale | undefined | null): boolean => {
@@ -44,16 +65,18 @@ function reviewHasContentForLocale(review: Review, locale: 'en' | 'he'): boolean
 
 export default function ReviewsPage() {
   const locale = useLocale();
+  const t = useTranslations('admin.reviews');
   const [pendingReviews, setPendingReviews] = useState<Review[]>([]);
   const [approvedReviews, setApprovedReviews] = useState<Review[]>([]);
   const [rejectedReviews, setRejectedReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingRejected, setLoadingRejected] = useState(false);
+  const [hasFetchedRejected, setHasFetchedRejected] = useState(false);
   const [loadingEntityType, setLoadingEntityType] = useState<Record<string, boolean>>({});
   const [loadedEntityTypes, setLoadedEntityTypes] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState('');
   /** Which locale's content to display in the list (en / he) */
-  const [contentLocale, setContentLocale] = useState<'en' | 'he'>('en');
+  const [contentLocale, setContentLocale] = useState<'en' | 'he' | 'all'>('all');
 
   // Edit modal state (per-locale)
   const [editingReview, setEditingReview] = useState<Review | null>(null);
@@ -135,6 +158,7 @@ export default function ReviewsPage() {
       console.error('Error fetching rejected reviews:', err);
     } finally {
       setLoadingRejected(false);
+      setHasFetchedRejected(true);
     }
   }, [search]);
 
@@ -211,10 +235,10 @@ export default function ReviewsPage() {
 
   const openEditModal = (review: Review) => {
     setEditingReview(review);
-    setEditUserNameEn(resolveContent(review.userName, 'en'));
-    setEditUserNameHe(resolveContent(review.userName, 'he'));
-    setEditCommentEn(resolveContent(review.comment, 'en'));
-    setEditCommentHe(resolveContent(review.comment, 'he'));
+    setEditUserNameEn(getContentForLocale(review.userName, 'en'));
+    setEditUserNameHe(getContentForLocale(review.userName, 'he'));
+    setEditCommentEn(getContentForLocale(review.comment, 'en'));
+    setEditCommentHe(getContentForLocale(review.comment, 'he'));
     setEditRating(review.rating);
     setEditHelpfulCount(review.helpfulCount ?? 0);
     setError(null);
@@ -274,7 +298,7 @@ export default function ReviewsPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(locale === 'he' ? 'he-IL' : 'en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -289,7 +313,7 @@ export default function ReviewsPage() {
         key={i}
         className={`w-4 h-4 ${
           i < rating
-            ? 'fill-yellow-400 text-yellow-400'
+            ? 'fill-brand-text dark:fill-brand-dark text-brand-text dark:text-brand-dark'
             : 'fill-gray-300 text-gray-300 dark:fill-gray-600 dark:text-gray-600'
         }`}
       />
@@ -401,8 +425,9 @@ export default function ReviewsPage() {
   // Render a single review item as an accordion (displays content for contentLocale)
   const renderReviewItem = (review: Review) => {
     const isOpen = openReview === review._id;
-    const displayUserName = resolveContent(review.userName, contentLocale);
-    const displayComment = resolveContent(review.comment, contentLocale);
+    const displayLocale = contentLocale === 'all' ? 'en' : contentLocale;
+    const displayUserName = resolveContent(review.userName, displayLocale);
+    const displayComment = resolveContent(review.comment, displayLocale);
     const commentPreview = displayComment ? (displayComment.length > 100 ? displayComment.substring(0, 100) + '...' : displayComment) : '';
     
     return (
@@ -425,14 +450,14 @@ export default function ReviewsPage() {
               {displayUserName || '—'}
             </span>
             <span className="text-sm text-gray dark:text-gray-dark">
-              on{' '}
+              {t('on')}{' '}
               <Link
                 href={getEntityLink(review)}
                 className="text-brand-main dark:text-brand-dark hover:underline"
                 target="_blank"
                 onClick={(e) => e.stopPropagation()}
               >
-                {review.entityId?.name?.en || review.slug}
+                {review.entityId?.name?.[locale as 'en' | 'he'] || review.entityId?.name?.en || review.entityId?.name?.he || review.slug}
               </Link>
             </span>
             <span className="text-xs text-gray dark:text-gray-dark capitalize">
@@ -449,7 +474,7 @@ export default function ReviewsPage() {
             {(review.helpfulCount > 0 || review.reportsCount > 0) && (
               <div className="flex items-center space-x-2 text-xs">
                 {review.helpfulCount > 0 && (
-                  <span className="text-gray dark:text-gray-dark">👍 {review.helpfulCount}</span>
+                  <span>👍 {review.helpfulCount} {t('helpful')}</span>
                 )}
                 {review.reportsCount > 0 && (
                   <span className="text-red-600 dark:text-red-400">⚠️ {review.reportsCount}</span>
@@ -482,17 +507,17 @@ export default function ReviewsPage() {
             {/* Stats */}
             <div className="flex items-center space-x-4 text-sm text-gray dark:text-gray-dark">
               {review.helpfulCount > 0 && (
-                <span>👍 {review.helpfulCount} helpful</span>
+                <span>👍 {review.helpfulCount} {t('helpful')}</span>
               )}
               {review.reportsCount > 0 && (
                 <span className="text-red-600 dark:text-red-400">
-                  ⚠️ {review.reportsCount} reports
+                  ⚠️ {review.reportsCount} {t('reports')}
                 </span>
               )}
             </div>
 
             {/* Actions */}
-            <div className="flex items-center space-x-2 pt-2">
+            <div className="flex items-center gap-2 pt-2">
               <Button
                 variant="gray"
                 size="sm"
@@ -500,10 +525,10 @@ export default function ReviewsPage() {
                   e.stopPropagation();
                   openEditModal(review);
                 }}
-                className="flex items-center space-x-1"
+                className="flex items-center gap-1"
               >
                 <Edit2 className="w-4 h-4" />
-                <span>Edit</span>
+                <span>{t('edit')}</span>
               </Button>
               {review.status === 'pending' && (
                 <>
@@ -514,10 +539,10 @@ export default function ReviewsPage() {
                       e.stopPropagation();
                       handleStatusChange(review._id, 'approve');
                     }}
-                    className="flex items-center space-x-1"
+                    className="flex items-center gap-1"
                   >
                     <Check className="w-4 h-4" />
-                    <span>Approve</span>
+                    <span>{t('approve')}</span>
                   </Button>
                   <Button
                     variant="red"
@@ -526,10 +551,10 @@ export default function ReviewsPage() {
                       e.stopPropagation();
                       handleStatusChange(review._id, 'reject');
                     }}
-                    className="flex items-center space-x-1"
+                    className="flex items-center gap-1"
                   >
                     <X className="w-4 h-4" />
-                    <span>Reject</span>
+                    <span>{t('reject')}</span>
                   </Button>
                 </>
               )}
@@ -541,10 +566,10 @@ export default function ReviewsPage() {
                     e.stopPropagation();
                     handleStatusChange(review._id, 'reject');
                   }}
-                  className="flex items-center space-x-1"
+                  className="flex items-center gap-1"
                 >
                   <X className="w-4 h-4" />
-                  <span>Reject</span>
+                  <span>{t('reject')}</span>
                 </Button>
               )}
               {review.status === 'rejected' && (
@@ -555,10 +580,10 @@ export default function ReviewsPage() {
                     e.stopPropagation();
                     handleStatusChange(review._id, 'approve');
                   }}
-                  className="flex items-center space-x-1"
+                  className="flex items-center gap-1"
                 >
                   <Check className="w-4 h-4" />
-                  <span>Approve</span>
+                  <span>{t('approve')}</span>
                 </Button>
               )}
             </div>
@@ -572,11 +597,9 @@ export default function ReviewsPage() {
   const renderReviewSection = (reviews: Review[], emptyMessage: string) => {
     if (loading) {
       return (
-        <div className="p-6 space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-32 w-full" />
-                ))}
-              </div>
+        <div className="md:p-6 flex items-center justify-center min-h-[170px]">
+          <LoadingSpinner size={48} variant="default" />
+        </div>
       );
     }
 
@@ -595,17 +618,26 @@ export default function ReviewsPage() {
     );
   };
 
-  // Filter reviews to only those that have content for the selected locale (en/he)
+  // Filter reviews to only those that have content for the selected locale (en/he/all)
   const filteredPendingReviews = useMemo(
-    () => pendingReviews.filter((r) => reviewHasContentForLocale(r, contentLocale)),
+    () =>
+      contentLocale === 'all'
+        ? pendingReviews
+        : pendingReviews.filter((r) => reviewHasContentForLocale(r, contentLocale)),
     [pendingReviews, contentLocale]
   );
   const filteredApprovedReviews = useMemo(
-    () => approvedReviews.filter((r) => reviewHasContentForLocale(r, contentLocale)),
+    () =>
+      contentLocale === 'all'
+        ? approvedReviews
+        : approvedReviews.filter((r) => reviewHasContentForLocale(r, contentLocale)),
     [approvedReviews, contentLocale]
   );
   const filteredRejectedReviews = useMemo(
-    () => rejectedReviews.filter((r) => reviewHasContentForLocale(r, contentLocale)),
+    () =>
+      contentLocale === 'all'
+        ? rejectedReviews
+        : rejectedReviews.filter((r) => reviewHasContentForLocale(r, contentLocale)),
     [rejectedReviews, contentLocale]
   );
 
@@ -625,10 +657,21 @@ export default function ReviewsPage() {
   const [openGuide, setOpenGuide] = useState<string | null>(null);
   const [openReview, setOpenReview] = useState<string | null>(null); // Track which review is expanded
 
+  /** Which approved entity type tab is selected (events / skateparks / guides / products / trainers) */
+  const [approvedEntityTab, setApprovedEntityTab] = useState<'event' | 'skatepark' | 'guide' | 'product' | 'trainer'>('skatepark');
+
   const areaLabels: Record<string, string> = {
-    north: 'North',
-    center: 'Center',
-    south: 'South',
+    north: t('areaNorth'),
+    center: t('areaCenter'),
+    south: t('areaSouth'),
+  };
+
+  const entityLabelKeys: Record<string, string> = {
+    event: 'events',
+    skatepark: 'skateparks',
+    guide: 'guides',
+    product: 'products',
+    trainer: 'trainers',
   };
 
   return (
@@ -636,9 +679,9 @@ export default function ReviewsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reviews Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('title')}</h1>
           <p className="text-sm text-gray dark:text-gray-dark mt-1">
-            Review and moderate user reviews
+            {t('subtitle')}
           </p>
         </div>
       </div>
@@ -647,39 +690,26 @@ export default function ReviewsPage() {
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-4">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Show reviews with content in:</span>
-            <div className="flex gap-2 rounded-lg border border-border dark:border-border-dark p-0.5 bg-card dark:bg-card-dark">
-              <button
-                type="button"
-                onClick={() => setContentLocale('en')}
-                className={cn(
-                  'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-                  contentLocale === 'en'
-                    ? 'bg-brand-text dark:bg-brand-dark text-white dark:text-brand-stroke'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark'
-                )}
-              >
-                English (en)
-              </button>
-              <button
-                type="button"
-                onClick={() => setContentLocale('he')}
-                className={cn(
-                  'px-4 py-2 text-sm font-medium rounded-md transition-colors',
-                  contentLocale === 'he'
-                    ? 'bg-brand-main text-white dark:bg-brand-dark dark:text-white'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-sidebar-hover dark:hover:bg-sidebar-hover-dark'
-                )}
-              >
-                Hebrew (he)
-              </button>
-            </div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {t('showContentIn')}
+            </span>
+            <SegmentedControls
+              name="reviews-content-locale"
+              options={[
+                { value: 'all', label: t('all'), variant: 'blue' },
+                { value: 'en', label: t('englishEn'), variant: 'blue' },
+                { value: 'he', label: t('hebrewHe'), variant: 'blue' },
+              ]}
+              value={contentLocale}
+              onValueChange={(value) => setContentLocale(value as 'en' | 'he' | 'all')}
+              className="min-w-[240px]"
+            />
             <div className="flex-1 min-w-64">
-              <Input
-                type="text"
-                placeholder="Search by content, user name, or entity..."
+              <SearchInput
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onClear={() => setSearch('')}
+                placeholder={t('searchPlaceholder')}
               />
             </div>
           </div>
@@ -697,14 +727,14 @@ export default function ReviewsPage() {
       <Card>
         <CardHeader>
           <CardTitle>
-            Pending Reviews {filteredPendingReviews.length > 0 && `(${filteredPendingReviews.length})`}
+            {t('pendingReviews')} {filteredPendingReviews.length > 0 && `(${filteredPendingReviews.length})`}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             {renderReviewSection(
               filteredPendingReviews,
-              contentLocale === 'en' ? 'No pending reviews with English content.' : 'No pending reviews with Hebrew content.'
+              contentLocale === 'en' ? t('noPendingEn') : contentLocale === 'he' ? t('noPendingHe') : t('noPendingAll')
             )}
           </div>
         </CardContent>
@@ -714,17 +744,36 @@ export default function ReviewsPage() {
       <Card>
         <CardHeader>
           <CardTitle>
-            Approved Reviews {filteredApprovedReviews.length > 0 && `(${filteredApprovedReviews.length})`}
+            {t('approvedReviews')} {filteredApprovedReviews.length > 0 && `(${filteredApprovedReviews.length})`}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <div className="p-6 space-y-4">
-                {/* Events Accordion */}
+            <div className="md:p-6 space-y-4">
+              {/* Entity type tabs – show only the selected accordion */}
+              <div className="flex flex-wrap items-center gap-4">
+                <SegmentedControls
+                  name="approved-reviews-entity"
+                  value={approvedEntityTab}
+                  onValueChange={(v) => setApprovedEntityTab(v as typeof approvedEntityTab)}
+                  hideLabelBelow="sm"
+                  options={[
+                    { value: 'skatepark', label: t('skateparks'), icon: <Icon name="parkBold" className="w-4 h-4" />, variant: 'green' },
+                    { value: 'event', label: t('events'), icon: <Icon name="calendarBold" className="w-4 h-4" />, variant: 'purple' },
+                    { value: 'guide', label: t('guides'), icon: <Icon name="bookBold" className="w-4 h-4" />, variant: 'yellow' },
+                    { value: 'product', label: t('products'), icon: <Icon name="shopBold" className="w-4 h-4" />, variant: 'lime' },
+                    { value: 'trainer', label: t('trainers'), icon: <Icon name="trainersBold" className="w-4 h-4" />, variant: 'lime' },
+                  ]}
+                  className="min-w-0 flex-1"
+                />
+              </div>
+
+                {approvedEntityTab === 'event' && (
+                /* Events Accordion */
                 <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
                     <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Events ({groupedApproved.event.length})
+                        {t('events')} ({groupedApproved.event.length})
                       </h3>
                       {groupedApproved.event.length === 0 && !loadingEntityType['event-approved'] && (
                         <Button
@@ -733,7 +782,7 @@ export default function ReviewsPage() {
                           onClick={() => fetchEntityTypeReviews('event', 'approved')}
                           disabled={loadingEntityType['event-approved']}
                         >
-                          {loadingEntityType['event-approved'] ? 'Loading...' : 'Load Events Reviews'}
+                          {loadingEntityType['event-approved'] ? t('loading') : t('fetch')}
                         </Button>
                       )}
                     </div>
@@ -741,10 +790,12 @@ export default function ReviewsPage() {
                       <div className="p-6">
                         <Skeleton className="h-32 w-full" />
                       </div>
+                    ) : !loadedEntityTypes['event-approved'] ? (
+                      <div className="overflow-hidden max-h-0 opacity-0" aria-hidden />
                     ) : groupedApproved.event.length > 0 ? (
                       <div className="divide-y divide-border-dark dark:divide-border-dark">
                         {Object.entries(eventsByEntity).map(([eventSlug, eventReviews]) => {
-                          const eventName = eventReviews[0]?.entityId?.name?.en || eventSlug;
+                          const eventName = eventReviews[0]?.entityId?.name?.[locale as 'en' | 'he'] || eventReviews[0]?.entityId?.name?.en || eventReviews[0]?.entityId?.name?.he || eventSlug;
                           const isOpen = openEvent === eventSlug;
                           return (
                             <div key={eventSlug} className="border-b border-border dark:border-border-dark last:border-none">
@@ -757,7 +808,7 @@ export default function ReviewsPage() {
                                     {eventName}
                                   </span>
                                   <span className="text-sm text-gray dark:text-gray-dark">
-                                    ({eventReviews.length} {eventReviews.length === 1 ? 'review' : 'reviews'})
+                                    ({eventReviews.length} {eventReviews.length === 1 ? t('review') : t('reviewsCount')})
                                   </span>
                                 </div>
                                 <svg 
@@ -778,27 +829,24 @@ export default function ReviewsPage() {
                       </div>
                     ) : (
                       <div className="p-6 text-center">
-                        <p className="text-gray dark:text-gray-dark">No approved event reviews found.</p>
+                        <p className="text-gray dark:text-gray-dark">{t('noApprovedEventReviews')}</p>
                       </div>
                     )}
                   </div>
+                )}
 
-                {/* Skateparks Accordion - By Area, then by Park */}
+                {approvedEntityTab === 'skatepark' && (
+                /* Skateparks Accordion - By Area, then by Park */
                 <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
                     <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark">
-                      <div className="flex justify-between items-center mb-2">
+                      <div className="flex justify-between items-center">
                         <button
                           onClick={() => setOpenSkateparks(!openSkateparks)}
                           className="flex-1 flex justify-between items-center text-left"
                         >
-                          <div>
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                              Skateparks ({groupedApproved.skatepark.length} reviews)
-                            </h3>
-                            <p className="text-sm text-gray dark:text-gray-dark mt-1">
-                              Organized by area: North, Center, South
-                            </p>
-                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            {t('skateparks')} ({groupedApproved.skatepark.length})
+                          </h3>
                           <svg 
                             className={`w-5 h-5 text-gray dark:text-gray-dark transition-transform duration-300 ${openSkateparks ? 'rotate-180' : ''}`} 
                             fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -814,7 +862,7 @@ export default function ReviewsPage() {
                             disabled={loadingEntityType['skatepark-approved']}
                             className="ml-4"
                           >
-                            {loadingEntityType['skatepark-approved'] ? 'Loading...' : 'Load Skateparks Reviews'}
+                            {loadingEntityType['skatepark-approved'] ? t('loading') : t('fetch')}
                           </Button>
                         )}
                       </div>
@@ -823,12 +871,14 @@ export default function ReviewsPage() {
                       <div className="p-6">
                         <Skeleton className="h-32 w-full" />
                       </div>
+                    ) : !loadedEntityTypes['skatepark-approved'] ? (
+                      <div className="overflow-hidden max-h-0 opacity-0" aria-hidden />
                     ) : groupedApproved.skatepark.length > 0 ? (
                     <div className={cn(
                       "overflow-hidden transition-all duration-300 ease-in-out",
                       openSkateparks ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
                     )}>
-                      <div className="p-6 space-y-4">
+                      <div className="p-2 md:p-6 ">
                         {(['north', 'center', 'south'] as const).map((area) => {
                           const areaParks = skateparksByArea[area] || {};
                           const areaReviews = Object.values(areaParks).flat();
@@ -842,8 +892,8 @@ export default function ReviewsPage() {
                           };
                           
                           const areaDescription = parkCount > 0 
-                            ? `${parkCount} ${parkCount === 1 ? 'park' : 'parks'}, ${areaReviews.length} ${areaReviews.length === 1 ? 'review' : 'reviews'}`
-                            : `${areaReviews.length} ${areaReviews.length === 1 ? 'review' : 'reviews'}`;
+                            ? `${parkCount} ${parkCount === 1 ? t('park') : t('parks')}, ${areaReviews.length} ${areaReviews.length === 1 ? t('review') : t('reviewsCount')}`
+                            : `${areaReviews.length} ${areaReviews.length === 1 ? t('review') : t('reviewsCount')}`;
                           
                           return (
                             <div key={area} className={cn(
@@ -872,7 +922,7 @@ export default function ReviewsPage() {
                                         ? "text-blue dark:text-blue-dark" 
                                         : "text-gray-900 dark:text-white group-hover:text-blue dark:group-hover:text-blue-dark"
                                     )}>
-                                      {areaLabels[area]} Area
+                                      {locale === 'he' ? `${t('areaSuffix')} ${areaLabels[area]}` : `${areaLabels[area]} ${t('areaSuffix')}`}
                                     </h3>
                                     <p className="text-sm text-gray dark:text-gray-dark">{areaDescription}</p>
                                   </div>
@@ -906,11 +956,11 @@ export default function ReviewsPage() {
                                 <div className="px-2 space-y-2">
                                   {areaReviews.length === 0 ? (
                                     <p className="text-sm text-gray dark:text-gray-dark py-2 px-4">
-                                      No reviews in this area.
+                                      {t('noReviewsInArea')}
                                     </p>
                                   ) : (
                                     Object.entries(areaParks).map(([parkSlug, parkReviews]) => {
-                                      const parkName = parkReviews[0]?.entityId?.name?.en || parkSlug;
+                                      const parkName = parkReviews[0]?.entityId?.name?.[locale as 'en' | 'he'] || parkReviews[0]?.entityId?.name?.en || parkReviews[0]?.entityId?.name?.he || parkSlug;
                                       const isParkOpen = openPark === `${area}-${parkSlug}`;
                                       return (
                                         <div key={parkSlug} className="border border-border dark:border-border-dark rounded-lg overflow-hidden bg-card dark:bg-card-dark">
@@ -919,12 +969,12 @@ export default function ReviewsPage() {
                                             onClick={() => setOpenPark(isParkOpen ? null : `${area}-${parkSlug}`)}
                                             className="w-full flex justify-between items-center px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                                           >
-                                            <div className="flex items-center space-x-3">
+                                            <div className="flex flex-col items-start gap-1">
                                               <span className={`text-sm font-medium ${isParkOpen ? 'text-blue dark:text-blue-dark' : 'text-gray-900 dark:text-white'}`}>
                                                 {parkName}
                                               </span>
                                               <span className="text-xs text-gray dark:text-gray-dark">
-                                                ({parkReviews.length} {parkReviews.length === 1 ? 'review' : 'reviews'})
+                                                ({parkReviews.length} {parkReviews.length === 1 ? t('review') : t('reviewsCount')})
                                               </span>
                                             </div>
                                             <svg 
@@ -952,16 +1002,18 @@ export default function ReviewsPage() {
                     </div>
                     ) : (
                       <div className="p-6 text-center">
-                        <p className="text-gray dark:text-gray-dark">No approved skatepark reviews found.</p>
+                        <p className="text-gray dark:text-gray-dark">{t('noApprovedSkateparkReviews')}</p>
                       </div>
                     )}
                   </div>
+                )}
 
-                {/* Guides Accordion */}
+                {approvedEntityTab === 'guide' && (
+                /* Guides Accordion */
                 <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
                     <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Guides ({groupedApproved.guide.length})
+                        {t('guides')} ({groupedApproved.guide.length})
                       </h3>
                       {groupedApproved.guide.length === 0 && !loadingEntityType['guide-approved'] && (
                         <Button
@@ -970,7 +1022,7 @@ export default function ReviewsPage() {
                           onClick={() => fetchEntityTypeReviews('guide', 'approved')}
                           disabled={loadingEntityType['guide-approved']}
                         >
-                          {loadingEntityType['guide-approved'] ? 'Loading...' : 'Load Guides Reviews'}
+                          {loadingEntityType['guide-approved'] ? t('loading') : t('fetch')}
                         </Button>
                       )}
                     </div>
@@ -978,10 +1030,12 @@ export default function ReviewsPage() {
                       <div className="p-6">
                         <Skeleton className="h-32 w-full" />
                       </div>
+                    ) : !loadedEntityTypes['guide-approved'] ? (
+                      <div className="overflow-hidden max-h-0 opacity-0" aria-hidden />
                     ) : groupedApproved.guide.length > 0 ? (
                       <div className="divide-y divide-border dark:divide-border-dark">
                         {Object.entries(guidesByEntity).map(([guideSlug, guideReviews]) => {
-                          const guideName = guideReviews[0]?.entityId?.name?.en || guideSlug;
+                          const guideName = guideReviews[0]?.entityId?.name?.[locale as 'en' | 'he'] || guideReviews[0]?.entityId?.name?.en || guideReviews[0]?.entityId?.name?.he || guideSlug;
                           const isOpen = openGuide === guideSlug;
                           return (
                             <div key={guideSlug} className="border-b border-border-dark dark:border-border-dark last:border-none">
@@ -994,7 +1048,7 @@ export default function ReviewsPage() {
                                     {guideName}
                                   </span>
                                   <span className="text-sm text-gray dark:text-gray-dark">
-                                    ({guideReviews.length} {guideReviews.length === 1 ? 'review' : 'reviews'})
+                                    ({guideReviews.length} {guideReviews.length === 1 ? t('review') : t('reviewsCount')})
                                   </span>
                                 </div>
                                 <svg 
@@ -1015,16 +1069,18 @@ export default function ReviewsPage() {
                       </div>
                     ) : (
                       <div className="p-6 text-center">
-                        <p className="text-gray dark:text-gray-dark">No approved guide reviews found.</p>
+                        <p className="text-gray dark:text-gray-dark">{t('noApprovedGuideReviews')}</p>
                       </div>
                     )}
                   </div>
+                )}
 
-                {/* Products Accordion */}
+                {approvedEntityTab === 'product' && (
+                /* Products Accordion */
                 <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
                     <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Products ({groupedApproved.product.length})
+                        {t('products')} ({groupedApproved.product.length})
                       </h3>
                       {groupedApproved.product.length === 0 && !loadingEntityType['product-approved'] && (
                         <Button
@@ -1033,7 +1089,7 @@ export default function ReviewsPage() {
                           onClick={() => fetchEntityTypeReviews('product', 'approved')}
                           disabled={loadingEntityType['product-approved']}
                         >
-                          {loadingEntityType['product-approved'] ? 'Loading...' : 'Load Products Reviews'}
+                          {loadingEntityType['product-approved'] ? t('loading') : t('fetch')}
                         </Button>
                       )}
                     </div>
@@ -1041,10 +1097,12 @@ export default function ReviewsPage() {
                       <div className="p-6">
                         <Skeleton className="h-32 w-full" />
                       </div>
+                    ) : !loadedEntityTypes['product-approved'] ? (
+                      <div className="overflow-hidden max-h-0 opacity-0" aria-hidden />
                     ) : groupedApproved.product.length > 0 ? (
                       <div className="divide-y divide-border dark:divide-border-dark">
                         {Object.entries(productsByEntity).map(([productSlug, productReviews]) => {
-                          const productName = productReviews[0]?.entityId?.name?.en || productSlug;
+                          const productName = productReviews[0]?.entityId?.name?.[locale as 'en' | 'he'] || productReviews[0]?.entityId?.name?.en || productReviews[0]?.entityId?.name?.he || productSlug;
                           const isOpen = openEvent === productSlug;
                           return (
                             <div key={productSlug} className="border-b border-border dark:border-border-dark last:border-none">
@@ -1057,7 +1115,7 @@ export default function ReviewsPage() {
                                     {productName}
                                   </span>
                                   <span className="text-sm text-gray dark:text-gray-dark">
-                                    ({productReviews.length} {productReviews.length === 1 ? 'review' : 'reviews'})
+                                    ({productReviews.length} {productReviews.length === 1 ? t('review') : t('reviewsCount')})
                                   </span>
                                 </div>
                                 <svg 
@@ -1078,16 +1136,18 @@ export default function ReviewsPage() {
                       </div>
                     ) : (
                       <div className="p-6 text-center">
-                        <p className="text-gray dark:text-gray-dark">No approved product reviews found.</p>
+                        <p className="text-gray dark:text-gray-dark">{t('noApprovedProductReviews')}</p>
                       </div>
                     )}
                   </div>
+                )}
 
-                {/* Trainers Accordion */}
+                {approvedEntityTab === 'trainer' && (
+                /* Trainers Accordion */
                 <div className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
                     <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Trainers ({groupedApproved.trainer.length})
+                        {t('trainers')} ({groupedApproved.trainer.length})
                       </h3>
                       {groupedApproved.trainer.length === 0 && !loadingEntityType['trainer-approved'] && (
                         <Button
@@ -1096,7 +1156,7 @@ export default function ReviewsPage() {
                           onClick={() => fetchEntityTypeReviews('trainer', 'approved')}
                           disabled={loadingEntityType['trainer-approved']}
                         >
-                          {loadingEntityType['trainer-approved'] ? 'Loading...' : 'Load Trainers Reviews'}
+                          {loadingEntityType['trainer-approved'] ? t('loading') : t('fetch')}
                         </Button>
                       )}
                     </div>
@@ -1104,10 +1164,12 @@ export default function ReviewsPage() {
                       <div className="p-6">
                         <Skeleton className="h-32 w-full" />
                       </div>
+                    ) : !loadedEntityTypes['trainer-approved'] ? (
+                      <div className="overflow-hidden max-h-0 opacity-0" aria-hidden />
                     ) : groupedApproved.trainer.length > 0 ? (
                       <div className="divide-y divide-border dark:divide-border-dark">
                         {Object.entries(trainersByEntity).map(([trainerSlug, trainerReviews]) => {
-                          const trainerName = trainerReviews[0]?.entityId?.name?.en || trainerSlug;
+                          const trainerName = trainerReviews[0]?.entityId?.name?.[locale as 'en' | 'he'] || trainerReviews[0]?.entityId?.name?.en || trainerReviews[0]?.entityId?.name?.he || trainerSlug;
                           const isOpen = openEvent === trainerSlug;
                           return (
                             <div key={trainerSlug} className="border-b border-border dark:border-border-dark last:border-none">
@@ -1120,7 +1182,7 @@ export default function ReviewsPage() {
                                     {trainerName}
                                   </span>
                                   <span className="text-sm text-gray dark:text-gray-dark">
-                                    ({trainerReviews.length} {trainerReviews.length === 1 ? 'review' : 'reviews'})
+                                    ({trainerReviews.length} {trainerReviews.length === 1 ? t('review') : t('reviewsCount')})
                                   </span>
                                 </div>
                                 <svg 
@@ -1141,10 +1203,11 @@ export default function ReviewsPage() {
                       </div>
                     ) : (
                       <div className="p-6 text-center">
-                        <p className="text-gray dark:text-gray-dark">No approved trainer reviews found.</p>
+                        <p className="text-gray dark:text-gray-dark">{t('noApprovedTrainerReviews')}</p>
                       </div>
                     )}
                   </div>
+                )}
               </div>
             </div>
         </CardContent>
@@ -1155,15 +1218,15 @@ export default function ReviewsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>
-              Rejected Reviews {filteredRejectedReviews.length > 0 && `(${filteredRejectedReviews.length})`}
+              {t('rejectedReviews')} {filteredRejectedReviews.length > 0 && `(${filteredRejectedReviews.length})`}
             </CardTitle>
             {rejectedReviews.length === 0 && !loadingRejected && (
               <Button
-                variant="green"
+                variant="gray"
                 onClick={fetchRejectedReviews}
                 disabled={loadingRejected}
               >
-                {loadingRejected ? 'Loading...' : 'Load Rejected Reviews'}
+                {loadingRejected ? t('loading') : t('fetch')}
               </Button>
             )}
           </div>
@@ -1171,34 +1234,23 @@ export default function ReviewsPage() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             {loadingRejected ? (
-              <div className="p-6 space-y-4">
+              <div className="md:p-6 space-y-4">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <Skeleton key={i} className="h-32 w-full" />
                 ))}
               </div>
             ) : rejectedReviews.length === 0 ? (
               <div className="p-12 text-center">
-                <p className="text-gray dark:text-gray-dark mb-4">No rejected reviews loaded.</p>
-                <Button
-                  variant="green"
-                  onClick={fetchRejectedReviews}
-                  disabled={loadingRejected}
-                >
-                  {loadingRejected ? 'Loading...' : 'Load Rejected Reviews'}
-                </Button>
+                <p className="text-gray dark:text-gray-dark">
+                  {hasFetchedRejected ? t('noRejectedAtServer') : t('noRejectedLoadedHint')}
+                </p>
               </div>
             ) : (
               <div className="p-6 space-y-4">
                 {/* Group rejected reviews by entity type - Always show all entity types */}
                 {(['event', 'skatepark', 'guide', 'product', 'trainer'] as const).map((entityType) => {
                   const reviews = groupedRejected[entityType] || [];
-                  const entityLabels: Record<string, string> = {
-                    event: 'Events',
-                    skatepark: 'Skateparks',
-                    guide: 'Guides',
-                    product: 'Products',
-                    trainer: 'Trainers',
-                  };
+                  const entityLabel = t(entityLabelKeys[entityType]);
                   const isLoading = loadingEntityType[`${entityType}-rejected`];
                   const isLoaded = loadedEntityTypes[`${entityType}-rejected`];
                   
@@ -1209,7 +1261,7 @@ export default function ReviewsPage() {
                     <div key={entityType} className="border border-border dark:border-border-dark rounded-lg overflow-hidden">
                       <div className="px-6 py-4 bg-card dark:bg-card-dark border-b border-border dark:border-border-dark flex items-center justify-between">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                          {entityLabels[entityType]} ({reviews.length})
+                          {entityLabel} ({reviews.length})
                         </h3>
                         {reviews.length === 0 && !isLoading && (
                           <Button
@@ -1218,7 +1270,7 @@ export default function ReviewsPage() {
                             onClick={() => fetchEntityTypeReviews(entityType, 'rejected')}
                             disabled={isLoading}
                           >
-                            {isLoading ? 'Loading...' : `Load ${entityLabels[entityType]} Reviews`}
+                            {isLoading ? t('loading') : t('fetch')}
                           </Button>
                         )}
                       </div>
@@ -1232,7 +1284,7 @@ export default function ReviewsPage() {
                         </div>
                       ) : (
                         <div className="p-6 text-center">
-                          <p className="text-gray dark:text-gray-dark">No rejected {entityType} reviews found.</p>
+                          <p className="text-gray dark:text-gray-dark">{t('noRejectedEntityReviews', { entity: entityLabel })}</p>
                         </div>
                       )}
                     </div>
@@ -1242,7 +1294,7 @@ export default function ReviewsPage() {
                 {/* Show message if no rejected reviews loaded yet */}
                 {rejectedReviews.length === 0 && Object.keys(loadedEntityTypes).filter(k => k.includes('rejected')).length === 0 && (
                   <div className="text-center py-8">
-                    <p className="text-gray dark:text-gray-dark mb-4">No rejected reviews loaded. Click the buttons above to load reviews by entity type.</p>
+                    <p className="text-gray dark:text-gray-dark mb-4">{t('noRejectedLoadedHint')}</p>
                   </div>
                 )}
               </div>
@@ -1256,7 +1308,7 @@ export default function ReviewsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
           <Card className="bg-sidebar dark:bg-sidebar-dark w-full max-w-2xl max-h-[90vh] overflow-y-auto p-4">
             <CardHeader>
-              <CardTitle>Edit Review (en & he)</CardTitle>
+              <CardTitle>{t('editReviewTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {error && (
@@ -1267,9 +1319,9 @@ export default function ReviewsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Rating (shared)
+                  {t('ratingShared')}
                 </label>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2">
                   {[1, 2, 3, 4, 5].map((rating) => (
                     <button
                       key={rating}
@@ -1280,7 +1332,7 @@ export default function ReviewsPage() {
                       <Star
                         className={`w-8 h-8 ${
                           rating <= editRating
-                            ? 'fill-yellow-400 text-yellow-400'
+                            ? 'fill-brand-text dark:fill-brand-dark text-brand-text dark:text-brand-dark'
                             : 'text-text-secondary dark:text-text-secondary-dark'
                         }`}
                       />
@@ -1294,33 +1346,34 @@ export default function ReviewsPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Helpful count
+                  {t('helpfulCount')}
                 </label>
-                <Input
-                  type="number"
+                <NumberInput
                   min={0}
                   value={editHelpfulCount}
-                  onChange={(e) => setEditHelpfulCount(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                  onChange={(e) =>
+                    setEditHelpfulCount(Math.max(0, parseInt(e.target.value, 10) || 0))
+                  }
                   placeholder="0"
                 />
               </div>
 
               {/* English (en) section */}
               <div className="space-y-3 rounded-lg border border-border dark:border-border-dark p-4">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">English (en)</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('sectionEn')}</h3>
                 <Input
-                  label="User Name (en)"
+                  label={t('userNameEn')}
                   value={editUserNameEn}
                   onChange={(e) => setEditUserNameEn(e.target.value)}
-                  placeholder="Reviewer name (English)..."
+                  placeholder={t('placeholderUserNameEn')}
                   maxLength={100}
                 />
                 <Textarea
-                  label="Comment (en)"
+                  label={t('commentEn')}
                   value={editCommentEn}
                   onChange={(e) => setEditCommentEn(e.target.value)}
                   rows={3}
-                  placeholder="Review comment (English)..."
+                  placeholder={t('placeholderCommentEn')}
                   maxLength={2000}
                 />
                 <p className="text-xs text-gray dark:text-gray-dark">{editCommentEn.length}/2000</p>
@@ -1328,20 +1381,20 @@ export default function ReviewsPage() {
 
               {/* Hebrew (he) section */}
               <div className="space-y-3 rounded-lg border border-border dark:border-border-dark p-4" dir="rtl">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Hebrew (he)</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('sectionHe')}</h3>
                 <Input
-                  label="User Name (he)"
+                  label={t('userNameHe')}
                   value={editUserNameHe}
                   onChange={(e) => setEditUserNameHe(e.target.value)}
-                  placeholder="שם המבקר (עברית)..."
+                  placeholder={t('placeholderUserNameHe')}
                   maxLength={100}
                 />
                 <Textarea
-                  label="Comment (he)"
+                  label={t('commentHe')}
                   value={editCommentHe}
                   onChange={(e) => setEditCommentHe(e.target.value)}
                   rows={3}
-                  placeholder="תוכן הביקורת (עברית)..."
+                  placeholder={t('placeholderCommentHe')}
                   maxLength={2000}
                 />
                 <p className="text-xs text-gray dark:text-gray-dark">{editCommentHe.length}/2000</p>
@@ -1353,14 +1406,14 @@ export default function ReviewsPage() {
                   onClick={handleSaveEdit}
                   disabled={saving}
                 >
-                  {saving ? 'Saving...' : 'Save Changes'}
+                  {saving ? t('saving') : t('saveChanges')}
                 </Button>
                 <Button
                   variant="error"
                   onClick={closeEditModal}
                   disabled={saving}
                 >
-                  Cancel
+                  {t('cancel')}
                 </Button>
               </div>
             </CardContent>

@@ -23,28 +23,39 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    if (!ENABLE_ANALYTICS) {
-      return NextResponse.json({
-        enabled: false,
-        message: 'Analytics is disabled. Set NEXT_PUBLIC_ENABLE_ANALYTICS=true in .env.local.',
-        pageViewsByPath: [],
-        avgTimeOnPageByPath: [],
-        sessionsSummary: { totalSessions: 0, avgSessionDurationMs: 0 },
-        deviceBreakdown: { byCategory: [], byType: [] },
-        consentBreakdown: [],
-        referrerBreakdown: [],
-        countryBreakdown: [],
-        topPages: [],
-        searchQueries: [],
-        searchClicks: [],
-        popularSearchHidden: [],
-        sessionsByDay: [],
-        pageViewsByDay: [],
-      });
+    const { searchParams } = new URL(request.url);
+    const daysParam = searchParams.get('days') ?? String(DEFAULT_DAYS);
+    const fromParam = searchParams.get('from');
+    const toParam = searchParams.get('to');
+
+    let from: Date;
+    let toDate: Date;
+    let days: number;
+    let groupBy: 'day' | 'hour' = 'day';
+
+    if (daysParam === 'custom' && fromParam && toParam) {
+      from = new Date(fromParam);
+      toDate = new Date(toParam);
+      if (Number.isNaN(from.getTime()) || Number.isNaN(toDate.getTime()) || from > toDate) {
+        return NextResponse.json({ error: 'Invalid custom date range' }, { status: 400 });
+      }
+      from.setHours(0, 0, 0, 0);
+      toDate.setHours(23, 59, 59, 999);
+      const rangeMs = toDate.getTime() - from.getTime();
+      days = Math.ceil(rangeMs / 86400000);
+      if (days > 365) {
+        return NextResponse.json({ error: 'Custom range must be at most 365 days' }, { status: 400 });
+      }
+      if (days < 4) groupBy = 'hour';
+    } else {
+      days = Math.min(365, Math.max(1, parseInt(daysParam, 10) || DEFAULT_DAYS));
+      from = new Date();
+      from.setDate(from.getDate() - days);
+      from.setHours(0, 0, 0, 0);
+      toDate = new Date();
+      toDate.setHours(23, 59, 59, 999);
     }
 
-    const { searchParams } = new URL(request.url);
-    const days = Math.min(365, Math.max(1, parseInt(searchParams.get('days') ?? String(DEFAULT_DAYS), 10) || DEFAULT_DAYS));
     const userParam = searchParams.get('user');
 
     const filterByCurrentUser = userParam === 'me';
@@ -60,7 +71,10 @@ export async function GET(request: NextRequest) {
     from.setDate(from.getDate() - days);
     from.setHours(0, 0, 0, 0);
 
-    const matchPageView: Record<string, unknown> = { type: 'page_view', timestamp: { $gte: from } };
+    const matchPageView: Record<string, unknown> = {
+      type: 'page_view',
+      timestamp: { $gte: from, $lte: toDate },
+    };
     if (currentUserId) {
       matchPageView.userId = currentUserId;
     } else if (adminUserIds.length > 0) {
@@ -70,9 +84,18 @@ export async function GET(request: NextRequest) {
         { userId: { $nin: adminUserIds } },
       ];
     }
-    const matchConsent: Record<string, unknown> = { type: 'consent', timestamp: { $gte: from } };
-    const matchSearchQuery: Record<string, unknown> = { type: 'search_query', timestamp: { $gte: from } };
-    const matchSearchClick: Record<string, unknown> = { type: 'search_click', timestamp: { $gte: from } };
+    const matchConsent: Record<string, unknown> = {
+      type: 'consent',
+      timestamp: { $gte: from, $lte: toDate },
+    };
+    const matchSearchQuery: Record<string, unknown> = {
+      type: 'search_query',
+      timestamp: { $gte: from, $lte: toDate },
+    };
+    const matchSearchClick: Record<string, unknown> = {
+      type: 'search_click',
+      timestamp: { $gte: from, $lte: toDate },
+    };
     // Only count sessions that have an id (so we can dedupe by session, not by page view)
     const matchPageViewWithSession = {
       ...matchPageView,
@@ -179,12 +202,17 @@ export async function GET(request: NextRequest) {
           },
         },
       ]),
-      // Sessions per day (unique sessionIds per day) for line chart
+      // Sessions per day/hour (unique sessionIds) for line chart
       AnalyticsEvent.aggregate<{ date: string; count: number }>([
         { $match: matchPageViewWithSession },
         {
           $addFields: {
-            day: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } },
+            day: {
+              $dateToString: {
+                format: groupBy === 'hour' ? '%Y-%m-%dT%H' : '%Y-%m-%d',
+                date: '$timestamp',
+              },
+            },
           },
         },
         {
@@ -202,12 +230,17 @@ export async function GET(request: NextRequest) {
         },
         { $sort: { date: 1 } },
       ]),
-      // Page views per day (count of page_view events per day) for line chart
+      // Page views per day/hour for line chart
       AnalyticsEvent.aggregate<{ date: string; count: number }>([
         { $match: matchPageView },
         {
           $addFields: {
-            day: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } },
+            day: {
+              $dateToString: {
+                format: groupBy === 'hour' ? '%Y-%m-%dT%H' : '%Y-%m-%d',
+                date: '$timestamp',
+              },
+            },
           },
         },
         { $group: { _id: '$day', count: { $sum: 1 } } },
@@ -262,7 +295,8 @@ export async function GET(request: NextRequest) {
     const popularSearchHidden = settings.popularSearchHidden || [];
 
     return NextResponse.json({
-      enabled: true,
+      enabled: ENABLE_ANALYTICS,
+      ...(ENABLE_ANALYTICS ? {} : { message: 'Analytics is disabled. Set NEXT_PUBLIC_ENABLE_ANALYTICS=true in .env.local.' }),
       from: from.toISOString(),
       days,
       pageViewsByPath,

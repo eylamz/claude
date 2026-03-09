@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, type ReactNode } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { Card, CardHeader, CardTitle, CardContent, Button, SelectWrapper, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Skeleton } from '@/components/ui';
 import {
@@ -47,6 +47,32 @@ interface MetricsData {
 const DEVICE_COLORS = ['#3caa41', '#1d4ed8', '#e49a43', '#8B5CF6', '#EC4899'];
 const CONSENT_COLORS = ['#1d4ed8', '#e49a43', '#6366F1'];
 const REFERRER_COLORS = ['#3caa41', '#1d4ed8', '#e49a43', '#8B5CF6', '#EC4899'];
+
+// Custom tooltip for line charts (light/dark mode, matches admin skateparks style)
+const LineChartTooltip = ({
+  active,
+  payload,
+  valueLabel,
+}: {
+  active?: boolean;
+  payload?: Array<{ value: number; payload: { date: string } }>;
+  valueLabel: string;
+}) => {
+  if (!active || !payload?.length) return null;
+  const dateStr = payload[0].payload?.date;
+  const value = payload[0].value ?? 0;
+  const label = dateStr
+    ? new Date(dateStr).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+    : dateStr;
+  return (
+    <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4">
+      <div className="font-semibold text-gray-900 dark:text-white mb-1">{label}</div>
+      <div className="text-sm text-gray-700 dark:text-gray-300">
+        {value} {valueLabel}
+      </div>
+    </div>
+  );
+};
 
 function formatDuration(ms: number): string {
   if (ms < 1000) return `${Math.round(ms)}ms`;
@@ -181,8 +207,6 @@ export default function AdminMetricsPage() {
     );
   }
 
-  const disabled = !data?.enabled;
-
   const isIlCookiePolicy = process.env.NEXT_PUBLIC_SET_IL_COOKIE_POLICY === 'true';
 
   return (
@@ -240,16 +264,17 @@ export default function AdminMetricsPage() {
             </Card>
           ))}
         </div>
-      ) : disabled ? (
-        <Card className="bg-card dark:bg-card-dark">
-          <CardContent className="p-4">
-            <p className="text-gray-600 dark:text-gray-400">
-              {data?.message ?? t('metrics.disabledMessage')}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
+      ) : data ? (
         <>
+          {!data.enabled && (
+            <Card className="border border-red-border dark:border-red-border-dark bg-red-bg dark:bg-red-bg-dark">
+              <CardContent className="p-4">
+                <p className="text-sm font-medium text-red dark:text-red-dark">
+                  {data.message ?? t('metrics.disabledMessage')}
+                </p>
+              </CardContent>
+            </Card>
+          )}
           {/* Summary cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <Card className="bg-card dark:bg-card-dark">
@@ -324,14 +349,8 @@ export default function AdminMetricsPage() {
                         }}
                       />
                       <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="text-text-secondary dark:text-text-secondary-dark" />
-                      <Tooltip
-                        labelFormatter={(label: string) => {
-                          const d = new Date(label);
-                          return d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-                        }}
-                        formatter={(value: unknown) => [value as ReactNode, t('metrics.sessions')]}
-                      />
-                      <Line type="monotone" dataKey="count" stroke="#10B981" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name={t('metrics.sessions')} />
+                      <Tooltip content={<LineChartTooltip valueLabel={t('metrics.sessions')} />} />
+                      <Line type="monotone" dataKey="count" stroke="#9dff00" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name={t('metrics.sessions')} />
                     </LineChart>
                   </ResponsiveContainer>
                 ) : (
@@ -368,13 +387,7 @@ export default function AdminMetricsPage() {
                         }}
                       />
                       <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="text-text-secondary dark:text-text-secondary-dark" />
-                      <Tooltip
-                        labelFormatter={(label: string) => {
-                          const d = new Date(label);
-                          return d.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-                        }}
-                        formatter={(value: unknown) => [value as ReactNode, t('metrics.views')]}
-                      />
+                      <Tooltip content={<LineChartTooltip valueLabel={t('metrics.views')} />} />
                       <Line type="monotone" dataKey="count" stroke="#47b84d" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name={t('metrics.views')} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -816,7 +829,7 @@ export default function AdminMetricsPage() {
             </Card>
           </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 }

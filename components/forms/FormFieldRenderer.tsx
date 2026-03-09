@@ -141,7 +141,7 @@ export function FormFieldRenderer({ field, value, onChange, error, locale, quest
 
                   <label
                     htmlFor={`${field.id}-${index}`}
-                    className={`text-sm text-text dark:text-text-dark cursor-pointer ${locale === 'he' ? 'ms-2' : 'ms-6'}`}
+                    className={`min-w-[300px] text-sm text-text dark:text-text-dark cursor-pointer ${locale === 'he' ? 'ms-2' : 'ms-6'}`}
                   >
                     {optionLabel}
                   </label>
