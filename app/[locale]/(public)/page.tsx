@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { SkeletonSection } from '@/components/home/skeleton-section';
 import { ArrowRight } from '@/components/home/arrow-right';
 import { Button } from '@/components/ui';
+import { Icon } from '@/components/icons/Icon';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Locale } from '@/i18n';
 import { isEcommerceEnabled } from '@/lib/utils/ecommerce';
@@ -509,8 +510,12 @@ export default function HomePage() {
       {/* Features Section */}
       <section className="mb-24 sm:mb-32 px-4 ">
         <div className="max-w-6xl mx-auto">
-          <h2 className={`text-3xl sm:text-4xl md:text-5xl ${locale === 'he' ? 'font-bold' : 'font-extrabold'} text-center mb-4 text-text dark:text-text-dark`}>
-            {t('whyEnboss')}
+          <h2 className={`flex items-center justify-center gap-1.5 md:gap-3 text-3xl sm:text-4xl md:text-5xl ${locale === 'he' ? 'font-bold' : 'font-extrabold'} text-center mb-4 text-text dark:text-text-dark`}>
+            {locale === 'he' ? (
+              <>למה <Icon name="logo" className="w-[3.8em] mb-[-2px] text-brand-main stroke-[7px] dark:stroke-transparent stroke-brand-stroke" style={{ paintOrder: 'stroke' }} />?</>
+            ) : (
+              <>why <Icon name="logo" className="w-[4.5em] mt-[-2px] " />?</>
+            )}
           </h2>
           <p className="text-lg sm:text-xl text-center text-text-secondary dark:text-text-dark/70 mb-16 max-w-2xl mx-auto">
             {t('whyEnbossSubtitle')}
@@ -545,7 +550,7 @@ export default function HomePage() {
                 <div className="absolute inset-0 flex items-center justify-start overflow-visible pointer-events-none z-0" aria-hidden>
                   <FeatureIconMap
                     name="bookBold"
-                    className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/15 -translate-y-[8%] -translate-x-[8%]"
+                    className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/25 translate-y-[-10%] md:translate-x-[-33%] md:translate-y-[-10%] translate-x-[-33%]"
                   />
                 </div>
                 <div className="card-content relative z-10 flex flex-row-reverse items-center gap-4 md:block p-8 lg:p-10 text-white">
@@ -585,7 +590,7 @@ export default function HomePage() {
                 <div className="absolute inset-0 flex items-center justify-start overflow-visible pointer-events-none z-0" aria-hidden>
                   <FeatureIconMap
                     name="reviewBold"
-                    className="w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/50 translate-y-[17%] -translate-x-[80%]  md:-translate-x-[-105%]"
+                    className={`w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 text-white/20 dark:text-white/50 md:translate-y-[-16%]  ${locale === 'he' ? 'translate-y-[17%] translate-x-[-119%]' : 'translate-y-[-22%] translate-x-[91%]'}`}
                   />
                 </div>
                 <div className="card-content relative z-10 flex flex-row-reverse items-center gap-4 md:block p-8 lg:p-10 text-white">

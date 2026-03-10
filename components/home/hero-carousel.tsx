@@ -63,54 +63,48 @@ const REM_TO_PX = 16;
 const GAP_REM = 1.5; // 24px
 
 const CarouselSlideImage = memo(function CarouselSlideImage({
-  imageUrl,
+  lowSrc,
+  highSrc,
   altText,
   isEager,
+  isActive,
 }: {
-  imageUrl: string;
+  lowSrc: string;
+  highSrc?: string;
   altText: string;
   isEager: boolean;
+  isActive?: boolean;
 }) {
+  const [src, setSrc] = useState(lowSrc);
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
+    setSrc(lowSrc);
     setIsLoaded(false);
     setHasError(false);
-  }, [imageUrl]);
+  }, [lowSrc, highSrc]);
 
   useEffect(() => {
-    const check = () => {
-      if (!imgRef.current) return false;
-      const img = imgRef.current;
-      if (img.complete && img.naturalHeight !== 0) {
-        setIsLoaded(true);
-        setHasError(false);
-        return true;
-      }
-      if (img.complete && img.naturalHeight === 0) {
-        setIsLoaded(true);
-        setHasError(true);
-        return true;
-      }
-      return false;
+    if (!highSrc || !isLoaded) return;
+    if (isActive === false) return;
+
+    let cancelled = false;
+    const img = new Image();
+    img.src = highSrc;
+    img.decoding = 'async';
+    img.onload = () => {
+      if (cancelled) return;
+      setSrc(highSrc);
     };
-    if (check()) return;
-    const t1 = setTimeout(check, 100);
-    const t2 = setTimeout(() => {
-      if (!imgRef.current) return;
-      const img = imgRef.current;
-      if (!isLoaded && !hasError && (!img.complete || img.naturalHeight === 0)) {
-        setIsLoaded(true);
-        setHasError(true);
-      }
-    }, 3000);
+    img.onerror = () => {
+      if (cancelled) return;
+    };
+
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
+      cancelled = true;
     };
-  }, [imageUrl, isLoaded, hasError]);
+  }, [highSrc, isLoaded, isActive]);
 
   const onLoad = () => {
     setIsLoaded(true);
@@ -129,8 +123,7 @@ const CarouselSlideImage = memo(function CarouselSlideImage({
         </div>
       )}
       <img
-        ref={imgRef}
-        src={imageUrl}
+        src={src}
         alt={altText}
         className={`w-full h-full object-cover object-top transition-opacity duration-200 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
         loading={isEager ? 'eager' : 'lazy'}
@@ -345,7 +338,7 @@ export default function HeroCarousel({ images, autoSlideInterval = 3000 }: HeroC
     return null;
   }
   
-  const getImageUrl = (image: HeroCarouselImage): string | undefined => {
+  const getImageUrls = (image: HeroCarouselImage): { low?: string; high?: string } => {
     let url: string | undefined;
     switch (currentBreakpoint) {
       case 'mobile':
@@ -360,14 +353,28 @@ export default function HeroCarousel({ images, autoSlideInterval = 3000 }: HeroC
       default:
         url = image.desktopImageUrl || image.tabletImageUrl || image.mobileImageUrl;
     }
-    if (!url) return undefined;
-    const width =
+    if (!url) return {};
+
+    const baseWidth =
       currentBreakpoint === 'desktop'
         ? HERO_CAROUSEL_WIDTHS.desktop
         : currentBreakpoint === 'tablet'
           ? HERO_CAROUSEL_WIDTHS.tablet
           : HERO_CAROUSEL_WIDTHS.mobile;
-    return optimizeCloudinaryUrl(url, { width, crop: 'fill' });
+
+    const low = optimizeCloudinaryUrl(url, {
+      width: Math.round(baseWidth * 0.5),
+      quality: 40,
+      crop: 'fill',
+    });
+
+    const high = optimizeCloudinaryUrl(url, {
+      width: Math.round(baseWidth * 3),
+      quality: 100,
+      crop: 'fill',
+    });
+
+    return { low, high };
   };
   
   const slideWidthPercent = 100; 
@@ -474,13 +481,15 @@ export default function HeroCarousel({ images, autoSlideInterval = 3000 }: HeroC
                 >
                   {/* Slide Image - Full Bleed */}
                   {(() => {
-                    const imageUrl = getImageUrl(image);
+                    const { low, high } = getImageUrls(image);
                     const altText = isRealSlide ? (getLocalizedText(image.title) || `Slide ${realIndex + 1}`) : "Carousel transition image";
-                    return imageUrl ? (
+                    return low ? (
                       <CarouselSlideImage
-                        imageUrl={imageUrl}
+                        lowSrc={low}
+                        highSrc={high}
                         altText={altText}
                         isEager={viewIndex === currentViewIndex}
+                        isActive={isActive}
                       />
                     ) : null;
                   })()}

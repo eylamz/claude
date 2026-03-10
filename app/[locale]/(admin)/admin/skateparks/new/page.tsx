@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
+import Link from 'next/link';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper } from '@/components/ui';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ImageUploader } from '@/components/admin/image-uploader';
@@ -371,22 +372,34 @@ export default function NewSkateparkPage() {
     <div className="pt-16 space-y-6 min-h-screen bg-background dark:bg-background-dark max-w-4xl mx-auto">
       <Toaster />
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-text dark:text-text-dark">New Skatepark</h1>
           <p className="text-sm text-text-secondary dark:text-text-secondary-dark mt-1">
             Create a new skatepark entry
           </p>
         </div>
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-        >
-          Cancel
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Link href={`/${locale}/admin/skateparks`}>
+            <Button 
+              type="button" 
+              variant="red"
+              >
+                Back
+              </Button>
+          </Link>
+          <Button
+            type="submit"
+            form="new-skatepark-form"
+            variant="green"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Creating...' : 'Create Skatepark'}
+          </Button>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="new-skatepark-form" onSubmit={handleSubmit} className="space-y-6">
       {errors.general && (
         <Card>
           <CardContent className="p-4">
@@ -1425,16 +1438,19 @@ export default function NewSkateparkPage() {
         </CardContent>
       </Card>
 
-      {/* Submit Buttons */}
-      <div className="flex justify-end space-x-4">
+      {/* Submit Buttons - top and bottom */}
+      <div className="flex flex-wrap items-center justify-end gap-3 pt-4 pb-8 border-t border-border dark:border-border-dark">
+        <Link href={`/${locale}/admin/skateparks`}>
+          <Button type="button" variant="gray">Back</Button>
+        </Link>
         <Button
           type="button"
-          variant="secondary"
+          variant="red"
           onClick={() => router.back()}
         >
           Cancel
         </Button>
-        <Button type="submit" variant="primary" disabled={isSubmitting}>
+        <Button type="submit" variant="green" disabled={isSubmitting}>
           {isSubmitting ? 'Creating...' : 'Create Skatepark'}
         </Button>
       </div>

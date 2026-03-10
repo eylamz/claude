@@ -690,7 +690,7 @@ export default function SkateparkDetailPage() {
             Edit skatepark details
           </p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap items-center gap-3">
           <Link href={`/${locale}/admin/skateparks`}>
             <Button variant="gray">Back</Button>
           </Link>
@@ -1810,6 +1810,19 @@ export default function SkateparkDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Bottom actions - same as header */}
+      <div className="flex flex-wrap items-center justify-end gap-3 pt-4 pb-8 border-t border-border dark:border-border-dark">
+        <Link href={`/${locale}/admin/skateparks`}>
+          <Button variant="gray">Back</Button>
+        </Link>
+        <Button variant="red" onClick={handleDelete} disabled={saving}>
+          Delete
+        </Button>
+        <Button variant="green" onClick={handleSave} disabled={saving}>
+          {saving ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </div>
     </div>
   );
 }
