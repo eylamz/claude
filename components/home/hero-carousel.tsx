@@ -368,8 +368,9 @@ export default function HeroCarousel({ images, autoSlideInterval = 3000 }: HeroC
       crop: 'fill',
     });
 
+    const highWidth = Math.max(1200, Math.round(baseWidth * 3));
     const high = optimizeCloudinaryUrl(url, {
-      width: Math.round(baseWidth * 3),
+      width: highWidth,
       quality: 100,
       crop: 'fill',
     });

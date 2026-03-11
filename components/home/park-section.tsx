@@ -152,7 +152,7 @@ export const ParkSection = ({ parks, t: _t }: ParkSectionProps) => {
               key={park._id}
               className="flex-none w-[220px] min-w-[220px] md:w-[260px] md:min-w-[260px] snap-center"
             >
-              <ParkCard park={park as any} locale={locale} compact />
+              <ParkCard park={park as any} locale={locale} compact nameClassName="font-medium" />
             </div>
           ))}
         </div>

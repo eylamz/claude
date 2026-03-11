@@ -235,7 +235,8 @@ export default function HomePage() {
   // After page is done loading, preload full-quality CTA background and swap
   const ctaHighWidth = useMemo(() => {
     const w = ctaContainerWidth || (typeof window !== 'undefined' ? window.innerWidth : 0) || CTA_BG_WIDTH;
-    return Math.min(2000, Math.max(640, w));
+    // Ensure a minimum of 1200px width for better perceived sharpness
+    return Math.min(2000, Math.max(1200, w));
   }, [ctaContainerWidth]);
   const ctaHighUrl = useMemo(
     () => optimizeCloudinaryUrl(CTA_BG_BASE, { width: ctaHighWidth, quality: 100 }),

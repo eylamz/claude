@@ -61,6 +61,18 @@ const getOptimizedThumbnailUrl = (
   return originalUrl;
 };
 
+// Creates low-quality versions of Cloudinary images for fast initial load
+const getLowQualityImageUrl = (originalUrl: string): string => {
+  if (originalUrl && originalUrl.includes('cloudinary.com')) {
+    const urlParts = originalUrl.split('/upload/');
+    if (urlParts.length === 2) {
+      // Smaller width + lower quality, no strict size matching
+      return `${urlParts[0]}/upload/w_800,q_40,c_fit/${urlParts[1]}`;
+    }
+  }
+  return originalUrl;
+};
+
 // Creates high-quality versions of Cloudinary images for zooming
 const getHighQualityImageUrl = (originalUrl: string, quality: number = 100): string => {
   if (originalUrl && originalUrl.includes('cloudinary.com')) {
@@ -80,12 +92,12 @@ const FullscreenImageViewer = ({
 }: FullscreenImageViewerProps) => {
   const t = useTranslations('skateparks.imageViewer');
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [currentSrc, setCurrentSrc] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [isPinching, setIsPinching] = useState(false);
   const [isSwiping, setIsSwiping] = useState(false);
-  const [isHighQualityLoaded, setIsHighQualityLoaded] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [showHelperText, setShowHelperText] = useState(false);
   const [isHelperFadingOut, setIsHelperFadingOut] = useState(false);
@@ -115,6 +127,30 @@ const FullscreenImageViewer = ({
     setPosition({ x: 0, y: 0 });
   }, []);
 
+  const loadImageForIndex = useCallback(
+    (index: number) => {
+      const image = images[index];
+      if (!image) {
+        setCurrentSrc(null);
+        return;
+      }
+      const lowSrc = getLowQualityImageUrl(image.url);
+      const highSrc = getHighQualityImageUrl(image.url);
+
+      // Start with low-quality src
+      setCurrentSrc(lowSrc);
+
+      // Preload best-quality version and swap when ready
+      const img = new Image();
+      img.src = highSrc;
+      img.decoding = 'async';
+      img.onload = () => {
+        setCurrentSrc(highSrc);
+      };
+    },
+    [images]
+  );
+
   useEffect(() => {
     const checkTouchDevice = () => {
       const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -129,7 +165,6 @@ const FullscreenImageViewer = ({
     if (isOpen) {
       setCurrentIndex(initialIndex);
       resetZoom();
-      setIsHighQualityLoaded(false);
       setImageLoading(true);
       setShowHelperText(true);
       setIsHelperFadingOut(false);
@@ -142,12 +177,7 @@ const FullscreenImageViewer = ({
       }, 5000);
 
       if (images[initialIndex]) {
-        const img = new Image();
-        img.src = getHighQualityImageUrl(images[initialIndex].url);
-        img.onload = () => {
-          setIsHighQualityLoaded(true);
-        };
-        highQualityImageRef.current = img;
+        loadImageForIndex(initialIndex);
       }
 
       return () => {
@@ -157,11 +187,7 @@ const FullscreenImageViewer = ({
         }
       };
     }
-  }, [initialIndex, isOpen, images, resetZoom]);
-
-  useEffect(() => {
-    setImageLoading(true);
-  }, [currentIndex]);
+  }, [initialIndex, isOpen, images, loadImageForIndex, resetZoom]);
 
   useEffect(() => {
     if (isOpen) {
@@ -188,20 +214,44 @@ const FullscreenImageViewer = ({
     };
   }, [isOpen]);
 
+  const navigate = useCallback(
+    (direction: 'prev' | 'next', e?: React.MouseEvent) => {
+      if (e) {
+        e.stopPropagation();
+      }
+      if (scale > 1) return;
+
+      const total = images.length;
+      const newIndex =
+        direction === 'prev'
+          ? currentIndex > 0
+            ? currentIndex - 1
+            : total - 1
+          : currentIndex < total - 1
+            ? currentIndex + 1
+            : 0;
+
+      setCurrentIndex(newIndex);
+      setImageLoading(true);
+      loadImageForIndex(newIndex);
+      resetZoom();
+    },
+    [currentIndex, images.length, loadImageForIndex, resetZoom, scale]
+  );
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
       switch (e.key) {
         case 'ArrowLeft':
           if (scale === 1) {
-            setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
-            resetZoom();
+            // Use the same navigation logic as buttons/swipes so the main image updates too
+            navigate('prev');
           }
           break;
         case 'ArrowRight':
           if (scale === 1) {
-            setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
-            resetZoom();
+            navigate('next');
           }
           break;
         case 'Escape':
@@ -221,45 +271,7 @@ const FullscreenImageViewer = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, images.length, onClose, scale, resetZoom]);
-
-  const navigate = useCallback(
-    (direction: 'prev' | 'next', e?: React.MouseEvent) => {
-      if (e) {
-        e.stopPropagation();
-      }
-      if (scale > 1) return;
-
-      if (direction === 'prev') {
-        setCurrentIndex((prev) => {
-          const newIndex = prev > 0 ? prev - 1 : images.length - 1;
-          preloadHighQualityImage(newIndex);
-          return newIndex;
-        });
-      } else {
-        setCurrentIndex((prev) => {
-          const newIndex = prev < images.length - 1 ? prev + 1 : 0;
-          preloadHighQualityImage(newIndex);
-          return newIndex;
-        });
-      }
-      resetZoom();
-      setImageLoading(true);
-    },
-    [images.length, resetZoom, scale]
-  );
-
-  const preloadHighQualityImage = (index: number) => {
-    setIsHighQualityLoaded(false);
-    if (images[index]) {
-      const img = new Image();
-      img.src = getHighQualityImageUrl(images[index].url);
-      img.onload = () => {
-        setIsHighQualityLoaded(true);
-      };
-      highQualityImageRef.current = img;
-    }
-  };
+  }, [isOpen, navigate, onClose, scale, resetZoom]);
 
   const handleZoom = (newScale: number) => {
     setScale(newScale);
@@ -474,13 +486,6 @@ const FullscreenImageViewer = ({
     }
   };
 
-  const getImageSrc = () => {
-    if (!images[currentIndex]) return '';
-    return isHighQualityLoaded && scale > 1.5
-      ? getHighQualityImageUrl(images[currentIndex].url)
-      : images[currentIndex].url;
-  };
-
   const handleImageLoad = () => {
     setImageLoading(false);
   };
@@ -627,32 +632,34 @@ const FullscreenImageViewer = ({
                 </div>
               )}
 
-              <img
-                ref={imageRef}
-                src={getImageSrc()}
-                alt={images[currentIndex]?.alt || `Image ${currentIndex + 1}`}
-                className={`max-h-[90vh] max-w-[90vw] object-contain rounded-xl saturate-[120%] select-none ${imageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
-                style={{
-                  transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-                  cursor: scale > 1 ? 'grab' : 'pointer',
-                  transition: isPanning || isPinching ? 'none' : 'transform 0.2s ease-out',
-                  willChange: 'transform',
-                  touchAction: 'none',
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                  MozUserSelect: 'none',
-                  msUserSelect: 'none',
-                  pointerEvents: 'auto',
-                  boxShadow:
-                    '0 1px 1px #66666612, 0 2px 2px #5e5e5e12, 0 4px 4px #7a5d4413, 0 8px 8px #5e5e5e12, 0 16px 16px #5e5e5e12',
-                }}
-                onLoad={handleImageLoad}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDoubleClick(e);
-                }}
-                draggable={false}
-              />
+              {currentSrc && (
+                <img
+                  ref={imageRef}
+                  src={currentSrc}
+                  alt={images[currentIndex]?.alt || `Image ${currentIndex + 1}`}
+                  className={`max-h-[90vh] max-w-[90vw] object-contain rounded-xl saturate-[120%] select-none ${imageLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
+                  style={{
+                    transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                    cursor: scale > 1 ? 'grab' : 'pointer',
+                    transition: isPanning || isPinching ? 'none' : 'transform 0.2s ease-out',
+                    willChange: 'transform',
+                    touchAction: 'none',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    MozUserSelect: 'none',
+                    msUserSelect: 'none',
+                    pointerEvents: 'auto',
+                    boxShadow:
+                      '0 1px 1px #66666612, 0 2px 2px #5e5e5e12, 0 4px 4px #7a5d4413, 0 8px 8px #5e5e5e12, 0 16px 16px #5e5e5e12',
+                  }}
+                  onLoad={handleImageLoad}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDoubleClick(e);
+                  }}
+                  draggable={false}
+                />
+              )}
             </div>
 
             {showHelperText && (
@@ -729,8 +736,8 @@ const FullscreenImageViewer = ({
                 e.stopPropagation();
                 setCurrentIndex(index);
                 resetZoom();
-                preloadHighQualityImage(index);
                 setImageLoading(true);
+                loadImageForIndex(index);
               }}
               className={cn(
                 'flex-shrink-0 w-12 h-9 sm:w-16 sm:h-12 rounded-md overflow-hidden transition-all',

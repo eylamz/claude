@@ -18,18 +18,34 @@ interface ParkImageGalleryProps {
   locale?: string;
 }
 
-// Creates optimized versions of Cloudinary images
-const getOptimizedImageUrl = (originalUrl: string, width: number = 800, quality: number = 90): string => {
-  if (originalUrl && originalUrl.includes('cloudinary.com')) {
-    const urlParts = originalUrl.split('/upload/');
-    if (urlParts.length === 2) {
-      return `${urlParts[0]}/upload/w_${width},q_${quality},c_fill/${urlParts[1]}`;
-    }
+// Creates optimized versions of Cloudinary images (no screen-width matching, just quality/width presets)
+const getOptimizedImageUrl = (
+  originalUrl: string,
+  {
+    width,
+    quality,
+  }: {
+    width?: number;
+    quality: number;
   }
-  return originalUrl;
+): string => {
+  if (!originalUrl || !originalUrl.includes('cloudinary.com')) {
+    return originalUrl;
+  }
+  const urlParts = originalUrl.split('/upload/');
+  if (urlParts.length !== 2) {
+    return originalUrl;
+  }
+  const transforms: string[] = [];
+  if (width) {
+    transforms.push(`w_${width}`, 'c_fill');
+  }
+  transforms.push(`q_${quality}`);
+  const transformStr = transforms.join(',');
+  return `${urlParts[0]}/upload/${transformStr}/${urlParts[1]}`;
 };
 
-// Create a memoized image component to handle loading state
+// Create a memoized image component to handle low → high quality loading
 const OptimizedImage = React.memo(({ 
   url, 
   index, 
@@ -44,6 +60,29 @@ const OptimizedImage = React.memo(({
   className?: string;
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [src, setSrc] = useState(() =>
+    // Start with a small, lower-quality version for quick paint
+    getOptimizedImageUrl(url, { width: 800, quality: 40 })
+  );
+
+  // When the low-quality image has loaded, start preloading the best-quality version
+  useEffect(() => {
+    if (!isLoaded) return;
+    const highSrc = getOptimizedImageUrl(url, { quality: 100 });
+    let cancelled = false;
+    const img = new Image();
+    img.src = highSrc;
+    img.decoding = 'async';
+    img.onload = () => {
+      if (!cancelled) {
+        setSrc(highSrc);
+      }
+    };
+    return () => {
+      cancelled = true;
+      img.src = '';
+    };
+  }, [isLoaded, url]);
   
   return (
     <div className={cn('relative w-full h-full overflow-hidden', className)}>
@@ -53,7 +92,7 @@ const OptimizedImage = React.memo(({
         </div>
       )}
       <img
-        src={getOptimizedImageUrl(url, 1200, 90)}
+        src={src}
         alt={alt || `Image ${index + 1}`}
         className={cn(
           'w-full h-full object-cover select-none transition-all duration-300 cursor-zoom-in saturate-[1.3]',

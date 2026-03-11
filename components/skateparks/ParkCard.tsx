@@ -359,6 +359,8 @@ interface ParkCardProps {
   highlightQuery?: string;
   /** Lighter card for homepage: no badges, no amenities. */
   compact?: boolean;
+  /** Optional class override for the park name typography. */
+  nameClassName?: string;
 }
 
 /**
@@ -373,6 +375,7 @@ export const ParkCard = memo(
     userLocation,
     highlightQuery,
     compact = false,
+    nameClassName,
   }: ParkCardProps) => {
     const pendingSlug = usePendingParkNavigation();
     const [isInViewport, setIsInViewport] = useState(false);
@@ -645,7 +648,7 @@ export const ParkCard = memo(
         {/* Name Section - Always visible below image */}
         <div className="w-full py-2">
           <h3
-            className={`text-xl font-semibold truncate text-text dark:text-text-dark ${compact ? '' : 'opacity-0 animate-fadeInDown'}`}
+            className={`text-xl ${nameClassName ?? 'font-semibold'} truncate text-text dark:text-text-dark ${compact ? '' : 'opacity-0 animate-fadeInDown'}`}
             style={compact ? undefined : { animationDelay: '400ms' }}
           >
             {highlightQuery ? highlightMatch(name, highlightQuery) : name}

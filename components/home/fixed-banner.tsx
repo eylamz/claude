@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Icon } from '@/components/icons';
 import { optimizeCloudinaryUrl, FIXED_BANNER_WIDTH } from '@/lib/cloudinary-utils';
@@ -15,6 +15,8 @@ const FIXED_BANNER_IMAGE =
 
 export default function FixedBanner({ isRtl, locale }: FixedBannerProps) {
   const [isDark, setIsDark] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
   useEffect(() => {
     // Check dark mode on mount and when it changes
@@ -34,12 +36,73 @@ export default function FixedBanner({ isRtl, locale }: FixedBannerProps) {
     return () => observer.disconnect();
   }, []);
 
-  const fixedImage = optimizeCloudinaryUrl(FIXED_BANNER_IMAGE, { width: FIXED_BANNER_WIDTH, crop: 'scale' });
+  // Measure banner width so we can request a high-res image with a minimum of 1200px
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    let rafId: number | null = null;
+    let lastWidth = 0;
+    const onResize = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (!containerRef.current) return;
+        const w = containerRef.current.clientWidth;
+        if (w === lastWidth) return;
+        lastWidth = w;
+        setContainerWidth(w);
+      });
+    };
+    const observer = new MutationObserver(onResize);
+    onResize();
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    window.addEventListener('resize', onResize);
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      observer.disconnect();
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
+
+  const fixedLowImage = useMemo(
+    () => optimizeCloudinaryUrl(FIXED_BANNER_IMAGE, { width: 500, quality: 40, crop: 'scale' }),
+    []
+  );
+  const [fixedImage, setFixedImage] = useState(fixedLowImage);
+
+  const fixedHighWidth = useMemo(() => {
+    const w = containerWidth || FIXED_BANNER_WIDTH;
+    // Ensure minimum 1200px for better sharpness, cap to a reasonable max
+    return Math.min(2000, Math.max(1200, w));
+  }, [containerWidth]);
+
+  const fixedHighImage = useMemo(
+    () => optimizeCloudinaryUrl(FIXED_BANNER_IMAGE, { width: fixedHighWidth, quality: 100, crop: 'scale' }),
+    [fixedHighWidth]
+  );
+
+  // Swap to high-res background once it's loaded in the browser
+  useEffect(() => {
+    let cancelled = false;
+    const img = new Image();
+    img.src = fixedHighImage;
+    img.onload = () => {
+      if (!cancelled) setFixedImage(fixedHighImage);
+    };
+    return () => {
+      cancelled = true;
+      img.src = '';
+    };
+  }, [fixedHighImage]);
 
   const title = locale === 'he' ? 'לאחד ולגלוש' : 'Unite & Ride';
 
   return (
     <div
+      ref={containerRef}
       className={`transform-gpu select-none opacity-0 relative w-full h-[200px] sm:h-[220px] xl:rounded-2xl overflow-hidden xl:bord shadow-lg animate-fadeIn ${isRtl ? 'rtl' : 'ltr'}`}
       style={{ animationDelay: '1000ms' }}
     >
