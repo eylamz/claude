@@ -117,7 +117,6 @@ const FullscreenImageViewer = ({
   const touchEndXRef = useRef(0);
   const touchStartYRef = useRef(0);
   const minSwipeDistance = 50;
-  const highQualityImageRef = useRef<HTMLImageElement | null>(null);
   const lastClickTimeRef = useRef(0);
   const lastClickPositionRef = useRef({ x: 0, y: 0 });
   const doubleClickDelay = 300;
