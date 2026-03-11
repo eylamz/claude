@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/db/mongodb';
 import AnalyticsEvent from '@/lib/models/AnalyticsEvent';
 import type { ConsentChoice, DeviceCategory, ReferrerCategory, SearchEventSource } from '@/lib/models/AnalyticsEvent';
+import { getVisitorTypeFromUserAgent } from '@/lib/utils/visitor-type';
 
 const ENABLE_ANALYTICS = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true';
 
@@ -53,6 +54,9 @@ export async function POST(request: NextRequest) {
 
     const { type } = body;
 
+    const userAgent = request.headers.get('user-agent');
+    const visitorType = getVisitorTypeFromUserAgent(userAgent);
+
     if (type === 'consent') {
       const choice = body.choice;
       if (!CONSENT_CHOICES.includes(choice)) {
@@ -65,6 +69,7 @@ export async function POST(request: NextRequest) {
         type: 'consent',
         timestamp: new Date(),
         choice,
+        visitorType,
         ...(sessionId && { sessionId }),
       });
       return new NextResponse(null, { status: 204 });
@@ -98,6 +103,7 @@ export async function POST(request: NextRequest) {
         type: 'page_view',
         timestamp: new Date(),
         path,
+        visitorType,
         ...(sessionId && { sessionId }),
         ...(locale && { locale }),
         ...(timeOnPageMs !== undefined && { timeOnPageMs }),
@@ -131,6 +137,7 @@ export async function POST(request: NextRequest) {
         type: 'search_query',
         timestamp: new Date(),
         query: query.trim(),
+        visitorType,
         ...(sessionId && { sessionId }),
         ...(locale && { locale }),
         ...(source && { source }),
@@ -169,6 +176,7 @@ export async function POST(request: NextRequest) {
         timestamp: new Date(),
         resultType,
         resultSlug,
+        visitorType,
         ...(query !== undefined && { query }),
         ...(resultId && { resultId }),
         ...(href && { href }),

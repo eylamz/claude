@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Card, CardHeader, CardTitle, CardContent, Button, SelectWrapper, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Skeleton, Input } from '@/components/ui';
 import {
   BarChart,
@@ -38,17 +38,113 @@ interface MetricsData {
   consentBreakdown: Array<{ choice: string; count: number }>;
   referrerBreakdown: Array<{ referrerCategory: string; count: number }>;
   countryBreakdown: Array<{ country: string; count: number }>;
+  navigationPatterns?: Array<{ fromPath: string; toPath: string; count: number }>;
   topPages: Array<{ path: string; count: number }>;
   searchQueries?: Array<{ query: string; deviceCategory: string; count: number }>;
   searchClicks?: Array<{ resultType: string; resultSlug: string; deviceCategory: string; count: number }>;
   popularSearchHidden?: Array<{ resultType: string; resultSlug: string }>;
   sessionsByDay?: Array<{ date: string; count: number }>;
   pageViewsByDay?: Array<{ date: string; count: number }>;
+  visitorTypeBreakdown?: Array<{ visitorType: string; count: number }>;
+  visitorTypeFilter?: 'all' | 'user' | 'crawler' | 'bot' | 'other';
 }
 
 const DEVICE_COLORS = ['#3caa41', '#1d4ed8', '#e49a43', '#8B5CF6', '#EC4899'];
 const CONSENT_COLORS = ['#1d4ed8', '#e49a43', '#6366F1'];
 const REFERRER_COLORS = ['#3caa41', '#1d4ed8', '#e49a43', '#8B5CF6', '#EC4899'];
+
+// ISO 3166-1 alpha-2 → full country name (for tooltips)
+const COUNTRY_NAMES: Record<string, string> = {
+  AD: 'Andorra', AE: 'United Arab Emirates', AF: 'Afghanistan', AG: 'Antigua and Barbuda', AI: 'Anguilla',
+  AL: 'Albania', AM: 'Armenia', AO: 'Angola', AR: 'Argentina', AS: 'American Samoa', AT: 'Austria',
+  AU: 'Australia', AW: 'Aruba', AX: 'Åland Islands', AZ: 'Azerbaijan', BA: 'Bosnia and Herzegovina',
+  BB: 'Barbados', BD: 'Bangladesh', BE: 'Belgium', BF: 'Burkina Faso', BG: 'Bulgaria', BH: 'Bahrain',
+  BI: 'Burundi', BJ: 'Benin', BL: 'Saint Barthélemy', BM: 'Bermuda', BN: 'Brunei', BO: 'Bolivia',
+  BQ: 'Caribbean Netherlands', BR: 'Brazil', BS: 'Bahamas', BT: 'Bhutan', BW: 'Botswana', BY: 'Belarus',
+  BZ: 'Belize', CA: 'Canada', CC: 'Cocos (Keeling) Islands', CD: 'Democratic Republic of the Congo',
+  CF: 'Central African Republic', CG: 'Republic of the Congo', CH: 'Switzerland', CI: 'Ivory Coast',
+  CK: 'Cook Islands', CL: 'Chile', CM: 'Cameroon', CN: 'China', CO: 'Colombia', CR: 'Costa Rica',
+  CU: 'Cuba', CV: 'Cape Verde', CW: 'Curaçao', CX: 'Christmas Island', CY: 'Cyprus', CZ: 'Czech Republic',
+  DE: 'Germany', DJ: 'Djibouti', DK: 'Denmark', DM: 'Dominica', DO: 'Dominican Republic', DZ: 'Algeria',
+  EC: 'Ecuador', EE: 'Estonia', EG: 'Egypt', EH: 'Western Sahara', ER: 'Eritrea', ES: 'Spain',
+  ET: 'Ethiopia', FI: 'Finland', FJ: 'Fiji', FK: 'Falkland Islands', FM: 'Micronesia', FO: 'Faroe Islands',
+  FR: 'France', GA: 'Gabon', GB: 'United Kingdom', GD: 'Grenada', GE: 'Georgia', GF: 'French Guiana',
+  GG: 'Guernsey', GH: 'Ghana', GI: 'Gibraltar', GL: 'Greenland', GM: 'Gambia', GN: 'Guinea',
+  GP: 'Guadeloupe', GQ: 'Equatorial Guinea', GR: 'Greece', GT: 'Guatemala', GU: 'Guam', GW: 'Guinea-Bissau',
+  GY: 'Guyana', HK: 'Hong Kong', HN: 'Honduras', HR: 'Croatia', HT: 'Haiti', HU: 'Hungary',
+  ID: 'Indonesia', IE: 'Ireland', IL: 'Israel', IM: 'Isle of Man', IN: 'India', IO: 'British Indian Ocean Territory',
+  IQ: 'Iraq', IR: 'Iran', IS: 'Iceland', IT: 'Italy', JE: 'Jersey', JM: 'Jamaica', JO: 'Jordan',
+  JP: 'Japan', KE: 'Kenya', KG: 'Kyrgyzstan', KH: 'Cambodia', KI: 'Kiribati', KM: 'Comoros',
+  KN: 'Saint Kitts and Nevis', KP: 'North Korea', KR: 'South Korea', KW: 'Kuwait', KY: 'Cayman Islands',
+  KZ: 'Kazakhstan', LA: 'Laos', LB: 'Lebanon', LC: 'Saint Lucia', LI: 'Liechtenstein', LK: 'Sri Lanka',
+  LR: 'Liberia', LS: 'Lesotho', LT: 'Lithuania', LU: 'Luxembourg', LV: 'Latvia', LY: 'Libya',
+  MA: 'Morocco', MC: 'Monaco', MD: 'Moldova', ME: 'Montenegro', MF: 'Saint Martin', MG: 'Madagascar',
+  MH: 'Marshall Islands', MK: 'North Macedonia', ML: 'Mali', MM: 'Myanmar', MN: 'Mongolia', MO: 'Macau',
+  MP: 'Northern Mariana Islands', MQ: 'Martinique', MR: 'Mauritania', MS: 'Montserrat', MT: 'Malta',
+  MU: 'Mauritius', MV: 'Maldives', MW: 'Malawi', MX: 'Mexico', MY: 'Malaysia', MZ: 'Mozambique',
+  NA: 'Namibia', NC: 'New Caledonia', NE: 'Niger', NF: 'Norfolk Island', NG: 'Nigeria', NI: 'Nicaragua',
+  NL: 'Netherlands', NO: 'Norway', NP: 'Nepal', NR: 'Nauru', NU: 'Niue', NZ: 'New Zealand',
+  OM: 'Oman', PA: 'Panama', PE: 'Peru', PF: 'French Polynesia', PG: 'Papua New Guinea', PH: 'Philippines',
+  PK: 'Pakistan', PL: 'Poland', PM: 'Saint Pierre and Miquelon', PR: 'Puerto Rico', PS: 'Palestine',
+  PT: 'Portugal', PW: 'Palau', PY: 'Paraguay', QA: 'Qatar', RE: 'Réunion', RO: 'Romania', RS: 'Serbia',
+  RU: 'Russia', RW: 'Rwanda', SA: 'Saudi Arabia', SB: 'Solomon Islands', SC: 'Seychelles', SD: 'Sudan',
+  SE: 'Sweden', SG: 'Singapore', SH: 'Saint Helena', SI: 'Slovenia', SJ: 'Svalbard and Jan Mayen',
+  SK: 'Slovakia', SL: 'Sierra Leone', SM: 'San Marino', SN: 'Senegal', SO: 'Somalia', SR: 'Suriname',
+  SS: 'South Sudan', ST: 'São Tomé and Príncipe', SV: 'El Salvador', SX: 'Sint Maarten', SY: 'Syria',
+  SZ: 'Eswatini', TC: 'Turks and Caicos Islands', TD: 'Chad', TG: 'Togo', TH: 'Thailand', TJ: 'Tajikistan',
+  TK: 'Tokelau', TL: 'Timor-Leste', TM: 'Turkmenistan', TN: 'Tunisia', TO: 'Tonga', TR: 'Turkey',
+  TT: 'Trinidad and Tobago', TV: 'Tuvalu', TW: 'Taiwan', TZ: 'Tanzania', UA: 'Ukraine', UG: 'Uganda',
+  US: 'United States', UY: 'Uruguay', UZ: 'Uzbekistan', VA: 'Vatican City', VC: 'Saint Vincent and the Grenadines',
+  VE: 'Venezuela', VG: 'British Virgin Islands', VI: 'United States Virgin Islands', VN: 'Vietnam', VU: 'Vanuatu',
+  WF: 'Wallis and Futuna', WS: 'Samoa', XK: 'Kosovo', YE: 'Yemen', YT: 'Mayotte', ZA: 'South Africa',
+  ZM: 'Zambia', ZW: 'Zimbabwe',
+};
+
+// ISO 3166-1 alpha-2 → Hebrew country name (for tooltips when locale is he)
+const COUNTRY_NAMES_HE: Record<string, string> = {
+  AD: 'אנדורה', AE: 'איחוד האמירויות', AF: 'אפגניסטן', AG: 'אנטיגואה וברבודה', AI: 'אנגווילה',
+  AL: 'אלבניה', AM: 'ארמניה', AO: 'אנגולה', AR: 'ארגנטינה', AS: 'סמואה האמריקנית', AT: 'אוסטריה',
+  AU: 'אוסטרליה', AW: 'ארובה', AX: 'איי אולנד', AZ: 'אזרבייג\'ן', BA: 'בוסניה והרצגובינה',
+  BB: 'ברבדוס', BD: 'בנגלדש', BE: 'בלגיה', BF: 'בורקינה פאסו', BG: 'בולגריה', BH: 'בחריין',
+  BI: 'בורונדי', BJ: 'בנין', BL: 'סן ברתלמי', BM: 'ברמודה', BN: 'ברוניי', BO: 'בוליביה',
+  BQ: 'האנטילים ההולנדיים', BR: 'ברזיל', BS: 'איי בהאמה', BT: 'בהוטן', BW: 'בוטסואנה', BY: 'בלארוס',
+  BZ: 'בליז', CA: 'קנדה', CC: 'איי קוקוס', CD: 'קונגו (DRC)', CF: 'הרפובליקה המרכז-אפריקאית',
+  CG: 'קונגו', CH: 'שווייץ', CI: 'חוף השנהב', CK: 'איי קוק', CL: 'צ\'ילה', CM: 'קמרון', CN: 'סין',
+  CO: 'קולומביה', CR: 'קוסטה ריקה', CU: 'קובה', CV: 'כף ורדה', CW: 'קוראסאו', CX: 'אי חג המולד',
+  CY: 'קפריסין', CZ: 'צ\'כיה', DE: 'גרמניה', DJ: 'ג\'יבוטי', DK: 'דנמרק', DM: 'דומיניקה',
+  DO: 'הרפובליקה הדומיניקנית', DZ: 'אלג\'יריה', EC: 'אקוודור', EE: 'אסטוניה', EG: 'מצרים',
+  EH: 'סהרה המערבית', ER: 'אריתריאה', ES: 'ספרד', ET: 'אתיופיה', FI: 'פינלנד', FJ: 'פיג\'י',
+  FK: 'איי פוקלנד', FM: 'מיקרונזיה', FO: 'איי פארו', FR: 'צרפת', GA: 'גבון', GB: 'בריטניה',
+  GD: 'גרנדה', GE: 'גאורגיה', GF: 'גיאנה הצרפתית', GG: 'גרנזי', GH: 'גאנה', GI: 'גיברלטר',
+  GL: 'גרינלנד', GM: 'גמביה', GN: 'גינאה', GP: 'גוואדלופ', GQ: 'גינאה המשוונית', GR: 'יוון',
+  GT: 'גואטמלה', GU: 'גואם', GW: 'גינאה-ביסאו', GY: 'גיאנה', HK: 'הונג קונג', HN: 'הונדורס',
+  HR: 'קרואטיה', HT: 'האיטי', HU: 'הונגריה', ID: 'אינדונזיה', IE: 'אירלנד', IL: 'ישראל',
+  IM: 'האי מאן', IN: 'הודו', IO: 'טריטוריית האוקיינוס ההודי', IQ: 'עיראק', IR: 'איראן', IS: 'איסלנד',
+  IT: 'איטליה', JE: 'ג\'רסי', JM: 'ג\'מייקה', JO: 'ירדן', JP: 'יפן', KE: 'קניה', KG: 'קירגיזסטן',
+  KH: 'קמבודיה', KI: 'קיריבטי', KM: 'קומורו', KN: 'סנט קיטס ונוויס', KP: 'צפון קוריאה', KR: 'דרום קוריאה',
+  KW: 'כווית', KY: 'איי קיימן', KZ: 'קזחסטן', LA: 'לאוס', LB: 'לבנון', LC: 'סנט לוסיה',
+  LI: 'ליכטנשטיין', LK: 'סרי לנקה', LR: 'ליבריה', LS: 'לסוטו', LT: 'ליטא', LU: 'לוקסמבורג',
+  LV: 'לטביה', LY: 'לוב', MA: 'מרוקו', MC: 'מונקו', MD: 'מולדובה', ME: 'מונטנגרו', MF: 'סן מרטן',
+  MG: 'מדגסקר', MH: 'איי מרשל', MK: 'מקדוניה הצפונית', ML: 'מאלי', MM: 'מיאנמר', MN: 'מונגוליה',
+  MO: 'מקאו', MP: 'איי מריאנה הצפוניים', MQ: 'מרטיניק', MR: 'מאוריטניה', MS: 'מונטסראט', MT: 'מלטה',
+  MU: 'מאוריציוס', MV: 'האיים המלדיביים', MW: 'מלאווי', MX: 'מקסיקו', MY: 'מלזיה', MZ: 'מוזמביק',
+  NA: 'נמיביה', NC: 'קלדוניה החדשה', NE: 'ניז\'ר', NF: 'אי נורפוק', NG: 'ניגריה', NI: 'ניקרגואה',
+  NL: 'הולנד', NO: 'נורווגיה', NP: 'נפאל', NR: 'נאורו', NU: 'ניואה', NZ: 'ניו זילנד',
+  OM: 'עומאן', PA: 'פנמה', PE: 'פרו', PF: 'פולינזיה הצרפתית', PG: 'פפואה גינאה החדשה', PH: 'הפיליפינים',
+  PK: 'פקיסטן', PL: 'פולין', PM: 'סן פייר ומיקלון', PR: 'פורטו ריקו', PS: 'פלסטין', PT: 'פורטוגל',
+  PW: 'פלאו', PY: 'פרגוואי', QA: 'קטר', RE: 'ראוניון', RO: 'רומניה', RS: 'סרביה', RU: 'רוסיה',
+  RW: 'רואנדה', SA: 'ערב הסעודית', SB: 'איי שלמה', SC: 'סיישל', SD: 'סודן', SE: 'שוודיה',
+  SG: 'סינגפור', SH: 'סנט הלנה', SI: 'סלובניה', SJ: 'סבאלברד ויאן מאיין', SK: 'סלובקיה',
+  SL: 'סיירה לאון', SM: 'סן מרינו', SN: 'סנגל', SO: 'סומליה', SR: 'סורינאם', SS: 'דרום סודן',
+  ST: 'סאו טומה ופרינסיפה', SV: 'אל סלבדור', SX: 'סן מרטן', SY: 'סוריה', SZ: 'אסווטיני',
+  TC: 'איי טורקס וקייקס', TD: 'צ\'אד', TG: 'טוגו', TH: 'תאילנד', TJ: 'טג\'יקיסטן', TK: 'טוקלאו',
+  TL: 'מזרח טימור', TM: 'טורקמניסטן', TN: 'תוניסיה', TO: 'טונגה', TR: 'טורקיה',
+  TT: 'טרינידד וטובגו', TV: 'טובאלו', TW: 'טאיוואן', TZ: 'טנזניה', UA: 'אוקראינה', UG: 'אוגנדה',
+  US: 'ארצות הברית', UY: 'אורוגוואי', UZ: 'אוזבקיסטן', VA: 'הוותיקן', VC: 'סנט וינסנט והגרנדינים',
+  VE: 'ונצואלה', VG: 'איי הבתולה הבריטיים', VI: 'איי הבתולה של ארה"ב', VN: 'וייטנאם', VU: 'ונואטו',
+  WF: 'ווליס ופוטונה', WS: 'סמואה', XK: 'קוסובו', YE: 'תימן', YT: 'מאיוט', ZA: 'דרום אפריקה',
+  ZM: 'זמביה', ZW: 'זימבבואה',
+};
 
 // Custom tooltip for line charts (light/dark mode, matches admin skateparks style)
 const LineChartTooltip = ({
@@ -86,15 +182,18 @@ const BarChartTooltip = ({
   payload,
   labelKey = 'path',
   valueLabel,
+  labelFormatter,
 }: {
   active?: boolean;
   payload?: Array<{ value: number; payload: Record<string, unknown> }>;
   labelKey?: string;
   valueLabel: string;
+  labelFormatter?: (label: string) => string;
 }) => {
   if (!active || !payload?.length) return null;
   const row = payload[0].payload;
-  const label = row ? String(row[labelKey] ?? payload[0].value) : '';
+  let label = row ? String(row[labelKey] ?? payload[0].value) : '';
+  if (labelFormatter) label = labelFormatter(label);
   const value = payload[0].value ?? 0;
   return (
     <div className="bg-white dark:bg-black border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4">
@@ -117,15 +216,18 @@ function formatDuration(ms: number): string {
 
 export default function AdminMetricsPage() {
   const t = useTranslations('admin');
+  const locale = useLocale();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<MetricsData | null>(null);
   const [days, setDays] = useState('30');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  const [visitorType, setVisitorType] = useState<'all' | 'user' | 'crawler' | 'bot' | 'other'>('all');
   const [showUnknownCountry, setShowUnknownCountry] = useState(false);
   const [updatingHidden, setUpdatingHidden] = useState<string | null>(null);
   const [openGraph, setOpenGraph] = useState<'sessions' | 'pageViews' | null>(null);
+  const [showNavigationPatterns, setShowNavigationPatterns] = useState(false);
 
   const hiddenSet = useMemo(
     () =>
@@ -154,10 +256,11 @@ export default function AdminMetricsPage() {
       setError(null);
       setLoading(true);
       const isCustom = days === 'custom';
-      const url =
+      const base =
         isCustom && customStart && customEnd
           ? `/api/admin/metrics?days=custom&from=${encodeURIComponent(customStart)}&to=${encodeURIComponent(customEnd)}`
           : `/api/admin/metrics?days=${days}`;
+      const url = visitorType === 'all' ? base : `${base}&visitorType=${encodeURIComponent(visitorType)}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch metrics');
       const json = await res.json();
@@ -175,17 +278,18 @@ export default function AdminMetricsPage() {
     } else if (customStart && customEnd) {
       fetchMetrics();
     }
-  }, [days, customStart, customEnd]);
+  }, [days, customStart, customEnd, visitorType]);
 
   const handleRefresh = async () => {
     try {
       setError(null);
       setLoading(true);
       const isCustom = days === 'custom';
-      const url =
+      const base =
         isCustom && customStart && customEnd
           ? `/api/admin/metrics?days=custom&from=${encodeURIComponent(customStart)}&to=${encodeURIComponent(customEnd)}`
           : `/api/admin/metrics?days=${days}`;
+      const url = visitorType === 'all' ? base : `${base}&visitorType=${encodeURIComponent(visitorType)}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch metrics');
       const json = await res.json();
@@ -269,7 +373,7 @@ export default function AdminMetricsPage() {
             {t('metrics.subtitle')}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="w-36">
             <SelectWrapper
               value={days}
@@ -280,6 +384,19 @@ export default function AdminMetricsPage() {
                 { value: '90', label: t('metrics.days90') },
                 { value: '365', label: t('metrics.days365') },
                 { value: 'custom', label: t('metrics.daysCustom') },
+              ]}
+            />
+          </div>
+          <div className="w-40">
+            <SelectWrapper
+              value={visitorType}
+              onChange={(e) => setVisitorType(e.target.value as 'all' | 'user' | 'crawler' | 'bot' | 'other')}
+              options={[
+                { value: 'all', label: t('metrics.visitorTypeAll') },
+                { value: 'user', label: t('metrics.visitorTypeUser') },
+                { value: 'crawler', label: t('metrics.visitorTypeCrawler') },
+                { value: 'bot', label: t('metrics.visitorTypeBot') },
+                { value: 'other', label: t('metrics.visitorTypeOther') },
               ]}
             />
           </div>
@@ -352,6 +469,22 @@ export default function AdminMetricsPage() {
                 </p>
               </CardContent>
             </Card>
+          )}
+          {/* Visitor type breakdown (page views in period; filter hint when not "all") */}
+          {(data?.visitorTypeBreakdown?.length || visitorType !== 'all') && (
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <span className="font-medium text-gray-700 dark:text-gray-300">{t('metrics.visitorTypeBreakdown')}:</span>
+              {data?.visitorTypeBreakdown?.map((row) => (
+                <span key={row.visitorType} className="text-gray-600 dark:text-gray-400">
+                  {t(`metrics.visitorType.${row.visitorType}` as const)} {row.count.toLocaleString()}
+                </span>
+              ))}
+              {visitorType !== 'all' && (
+                <span className="text-amber-600 dark:text-amber-400">
+                  ({t('metrics.visitorTypeFilterActive', { type: t(`metrics.visitorType.${visitorType}` as const) })})
+                </span>
+              )}
+            </div>
           )}
           {/* Summary cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
@@ -508,11 +641,13 @@ export default function AdminMetricsPage() {
                 <CardTitle className="text-gray-900 dark:text-white">{t('metrics.trafficSources')}</CardTitle>
               </CardHeader>
               <CardContent className="p-4 pt-0">
-                {data?.referrerBreakdown?.length ? (
+                {(() => {
+                  const acquisitionOnly = (data?.referrerBreakdown ?? []).filter((r) => r.referrerCategory !== 'internal');
+                  return acquisitionOnly.length ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
-                        data={data.referrerBreakdown.map((r) => ({ name: t(`metrics.referrer.${r.referrerCategory}` as const), value: r.count }))}
+                        data={acquisitionOnly.map((r) => ({ name: t(`metrics.referrer.${r.referrerCategory}` as const), value: r.count }))}
                         cx="50%"
                         cy="50%"
                         innerRadius={60}
@@ -521,7 +656,7 @@ export default function AdminMetricsPage() {
                         dataKey="value"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       >
-                        {data.referrerBreakdown.map((_, i) => (
+                        {acquisitionOnly.map((_, i) => (
                           <Cell key={i} fill={REFERRER_COLORS[i % REFERRER_COLORS.length]} />
                         ))}
                       </Pie>
@@ -531,9 +666,56 @@ export default function AdminMetricsPage() {
                   </ResponsiveContainer>
                 ) : (
                   <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noReferrerData')}</p>
+                );
+                })()}
+                <Button
+                  variant={showNavigationPatterns ? 'red' : 'gray'}
+                  size="sm"
+                  className="mt-3 w-full"
+                  onClick={() => setShowNavigationPatterns((v) => !v)}
+                >
+                  {showNavigationPatterns ? t('metrics.hideNavigationPatterns') : t('metrics.showNavigationPatterns')}
+                </Button>
+              </CardContent>
+            </Card>
+
+          {/* Navigation patterns (internal: from path → to path, top to low) */}
+          {showNavigationPatterns && (
+            <Card className="bg-card dark:bg-card-dark lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-gray-900 dark:text-white">{t('metrics.navigationPatternsTitle')}</CardTitle>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {t('metrics.navigationPatternsDescription')}
+                </p>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                {(data?.navigationPatterns?.length ?? 0) > 0 ? (
+                  <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t('metrics.fromPath')}</TableHead>
+                          <TableHead>{t('metrics.toPath')}</TableHead>
+                          <TableHead className="text-right">{t('metrics.views')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(data?.navigationPatterns ?? []).map((row, i) => (
+                          <TableRow key={`${row.fromPath}-${row.toPath}-${i}`}>
+                            <TableCell className="font-mono text-xs text-gray-900 dark:text-white truncate max-w-[200px]" title={row.fromPath}>{row.fromPath || '—'}</TableCell>
+                            <TableCell className="font-mono text-xs text-gray-900 dark:text-white truncate max-w-[200px]" title={row.toPath}>{row.toPath || '—'}</TableCell>
+                            <TableCell className="text-right text-gray-700 dark:text-gray-300">{row.count}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noNavigationPatterns')}</p>
                 )}
               </CardContent>
             </Card>
+          )}
           </div>
 
           {/* Popular searches (shown to users in header/sidebar/search page) – manage visibility */}
@@ -825,7 +1007,7 @@ export default function AdminMetricsPage() {
                   if (unknownCount === 0) return null;
                   return (
                     <Button
-                      variant="gray"
+                      variant={showUnknownCountry ? 'red' : 'gray'}
                       size="sm"
                       onClick={() => setShowUnknownCountry((v) => !v)}
                       className="shrink-0"
@@ -861,24 +1043,24 @@ export default function AdminMetricsPage() {
                         );
                       })()}
                       <ResponsiveContainer width="100%" height={260}>
-                        <BarChart data={countryData} layout="vertical" margin={{ left: 20, right: 20 }}>
+                        <BarChart data={countryData} margin={{ bottom: 20 }}>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-border dark:stroke-border-dark" />
-                          <XAxis type="number" tick={{ fill: 'currentColor', fontSize: 12 }} />
-                          <YAxis
+                          <XAxis
                             type="category"
                             dataKey="country"
-                            width={48}
                             tick={{ fill: 'currentColor', fontSize: 11 }}
                           />
+                          <YAxis type="number" tick={{ fill: 'currentColor', fontSize: 12 }} />
                           <Tooltip
                             content={
                               <BarChartTooltip
                                 labelKey="country"
                                 valueLabel={t('metrics.sessions')}
+                                labelFormatter={(code) => (locale === 'he' ? COUNTRY_NAMES_HE[code.toUpperCase()] : COUNTRY_NAMES[code.toUpperCase()]) ?? code}
                               />
                             }
                           />
-                          <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} name={t('metrics.sessions')} />
+                          <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} name={t('metrics.sessions')} />
                         </BarChart>
                       </ResponsiveContainer>
                     </>

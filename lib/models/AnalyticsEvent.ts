@@ -6,6 +6,8 @@ export type SearchEventSource = 'header' | 'sidebar' | 'search_page';
 
 export type DeviceCategory = 'mobile' | 'tablet' | 'desktop';
 export type ReferrerCategory = 'direct' | 'internal' | 'google' | 'social' | 'other';
+/** Classified from User-Agent: user (browser), crawler (SEO/social), bot (scripts/headless), other */
+export type VisitorType = 'user' | 'crawler' | 'bot' | 'other';
 export type ConsentChoice =
   | 'accept_all'
   | 'reject_non_essential'
@@ -32,12 +34,15 @@ export interface IPageViewEvent extends IAnalyticsEventBase {
   userId?: string;
   /** ISO 3166-1 alpha-2 country code from request IP (e.g. Vercel/Cloudflare headers) */
   country?: string;
+  /** Classified from request User-Agent (user, crawler, bot, other) */
+  visitorType?: VisitorType;
 }
 
 export interface IConsentEvent extends IAnalyticsEventBase {
   type: 'consent';
   choice: ConsentChoice;
   sessionId?: string;
+  visitorType?: VisitorType;
 }
 
 export interface ISearchQueryEvent extends IAnalyticsEventBase {
@@ -46,6 +51,7 @@ export interface ISearchQueryEvent extends IAnalyticsEventBase {
   sessionId?: string;
   locale?: string;
   source?: SearchEventSource;
+  visitorType?: VisitorType;
 }
 
 export interface ISearchClickEvent extends IAnalyticsEventBase {
@@ -58,6 +64,7 @@ export interface ISearchClickEvent extends IAnalyticsEventBase {
   sessionId?: string;
   locale?: string;
   source?: SearchEventSource;
+  visitorType?: VisitorType;
 }
 
 export type IAnalyticsEvent = IPageViewEvent | IConsentEvent | ISearchQueryEvent | ISearchClickEvent;
@@ -85,6 +92,7 @@ const AnalyticsEventSchema = new Schema<IAnalyticsEvent>(
     referrerCategory: { type: String, enum: ['direct', 'internal', 'google', 'social', 'other'] },
     userId: { type: String },
     country: { type: String },
+    visitorType: { type: String, enum: ['user', 'crawler', 'bot', 'other'] },
     // consent fields
     choice: {
       type: String,
@@ -116,6 +124,7 @@ AnalyticsEventSchema.index({ type: 1, deviceType: 1 });
 AnalyticsEventSchema.index({ type: 1, userId: 1 });
 AnalyticsEventSchema.index({ type: 1, userId: 1, timestamp: -1 });
 AnalyticsEventSchema.index({ type: 1, country: 1 });
+AnalyticsEventSchema.index({ type: 1, visitorType: 1 });
 AnalyticsEventSchema.index({ type: 1, query: 1 });
 AnalyticsEventSchema.index({ type: 1, resultType: 1 });
 

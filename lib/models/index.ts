@@ -88,6 +88,7 @@ export type {
   SearchEventSource,
   DeviceCategory,
   ReferrerCategory,
+  VisitorType,
   ConsentChoice,
 } from './AnalyticsEvent';
 

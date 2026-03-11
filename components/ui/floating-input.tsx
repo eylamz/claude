@@ -120,7 +120,7 @@ const FloatingInput = React.forwardRef<HTMLInputElement, FloatingInputProps>(
               className={cn(
                 "absolute pointer-events-none transition-all duration-200 ease-in-out",
                 "text-text-secondary dark:text-text-secondary-dark  ",
-                isFocused && "text-brand-main dark:text-brand-dark",
+                isFocused && "text-[#7ac109] dark:text-brand-dark",
                 isFloating
                   ? `-top-2 ${isRTL ? 'right-1.5' : 'left-1.5'} text-xs font-medium scale-100 bg-gradient-to-t from-input to-background dark:from-input-dark dark:to-[#1d1d1f] px-1`
                   : `top-1/2 ${isRTL ? 'right-3' : 'left-3'} -translate-y-1/2 text-sm scale-100 bg-transparent`,

@@ -113,12 +113,12 @@ const SelectContent = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-popover-border dark:border-popover-border-dark bg-popover dark:bg-popover-dark shadow-xl animate-in fade-in zoom-in-95",
+        "absolute z-50 mt-1 min-w-fit w-full overflow-hidden rounded-lg border border-popover-border dark:border-popover-border-dark bg-popover dark:bg-popover-dark shadow-xl animate-in fade-in zoom-in-95",
         className
       )}
       {...props}
     >
-      <div className="p-1 flex flex-col gap-1">{children}</div>
+      <div className="miin-w-fit p-1 flex flex-col gap-1">{children}</div>
     </div>
   );
 });
@@ -146,7 +146,7 @@ const SelectItem = React.forwardRef<
         context?.setOpen(false);
       }}
       className={cn(
-        "relative flex w-full cursor-pointer select-none items-center rounded-lg py-0.5 px-3 text-sm transition-colors",
+        "relative flex min-w-fit w-full cursor-pointer select-none items-center rounded-lg py-0.5 px-3 text-sm transition-colors",
         selectedClasses,
         className
       )}

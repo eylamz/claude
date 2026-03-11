@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useTranslations, useLocale } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
@@ -194,9 +194,66 @@ export default function HomePage() {
   const [finalCtaLoading, setFinalCtaLoading] = useState(false);
   const router = useRouter();
 
+  // Final CTA background: low-quality first, then full-quality by width after page load (like hero carousel)
+  const CTA_BG_BASE =
+    'https://res.cloudinary.com/dr0rvohz9/image/upload/v1771769672/wcjoumbnl57r6aqe9nae.webp';
+  const ctaLowUrl = optimizeCloudinaryUrl(CTA_BG_BASE, { width: 500, quality: 40 });
+  const [ctaBgUrl, setCtaBgUrl] = useState(ctaLowUrl);
+  const ctaSectionRef = useRef<HTMLElement>(null);
+  const [ctaContainerWidth, setCtaContainerWidth] = useState(0);
+
   useEffect(() => {
     fetchHomepageData();
   }, [locale]);
+
+  // Measure CTA section width for responsive full-quality background
+  useEffect(() => {
+    const el = ctaSectionRef.current;
+    if (!el) return;
+    let rafId: number | null = null;
+    let lastWidth = 0;
+    const onResize = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (!ctaSectionRef.current) return;
+        const w = ctaSectionRef.current.clientWidth;
+        if (w === lastWidth) return;
+        lastWidth = w;
+        setCtaContainerWidth(w);
+      });
+    };
+    const observer = new ResizeObserver(onResize);
+    observer.observe(el);
+    setCtaContainerWidth(el.clientWidth);
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      observer.disconnect();
+    };
+  }, []);
+
+  // After page is done loading, preload full-quality CTA background and swap
+  const ctaHighWidth = useMemo(() => {
+    const w = ctaContainerWidth || (typeof window !== 'undefined' ? window.innerWidth : 0) || CTA_BG_WIDTH;
+    return Math.min(2000, Math.max(640, w));
+  }, [ctaContainerWidth]);
+  const ctaHighUrl = useMemo(
+    () => optimizeCloudinaryUrl(CTA_BG_BASE, { width: ctaHighWidth, quality: 100 }),
+    [ctaHighWidth]
+  );
+  useEffect(() => {
+    if (loading || !ctaHighUrl) return;
+    let cancelled = false;
+    const img = new Image();
+    img.src = ctaHighUrl;
+    img.onload = () => {
+      if (!cancelled) setCtaBgUrl(ctaHighUrl);
+    };
+    return () => {
+      cancelled = true;
+      img.src = '';
+    };
+  }, [loading, ctaHighUrl]);
 
   const fetchHomepageData = async () => {
     try {
@@ -649,12 +706,10 @@ export default function HomePage() {
 
       {/* Final CTA Section */}
       <section
-        className="relative 4xl:rounded-2xl h-[400px] md:h-[500px] lg:h-[900px] max-w-[2000px] mx-auto py-20 sm:py-8 md:py-20 lg:py-20 px-4 sm:px-6 lg:px-8 text-center overflow-hidden bg-cover bg-bottom bg-no-repeat 4xl:shadow-lg "
+        ref={ctaSectionRef}
+        className="relative 4xl:rounded-2xl h-[400px] md:h-[500px] lg:h-[900px] max-w-[2000px] mx-auto py-20 sm:py-8 md:py-20 lg:py-20 px-4 sm:px-6 lg:px-8 text-center overflow-hidden bg-cover bg-bottom bg-no-repeat 4xl:shadow-lg transition-[background-image] duration-200"
         style={{
-          backgroundImage: `url('${optimizeCloudinaryUrl(
-            'https://res.cloudinary.com/dr0rvohz9/image/upload/v1771769672/wcjoumbnl57r6aqe9nae.webp',
-            { width: CTA_BG_WIDTH }
-          )}')`,
+          backgroundImage: `url('${ctaBgUrl}')`,
         }}
       >
         <div
@@ -704,7 +759,7 @@ export default function HomePage() {
             {t('togetherWeRideSubtitle')}
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-5 max-w-6xl mx-auto px-4 md:px-0">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 md:gap-5 max-w-6xl mx-auto px-0">
             {[
               {
                 label: t('communityProParks'),

@@ -44,6 +44,13 @@
     "dateTo": "עד",
     "topPages": "דפים מובילים (לפי צפיות)",
     "trafficSources": "מקורות תעבורה",
+    "showNavigationPatterns": "הצג דפוסי ניווט",
+    "hideNavigationPatterns": "הסתר דפוסי ניווט",
+    "navigationPatternsTitle": "דפוסי ניווט",
+    "navigationPatternsDescription": "לאן משתמשים עוברים אחרי דף (רק בתוך האתר). ממוין מהנפוץ לפחות נפוץ.",
+    "fromPath": "מ",
+    "toPath": "אל",
+    "noNavigationPatterns": "אין עדיין נתוני ניווט פנימיים.",
     "devices": "מכשירים",
     "operatingSystem": "מערכת הפעלה",
     "cookieConsent": "הסכמת עוגיות",
@@ -131,7 +138,20 @@
     "popularRestored": "שוחזר לחיפושים פופולריים.",
     "popularUpdateFailed": "עדכון נכשל.",
     "toastError": "שגיאה",
-    "actions": "פעולות"
+    "actions": "פעולות",
+    "visitorTypeAll": "כל המבקרים",
+    "visitorTypeUser": "משתמשים בלבד",
+    "visitorTypeCrawler": "קרולרים בלבד",
+    "visitorTypeBot": "בוטים בלבד",
+    "visitorTypeOther": "אחר בלבד",
+    "visitorTypeBreakdown": "סוג מבקר (צפיות בדף)",
+    "visitorTypeFilterActive": "המדדים מסוננים ל: {type}",
+    "visitorType": {
+      "user": "משתמש",
+      "crawler": "קרולר",
+      "bot": "בוט",
+      "other": "אחר"
+    }
   },
   "eventSignups": {
     "title": "הרשמות לאירועים",

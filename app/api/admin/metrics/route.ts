@@ -62,6 +62,28 @@ export async function GET(request: NextRequest) {
 
     const filterByCurrentUser = userParam === 'me';
 
+    /** Filter by visitor type: all | user | crawler | bot | other. Default all. */
+    const visitorTypeParam = searchParams.get('visitorType') ?? 'all';
+    const validVisitorTypes = ['all', 'user', 'crawler', 'bot', 'other'] as const;
+    const visitorTypeFilter: 'all' | 'user' | 'crawler' | 'bot' | 'other' = validVisitorTypes.includes(visitorTypeParam as (typeof validVisitorTypes)[number])
+      ? (visitorTypeParam as (typeof validVisitorTypes)[number])
+      : 'all';
+
+    /** MongoDB condition for visitorType: when filtering to 'user', include null/missing (legacy events). */
+    const visitorTypeMatch = (): Record<string, unknown> => {
+      if (visitorTypeFilter === 'all') return {};
+      if (visitorTypeFilter === 'user') {
+        return {
+          $or: [
+            { visitorType: 'user' },
+            { visitorType: { $exists: false } },
+            { visitorType: null },
+          ],
+        };
+      }
+      return { visitorType: visitorTypeFilter };
+    };
+
     // Always exclude admin users from metrics (do not track admin activity)
     let adminUserIds: string[] = [];
     const admins = await User.find({ role: 'admin' }).select('_id').lean();
@@ -73,6 +95,7 @@ export async function GET(request: NextRequest) {
       type: 'page_view',
       timestamp: { $gte: from, $lte: toDate },
       path: { $not: { $regex: '/admin' } },
+      ...visitorTypeMatch(),
     };
     if (currentUserId) {
       matchPageView.userId = currentUserId;
@@ -86,14 +109,17 @@ export async function GET(request: NextRequest) {
     const matchConsent: Record<string, unknown> = {
       type: 'consent',
       timestamp: { $gte: from, $lte: toDate },
+      ...visitorTypeMatch(),
     };
     const matchSearchQuery: Record<string, unknown> = {
       type: 'search_query',
       timestamp: { $gte: from, $lte: toDate },
+      ...visitorTypeMatch(),
     };
     const matchSearchClick: Record<string, unknown> = {
       type: 'search_click',
       timestamp: { $gte: from, $lte: toDate },
+      ...visitorTypeMatch(),
     };
     // Only count sessions that have an id (so we can dedupe by session, not by page view)
     const matchPageViewWithSession = {
@@ -114,6 +140,8 @@ export async function GET(request: NextRequest) {
       searchClicks,
       sessionsByDayRaw,
       pageViewsByDayRaw,
+      navigationPatternsRaw,
+      visitorTypeBreakdownRaw,
     ] = await Promise.all([
       AnalyticsEvent.aggregate<{ _id: string; count: number }>([
         { $match: matchPageView },
@@ -248,6 +276,78 @@ export async function GET(request: NextRequest) {
         { $project: { date: '$_id', count: 1, _id: 0 } },
         { $sort: { date: 1 } },
       ]),
+      // Navigation patterns: internal referrer → path, from top to low
+      AnalyticsEvent.aggregate<{ fromPath: string; toPath: string; count: number }>([
+        {
+          $match: {
+            ...matchPageView,
+            referrerCategory: 'internal',
+            referrer: { $exists: true, $regex: /^https?:\/\// },
+          },
+        },
+        {
+          $addFields: {
+            afterProtocol: {
+              $substr: [
+                '$referrer',
+                { $add: [{ $indexOfCP: ['$referrer', '//'] }, 2] },
+                2000,
+              ],
+            },
+          },
+        },
+        {
+          $addFields: {
+            firstSlashIdx: { $indexOfCP: ['$afterProtocol', '/'] },
+          },
+        },
+        {
+          $addFields: {
+            fromPath: {
+              $cond: [
+                { $gte: ['$firstSlashIdx', 0] },
+                { $substr: ['$afterProtocol', '$firstSlashIdx', 2000] },
+                '/',
+              ],
+            },
+          },
+        },
+        { $match: { $expr: { $ne: ['$fromPath', '$path'] } } },
+        {
+          $group: {
+            _id: { fromPath: '$fromPath', toPath: '$path' },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 100 },
+        {
+          $project: {
+            fromPath: '$_id.fromPath',
+            toPath: '$_id.toPath',
+            count: 1,
+            _id: 0,
+          },
+        },
+      ]),
+      // Visitor type breakdown (page views only, same date range; treat null/missing as 'user')
+      AnalyticsEvent.aggregate<{ visitorType: string; count: number }>([
+        {
+          $match: {
+            type: 'page_view',
+            timestamp: { $gte: from, $lte: toDate },
+            path: { $not: { $regex: '/admin' } },
+          },
+        },
+        {
+          $group: {
+            _id: { $ifNull: ['$visitorType', 'user'] },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $project: { visitorType: '$_id', count: 1, _id: 0 } },
+      ]),
     ]);
 
     const sessionsSummary = sessionDurations[0]
@@ -320,6 +420,17 @@ export async function GET(request: NextRequest) {
     // Exclude local dev (LOCAL) from country breakdown so it is not shown
     const countryBreakdownFiltered = countryBreakdown.filter((c) => c.country !== 'LOCAL');
 
+    const navigationPatterns = navigationPatternsRaw.map((r) => ({
+      fromPath: r.fromPath ?? '/',
+      toPath: r.toPath ?? '',
+      count: r.count ?? 0,
+    }));
+
+    const visitorTypeBreakdown = visitorTypeBreakdownRaw.map((r) => ({
+      visitorType: r.visitorType ?? 'user',
+      count: r.count ?? 0,
+    }));
+
     return NextResponse.json({
       enabled: ENABLE_ANALYTICS,
       ...(ENABLE_ANALYTICS ? {} : { message: 'Analytics is disabled. Set NEXT_PUBLIC_ENABLE_ANALYTICS=true in .env.local.' }),
@@ -340,6 +451,9 @@ export async function GET(request: NextRequest) {
       popularSearchHidden,
       sessionsByDay,
       pageViewsByDay,
+      navigationPatterns,
+      visitorTypeBreakdown,
+      visitorTypeFilter: visitorTypeFilter,
     });
   } catch (error) {
     console.error('[admin/metrics]', error);

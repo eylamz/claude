@@ -1600,7 +1600,7 @@ export default function SkateparkPage() {
 
   if (loading) {
     return (
-      <div className="pt-[4.3rem] min-h-screen">
+      <div className="pt-[4rem] min-h-screen">
         <div className="flex flex-col gap-6 max-w-6xl mx-auto overflow-visible">
           {/* Breadcrumb Skeleton */}
           <div className="hidden md:block mb-4">
@@ -1957,7 +1957,7 @@ export default function SkateparkPage() {
       />
 
 
-      <div className="pt-[4.3rem] min-h-screen">
+      <div className="pt-[4rem] min-h-screen">
         {/* Breadcrumb */}
         <Breadcrumb
           items={[

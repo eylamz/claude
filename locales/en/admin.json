@@ -44,6 +44,13 @@
     "dateTo": "To",
     "topPages": "Top pages (by views)",
     "trafficSources": "Traffic sources",
+    "showNavigationPatterns": "Show navigation patterns",
+    "hideNavigationPatterns": "Hide navigation patterns",
+    "navigationPatternsTitle": "Navigation patterns",
+    "navigationPatternsDescription": "Where users go after landing on a page (same site only). Sorted from most to least common.",
+    "fromPath": "From",
+    "toPath": "To",
+    "noNavigationPatterns": "No internal navigation data yet.",
     "devices": "Devices",
     "operatingSystem": "Operating system",
     "cookieConsent": "Cookie consent",
@@ -131,7 +138,20 @@
     "popularRestored": "Restored to popular searches.",
     "popularUpdateFailed": "Failed to update.",
     "toastError": "Error",
-    "actions": "Actions"
+    "actions": "Actions",
+    "visitorTypeAll": "All visitors",
+    "visitorTypeUser": "Users only",
+    "visitorTypeCrawler": "Crawlers only",
+    "visitorTypeBot": "Bots only",
+    "visitorTypeOther": "Other only",
+    "visitorTypeBreakdown": "Visitor type (page views)",
+    "visitorTypeFilterActive": "Metrics filtered to: {type}",
+    "visitorType": {
+      "user": "User",
+      "crawler": "Crawler",
+      "bot": "Bot",
+      "other": "Other"
+    }
   },
   "eventSignups": {
     "title": "Event Signups",
