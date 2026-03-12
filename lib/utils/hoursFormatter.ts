@@ -344,6 +344,16 @@ export const formatDayRanges = (days: DayOfWeek[], locale: string = 'en'): strin
     holidays: { en: 'Holidays', he: 'חגים', short: { en: 'Holidays', he: 'חגים' } },
   };
 
+  // Hebrew ordinal names without the "יום" prefix, for use with the "ימי" prefix
+  const hebrewOrdinals: Partial<Record<DayOfWeek, string>> = {
+    sunday: 'ראשון',
+    monday: 'שני',
+    tuesday: 'שלישי',
+    wednesday: 'רביעי',
+    thursday: 'חמישי',
+    friday: 'שישי',
+  };
+
   const translations: Record<string, { en: string; he: string }> = {
     allWeek: { en: 'All Week', he: 'כל השבוע' },
     days: { en: '', he: 'ימי ' },
@@ -382,23 +392,27 @@ export const formatDayRanges = (days: DayOfWeek[], locale: string = 'en'): strin
   // If it's just one day
   if (sortedDays.length === 1) {
     const dayKey = sortedDays[0];
-    let dayName: string;
-    if (dayKey === 'friday') {
-      // For Friday with days prefix in Hebrew, use "שישי" instead of "ו"
+
+    // Hebrew: use "ימי" + ordinal without the "יום" prefix (e.g., "ימי ראשון")
+    if (locale === 'he') {
+      if (dayKey === 'saturday' || dayKey === 'holidays') {
+        return dayNames[dayKey]?.he || dayKey;
+      }
       const daysPrefix = t('days');
-      if (daysPrefix && locale === 'he') {
-        dayName = 'שישי';
-      } else {
-        dayName = dayNames['friday'].short[locale as 'en' | 'he'] || dayNames['friday'].short.en;
-      }
-    } else {
-      const dayInfo = dayNames[dayKey];
-      if (dayInfo) {
-        dayName = dayInfo[locale as 'en' | 'he'] || dayInfo.en || dayKey;
-      } else {
-        dayName = dayKey;
-      }
+      const ordinal = hebrewOrdinals[dayKey];
+      const baseName =
+        ordinal ||
+        dayNames[dayKey]?.he.replace(/^יום\s*/, '') ||
+        dayNames[dayKey]?.he ||
+        dayKey;
+      // For Hebrew we already have a trailing space in the prefix
+      return daysPrefix ? `${daysPrefix}${baseName}` : baseName;
     }
+
+    // Non-Hebrew locales
+    const dayInfo = dayNames[dayKey];
+    const dayName = dayInfo ? (dayInfo[locale as 'en' | 'he'] || dayInfo.en || dayKey) : dayKey;
+
     // Don't add "days" prefix for Saturday and Holidays
     if (dayKey === 'saturday' || dayKey === 'holidays') {
       return dayName;
@@ -447,16 +461,25 @@ export const formatDayRanges = (days: DayOfWeek[], locale: string = 'en'): strin
     return daysPrefix ? `${daysPrefix} ${firstDay} ${t('to')} ${lastDay}` : `${firstDay} ${t('to')} ${lastDay}`;
   }
 
-  // Not consecutive, list them all with special handling for Friday
+  // Not consecutive, list them all with special handling for Hebrew
   const daysPrefix = t('days');
   const formattedDays = sortedDays.map(day => {
-    if (day === 'friday') {
-      // For Friday with days prefix in Hebrew, use "שישי" instead of "ו"
-      if (daysPrefix && locale === 'he') {
-        return 'שישי';
+    // Hebrew: strip the "יום" prefix and use ordinals where available
+    if (locale === 'he') {
+      if (day === 'saturday' || day === 'holidays') {
+        return dayNames[day]?.he || day;
       }
-      return dayNames['friday'].short[locale as 'en' | 'he'] || dayNames['friday'].short.en;
+      const ordinal = hebrewOrdinals[day];
+      if (ordinal) {
+        return ordinal;
+      }
+      const heName = dayNames[day]?.he;
+      if (heName) {
+        return heName.replace(/^יום\s*/, '');
+      }
+      return day;
     }
+
     const dayInfo = dayNames[day];
     if (dayInfo) {
       return dayInfo[locale as 'en' | 'he'] || dayInfo.en || day;
@@ -464,6 +487,10 @@ export const formatDayRanges = (days: DayOfWeek[], locale: string = 'en'): strin
     return day;
   }).join(', ');
   
+  if (locale === 'he') {
+    // Prefix already contains trailing space for Hebrew
+    return daysPrefix ? `${daysPrefix}${formattedDays}` : formattedDays;
+  }
   return daysPrefix ? `${daysPrefix} ${formattedDays}` : formattedDays;
 };
 
