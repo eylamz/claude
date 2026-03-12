@@ -105,6 +105,8 @@ export default function EditGuidePage() {
   const params = useParams();
   const id = params.id as string;
 
+  const [guideId, setGuideId] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'en' | 'he'>('en');
@@ -162,6 +164,12 @@ export default function EditGuidePage() {
 
         const data = await response.json();
         const guide = data.guide;
+
+        // Store the canonical guide ID separately so API mutations always use it,
+        // regardless of whether the URL segment is an ID or a slug.
+        if (guide?.id) {
+          setGuideId(String(guide.id));
+        }
 
         // Migrate content blocks from old format to new format (separated by language)
         let contentBlocks: { en: ContentBlock[]; he: ContentBlock[] };
@@ -594,7 +602,7 @@ export default function EditGuidePage() {
           }),
       };
 
-      const response = await fetch(`/api/admin/guides/${id}`, {
+      const response = await fetch(`/api/admin/guides/${guideId || id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -704,7 +712,7 @@ export default function EditGuidePage() {
         status: submitData.status,
       });
 
-      const response = await fetch(`/api/admin/guides/${id}`, {
+      const response = await fetch(`/api/admin/guides/${guideId || id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submitData),

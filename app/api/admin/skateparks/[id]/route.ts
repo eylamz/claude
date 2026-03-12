@@ -23,11 +23,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-
-    // Validate ObjectId first (before checking circuit breaker)
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: 'Invalid skatepark ID' }, { status: 400 });
-    }
+    const isObjectId = mongoose.Types.ObjectId.isValid(id);
 
     // Check circuit breaker - if blocked, return early without database call
     if (isBlocked(ENDPOINT, id)) {
@@ -54,7 +50,12 @@ export async function GET(
       }
     }
 
-    const skatepark = await Skatepark.findById(id).lean();
+    // Allow lookup by MongoDB ObjectId or by slug.
+    // If the param is a valid ObjectId, use it as the document _id.
+    // Otherwise, treat the param as a slug.
+    const skatepark = isObjectId
+      ? await Skatepark.findById(id).lean()
+      : await Skatepark.findOne({ slug: id }).lean();
 
     if (!skatepark) {
       // Record 404 error

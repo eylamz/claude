@@ -1194,6 +1194,7 @@ export default function SkateparksPage() {
           ) : (
             skateparks.map((skatepark) => {
               const skateparkId = skatepark._id || skatepark.id || '';
+              const skateparkSlug = skatepark.slug;
               const isDeleting = deleting.has(skateparkId);
               return (
                 <TableRow 
@@ -1253,7 +1254,7 @@ export default function SkateparksPage() {
                   <TableCell className="hidden md:table-cell">
                     <div>
                       <button
-                        onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkId}`)}
+                        onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkSlug}`)}
                         className="text-sm font-medium text-brand-main dark:text-brand-dark hover:underline"
                       >
                         {skatepark.name.en}
@@ -1263,7 +1264,7 @@ export default function SkateparksPage() {
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-sm text-text dark:text-text-dark">
                     <button
-                      onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkId}`)}
+                      onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkSlug}`)}
                       className="text-brand-text dark:text-brand-dark underline dark:no-underline hover:font-medium dark:hover:underline"
                     >
                       {skatepark.slug}
@@ -1302,7 +1303,7 @@ export default function SkateparksPage() {
                         <DropdownMenuItem onClick={() => window.open(`/${locale}/skateparks/${skatepark.slug}`, '_blank')}>
                           {t('admin.table.view') || 'View'}
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkId}`)}>
+                        <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/skateparks/${skateparkSlug}`)}>
                           {t('admin.table.edit')}
                         </DropdownMenuItem>
                         <DropdownMenuItem 

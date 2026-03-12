@@ -20,11 +20,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-
-    // Validate ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: 'Invalid event ID' }, { status: 400 });
-    }
+    const isObjectId = mongoose.Types.ObjectId.isValid(id);
 
     // Verify authentication
     const session = await getServerSession(authOptions);
@@ -40,7 +36,12 @@ export async function GET(
 
     await connectDB();
 
-    const event = await Event.findById(id).lean() as EventLean | null;
+    // Allow lookup by MongoDB ObjectId or by slug.
+    // If the param is a valid ObjectId, use it as the document _id.
+    // Otherwise, treat the param as a slug.
+    const event = (isObjectId
+      ? await Event.findById(id).lean()
+      : await Event.findOne({ slug: id }).lean()) as EventLean | null;
 
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });

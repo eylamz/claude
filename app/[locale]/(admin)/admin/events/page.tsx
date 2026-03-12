@@ -761,7 +761,7 @@ export default function EventsPage() {
                 <TableCell>
                   <div>
                     <button
-                      onClick={() => router.push(`/${locale}/admin/events/${event.id}/edit`)}
+                      onClick={() => router.push(`/${locale}/admin/events/${event.slug}/edit`)}
                       className="text-sm font-medium text-brand-text dark:text-brand-dark hover:underline"
                     >
                       {event.title.en}
@@ -769,7 +769,7 @@ export default function EventsPage() {
                     <div className="text-xs text-text-secondary dark:text-text-secondary-dark">{event.title.he}</div>
                     <button
                       type="button"
-                      onClick={() => router.push(`/${locale}/admin/events/${event.id}/signup-form`)}
+                      onClick={() => router.push(`/${locale}/admin/events/${event.slug}/signup-form`)}
                       className="text-xs text-purple dark:text-purple-dark hover:underline mt-0.5"
                     >
                       Signup form
@@ -905,7 +905,7 @@ export default function EventsPage() {
                               className="flex-1"
                               onClick={() => {
                                 setViewPopoverOpen(null);
-                                router.push(`/${locale}/admin/events/${event.id}/edit`);
+                                router.push(`/${locale}/admin/events/${event.slug}/edit`);
                               }}
                             >
                               Edit Event
@@ -917,7 +917,7 @@ export default function EventsPage() {
                               className="flex-1"
                               onClick={() => {
                                 setViewPopoverOpen(null);
-                                router.push(`/${locale}/admin/events/${event.id}/signup-form`);
+                                router.push(`/${locale}/admin/events/${event.slug}/signup-form`);
                               }}
                             >
                               Signup form
@@ -964,10 +964,10 @@ export default function EventsPage() {
                       <DropdownMenuItem onClick={() => window.open(`/${locale}/events/${event.slug}`, '_blank')}>
                         View
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/events/${event.id}/edit`)}>
+                      <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/events/${event.slug}/edit`)}>
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/events/${event.id}/signup-form`)}>
+                      <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/events/${event.slug}/signup-form`)}>
                         Signup form
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleToggleFeature(event.id)}>

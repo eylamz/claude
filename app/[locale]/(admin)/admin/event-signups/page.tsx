@@ -825,14 +825,14 @@ export default function EventSignupsPage() {
                       <div className="flex flex-col gap-0.5">
                         <button
                           type="button"
-                          onClick={() => router.push(`/${locale}/admin/events/${signup.eventId}/edit`)}
+                          onClick={() => router.push(`/${locale}/admin/events/${signup.eventSlug}/edit`)}
                           className="text-start text-sm font-medium text-brand-main dark:text-brand-dark hover:underline"
                         >
                           {getEventTitleForSignup(signup)}
                         </button>
                         <button
                           type="button"
-                          onClick={() => router.push(`/${locale}/admin/events/${signup.eventId}/signup-form`)}
+                          onClick={() => router.push(`/${locale}/admin/events/${signup.eventSlug}/signup-form`)}
                           className="text-start text-xs text-gray dark:text-gray-dark hover:underline"
                         >
                           {t('eventSignups.editSignupForm')}

@@ -964,8 +964,11 @@ export default function GuidesPage() {
               </TableCell>
             </TableRow>
           ) : (
-            guides.map((guide) => (
-              <TableRow key={guide.id}>
+            guides.map((guide) => {
+              const guideId = guide.id;
+              const guideSlug = guide.slug;
+              return (
+              <TableRow key={guideId}>
                 <TableCell className="whitespace-nowrap px-4 md:px-6 md:py-3">
                   <Checkbox
                     variant="brand"
@@ -1002,7 +1005,7 @@ export default function GuidesPage() {
                 <TableCell>
                   <div>
                     <button
-                      onClick={() => router.push(`/${locale}/admin/guides/${guide.id}/edit`)}
+                      onClick={() => router.push(`/${locale}/admin/guides/${guideSlug}/edit`)}
                       className="text-sm font-medium text-brand-main dark:text-brand-dark hover:underline"
                     >
                       {guide.title.en}
@@ -1165,7 +1168,7 @@ export default function GuidesPage() {
                               className="flex-1"
                               onClick={() => {
                                 setViewPopoverOpen(null);
-                                router.push(`/${locale}/admin/guides/${guide.id}/edit`);
+                                router.push(`/${locale}/admin/guides/${guideSlug}/edit`);
                               }}
                             >
                               Edit Guide
@@ -1212,7 +1215,7 @@ export default function GuidesPage() {
                       <DropdownMenuItem onClick={() => window.open(`/${locale}/guides/${guide.slug}`, '_blank')}>
                         View
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/guides/${guide.id}/edit`)}>
+                      <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/guides/${guideSlug}/edit`)}>
                         Edit
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleToggleFeature(guide.id)}>
@@ -1228,7 +1231,7 @@ export default function GuidesPage() {
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))
+            )})
           )}
         </TableBody>
       </Table>

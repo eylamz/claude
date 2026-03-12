@@ -133,9 +133,9 @@ export default function SkateparkDetailPage() {
       if (cachedData) {
         try {
           const parsedData = JSON.parse(cachedData);
-          // Find the skatepark by id (could be _id or id field)
+          // Find the skatepark by id or slug (could be _id, id, or slug field)
           skateparkData = parsedData.find((park: any) => 
-            park._id === id || park.id === id
+            park._id === id || park.id === id || park.slug === id
           );
           
           if (skateparkData) {
@@ -593,7 +593,7 @@ export default function SkateparkDetailPage() {
       console.log('Saving skatepark - closingYear:', skateparkToSave.closingYear, 'closingMonth:', skateparkToSave.closingMonth);
       console.log('Full skateparkToSave object:', JSON.stringify(skateparkToSave, null, 2));
       
-      const response = await fetch(`/api/admin/skateparks/${id}`, {
+      const response = await fetch(`/api/admin/skateparks/${skatepark.id || (skatepark as any)._id || id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(skateparkToSave, (_key, value) => {
@@ -625,7 +625,7 @@ export default function SkateparkDetailPage() {
 
     try {
       setSaving(true);
-      const response = await fetch(`/api/admin/skateparks/${id}`, {
+      const response = await fetch(`/api/admin/skateparks/${skatepark?.id || (skatepark as any)?._id || id}`, {
         method: 'DELETE',
       });
 

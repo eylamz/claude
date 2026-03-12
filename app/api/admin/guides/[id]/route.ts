@@ -14,11 +14,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-
-    // Validate ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: 'Invalid guide ID' }, { status: 400 });
-    }
+    const isObjectId = mongoose.Types.ObjectId.isValid(id);
 
     // Verify authentication
     const session = await getServerSession(authOptions);
@@ -34,7 +30,12 @@ export async function GET(
 
     await connectDB();
 
-    const guide = await Guide.findById(id).lean();
+    // Allow lookup by MongoDB ObjectId or by slug.
+    // If the param is a valid ObjectId, use it as the document _id.
+    // Otherwise, treat the param as a slug.
+    const guide = isObjectId
+      ? await Guide.findById(id).lean()
+      : await Guide.findOne({ slug: id }).lean();
 
     if (!guide) {
       return NextResponse.json({ error: 'Guide not found' }, { status: 404 });
