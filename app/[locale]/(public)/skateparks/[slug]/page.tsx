@@ -50,7 +50,6 @@ interface OperatingHours {
 }
 
 interface Amenities {
-  entryFee: boolean;
   parking: boolean;
   shade: boolean;
   bathroom: boolean;
@@ -60,9 +59,26 @@ interface Amenities {
   bombShelter: boolean;
   scootersAllowed: boolean;
   bikesAllowed: boolean;
-  noWax: boolean;
   nearbyRestaurants: boolean;
+  noWax: boolean;
+  entryFee: boolean;
 }
+
+// Controls the display order of amenities in the amenities grid
+const AMENITIES_ORDER: (keyof Amenities)[] = [
+  'parking',
+  'shade',
+  'seating',
+  'bathroom',
+  'helmetRequired',
+  'guard',
+  'scootersAllowed',
+  'bikesAllowed',
+  'bombShelter',
+  'nearbyRestaurants',
+  'entryFee',
+  'noWax',
+];
 
 interface Review {
   _id: string;
@@ -146,8 +162,8 @@ const AMENITY_ICONS: Record<string, string> = {
   nearbyRestaurants: 'foodBold',
   scootersAllowed: 'scooter',
   bikesAllowed: 'bmx-icon', // Using parking as placeholder
-  entryFee: 'moneyBold',
   helmetRequired: 'helmet',
+  entryFee: 'moneyBold',
   bombShelter: 'safe-house',
   noWax: 'Wax', // Note: Wax icon exists, we'll show it crossed out for noWax
 };
@@ -2099,12 +2115,13 @@ export default function SkateparkPage() {
 
               {/* Amenities grid */}
               <div className="grid grid-cols-4 gap-1.5">
-                {Object.entries(skatepark.amenities).map(([key, value]) => {
+                {AMENITIES_ORDER.map((key) => {
+                  const value = skatepark.amenities?.[key];
                   const isAvailable = Boolean(value);
                   const isParkClosed = Boolean(skatepark.closingYear);
                   const iconName = AMENITY_ICONS[key as keyof typeof AMENITY_ICONS];
-                  
-                  if (!iconName) return null;
+
+                  if (!iconName || value === undefined) return null;
 
                   return (
                     <div key={key} className="w-full">

@@ -47,6 +47,7 @@ interface MetricsData {
   pageViewsByDay?: Array<{ date: string; count: number }>;
   visitorTypeBreakdown?: Array<{ visitorType: string; count: number }>;
   visitorTypeFilter?: 'all' | 'user' | 'crawler' | 'bot' | 'other';
+  skateparkVisitsBySession?: Array<{ slug: string; count: number }>;
 }
 
 const DEVICE_COLORS = ['#3caa41', '#1d4ed8', '#e49a43', '#8B5CF6', '#EC4899'];
@@ -228,6 +229,7 @@ export default function AdminMetricsPage() {
   const [updatingHidden, setUpdatingHidden] = useState<string | null>(null);
   const [openGraph, setOpenGraph] = useState<'sessions' | 'pageViews' | null>(null);
   const [showNavigationPatterns, setShowNavigationPatterns] = useState(false);
+  const [showSkateparkVisits, setShowSkateparkVisits] = useState(false);
 
   const hiddenSet = useMemo(
     () =>
@@ -531,6 +533,23 @@ export default function AdminMetricsPage() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('metrics.perSession')}</p>
               </CardContent>
             </Card>
+            <Card className="bg-card dark:bg-card-dark">
+              <CardContent className="p-4">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('metrics.skateparkVisitsTitle')}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  {(data?.skateparkVisitsBySession ?? []).reduce((s, p) => s + p.count, 0)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t('metrics.skateparkVisitsSubtitle')}</p>
+                <Button
+                  variant={showSkateparkVisits ? 'red' : 'purple'}
+                  size="sm"
+                  className="mt-2 w-full"
+                  onClick={() => setShowSkateparkVisits((v) => !v)}
+                >
+                  {showSkateparkVisits ? t('metrics.hideGraph') : t('metrics.skateparkVisitsViewGraph')}
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Sessions per day graph (opened by button in Total sessions card) */}
@@ -608,6 +627,36 @@ export default function AdminMetricsPage() {
                   </ResponsiveContainer>
                 ) : (
                   <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noDataYet')}</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Skatepark visits by session (unique session per park; opened by button in Skatepark visits card) */}
+          {showSkateparkVisits && (
+            <Card className="bg-card dark:bg-card-dark">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="text-gray-900 dark:text-white">{t('metrics.skateparkVisitsBySessionTitle')}</CardTitle>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('metrics.skateparkVisitsBySessionDescription')}</p>
+                </div>
+                <Button variant="gray" size="sm" onClick={() => setShowSkateparkVisits(false)}>
+                  {t('metrics.close')}
+                </Button>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                {data?.skateparkVisitsBySession?.length ? (
+                  <ResponsiveContainer width="100%" height={Math.max(300, Math.min(500, (data.skateparkVisitsBySession.length ?? 0) * 28))}>
+                    <BarChart data={data.skateparkVisitsBySession.slice(0, 25)} layout="vertical" margin={{ left: 20, right: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border dark:stroke-border-dark" />
+                      <XAxis type="number" tick={{ fill: 'currentColor', fontSize: 12 }} />
+                      <YAxis type="category" dataKey="slug" width={140} tick={{ fill: 'currentColor', fontSize: 11 }} tickFormatter={(v) => (v && v.length > 28 ? v.slice(0, 26) + '…' : v)} />
+                      <Tooltip content={<BarChartTooltip labelKey="slug" valueLabel={t('metrics.skateparkVisitsLabel')} />} />
+                      <Bar dataKey="count" fill="#8B5CF6" radius={[0, 4, 4, 0]} name={t('metrics.skateparkVisitsLabel')} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{t('metrics.noSkateparkVisitsData')}</p>
                 )}
               </CardContent>
             </Card>

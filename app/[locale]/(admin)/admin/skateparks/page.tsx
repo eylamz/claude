@@ -1228,7 +1228,7 @@ export default function SkateparksPage() {
                             <img
                               src={imageUrl}
                               alt={skatepark.name.en}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover saturate-150"
                               onError={(e) => {
                                 // Prevent infinite loop by hiding the image on error
                                 const img = e.target as HTMLImageElement;

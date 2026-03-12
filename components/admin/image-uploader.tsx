@@ -41,14 +41,17 @@ function getUploadConfig(folder: string): {
   return { uploadPreset: defaultPreset, sendFolderInRequest: true, publicIdPrefix: '' };
 }
 
+const DEFAULT_MAX_SIZE_BYTES = 5 * 1024 * 1024;
+
 interface ImageUploaderProps {
   images: ImageData[];
   onUpload: (images: ImageData[]) => void;
   maxImages?: number;
   folder: string;
+  maxFileSizeBytes?: number;
 }
 
-export function ImageUploader({ images, onUpload, maxImages = 10, folder }: ImageUploaderProps) {
+export function ImageUploader({ images, onUpload, maxImages = 10, folder, maxFileSizeBytes }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [dragActive, setDragActive] = useState(false);
@@ -57,10 +60,11 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
   const dragCounter = useRef(0);
 
   const validateFile = (file: File): string | null => {
-    // Strict size limit (5MB) to reduce abuse risk when using unsigned preset fallback
-    const MAX_SIZE_BYTES = 5 * 1024 * 1024;
-    if (file.size > MAX_SIZE_BYTES) {
-      return `File size exceeds ${MAX_SIZE_BYTES / (1024 * 1024)}MB limit`;
+    // Strict size limit (default 5MB) to reduce abuse risk when using unsigned preset fallback.
+    // Can be overridden per-usage via maxFileSizeBytes (e.g. 1MB for OG images).
+    const limitBytes = maxFileSizeBytes ?? DEFAULT_MAX_SIZE_BYTES;
+    if (file.size > limitBytes) {
+      return `File size exceeds ${Math.round((limitBytes / (1024 * 1024)) * 10) / 10}MB limit`;
     }
 
     // Image types only (no raw, video, or other)
@@ -418,7 +422,11 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder }: Imag
               {uploading ? 'Uploading...' : 'Drop images here or click to upload'}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              PNG, JPG, WebP up to 5MB each • Max {maxImages} images
+              {(() => {
+                const limitBytes = maxFileSizeBytes ?? DEFAULT_MAX_SIZE_BYTES;
+                const mb = Math.round((limitBytes / (1024 * 1024)) * 10) / 10;
+                return `PNG, JPG, WebP up to ${mb}MB each • Max ${maxImages} images`;
+              })()}
             </p>
           </div>
         </div>

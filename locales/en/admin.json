@@ -151,7 +151,14 @@
       "crawler": "Crawler",
       "bot": "Bot",
       "other": "Other"
-    }
+    },
+    "skateparkVisitsTitle": "Skatepark visits",
+    "skateparkVisitsSubtitle": "Unique sessions (per park)",
+    "skateparkVisitsViewGraph": "View graph",
+    "skateparkVisitsBySessionTitle": "Skatepark visits by session",
+    "skateparkVisitsBySessionDescription": "Number of unique sessions that viewed each skatepark page (same user visiting the same park twice in one session counts once).",
+    "skateparkVisitsLabel": "Sessions",
+    "noSkateparkVisitsData": "No skatepark visit data yet."
   },
   "eventSignups": {
     "title": "Event Signups",

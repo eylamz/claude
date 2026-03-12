@@ -151,7 +151,14 @@
       "crawler": "קרולר",
       "bot": "בוט",
       "other": "אחר"
-    }
+    },
+    "skateparkVisitsTitle": "ביקורים בסקייטפארקים",
+    "skateparkVisitsSubtitle": "סשנים ייחודיים (לפארק)",
+    "skateparkVisitsViewGraph": "הצג גרף",
+    "skateparkVisitsBySessionTitle": "ביקורים בסקייטפארקים לפי סשן",
+    "skateparkVisitsBySessionDescription": "מספר סשנים ייחודיים שצפו בדף כל סקייטפארק (משתמש שביקר באותו פארק פעמיים באותו סשן נספר פעם אחת).",
+    "skateparkVisitsLabel": "סשנים",
+    "noSkateparkVisitsData": "אין עדיין נתוני ביקורים בסקייטפארקים."
   },
   "eventSignups": {
     "title": "הרשמות לאירועים",

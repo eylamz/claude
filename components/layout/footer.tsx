@@ -313,11 +313,18 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-border dark:border-border-dark flex flex-col sm:flex-row justify-between items-center gap-6">
-          <p className="text-xs text-gray-600 dark:text-gray-400">
+          <p className="text-xs text-gray-600 dark:text-gray-400 order-2 sm:order-1">
             {locale === 'he' ? (
               <>© {currentYear} אנבוס. כל הזכויות שמורות.</>
             ) : (
               <>© {currentYear} ENBOSS. All rights reserved.</>
+            )}
+          </p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5 order-1 sm:order-2">
+            {locale === 'he' ? (
+              <>נוצר עם <Icon name="heartBold" className="w-3.5 h-3.5 mt-[1px] text-red dark:text-red-dark" aria-hidden /> עבור הקהילה.</>
+            ) : (
+              <>Made with <Icon name="heartBold" className="w-3.5 h-3.5 mt-[-1px] text-red dark:text-red-dark" aria-hidden /> for the community.</>
             )}
           </p>
         </div>

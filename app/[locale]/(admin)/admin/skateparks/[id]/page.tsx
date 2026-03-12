@@ -111,6 +111,7 @@ export default function SkateparkDetailPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showImageEditor, setShowImageEditor] = useState(false);
+  const [showOgImageUploader, setShowOgImageUploader] = useState(false);
   const [keywordInputEn, setKeywordInputEn] = useState('');
   const [keywordInputHe, setKeywordInputHe] = useState('');
   const [newImageUrl, setNewImageUrl] = useState('');
@@ -904,14 +905,63 @@ export default function SkateparkDetailPage() {
       {/* Images */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <CardTitle>Images</CardTitle>
-            <Button
-              variant="gray"
-              onClick={() => setShowImageEditor(!showImageEditor)}
-            >
-              {showImageEditor ? 'Hide Image Editor' : 'Edit Images'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="gray"
+                onClick={() => setShowImageEditor(!showImageEditor)}
+              >
+                {showImageEditor ? 'Hide Image Editor' : 'Edit Images'}
+              </Button>
+              <Button
+                type="button"
+                variant="purple"
+                onClick={async () => {
+                  const mainImage =
+                    skatepark.images?.find((img) => img.isFeatured) ||
+                    skatepark.images?.[0];
+                  const url = mainImage?.url;
+                  if (!url) return;
+
+                  const cleanUrl = url.split('?')[0];
+                  const extMatch = cleanUrl.match(/\.([a-zA-Z0-9]+)$/);
+                  const ext = extMatch ? `.${extMatch[1]}` : '.jpg';
+                  const baseName =
+                    skatepark.slug ||
+                    skatepark.name.en ||
+                    skatepark.name.he ||
+                    'skatepark';
+                  const filename = `${baseName}${ext}`;
+
+                  try {
+                    const res = await fetch(url, { mode: 'cors' });
+                    if (!res.ok) throw new Error('Fetch failed');
+                    const blob = await res.blob();
+                    const blobUrl = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(blobUrl);
+                  } catch {
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    link.target = '_blank';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }
+                }}
+                disabled={!skatepark.images || skatepark.images.length === 0}
+                title="Download the main (featured) image"
+              >
+                Download main image
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -1685,20 +1735,81 @@ export default function SkateparkDetailPage() {
               />
             </div>
           </div>
-          <Input
-            label="OG Image URL"
-            value={skatepark.seoMetadata?.ogImage || ''}
-            onChange={(e) =>
-              setSkatepark({
-                ...skatepark,
-                seoMetadata: {
-                  ...skatepark.seoMetadata,
-                  ogImage: e.target.value,
-                },
-              })
-            }
-            placeholder="https://example.com/image.jpg or /images/og-image.jpg"
-          />
+          <div className="space-y-2">
+            <Input
+              label="OG Image URL"
+              value={skatepark.seoMetadata?.ogImage || ''}
+              onChange={(e) =>
+                setSkatepark({
+                  ...skatepark,
+                  seoMetadata: {
+                    ...skatepark.seoMetadata,
+                    ogImage: e.target.value,
+                  },
+                })
+              }
+              placeholder="https://example.com/image.jpg or /images/og-image.jpg"
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="gray"
+                size="sm"
+                onClick={() => {
+                  const current = skatepark.seoMetadata?.ogImage?.trim() || '';
+                  if (!current) return;
+                  const separator = current.includes('?') ? '&' : '?';
+                  const newUrl = `${current}${separator}v=${Date.now()}`;
+                  setSkatepark({
+                    ...skatepark,
+                    seoMetadata: {
+                      ...skatepark.seoMetadata,
+                      ogImage: newUrl,
+                    },
+                  });
+                }}
+                title="Add version parameter to bypass cache"
+              >
+                Add version
+              </Button>
+              <Button
+                type="button"
+                variant="gray"
+                size="sm"
+                onClick={() => setShowOgImageUploader((v) => !v)}
+                title="Upload an image and use its URL as OG image"
+              >
+                {showOgImageUploader ? 'Hide image uploader' : 'Upload OG image'}
+              </Button>
+            </div>
+            {showOgImageUploader && (
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                <p className="text-sm text-text-secondary dark:text-text-secondary-dark mb-3">
+                  Upload an image; its URL will be set as the OG Image URL above.
+                </p>
+                <ImageUploader
+                  images={
+                    skatepark.seoMetadata?.ogImage
+                      ? [{ url: skatepark.seoMetadata.ogImage, publicId: 'og-image', alt: 'OG' }]
+                      : []
+                  }
+                  onUpload={(uploadedImages) => {
+                    const url = uploadedImages[0]?.url ?? '';
+                    setSkatepark({
+                      ...skatepark,
+                      seoMetadata: {
+                        ...skatepark.seoMetadata,
+                        ogImage: url,
+                      },
+                    });
+                  }}
+                  maxImages={1}
+                  folder="skateparks"
+                  maxFileSizeBytes={1024 * 1024}
+                />
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 

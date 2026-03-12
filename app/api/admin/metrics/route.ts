@@ -142,6 +142,7 @@ export async function GET(request: NextRequest) {
       pageViewsByDayRaw,
       navigationPatternsRaw,
       visitorTypeBreakdownRaw,
+      skateparkVisitsBySessionRaw,
     ] = await Promise.all([
       AnalyticsEvent.aggregate<{ _id: string; count: number }>([
         { $match: matchPageView },
@@ -348,6 +349,26 @@ export async function GET(request: NextRequest) {
         { $sort: { count: -1 } },
         { $project: { visitorType: '$_id', count: 1, _id: 0 } },
       ]),
+      // Skatepark visits by session (unique sessionId + slug per skatepark detail page)
+      AnalyticsEvent.aggregate<{ slug: string; count: number }>([
+        {
+          $match: {
+            ...matchPageViewWithSession,
+            path: { $regex: /\/skateparks\/[^/]+$/ },
+          },
+        },
+        {
+          $addFields: {
+            slug: { $arrayElemAt: [{ $split: ['$path', '/'] }, -1] },
+          },
+        },
+        { $match: { slug: { $exists: true, $ne: '' } } },
+        { $group: { _id: { sessionId: '$sessionId', slug: '$slug' } } },
+        { $group: { _id: '$_id.slug', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 50 },
+        { $project: { slug: '$_id', count: 1, _id: 0 } },
+      ]),
     ]);
 
     const sessionsSummary = sessionDurations[0]
@@ -431,6 +452,8 @@ export async function GET(request: NextRequest) {
       count: r.count ?? 0,
     }));
 
+    const skateparkVisitsBySession = skateparkVisitsBySessionRaw ?? [];
+
     return NextResponse.json({
       enabled: ENABLE_ANALYTICS,
       ...(ENABLE_ANALYTICS ? {} : { message: 'Analytics is disabled. Set NEXT_PUBLIC_ENABLE_ANALYTICS=true in .env.local.' }),
@@ -454,6 +477,7 @@ export async function GET(request: NextRequest) {
       navigationPatterns,
       visitorTypeBreakdown,
       visitorTypeFilter: visitorTypeFilter,
+      skateparkVisitsBySession,
     });
   } catch (error) {
     console.error('[admin/metrics]', error);
