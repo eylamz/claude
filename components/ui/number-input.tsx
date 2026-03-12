@@ -4,10 +4,11 @@ import { cn } from "@/lib/utils";
 export interface NumberInputProps
   extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
   error?: string;
+  precision?: number;
 }
 
 const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
-  ({ className, error, min = 1, max = Infinity, step = 1, value, onChange, ...props }, ref) => {
+  ({ className, error, precision, min = 1, max = Infinity, step = 1, value, onChange, ...props }, ref) => {
     const inputRef = React.useRef<HTMLInputElement>(null);
     
     React.useImperativeHandle(ref, () => inputRef.current!);
@@ -21,7 +22,11 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
     const stepValue = Number(step);
 
     const updateValue = (newValue: number) => {
-      const clampedValue = Math.max(minValue, Math.min(newValue, maxValue));
+      const adjustedValue =
+        typeof precision === 'number'
+          ? Number(newValue.toFixed(precision))
+          : newValue;
+      const clampedValue = Math.max(minValue, Math.min(adjustedValue, maxValue));
       setInternalValue(clampedValue);
 
       if (onChange) {

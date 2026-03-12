@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Skeleton } from '@/components/ui';
+import { NumberInput } from '@/components/ui/number-input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ImageUploader } from '@/components/admin/image-uploader';
 import { Toaster } from '@/components/ui/toaster';
@@ -1819,19 +1820,20 @@ export default function SkateparkDetailPage() {
           <CardTitle>Quality Rating</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex gap-4">
             <div>
               <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
                 Element Diversity (1-5)
               </label>
-              <Input
-                type="number"
-                min="1"
-                max="5"
-                step="0.1"
-                value={skatepark.qualityRating?.elementDiversity || ''}
-                onChange={(e) => {
-                  const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+              <NumberInput
+                min={1}
+                max={5}
+                step={0.1}
+                precision={1}
+                value={skatepark.qualityRating?.elementDiversity ?? ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const raw = e.target.value;
+                  const value = raw === '' ? undefined : parseFloat(raw);
                   if (value === undefined || (!isNaN(value) && value >= 1 && value <= 5)) {
                     setSkatepark({
                       ...skatepark,
@@ -1842,21 +1844,22 @@ export default function SkateparkDetailPage() {
                     });
                   }
                 }}
-                placeholder="1.0-5.0"
+                className="w-24"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
                 Cleanliness (1-5)
               </label>
-              <Input
-                type="number"
-                min="1"
-                max="5"
-                step="0.1"
-                value={skatepark.qualityRating?.cleanliness || ''}
-                onChange={(e) => {
-                  const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+              <NumberInput
+                min={1}
+                max={5}
+                step={0.1}
+                precision={1}
+                value={skatepark.qualityRating?.cleanliness ?? ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const raw = e.target.value;
+                  const value = raw === '' ? undefined : parseFloat(raw);
                   if (value === undefined || (!isNaN(value) && value >= 1 && value <= 5)) {
                     setSkatepark({
                       ...skatepark,
@@ -1867,21 +1870,22 @@ export default function SkateparkDetailPage() {
                     });
                   }
                 }}
-                placeholder="1.0-5.0"
+                className="w-24"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-text dark:text-text-dark mb-2">
                 Maintenance (1-5)
               </label>
-              <Input
-                type="number"
-                min="1"
-                max="5"
-                step="0.1"
-                value={skatepark.qualityRating?.maintenance || ''}
-                onChange={(e) => {
-                  const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
+              <NumberInput
+                min={1}
+                max={5}
+                step={0.1}
+                precision={1}
+                value={skatepark.qualityRating?.maintenance ?? ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const raw = e.target.value;
+                  const value = raw === '' ? undefined : parseFloat(raw);
                   if (value === undefined || (!isNaN(value) && value >= 1 && value <= 5)) {
                     setSkatepark({
                       ...skatepark,
@@ -1892,7 +1896,7 @@ export default function SkateparkDetailPage() {
                     });
                   }
                 }}
-                placeholder="1.0-5.0"
+                className="w-24"
               />
             </div>
           </div>
@@ -1930,7 +1934,7 @@ export default function SkateparkDetailPage() {
         <Button variant="red" onClick={handleDelete} disabled={saving}>
           Delete
         </Button>
-        <Button variant="green" onClick={handleSave} disabled={saving}>
+        <Button variant="primary" onClick={handleSave} disabled={saving}>
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { Button, Card, CardContent, SelectWrapper, Skeleton, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui';
+import { Button, Card, CardContent, SelectWrapper, Skeleton, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, SegmentedControls } from '@/components/ui';
 import { SearchInput } from '@/components/common/SearchInput';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -177,6 +177,18 @@ const SkillLevelTooltip = ({ active, payload, t }: any) => {
   );
 };
 
+interface SkateparkSeoMetadata {
+  ogImage?: string;
+  description?: {
+    en?: string;
+    he?: string;
+  };
+  keywords?: {
+    en?: string[] | string;
+    he?: string[] | string;
+  };
+}
+
 interface Skatepark {
   _id?: string;
   id?: string;
@@ -205,6 +217,7 @@ interface Skatepark {
     type: 'Point';
     coordinates: [number, number]; // [longitude, latitude]
   };
+  seoMetadata?: SkateparkSeoMetadata;
   rating: number;
   totalReviews: number;
 }
@@ -260,6 +273,8 @@ export default function SkateparksPage() {
   
   // Refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
+  // Row highlighting mode: '', 'og', 'keywords', or 'description'
+  const [highlightMode, setHighlightMode] = useState<'' | 'og' | 'keywords' | 'description'>('');
   
   // Refs to prevent duplicate API calls
   const isFetchingRef = useRef(false);
@@ -1045,7 +1060,7 @@ export default function SkateparksPage() {
       </Card>
 
       {/* Filters */}
-      <Card className="!p-0 bg-card dark:bg-card-dark">
+      <Card className="!p-0 bg-card dark:bg-card-dark overflow-visible">
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-4">
             <div className="flex-1 min-w-64">
@@ -1085,6 +1100,7 @@ export default function SkateparksPage() {
             <div className="">
               <SelectWrapper
                 value={amenities}
+                variant="blue"
                 onChange={(e) => setAmenities(e.target.value)}
                 options={[
                   { value: '', label: t('admin.allAmenities') },
@@ -1101,6 +1117,29 @@ export default function SkateparksPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Row highlight toggle (OG / Keywords / Description) */}
+      <div className="flex justify-end">
+        <SegmentedControls
+          value={highlightMode || 'none'}
+          onValueChange={(value) => {
+            // Allow turning a mode off by clicking it again
+            if (value === highlightMode) {
+              setHighlightMode('');
+            } else if (value === 'og' || value === 'keywords' || value === 'description') {
+              setHighlightMode(value);
+            } else {
+              setHighlightMode('');
+            }
+          }}
+          options={[
+            { value: 'none', label: 'None', variant: 'gray' },
+            { value: 'og', label: 'OG:img', variant: 'orange' },
+            { value: 'keywords', label: 'Keywords', variant: 'blue' },
+            { value: 'description', label: 'Description', variant: 'purple' },
+          ]}
+        />
+      </div>
 
       {/* Bulk Actions */}
       {selectedItems.size > 0 && (
@@ -1196,10 +1235,40 @@ export default function SkateparksPage() {
               const skateparkId = skatepark._id || skatepark.id || '';
               const skateparkSlug = skatepark.slug;
               const isDeleting = deleting.has(skateparkId);
+              const hasOgImage =
+                !!(skatepark.seoMetadata && skatepark.seoMetadata.ogImage && skatepark.seoMetadata.ogImage.trim().length > 0);
+              const hasFullSeoDescription =
+                !!(
+                  skatepark.seoMetadata &&
+                  skatepark.seoMetadata.description &&
+                  skatepark.seoMetadata.description.en?.trim() &&
+                  skatepark.seoMetadata.description.he?.trim()
+                );
+              const hasFullSeoKeywords = (() => {
+                if (!skatepark.seoMetadata || !skatepark.seoMetadata.keywords) return false;
+                const kw = skatepark.seoMetadata.keywords;
+                const enArray =
+                  Array.isArray(kw.en) ? kw.en : (kw.en ? String(kw.en).split(',').map((k) => k.trim()).filter(Boolean) : []);
+                const heArray =
+                  Array.isArray(kw.he) ? kw.he : (kw.he ? String(kw.he).split(',').map((k) => k.trim()).filter(Boolean) : []);
+                return enArray.length > 0 && heArray.length > 0;
+              })();
               return (
                 <TableRow 
                   key={skateparkId} 
-                  className={isDeleting ? 'opacity-50' : ''}
+                  className={`${isDeleting ? 'opacity-50' : ''} ${
+                    highlightMode === 'og' && hasOgImage
+                      ? 'bg-orange-bg dark:bg-orange-bg-dark'
+                      : ''
+                  } ${
+                    highlightMode === 'description' && hasFullSeoDescription
+                      ? 'bg-purple-bg dark:bg-purple-bg-dark'
+                      : ''
+                  } ${
+                    highlightMode === 'keywords' && hasFullSeoKeywords
+                      ? 'bg-blue-bg dark:bg-blue-bg-dark'
+                      : ''
+                  }`}
                 >
                   <TableCell className="whitespace-nowrap px-2 md:py-3">
                     {!isDeleting ? (
