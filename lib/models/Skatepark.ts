@@ -149,6 +149,12 @@ export interface ISkatepark extends Document {
   notes: ILocalizedStringArray;
   nicknames?: ILocalizedStringArray;
   isFeatured: boolean;
+  pioneerId?: mongoose.Types.ObjectId;
+  pioneerUsername?: string;
+  pioneerPhoto?: string;
+  currentKingUserId?: mongoose.Types.ObjectId;
+  currentKingUsername?: string;
+  currentKingPhoto?: string;
   mediaLinks: IMediaLinks;
   rating: number;
   totalReviews: number;
@@ -482,6 +488,30 @@ const SkateparkSchema: Schema<ISkatepark> = new Schema<ISkatepark>(
       type: Boolean,
       default: false,
       index: true,
+    },
+    pioneerId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    pioneerUsername: {
+      type: String,
+      trim: true,
+    },
+    pioneerPhoto: {
+      type: String,
+      trim: true,
+    },
+    currentKingUserId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    currentKingUsername: {
+      type: String,
+      trim: true,
+    },
+    currentKingPhoto: {
+      type: String,
+      trim: true,
     },
     status: {
       type: String,

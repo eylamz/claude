@@ -22,6 +22,7 @@ export interface IFormSubmissionAnswer {
  * FormSubmission interface extending Mongoose Document
  */
 export interface IFormSubmission extends Document {
+  userId?: mongoose.Types.ObjectId;
   formId: mongoose.Types.ObjectId;
   formSlug: string;
   answers: IFormSubmissionAnswer[];
@@ -77,6 +78,12 @@ const FormSubmissionAnswerSchema = new Schema<IFormSubmissionAnswer>(
  */
 const FormSubmissionSchema: Schema<IFormSubmission> = new Schema<IFormSubmission>(
   {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      index: true,
+      sparse: true,
+    },
     formId: {
       type: Schema.Types.ObjectId,
       ref: 'Form',

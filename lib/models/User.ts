@@ -30,6 +30,38 @@ export interface IUserPreferences {
 export type UserRole = 'user' | 'editor' | 'admin';
 
 /**
+ * User streak stats interface
+ */
+export interface IUserStreak {
+  currentWeeklyStreak: number;
+  longestWeeklyStreak: number;
+  currentMonthlyStreak: number;
+  longestMonthlyStreak: number;
+  lastActiveWeek: string;
+  lastActiveMonth: string;
+  weeklyHoursThisWeek: number;
+  monthlyHoursThisMonth: number;
+}
+
+/**
+ * User aggregated stats interface
+ */
+export interface IUserStats {
+  skateparksVisited: number;
+  totalCheckinHours: number;
+  guidesCompleted: number;
+  quizzesPassed: number;
+  eventsAttended: number;
+  reviewsWritten: number;
+  surveysCompleted: number;
+  kudosReceived: number;
+  kudosGiven: number;
+  challengesCompleted: number;
+  pioneerParks: number;
+  crownedKingCount: number;
+}
+
+/**
  * User interface extending Mongoose Document
  */
 export interface IUser extends Document {
@@ -37,9 +69,14 @@ export interface IUser extends Document {
   password: string;
   fullName: string;
   role: UserRole;
+  username?: string;
+  bio?: string;
+  profilePhoto?: string;
   addresses: IAddress[];
   preferences: IUserPreferences;
   wishlist: mongoose.Types.ObjectId[];
+  relatedSports: string[];
+  city?: string;
   resetToken?: string;
   resetTokenExpiry?: Date;
   resetTokenUsed?: boolean;
@@ -49,6 +86,16 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt?: Date;
+  totalXP: number;
+  levelId: number;
+  currentRank: number;
+  currentSeasonXP: number;
+  currentSeasonRank: number;
+  streak: IUserStreak;
+  crewId?: mongoose.Types.ObjectId | null;
+  badges: string[];
+  stats: IUserStats;
+  pioneerParkIds: mongoose.Types.ObjectId[];
   
   // Instance methods
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -91,6 +138,22 @@ const UserSchema: Schema<IUser> = new Schema<IUser>(
       default: '',
       trim: true,
       maxlength: [100, 'Full name cannot exceed 100 characters'],
+    },
+    username: {
+      type: String,
+      trim: true,
+      maxlength: [30, 'Username cannot exceed 30 characters'],
+      unique: true,
+      sparse: true,
+    },
+    bio: {
+      type: String,
+      trim: true,
+      maxlength: [300, 'Bio cannot exceed 300 characters'],
+    },
+    profilePhoto: {
+      type: String,
+      trim: true,
     },
     role: {
       type: String,
@@ -161,6 +224,14 @@ const UserSchema: Schema<IUser> = new Schema<IUser>(
         ref: 'Product',
       },
     ],
+    relatedSports: {
+      type: [String],
+      default: [],
+    },
+    city: {
+      type: String,
+      trim: true,
+    },
     resetToken: {
       type: String,
       select: false,
@@ -189,6 +260,124 @@ const UserSchema: Schema<IUser> = new Schema<IUser>(
     },
     lastLoginAt: {
       type: Date,
+    },
+    totalXP: {
+      type: Number,
+      default: 0,
+    },
+    levelId: {
+      type: Number,
+      default: 1,
+    },
+    currentRank: {
+      type: Number,
+      default: 0,
+    },
+    currentSeasonXP: {
+      type: Number,
+      default: 0,
+    },
+    currentSeasonRank: {
+      type: Number,
+      default: 0,
+    },
+    streak: {
+      currentWeeklyStreak: {
+        type: Number,
+        default: 0,
+      },
+      longestWeeklyStreak: {
+        type: Number,
+        default: 0,
+      },
+      currentMonthlyStreak: {
+        type: Number,
+        default: 0,
+      },
+      longestMonthlyStreak: {
+        type: Number,
+        default: 0,
+      },
+      lastActiveWeek: {
+        type: String,
+        default: '',
+      },
+      lastActiveMonth: {
+        type: String,
+        default: '',
+      },
+      weeklyHoursThisWeek: {
+        type: Number,
+        default: 0,
+      },
+      monthlyHoursThisMonth: {
+        type: Number,
+        default: 0,
+      },
+    },
+    crewId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Crew',
+      required: false,
+    },
+    badges: {
+      type: [String],
+      default: [],
+    },
+    stats: {
+      skateparksVisited: {
+        type: Number,
+        default: 0,
+      },
+      totalCheckinHours: {
+        type: Number,
+        default: 0,
+      },
+      guidesCompleted: {
+        type: Number,
+        default: 0,
+      },
+      quizzesPassed: {
+        type: Number,
+        default: 0,
+      },
+      eventsAttended: {
+        type: Number,
+        default: 0,
+      },
+      reviewsWritten: {
+        type: Number,
+        default: 0,
+      },
+      surveysCompleted: {
+        type: Number,
+        default: 0,
+      },
+      kudosReceived: {
+        type: Number,
+        default: 0,
+      },
+      kudosGiven: {
+        type: Number,
+        default: 0,
+      },
+      challengesCompleted: {
+        type: Number,
+        default: 0,
+      },
+      pioneerParks: {
+        type: Number,
+        default: 0,
+      },
+      crownedKingCount: {
+        type: Number,
+        default: 0,
+      },
+    },
+    pioneerParkIds: {
+      type: [Schema.Types.ObjectId],
+      ref: 'Skatepark',
+      default: [],
     },
   },
   {
