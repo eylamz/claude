@@ -26,6 +26,7 @@ import {
 import { highlightMatch } from '@/lib/search-highlight';
 import { isEcommerceEnabled, isTrainersEnabled } from '@/lib/utils/ecommerce';
 import { trackSearchQuery, trackSearchClick, shouldTrackAnalytics } from '@/lib/analytics/internal';
+import { loadPopularSearches, type PopularSearchItem } from '@/lib/search/popular-cache';
 
 // Optimize image URLs for event/guide thumbnails (match events + guides pages)
 function getOptimizedImageUrl(originalUrl: string): string | null {
@@ -633,10 +634,8 @@ function SearchPageContent() {
   });
   const [amenitiesFilterOpen, setAmenitiesFilterOpen] = useState(false);
 
-  // Top 5 most clicked search results (from analytics), cached per locale in localStorage with fetchedAt (1 week TTL)
-  const [popularClicks, setPopularClicks] = useState<
-    Array<{ resultType: string; resultSlug: string; count: number; name?: string }>
-  >([]);
+  // Top 5 most clicked search results (from analytics), cached per locale in localStorage with fetchedAt
+  const [popularClicks, setPopularClicks] = useState<PopularSearchItem[]>([]);
 
   // Scroll state
   const [isScrolled, setIsScrolled] = useState(false);
@@ -654,43 +653,12 @@ function SearchPageContent() {
     return () => mq.removeEventListener('change', handler);
   }, []);
 
-  // Fetch top 5 most clicked search results for "Popular" section; use localStorage per locale if fetched < 1 week ago
+  // Fetch top 5 most clicked search results for "Popular" section; shared 48h cache per locale
   useEffect(() => {
-    const CACHE_KEY = `search_popular_clicks_${locale}`;
-    const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
-    type PopularItem = { resultType: string; resultSlug: string; count: number; name?: string };
-    try {
-      const raw = localStorage.getItem(CACHE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as { results?: unknown[]; fetchedAt?: number };
-        const fetchedAt = parsed?.fetchedAt;
-        if (
-          typeof fetchedAt === 'number' &&
-          Date.now() - fetchedAt <= CACHE_TTL_MS &&
-          Array.isArray(parsed?.results)
-        ) {
-          setPopularClicks(parsed.results as PopularItem[]);
-          return;
-        }
-      }
-    } catch {
-      // ignore invalid cache
-    }
-    fetch(`/api/search/popular?locale=${encodeURIComponent(locale)}`)
-      .then((res) => res.json())
-      .then((data: { results?: PopularItem[] }) => {
-        if (Array.isArray(data?.results)) {
-          setPopularClicks(data.results);
-          if (data.results.length > 0) {
-            try {
-              localStorage.setItem(
-                CACHE_KEY,
-                JSON.stringify({ results: data.results, fetchedAt: Date.now() })
-              );
-            } catch {
-              // ignore quota / private mode
-            }
-          }
+    loadPopularSearches(locale)
+      .then((results) => {
+        if (Array.isArray(results)) {
+          setPopularClicks(results);
         }
       })
       .catch(() => {});
@@ -1095,6 +1063,12 @@ function SearchPageContent() {
         text: 'text-green-bg dark:text-green-bg-dark',
         border: 'border-green-border dark:border-green-border-dark',
         hoverBorder: 'hover:border-green-border dark:hover:border-green-border-dark',
+      },
+      yellow: {
+        bg: 'bg-yellow dark:bg-yellow-dark',
+        text: 'text-yellow-bg dark:text-yellow-bg-dark',
+        border: 'border-yellow-border dark:border-yellow-border-dark',
+        hoverBorder: 'hover:border-yellow-border dark:hover:border-yellow-border-dark',
       },
       blue: {
         bg: 'bg-blue dark:bg-blue-dark',

@@ -450,7 +450,7 @@ export const colors = {
       dark: 'hsl(60, 64%, 13%)',
     },
     border: {
-      light: 'hsl(60, 73%, 83%)',
+      light: 'hsl(60, 49%, 75%)',
       dark: 'hsl(60, 62%, 25%)',
     },
     hover: {

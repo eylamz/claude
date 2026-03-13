@@ -31,6 +31,7 @@ import {
 import { highlightMatch } from '@/lib/search-highlight';
 import { Separator } from '@/components/ui/separator';
 import { trackSearchQuery, trackSearchClick, shouldTrackAnalytics } from '@/lib/analytics/internal';
+import { loadPopularSearches, type PopularSearchItem } from '@/lib/search/popular-cache';
 
 interface MobileSidebarProps {
   isOpen: boolean;
@@ -98,9 +99,7 @@ export default function MobileSidebar({
   const [searchLoading, setSearchLoading] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [shouldAnimate, setShouldAnimate] = useState(false);
-  const [popularClicks, setPopularClicks] = useState<
-    Array<{ resultType: string; resultSlug: string; count: number; name?: string }>
-  >([]);
+  const [popularClicks, setPopularClicks] = useState<PopularSearchItem[]>([]);
   const [showPopularSearches, setShowPopularSearches] = useState(false);
   const [popularExiting, setPopularExiting] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -758,57 +757,14 @@ export default function MobileSidebar({
     };
   }, []);
 
-  // Top 5 most clicked search results (from analytics), cached per locale (1 week TTL)
+  // Top 5 most clicked search results (from analytics), cached per locale (shared 48h TTL)
   useEffect(() => {
-    const CACHE_KEY = `search_popular_clicks_${locale}`;
-    const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
-
-    try {
-      const raw = localStorage.getItem(CACHE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as { results?: unknown[]; fetchedAt?: number };
-        const fetchedAt = parsed?.fetchedAt;
-        if (
-          typeof fetchedAt === 'number' &&
-          Date.now() - fetchedAt <= CACHE_TTL_MS &&
-          Array.isArray(parsed?.results)
-        ) {
-          setPopularClicks(
-            parsed.results as Array<{
-              resultType: string;
-              resultSlug: string;
-              count: number;
-              name?: string;
-            }>
-          );
-          return;
+    loadPopularSearches(locale)
+      .then((results) => {
+        if (Array.isArray(results)) {
+          setPopularClicks(results);
         }
-      }
-    } catch {
-      // ignore invalid cache
-    }
-
-    fetch(`/api/search/popular?locale=${encodeURIComponent(locale)}`)
-      .then((res) => res.json())
-      .then(
-        (data: {
-          results?: Array<{ resultType: string; resultSlug: string; count: number; name?: string }>;
-        }) => {
-          if (Array.isArray(data?.results)) {
-            setPopularClicks(data.results);
-            if (data.results.length > 0) {
-              try {
-                localStorage.setItem(
-                  CACHE_KEY,
-                  JSON.stringify({ results: data.results, fetchedAt: Date.now() })
-                );
-              } catch {
-                // ignore quota / private mode
-              }
-            }
-          }
-        }
-      )
+      })
       .catch(() => {});
   }, [locale]);
 
@@ -1206,7 +1162,7 @@ export default function MobileSidebar({
                               skipTracking: skipAnalyticsTracking,
                             });
                           }}
-                          className="px-3 py-1.5 text-sm bg-sidebar-hover dark:bg-sidebar-hover-dark hover:bg-black/5 dark:hover:bg-white/5 border border-border dark:border-border-dark rounded-full transition-colors text-sidebar-text dark:text-sidebar-text-dark"
+                          className="px-3 py-1.5 text-sm bg-gray-bg/25 dark:bg-gray-bg-dark hover:bg-gray-hover-bg/40 dark:hover:bg-gray-hover-bg-dark border border-gray-border dark:border-border-dark rounded-full transition-colors text-sidebar-text dark:text-sidebar-text-dark"
                         >
                           {label}
                         </Link>
