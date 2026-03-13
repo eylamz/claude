@@ -166,11 +166,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-
-    // Validate ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: 'Invalid event ID' }, { status: 400 });
-    }
+    const isObjectId = mongoose.Types.ObjectId.isValid(id);
 
     // Verify authentication
     const session = await getServerSession(authOptions);
@@ -186,7 +182,10 @@ export async function PUT(
 
     await connectDB();
 
-    const event = await Event.findById(id);
+    // Allow lookup by MongoDB ObjectId or by slug, same as GET handler
+    const event = isObjectId
+      ? await Event.findById(id)
+      : await Event.findOne({ slug: id });
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
@@ -497,11 +496,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-
-    // Validate ObjectId
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: 'Invalid event ID' }, { status: 400 });
-    }
+    const isObjectId = mongoose.Types.ObjectId.isValid(id);
 
     // Verify authentication
     const csrfResponse = validateCsrf(request);
@@ -522,7 +517,10 @@ export async function DELETE(
 
     await connectDB();
 
-    const event = await Event.findById(id);
+    // Allow lookup by MongoDB ObjectId or by slug, same as GET handler
+    const event = isObjectId
+      ? await Event.findById(id)
+      : await Event.findOne({ slug: id });
     if (!event) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
