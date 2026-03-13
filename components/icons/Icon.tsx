@@ -361,6 +361,7 @@ const iconMap: Record<string, SvgComponent> = {
   lightbulbBold: LightbulbBold,
   hours24: Hours24,
   imageBold: ImageBold,
+  Image: ImageBold,
   bulkImage: BulkImage,
   sparks: Sparks,
   sparksBold: SparksBold,
@@ -560,6 +561,7 @@ export type IconName =
   | 'sparks' | 'sparksBold'
   | 'searchQuest'
   | 'bulkImage'
+  | 'Image'
   | 'imageBold'
   | 'clock' | 'clockBold' 
   | 'closedPark'

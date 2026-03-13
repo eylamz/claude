@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { ChevronLeft } from 'lucide-react';
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, SelectWrapper, Checkbox } from '@/components/ui';
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, SelectWrapper, Checkbox, Textarea } from '@/components/ui';
 import { useToast } from '@/hooks/use-toast';
 import { formatConfirmationNumber } from '@/lib/utils/formatConfirmationNumber';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -57,12 +57,14 @@ interface FormFieldValue {
   label?: string;
 }
 
-const DEFAULT_FORM_FIELDS: FormFieldValue[] = [
-  { name: 'fullName', type: 'text', value: '', label: 'Full Name' },
-  { name: 'email', type: 'email', value: '', label: 'Email' },
-  { name: 'phone', type: 'phone', value: '', label: 'Phone' },
-  { name: 'notes', type: 'textarea', value: '', label: 'Notes (optional)' },
-];
+function getDefaultFormFields(locale: 'en' | 'he'): FormFieldValue[] {
+  return [
+    { name: 'fullName', type: 'text', value: '', label: locale === 'he' ? 'שם מלא' : 'Full Name' },
+    { name: 'email', type: 'email', value: '', label: locale === 'he' ? 'אימייל' : 'Email' },
+    { name: 'phone', type: 'phone', value: '', label: locale === 'he' ? 'טלפון' : 'Phone' },
+    { name: 'notes', type: 'textarea', value: '', label: locale === 'he' ? 'הערות (אופציונלי)' : 'Notes (optional)' },
+  ];
+}
 
 export default function EventSignupPage() {
   const params = useParams();
@@ -75,7 +77,7 @@ export default function EventSignupPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormFieldValue[]>(() =>
-    DEFAULT_FORM_FIELDS.map((f) => ({ ...f, value: f.type === 'checkbox' ? false : '' }))
+    getDefaultFormFields(locale).map((f) => ({ ...f, value: f.type === 'checkbox' ? false : '' }))
   );
   const [success, setSuccess] = useState<{ confirmationNumber: string } | null>(null);
   const [showRulesModal, setShowRulesModal] = useState(false);
@@ -104,6 +106,13 @@ export default function EventSignupPage() {
                 type: f.type,
                 value: f.type === 'checkbox' ? false : '',
                 label: f.label?.[locale] ?? f.label?.en ?? f.name,
+              }))
+            );
+          } else {
+            setFormData(
+              getDefaultFormFields(locale).map((f) => ({
+                ...f,
+                value: f.type === 'checkbox' ? false : '',
               }))
             );
           }
@@ -354,7 +363,7 @@ export default function EventSignupPage() {
       <div className="max-w-lg mx-auto">
         <Link
           href={`/${locale}/events/${slug}`}
-          className="inline-flex items-center gap-2 text-brand-main hover:text-brand-main/80 font-medium mb-6"
+          className="inline-flex items-center gap-2 text-brand-text hover:text-brand-text/80 dark:text-brand-dark dark:hover:text-brand-dark/80 font-medium mb-6"
         >
           <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
           {locale === 'he'
@@ -362,7 +371,7 @@ export default function EventSignupPage() {
             : `Back to ${getEventTitle() || 'Event'}`}
         </Link>
 
-        <Card className="bg-card dark:bg-card-dark">
+        <Card className="">
           <CardHeader>
             <CardTitle className="text-xl text-center">
               {event?.signupForm?.title?.[locale] || event?.signupForm?.title?.en || (locale === 'he' ? 'הרשמה לאירוע' : 'Event Registration')}
@@ -391,23 +400,25 @@ export default function EventSignupPage() {
                 const placeholder = config?.placeholder?.[locale] ?? config?.placeholder?.en ?? field.label;
                 return (
                 <div key={field.name}>
-                  <label
-                    htmlFor={field.name}
-                    className="block text-base font-medium text-foreground dark:text-foreground-dark mb-1"
-                  >
-                    {field.label}
-                    {isRequired && <span className="text-red dark:text-red-dark ms-1">*</span>}
-                  </label>
                   {field.type === 'textarea' ? (
-                    <textarea
+                    <Textarea
                       id={field.name}
-                      className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input dark:border-input-dark bg-background dark:bg-background-dark text-foreground dark:text-foreground-dark"
                       value={String(field.value)}
                       onChange={(e) => updateField(field.name, e.target.value)}
                       placeholder={placeholder}
                       required={isRequired}
+                      label={field.label}
+                      className="min-h-[80px]"
                     />
                   ) : field.type === 'select' && config?.options?.length ? (
+                    <>
+                      <label
+                        htmlFor={field.name}
+                        className="block text-base font-medium text-foreground dark:text-foreground-dark mb-1"
+                      >
+                        {field.label}
+                        {isRequired && <span className="text-red dark:text-red-dark ms-1">*</span>}
+                      </label>
                     <SelectWrapper
                       value={String(field.value)}
                       onChange={(e) => updateField(field.name, e.target.value)}
@@ -420,7 +431,16 @@ export default function EventSignupPage() {
                       ]}
                       className="w-full"
                     />
+                    </>
                   ) : field.type === 'checkbox' && config?.options?.length ? (
+                    <>
+                    <label
+                      htmlFor={field.name}
+                      className="block text-base font-medium text-foreground dark:text-foreground-dark mb-1"
+                    >
+                      {field.label}
+                      {isRequired && <span className="text-red dark:text-red-dark ms-1">*</span>}
+                    </label>
                     <div className="space-y-2">
                       {config.options.map((opt) => {
                         const labelText = opt.label?.[locale] ?? opt.label?.en ?? opt.value;
@@ -458,6 +478,7 @@ export default function EventSignupPage() {
                         );
                       })}
                     </div>
+                    </>
                   ) : field.type === 'checkbox' ? (
                     <label className="flex items-center gap-2">
                       <input
@@ -481,6 +502,7 @@ export default function EventSignupPage() {
                       }
                       placeholder={placeholder}
                       required={isRequired}
+                      label={field.label}
                       className="w-full"
                     />
                   )}

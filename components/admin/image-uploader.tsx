@@ -15,6 +15,19 @@ interface ImageData {
  *   (works only if default preset has no folder set; otherwise create a preset with folder=guideAssets and set _GUIDES).
  * - Events: NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET_EVENTS (preset folder = EventAssets).
  */
+const PUBLIC_ID_MAX_LENGTH = 200;
+
+/** Cloudinary public_id allows only [a-zA-Z0-9_.-], max 200 chars. Sanitize filename-derived id. */
+function sanitizePublicIdForCloudinary(name: string): string {
+  const sanitized = name
+    .trim()
+    .replace(/[^a-zA-Z0-9_.-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  const trimmed = sanitized.slice(0, PUBLIC_ID_MAX_LENGTH);
+  return trimmed || 'image';
+}
+
 function getUploadConfig(folder: string): {
   uploadPreset: string;
   sendFolderInRequest: boolean;
@@ -155,7 +168,13 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder, maxFil
             let errorMessage = 'Upload failed';
             try {
               const errorResponse = JSON.parse(xhr.responseText);
-              errorMessage = errorResponse.error?.message || errorResponse.error || errorMessage;
+              const raw = errorResponse.error?.message || errorResponse.error || errorMessage;
+              if (typeof raw === 'string' && raw.toLowerCase().includes('upload preset not found')) {
+                errorMessage =
+                  `Cloudinary preset "${preset}" not found. Create an unsigned upload preset with this exact name in Cloudinary Dashboard → Settings → Upload.`;
+              } else {
+                errorMessage = raw;
+              }
             } catch {
               errorMessage = `Upload failed with status ${xhr.status}: ${xhr.statusText}`;
             }
@@ -224,8 +243,20 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder, maxFil
             doUpload(buildFormDataSigned(sig), sig.cloudName);
             return;
           }
-        } catch {
-          // Fall through to unsigned
+          // Surface sign API errors (e.g. 503 = missing server env) so user can fix and use signed upload
+          const errBody = await signRes.json().catch(() => ({}));
+          const errMsg =
+            signRes.status === 503
+              ? 'Server upload unavailable. Add CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET to .env.local and restart the dev server.'
+              : (errBody.error as string) || `Sign request failed (${signRes.status})`;
+          reject(new Error(errMsg));
+          return;
+        } catch (e) {
+          // Network or other failure; fall through to unsigned if we have a preset
+          if (!preset) {
+            reject(e instanceof Error ? e : new Error('Failed to reach upload sign endpoint'));
+            return;
+          }
         }
 
         // Fallback: unsigned preset (preset is visible in client; restrict in Cloudinary dashboard)
@@ -276,7 +307,7 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder, maxFil
         const config = getUploadConfig(folder);
         const uploadPromises = fileArray.map(async (file, _index) => {
           const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
-          const publicId = config.publicIdPrefix + fileNameWithoutExt;
+          const publicId = sanitizePublicIdForCloudinary(config.publicIdPrefix + fileNameWithoutExt);
           const compressedFile = await compressImage(file);
           return await uploadToCloudinary(
             compressedFile,
@@ -291,7 +322,8 @@ export function ImageUploader({ images, onUpload, maxImages = 10, folder, maxFil
         onUpload([...images, ...uploadedImages]);
       } catch (error) {
         console.error('Upload error:', error);
-        setErrors(['Failed to upload images. Please try again.']);
+        const message = error instanceof Error ? error.message : 'Failed to upload images. Please try again.';
+        setErrors([message]);
       } finally {
         setUploading(false);
       }

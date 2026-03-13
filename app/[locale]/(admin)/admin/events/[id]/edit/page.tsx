@@ -3,11 +3,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, SelectWrapper, Toaster, Skeleton } from '@/components/ui';
+import { NumberInput } from '@/components/ui/number-input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Icon } from '@/components/icons/Icon';
 import { useToast } from '@/hooks/use-toast';
 import { useSkateparkSlugOptions } from '@/hooks/use-skatepark-slug-options';
 import { EventContentBuilder, ImageUploader, type EventSectionForm } from '@/components/admin';
+import { PLACEHOLDER_SKATEPARK_IMAGE } from '@/lib/constants/placeholders';
 
 export interface EventMediaItem {
   id: string;
@@ -352,6 +355,33 @@ export default function EditEventPage() {
     const interval = setInterval(autoSave, 30000); // Every 30 seconds
     return () => clearInterval(interval);
   }, [autoSave]);
+
+  const getImageOrderNumber = useCallback((media: EventMediaItem[], mediaId: string) => {
+    return media.filter((item) => item.type === 'image').findIndex((item) => item.id === mediaId);
+  }, []);
+
+  const moveImageToOrderNumber = useCallback(
+    (currentMedia: EventMediaItem[], mediaId: string, targetOrderNumber: number): EventMediaItem[] => {
+      const imageItems = currentMedia.filter((item) => item.type === 'image');
+      const currentIndex = imageItems.findIndex((item) => item.id === mediaId);
+
+      if (currentIndex === -1) return currentMedia;
+
+      const boundedIndex = Math.max(0, Math.min(imageItems.length - 1, targetOrderNumber));
+      if (boundedIndex === currentIndex) return currentMedia;
+
+      const reorderedImages = [...imageItems];
+      const [movedImage] = reorderedImages.splice(currentIndex, 1);
+      reorderedImages.splice(boundedIndex, 0, movedImage);
+
+      let nextImageIndex = 0;
+      return currentMedia.map((item) => {
+        if (item.type !== 'image') return item;
+        return reorderedImages[nextImageIndex++];
+      });
+    },
+    []
+  );
 
   const handleTitleChange = (lang: 'en' | 'he', value: string) => {
     setFormData(prev => ({ ...prev, title: { ...prev.title, [lang]: value } }));
@@ -743,7 +773,7 @@ export default function EditEventPage() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-xs text-text-secondary dark:text-text-secondary-dark mb-2">
-                Upload images to Cloudinary (EventAssets folder). Each upload is added as a new media item.
+                Upload images to Cloudinary (EventAssets folder). Use the order number field below each image to control image order.
               </p>
               <ImageUploader
                 images={[]}
@@ -785,42 +815,133 @@ export default function EditEventPage() {
                         {m.url ? ` · ${m.url.slice(0, 40)}...` : ' (no URL)'}
                       </span>
                     </button>
-                    <Button
-                      type="button"
-                      variant="red"
-                      size="sm"
-                      onClick={() => {
-                        setFormData((prev) => ({ ...prev, media: (prev.media || []).filter((x) => x.id !== m.id) }));
-                        if (expandedMediaId === m.id) setExpandedMediaId(null);
-                      }}
-                    >
-                      Remove
-                    </Button>
+                    {m.type !== 'image' && (
+                      <Button
+                        type="button"
+                        variant="red"
+                        size="sm"
+                        onClick={() => {
+                          setFormData((prev) => ({ ...prev, media: (prev.media || []).filter((x) => x.id !== m.id) }));
+                          if (expandedMediaId === m.id) setExpandedMediaId(null);
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    )}
                   </div>
                   {expandedMediaId === m.id && (
                     <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                      <Input
-                        label="URL"
-                        type="url"
-                        value={m.url}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            media: (prev.media || []).map((x) => (x.id === m.id ? { ...x, url: e.target.value } : x)),
-                          }))
-                        }
-                        placeholder="https://..."
-                      />
-                      <Input
-                        label="Cloudinary ID"
-                        value={m.cloudinaryId || ''}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            media: (prev.media || []).map((x) => (x.id === m.id ? { ...x, cloudinaryId: e.target.value } : x)),
-                          }))
-                        }
-                      />
+                      {m.type === 'image' ? (
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                          <div className="h-32 w-full flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 sm:w-32">
+                            <img
+                              src={m.url}
+                              alt={m.altText?.en || m.altText?.he || `Event image ${index + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = PLACEHOLDER_SKATEPARK_IMAGE;
+                              }}
+                            />
+                          </div>
+                          <div className="flex-1 space-y-3">
+                            <div className="flex flex-wrap items-end gap-2">
+                              <div className="space-y-1">
+                                <label className="block text-xs font-medium text-text-secondary dark:text-text-secondary-dark">
+                                  Order Number
+                                </label>
+                                <NumberInput
+                                  key={`${m.id}-${getImageOrderNumber(formData.media || [], m.id)}`}
+                                  min={0}
+                                  step={1}
+                                  value={Math.max(0, getImageOrderNumber(formData.media || [], m.id))}
+                                  onChange={(e) => {
+                                    const nextOrderNumber = parseInt(e.target.value, 10);
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      media: moveImageToOrderNumber(
+                                        prev.media || [],
+                                        m.id,
+                                        Number.isNaN(nextOrderNumber) ? 0 : nextOrderNumber
+                                      ),
+                                    }));
+                                  }}
+                                  className="w-fit"
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                variant={getImageOrderNumber(formData.media || [], m.id) === 0 ? 'brand' : 'gray'}
+                                size="sm"
+                                className="h-10 min-w-10 px-3"
+                                onClick={() =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    media: moveImageToOrderNumber(prev.media || [], m.id, 0),
+                                  }))
+                                }
+                                title={getImageOrderNumber(formData.media || [], m.id) === 0 ? 'Main image' : 'Set as main image'}
+                                aria-label={getImageOrderNumber(formData.media || [], m.id) === 0 ? 'Main image' : 'Set as main image'}
+                              >
+                                <Icon name="Image" className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="red"
+                                size="sm"
+                                className="h-10 min-w-10 px-3"
+                                onClick={() => {
+                                  setFormData((prev) => ({ ...prev, media: (prev.media || []).filter((x) => x.id !== m.id) }));
+                                  if (expandedMediaId === m.id) setExpandedMediaId(null);
+                                }}
+                                title="Delete image"
+                                aria-label="Delete image"
+                              >
+                                <Icon name="trash" className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <Input
+                              label="Image URL"
+                              value={m.url}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  media: (prev.media || []).map((x) => (x.id === m.id ? { ...x, url: e.target.value } : x)),
+                                }))
+                              }
+                            />
+                            {m.cloudinaryId && (
+                              <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+                                Cloudinary ID: {m.cloudinaryId}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <Input
+                            label="URL"
+                            type="url"
+                            value={m.url}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                media: (prev.media || []).map((x) => (x.id === m.id ? { ...x, url: e.target.value } : x)),
+                              }))
+                            }
+                            placeholder="https://..."
+                          />
+                          <Input
+                            label="Cloudinary ID"
+                            value={m.cloudinaryId || ''}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                media: (prev.media || []).map((x) => (x.id === m.id ? { ...x, cloudinaryId: e.target.value } : x)),
+                              }))
+                            }
+                          />
+                        </>
+                      )}
                       <Input
                         label="Alt text (EN)"
                         value={m.altText?.en ?? ''}
@@ -871,7 +992,7 @@ export default function EditEventPage() {
                         }
                         dir="rtl"
                       />
-                      {m.url && (
+                      {m.type !== 'image' && m.url && (
                         <div className="mt-2">
                           <img src={m.url} alt={m.altText?.en || m.altText?.he || ''} className="max-h-32 object-contain rounded" />
                         </div>

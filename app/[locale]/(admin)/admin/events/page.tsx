@@ -11,6 +11,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { NumberInput } from '@/components/ui/number-input';
 import { useToast } from '@/hooks/use-toast';
+import { getEventsFetchedAtReadable, parseEventsVersion } from '@/lib/search-from-cache';
 
 interface Event {
   id: string;
@@ -89,6 +90,7 @@ export default function EventsPage() {
   
   // Cache version control
   const [eventsVersion, setEventsVersion] = useState<number>(1);
+  const [cacheVersionFromStorage, setCacheVersionFromStorage] = useState<string | null>(null);
   const [savingVersion, setSavingVersion] = useState(false);
   
   // Toast hook
@@ -97,14 +99,17 @@ export default function EventsPage() {
   // Refs to prevent duplicate API calls
   const isFetchingRef = useRef(false);
 
-  // Fetch settings on mount
+  // Fetch settings on mount and read localStorage cache version (client-only)
   useEffect(() => {
+    const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('events_version') : null;
+    setCacheVersionFromStorage(stored);
+
     const fetchSettings = async () => {
       try {
         const response = await fetch('/api/admin/settings');
         if (response.ok) {
           const data = await response.json();
-          setEventsVersion(data.settings?.eventsVersion || 1);
+          setEventsVersion(Math.floor(Number(data.settings?.eventsVersion)) || 1);
         }
       } catch (error) {
         console.error('Error fetching settings:', error);
@@ -117,12 +122,14 @@ export default function EventsPage() {
   const handleSaveVersion = async () => {
     try {
       setSavingVersion(true);
+      const nextVersion = Math.floor(Number(eventsVersion)) || 1;
       const response = await fetch('/api/admin/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventsVersion }),
+        body: JSON.stringify({ eventsVersion: nextVersion }),
       });
       if (!response.ok) throw new Error('Failed to save version');
+      setEventsVersion(nextVersion);
       toast({
         title: 'Success',
         description: 'Events cache version saved successfully!',
@@ -486,6 +493,15 @@ export default function EventsPage() {
     });
   };
 
+  const parsedCacheVersion = parseEventsVersion(cacheVersionFromStorage);
+  const displayedCacheVersion =
+    cacheVersionFromStorage != null
+      ? parsedCacheVersion.version != null
+        ? Math.floor(parsedCacheVersion.version)
+        : cacheVersionFromStorage
+      : '—';
+  const normalizedEventsVersion = Math.floor(Number(eventsVersion)) || 1;
+
   return (
     <div className="pt-16 space-y-6 max-w-6xl mx-auto">
       <Toaster />
@@ -499,19 +515,45 @@ export default function EventsPage() {
         </div>
         <div className="flex items-center gap-3">
           <Button
-            variant="gray"
+            variant="ghost"
             className='flex items-center gap-1'
             onClick={async () => {
               setIsRefreshing(true);
               try {
+                const cacheKey = 'events_cache';
+                const versionKey = 'events_version';
+
                 if (typeof localStorage !== 'undefined') {
-                  localStorage.removeItem('events_cache');
-                  localStorage.removeItem('events_version');
+                  localStorage.removeItem(cacheKey);
+                  localStorage.removeItem(versionKey);
+                  setCacheVersionFromStorage(null);
                 }
+
+                try {
+                  const publicResponse = await fetch('/api/events?full=true');
+                  if (publicResponse.ok) {
+                    const publicData = await publicResponse.json();
+                    const currentVersion = Math.floor(Number(publicData.version)) || 1;
+                    const nextStoredVersion = JSON.stringify({
+                      version: currentVersion,
+                      fetchedAt: getEventsFetchedAtReadable(),
+                    });
+
+                    if (typeof localStorage !== 'undefined') {
+                      localStorage.setItem(cacheKey, JSON.stringify(publicData.events || []));
+                      localStorage.setItem(versionKey, nextStoredVersion);
+                    }
+
+                    setCacheVersionFromStorage(nextStoredVersion);
+                  }
+                } catch (error) {
+                  console.warn('Failed to rebuild events cache during refresh', error);
+                }
+
                 await fetchEvents();
                 toast({
                   title: 'Success',
-                  description: 'Cache cleared and data refreshed successfully!',
+                  description: 'Data has been refreshed successfully!',
                   variant: 'success',
                 });
               } finally {
@@ -540,28 +582,44 @@ export default function EventsPage() {
       {/* Cache Version Control */}
       <Card className="bg-card dark:bg-card-dark">
         <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
+          <div className="flex flex-wrap items-end gap-4">
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Events Cache Version
+                Current cache version (localStorage)
               </label>
-              <NumberInput
-                value={eventsVersion}
-                onChange={(e) => setEventsVersion(parseInt(e.target.value) || 1)}
-                min={1}
-                className="w-32"
-              />
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-mono font-semibold text-gray-900 dark:text-white min-w-[4rem]">
+                  {displayedCacheVersion}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {cacheVersionFromStorage ? 'Stored in this browser' : 'No cache yet'}
+                </span>
+              </div>
+            </div>
+            <div className="border-l border-gray-200 dark:border-gray-700 pl-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Server version (invalidate caches)
+              </label>
+              <div className="flex items-center gap-2">
+                <NumberInput
+                  value={normalizedEventsVersion}
+                  onChange={(e) => setEventsVersion(Math.floor(Number(e.target.value)) || 1)}
+                  min={1}
+                  step={1}
+                  className="w-32"
+                />
+                <Button
+                  variant="info"
+                  onClick={handleSaveVersion}
+                  disabled={savingVersion}
+                >
+                  {savingVersion ? 'Saving...' : 'Save Version'}
+                </Button>
+              </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Increment this version to invalidate all client caches
+                Increment and save to invalidate all client caches
               </p>
             </div>
-            <Button
-              variant="info"
-              onClick={handleSaveVersion}
-              disabled={savingVersion}
-            >
-              {savingVersion ? 'Saving...' : 'Save Version'}
-            </Button>
           </div>
         </CardContent>
       </Card>

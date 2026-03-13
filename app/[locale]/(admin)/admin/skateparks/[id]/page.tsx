@@ -9,6 +9,7 @@ import { NumberInput } from '@/components/ui/number-input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ImageUploader } from '@/components/admin/image-uploader';
 import { Toaster } from '@/components/ui/toaster';
+import { Icon } from '@/components/icons/Icon';
 import { PLACEHOLDER_SKATEPARK_IMAGE } from '@/lib/constants/placeholders';
 
 interface Skatepark {
@@ -1089,8 +1090,8 @@ export default function SkateparkDetailPage() {
                         key={imageIndex}
                         className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4"
                       >
-                        <div className="flex items-start gap-4">
-                          <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                          <div className="h-32 w-full flex-shrink-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 sm:w-32">
                             <img
                               src={image.url}
                               alt={`${skatepark.name.en} ${imageIndex + 1}`}
@@ -1101,42 +1102,54 @@ export default function SkateparkDetailPage() {
                             />
                           </div>
                           <div className="flex-1 space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Input
-                                  label="Order Number"
-                                  type="number"
+                            <div className="flex flex-wrap items-end gap-2">
+                              <div className="space-y-1">
+                                <label className="block text-xs font-medium text-text-secondary dark:text-text-secondary-dark">
+                                  Order Number
+                                </label>
+                                <NumberInput
+                                  key={`${imageIndex}-${image.orderNumber}`}
+                                  min={0}
+                                  step={1}
                                   value={image.orderNumber}
                                   onChange={(e) => {
                                     const newImages = [...skatepark.images];
-                                    newImages[imageIndex].orderNumber = parseInt(e.target.value) || 0;
+                                    newImages[imageIndex].orderNumber = parseInt(e.target.value, 10) || 0;
                                     setSkatepark({ ...skatepark, images: newImages });
                                   }}
-                                  className="w-24"
+                                  className="w-fit"
                                 />
-                                <Button
-                                  variant={image.isFeatured ? 'primary' : 'secondary'}
-                                  size="sm"
-                                  onClick={() => {
-                                    const newImages = [...skatepark.images];
-                                    newImages.forEach((img, idx) => {
-                                      img.isFeatured = idx === imageIndex;
-                                    });
-                                    setSkatepark({ ...skatepark, images: newImages });
-                                  }}
-                                >
-                                  {image.isFeatured ? 'Main Image' : 'Set as Main'}
-                                </Button>
                               </div>
                               <Button
-                                variant="destructive"
+                                type="button"
+                                variant={image.isFeatured ? 'brand' : 'gray'}
                                 size="sm"
+                                className="h-10 min-w-10 px-3"
+                                onClick={() => {
+                                  const newImages = [...skatepark.images];
+                                  newImages.forEach((img, idx) => {
+                                    img.isFeatured = idx === imageIndex;
+                                  });
+                                  setSkatepark({ ...skatepark, images: newImages });
+                                }}
+                                title={image.isFeatured ? 'Main image' : 'Set as main image'}
+                                aria-label={image.isFeatured ? 'Main image' : 'Set as main image'}
+                              >
+                                <Icon name="Image" className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="red"
+                                size="sm"
+                                className="h-10 min-w-10 px-3"
                                 onClick={() => {
                                   const newImages = skatepark.images.filter((_, idx) => idx !== imageIndex);
                                   setSkatepark({ ...skatepark, images: newImages });
                                 }}
+                                title="Delete image"
+                                aria-label="Delete image"
                               >
-                                Delete
+                                <Icon name="trash" className="h-4 w-4" />
                               </Button>
                             </div>
                             <Input

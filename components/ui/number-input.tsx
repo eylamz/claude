@@ -17,6 +17,11 @@ const NumberInput = React.forwardRef<HTMLInputElement, NumberInputProps>(
       value !== undefined ? Number(value) : Number(min)
     );
 
+  React.useEffect(() => {
+    if (value === undefined || value === null || Number.isNaN(Number(value))) return;
+    setInternalValue(Number(value));
+  }, [value]);
+
     const minValue = Number(min);
     const maxValue = Number(max);
     const stepValue = Number(step);

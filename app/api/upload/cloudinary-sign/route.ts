@@ -9,6 +9,19 @@ const PUBLIC_ID_MAX_LENGTH = 200;
 const PUBLIC_ID_REGEX = /^[a-zA-Z0-9_.-]+$/;
 
 /**
+ * Sanitize a string for use as Cloudinary public_id: alphanumeric, dots, underscores, hyphens only, max length.
+ */
+function sanitizePublicId(name: string): string {
+  const sanitized = name
+    .trim()
+    .replace(/[^a-zA-Z0-9_.-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  const trimmed = sanitized.slice(0, PUBLIC_ID_MAX_LENGTH);
+  return trimmed || 'image';
+}
+
+/**
  * Generate Cloudinary signed upload parameters.
  * Admin-only. Returns signature so the client can upload directly to Cloudinary
  * without exposing an unsigned preset or API secret.
@@ -42,7 +55,8 @@ export async function POST(request: NextRequest) {
   }
 
   const folder = typeof body.folder === 'string' ? body.folder.trim() : '';
-  const publicId = typeof body.public_id === 'string' ? body.public_id.trim() : '';
+  const rawPublicId = typeof body.public_id === 'string' ? body.public_id : '';
+  const publicId = sanitizePublicId(rawPublicId);
 
   if (!ALLOWED_FOLDERS.includes(folder as (typeof ALLOWED_FOLDERS)[number])) {
     return NextResponse.json(

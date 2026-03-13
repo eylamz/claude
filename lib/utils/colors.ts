@@ -2,7 +2,7 @@ export const colors = {
   brand: {
     main: 'hsl(83, 100%, 50%)',
     dark: 'hsl(83, 100%, 50%)',
-    text: 'hsl(83, 100%, 17%)',
+    text: '#3B5D04', // '#7ac109', // 'hsl(83, 100%, 17%)', 
     color: 'hsl(162, 56%, 45%)',
     accent: 'hsl(249, 60%, 57%)',
     hover: 'hsl(83, 100%, 47%)',
@@ -173,8 +173,8 @@ export const colors = {
     light: 'hsl(0, 0%, 100%)',
     dark: 'hsl(240, 3%, 15%)',
     border: {
-      light: 'hsl(0, 0%, 50%)',
-      dark: 'hsl(240, 1%, 42%)',
+      light: 'hsl(0, 0%, 85%)',
+      dark: 'hsl(240, 4%, 28%)',
     },
     hover: {
       light: 'hsl(220, 6%, 99%)',
