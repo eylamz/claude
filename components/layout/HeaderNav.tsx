@@ -167,6 +167,8 @@ export default function HeaderNav() {
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [userLevel, setUserLevel] = useState<{ title: string; color: string } | null>(null);
+  const xpSystemEnabled = process.env.NEXT_PUBLIC_ENABLE_XP_SYSTEM === 'true';
   const [_scrollY, setScrollY] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevScrollYRef = useRef(0);
@@ -599,6 +601,26 @@ export default function HeaderNav() {
       .catch(() => {});
   }, [locale]);
 
+  // Fetch user level for header badge when logged in and XP system enabled
+  useEffect(() => {
+    if (!session?.user?.id || !xpSystemEnabled) {
+      setUserLevel(null);
+      return;
+    }
+    fetch('/api/account/profile')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const u = data?.user;
+        if (u?.levelTitle && u?.levelColor) {
+          const title = typeof u.levelTitle === 'string' ? u.levelTitle : (u.levelTitle[locale as 'en' | 'he'] ?? u.levelTitle.en);
+          setUserLevel({ title, color: u.levelColor });
+        } else {
+          setUserLevel(null);
+        }
+      })
+      .catch(() => setUserLevel(null));
+  }, [session?.user?.id, xpSystemEnabled, locale]);
+
   // Group results by category (like MobileSidebar)
   const groupedResults = useMemo(() => {
     return searchResults
@@ -959,8 +981,8 @@ export default function HeaderNav() {
               )}
             </nav>
 
-            {/* RIGHT: Actions (Search, Cart, Settings) */}
-            <div className="flex items-center justify-end gap-0 w-[124px] sm:w-[128px]">
+            {/* RIGHT: Actions (Search, Cart, Profile, Settings) */}
+            <div className="flex items-center justify-end gap-1 min-w-[124px] sm:min-w-[128px]">
               {/* Search (more prominent) */}
               <button
                 onClick={() => setIsSearchOpen(true)}
@@ -1209,6 +1231,38 @@ export default function HeaderNav() {
                 </div>
               )}
 
+              {/* Profile link (avatar or username + level badge when logged in) */}
+              {loginEnabled && session && (
+                <Link
+                  href={`/${locale}/account/profile`}
+                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sidebar-text dark:text-sidebar-text-dark hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
+                  aria-label={tCommon('profile')}
+                >
+                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 overflow-hidden">
+                    {(session.user as { image?: string }).image ? (
+                      <Image
+                        src={(session.user as { image: string }).image}
+                        alt=""
+                        width={32}
+                        height={32}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      (session.user?.name ?? session.user?.email ?? '?').charAt(0).toUpperCase()
+                    )}
+                  </span>
+                  {xpSystemEnabled && userLevel && (
+                    <span
+                      className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white truncate max-w-[72px]"
+                      style={{ backgroundColor: userLevel.color }}
+                      title={userLevel.title}
+                    >
+                      {userLevel.title}
+                    </span>
+                  )}
+                </Link>
+              )}
+
               {/* Settings */}
               <div className="relative">
                 <Popover>
@@ -1316,7 +1370,7 @@ export default function HeaderNav() {
                             asChild
                             className={`!px-6 w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                           >
-                            <Link href={`/${locale}/account`}>
+                            <Link href={`/${locale}/account/profile`}>
                               <Icon
                                 name="accountBold"
                                 className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200"

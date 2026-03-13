@@ -15,6 +15,7 @@ export interface UploadOptions {
   publicId?: string;
   overwrite?: boolean;
   resourceType?: 'image' | 'video' | 'raw' | 'auto';
+  format?: string;
   eager?: string[];
   allowedFormats?: string[];
   maxFileSize?: number;

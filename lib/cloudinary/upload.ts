@@ -27,6 +27,23 @@ export interface UploadError {
   error?: any;
 }
 
+/** Cloudinary returns snake_case; normalize to our UploadResult (camelCase). */
+function normalizeUploadResult(raw: Record<string, unknown>): UploadResult {
+  return {
+    publicId: (raw.public_id as string) ?? '',
+    secureUrl: (raw.secure_url as string) ?? (raw.secureUrl as string) ?? '',
+    url: (raw.url as string) ?? '',
+    width: (raw.width as number) ?? 0,
+    height: (raw.height as number) ?? 0,
+    format: (raw.format as string) ?? '',
+    bytes: (raw.bytes as number) ?? 0,
+    resourceType: (raw.resource_type as string) ?? 'image',
+    folder: raw.folder as string | undefined,
+    version: (raw.version as number) ?? 0,
+    signature: (raw.signature as string) ?? '',
+  };
+}
+
 /**
  * Upload a single image
  */
@@ -44,18 +61,21 @@ export async function uploadImage(
     };
 
     if (Buffer.isBuffer(file)) {
-      uploadParams.format = 'jpg';
+      if (!uploadParams.format) uploadParams.format = 'jpg';
+      const streamOptions = {
+        folder: uploadParams.folder,
+        public_id: uploadParams.public_id ?? uploadParams.publicId,
+        format: uploadParams.format,
+        resource_type: 'auto',
+      };
       const result = await new Promise<UploadResult>((resolve, reject) => {
         (cloudinary.uploader.upload_stream as (options: any, callback: (error: any, result: any) => void) => { end: (buffer: Buffer) => void })(
-          {
-            ...uploadParams,
-            resource_type: 'auto',
-          },
+          streamOptions,
           (error: any, result: any) => {
             if (error) {
               reject(error);
             } else if (result) {
-              resolve(result as unknown as UploadResult);
+              resolve(normalizeUploadResult(result));
             } else {
               reject(new Error('Upload failed'));
             }
@@ -70,23 +90,25 @@ export async function uploadImage(
         resource_type: 'auto',
       });
 
-      return result as unknown as UploadResult;
+      return normalizeUploadResult(result as Record<string, unknown>);
     } else {
       // Multer file object
       const fileBuffer = file.buffer;
       uploadParams.format = file.mimetype.split('/')[1];
-      
+      const streamOptions = {
+        folder: uploadParams.folder,
+        public_id: uploadParams.public_id ?? uploadParams.publicId,
+        format: uploadParams.format,
+        resource_type: 'auto',
+      };
       const result = await new Promise<UploadResult>((resolve, reject) => {
         (cloudinary.uploader.upload_stream as (options: any, callback: (error: any, result: any) => void) => { end: (buffer: Buffer) => void })(
-          {
-            ...uploadParams,
-            resource_type: 'auto',
-          },
+          streamOptions,
           (error: any, result: any) => {
             if (error) {
               reject(error);
             } else if (result) {
-              resolve(result as unknown as UploadResult);
+              resolve(normalizeUploadResult(result));
             } else {
               reject(new Error('Upload failed'));
             }

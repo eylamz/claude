@@ -20,6 +20,7 @@ import {
   ListOrdered,
   ChevronRight,
   ArrowRight,
+  UserCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
 import { Button } from '@/components/ui';
@@ -92,6 +93,7 @@ function SidebarNav({ locale, currentPath }: { locale: string; currentPath: stri
   const t = useTranslations('common.account');
   const navItems = [
     { href: `/${locale}/account`, icon: LayoutDashboard, label: t('dashboard'), exact: true },
+    { href: `/${locale}/account/profile`, icon: UserCircle, label: t('profile') },
     { href: `/${locale}/account/orders`, icon: ListOrdered, label: t('orders') },
     { href: `/${locale}/account/wishlist`, icon: Heart, label: t('wishlist') },
     { href: `/${locale}/account/addresses`, icon: MapPin, label: t('addresses') },
@@ -149,6 +151,7 @@ function MobileTabNav({ locale, currentPath }: { locale: string; currentPath: st
   const t = useTranslations('common.account');
   const navItems = [
     { href: `/${locale}/account`, icon: LayoutDashboard, label: t('dashboard') },
+    { href: `/${locale}/account/profile`, icon: UserCircle, label: t('profile') },
     { href: `/${locale}/account/orders`, icon: ListOrdered, label: t('orders') },
     { href: `/${locale}/account/wishlist`, icon: Heart, label: t('wishlist') },
     { href: `/${locale}/account/settings`, icon: Settings, label: t('settings') },
@@ -156,7 +159,7 @@ function MobileTabNav({ locale, currentPath }: { locale: string; currentPath: st
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-50">
-      <div className="grid grid-cols-4 h-16">
+      <div className="grid grid-cols-5 h-16">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPath === item.href || 
