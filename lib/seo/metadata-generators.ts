@@ -126,7 +126,7 @@ export async function generateSkateparkMetadata(params: {
     }
     const fallbackDescription =
       locale === 'he'
-        ? `בקר ב${name} - ${address}. בדוק שעות פעילות, שירותים וביקורות באנבוס.`
+        ? `בקר ב${name} - ${address}. בדוק שעות פעילות, שירותים וחוות דעת באנבוס.`
         : `Visit ${name} - ${address}. Check hours, amenities, and reviews on ENBOSS.`;
     const description = seoDescription
       ? seoDescription.substring(0, 160)
@@ -205,7 +205,7 @@ export async function generateSkateparksListingMetadata(params: {
 
   const description =
     locale === 'he'
-      ? `גלה סקייטפארקים בישראל. מצא פארקים קרובים, בדוק שעות פעילות, שירותים וביקורות. הצטרף לקהילת הרוכבים הגדולה בישראל.`
+      ? `גלה סקייטפארקים בישראל. מצא פארקים קרובים, בדוק שעות פעילות, שירותים וחוות דעת. הצטרף לקהילת הרוכבים הגדולה בישראל.`
       : `Discover skateparks across Israel. Find nearby parks, check hours, amenities, and reviews. Join Israel's largest skating community.`;
 
   return genMeta({

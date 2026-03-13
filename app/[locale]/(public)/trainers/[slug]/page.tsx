@@ -443,7 +443,7 @@ export default function TrainerPage() {
                       {trainer.rating.toFixed(1)}
                     </span>
                     <span className="text-gray-600 dark:text-gray-400">
-                      ({trainer.totalReviews} {trainer.totalReviews === 1 ? tr('review', 'ביקורת') : tr('reviews', 'ביקורות')})
+                      ({trainer.totalReviews} {trainer.totalReviews === 1 ? tr('review', 'ביקורת') : tr('reviews', 'חוות דעת')})
                     </span>
                   </div>
                 )}
@@ -665,7 +665,7 @@ export default function TrainerPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between mb-4">
-                <CardTitle>{tr('Reviews', 'ביקורות')}</CardTitle>
+                <CardTitle>{tr('Reviews', 'חוות דעת')}</CardTitle>
                 <Button
                   variant="primary"
                   size="sm"
@@ -698,7 +698,7 @@ export default function TrainerPage() {
                         ))}
                       </div>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {summary.total} {summary.total === 1 ? tr('review', 'ביקורת') : tr('reviews', 'ביקורות')}
+                        {summary.total} {summary.total === 1 ? tr('review', 'ביקורת') : tr('reviews', 'חוות דעת')}
                       </p>
                     </div>
                   </div>
@@ -751,7 +751,7 @@ export default function TrainerPage() {
             <CardContent>
               {reviews.length === 0 ? (
                 <p className="text-gray-600 dark:text-gray-400 text-center py-8">
-                  {tr('No reviews yet.', 'אין ביקורות עדיין.')}
+                  {tr('No reviews yet.', 'אין חוות דעת עדיין.')}
                 </p>
               ) : (
                 <div className="space-y-4">

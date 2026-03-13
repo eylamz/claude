@@ -223,7 +223,7 @@ export function getSkateparkMetaFromData(
     }
   }
   const fallbackDescription = locale === 'he'
-    ? `בקר ב${name} - ${address}. בדוק שעות פעילות, שירותים וביקורות ב-ENBOSS.`
+    ? `בקר ב${name} - ${address}. בדוק שעות פעילות, שירותים וחוות דעת ב-ENBOSS.`
     : `Visit ${name} - ${address}. Check hours, amenities, and reviews on ENBOSS.`;
   const description = seoDescription
     ? seoDescription.substring(0, 160)

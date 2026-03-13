@@ -21,7 +21,7 @@ const REVIEW_ERROR_MESSAGES: Record<Locale, Record<string, string>> = {
     alreadySubmitted: 'You have already submitted a review for this park',
   },
   he: {
-    alreadySubmitted: 'כבר הגשת ביקורת על פארק זה',
+    alreadySubmitted: 'כבר הגשת חוות דעת על פארק זה',
   },
 };
 
