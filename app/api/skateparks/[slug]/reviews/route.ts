@@ -7,6 +7,8 @@ import Review from '@/lib/db/models/Review';
 import Settings from '@/lib/models/Settings';
 import type { ReviewContentByLocale } from '@/lib/db/models/Review';
 import { validateCsrf } from '@/lib/security/csrf';
+import { featureFlags, serverFlags } from '@/lib/config/feature-flags';
+import { awardXP } from '@/lib/services/xp.service';
 
 const LOCALES = ['en', 'he'] as const;
 type Locale = (typeof LOCALES)[number];
@@ -313,7 +315,7 @@ export async function POST(
       reviewData.comment = { [locale]: comment.trim() };
     }
 
-    await Review.create(reviewData);
+    const review = await Review.create(reviewData);
 
     // Increment skateparks version to invalidate client caches
     try {
@@ -324,6 +326,25 @@ export async function POST(
     } catch (versionError) {
       // Log error but don't fail the review submission
       console.error('Failed to increment skateparks version:', versionError);
+    }
+
+    // Award XP for writing a review (non-blocking)
+    if (session?.user?.id && featureFlags.reviewRewards) {
+      try {
+        await awardXP({
+          userId: session.user.id,
+          type: 'review_written',
+          xpAmount: serverFlags.xpReviewWritten,
+          sourceId: String(park._id),
+          sourceType: 'skatepark',
+          meta: {
+            skateparkSlug: slug.toLowerCase(),
+            reviewId: String(review._id),
+          },
+        });
+      } catch (xpError) {
+        console.error('Failed to award XP for review creation:', xpError);
+      }
     }
 
     return NextResponse.json({ success: true, message: 'Review submitted for moderation' }, { status: 201 });

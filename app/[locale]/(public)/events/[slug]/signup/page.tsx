@@ -189,11 +189,6 @@ export default function EventSignupPage() {
       }
 
       setSuccess({ confirmationNumber: data.confirmationNumber });
-      toast({
-        title: locale === 'he' ? 'נרשמת בהצלחה' : 'Registered successfully',
-        description: locale === 'he' ? 'שמרו את מספר האישור.' : 'Save your confirmation number.',
-        variant: 'success',
-      });
     } catch {
       toast({
         title: locale === 'he' ? 'שגיאה' : 'Error',

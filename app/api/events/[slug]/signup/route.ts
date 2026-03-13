@@ -6,6 +6,8 @@ import Event from '@/lib/models/Event';
 import EventSignup from '@/lib/models/EventSignup';
 import { getRateLimiter } from '@/lib/redis';
 import { z } from 'zod';
+import { featureFlags, serverFlags } from '@/lib/config/feature-flags';
+import { awardXP } from '@/lib/services/xp.service';
 
 /**
  * Event Signup API Route
@@ -321,6 +323,24 @@ export async function POST(
     await Event.findByIdAndUpdate(event._id, {
       $inc: { attendingCount: 1 },
     });
+
+    // Award XP for event signup (non-blocking)
+    if (userId && featureFlags.eventSignupRewards) {
+      try {
+        await awardXP({
+          userId,
+          type: 'event_signup',
+          xpAmount: serverFlags.xpEventSignup,
+          sourceId: String(signup._id),
+          sourceType: 'event',
+          meta: {
+            eventSlug: event.slug,
+          },
+        });
+      } catch (xpError) {
+        console.error('Failed to award XP for event signup:', xpError);
+      }
+    }
 
     // Always return the 6-digit code we generated (do not use signup.confirmationNumber in case of model override)
     return NextResponse.json(

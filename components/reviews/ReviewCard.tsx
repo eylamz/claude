@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Star, ThumbsUp, Flag } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { featureFlags } from '@/lib/config/feature-flags';
 
 export interface ReviewData {
   _id: string;
@@ -11,10 +12,12 @@ export interface ReviewData {
   comment: string;
   createdAt: string;
   helpfulCount?: number;
+  kudosCount?: number;
 }
 
 export default function ReviewCard({ review }: { review: ReviewData }) {
   const [helpful, setHelpful] = useState(review.helpfulCount || 0);
+  const [kudos, setKudos] = useState(review.kudosCount || 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reported, setReported] = useState(false);
 
@@ -26,6 +29,24 @@ export default function ReviewCard({ review }: { review: ReviewData }) {
       if (res.ok) {
         const data = await res.json();
         setHelpful(data.helpfulCount ?? helpful + 1);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleKudos = async () => {
+    if (!featureFlags.kudos || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/reviews/${review._id}/kudos`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof data.totalKudos === 'number') {
+          setKudos(data.totalKudos);
+        }
       }
     } finally {
       setIsSubmitting(false);
@@ -61,6 +82,16 @@ export default function ReviewCard({ review }: { review: ReviewData }) {
         <Button variant="outline" size="sm" onClick={handleHelpful} disabled={isSubmitting}>
           <ThumbsUp className="w-4 h-4 mr-1" /> Helpful ({helpful})
         </Button>
+        {featureFlags.kudos && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleKudos}
+            disabled={isSubmitting}
+          >
+            <ThumbsUp className="w-4 h-4 mr-1" /> Kudos ({kudos})
+          </Button>
+        )}
         <button
           onClick={handleReport}
           className={`text-sm inline-flex items-center gap-1 ${reported ? 'text-gray-400' : 'text-gray-600 hover:text-gray-800'}`}

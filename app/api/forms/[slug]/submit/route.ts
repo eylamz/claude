@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
 import mongoose from 'mongoose';
 import connectDB from '@/lib/db/mongodb';
 import Form from '@/lib/models/Form';
 import FormSubmission from '@/lib/models/FormSubmission';
 import crypto from 'crypto';
 import { RateLimiter } from '@/lib/redis';
+import { authOptions } from '@/lib/auth/config';
+import { featureFlags, serverFlags } from '@/lib/config/feature-flags';
+import { awardXP } from '@/lib/services/xp.service';
 
 /**
  * Get client IP from request
@@ -89,8 +93,15 @@ export async function POST(
       );
     }
 
-    // Check for duplicate submission
-    const existingSubmission = await FormSubmission.findByFingerprint(new mongoose.Types.ObjectId(String(form._id)), fingerprint);
+    // Get authenticated user (optional)
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+
+    // Check for duplicate submission by fingerprint (anonymous/technical duplicate protection)
+    const existingSubmission = await FormSubmission.findByFingerprint(
+      new mongoose.Types.ObjectId(String(form._id)),
+      fingerprint
+    );
     if (existingSubmission) {
       return NextResponse.json(
         { error: 'You have already submitted this form', submitted: true },
@@ -146,12 +157,39 @@ export async function POST(
       userFingerprint: fingerprint,
       ipAddress: hashData(ip),
       userAgent: hashData(userAgent),
+      userId: userId || undefined,
     });
 
     await submission.save();
 
     // Increment form submissions count
     await form.incrementSubmissions();
+
+    // Award XP for survey completion (non-blocking, one reward per user per form)
+    if (userId && featureFlags.surveyRewards) {
+      try {
+        const existingUserSubmission = await FormSubmission.findOne({
+          formId: form._id,
+          userId,
+          _id: { $ne: submission._id },
+        }).lean();
+
+        if (!existingUserSubmission) {
+          await awardXP({
+            userId,
+            type: 'survey_completed',
+            xpAmount: serverFlags.xpSurveyCompleted,
+            sourceId: String(form._id),
+            sourceType: 'form',
+            meta: {
+              formSlug: form.slug,
+            },
+          });
+        }
+      } catch (xpError) {
+        console.error('Failed to award XP for survey completion:', xpError);
+      }
+    }
 
     return NextResponse.json({
       success: true,
