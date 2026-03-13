@@ -4,6 +4,8 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { locales } from '@/i18n';
 import { AppProviders } from '@/components/providers';
+import { AwardNotificationProvider } from '@/lib/contexts/AwardNotificationContext';
+import { AwardPopup } from '@/components/gamification/AwardPopup';
 import { ReactNode } from 'react';
 import HeaderNav from '@/components/layout/HeaderNav';
 import MobileNav from '@/components/layout/MobileNav';
@@ -93,12 +95,15 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <AppProviders>
-        <div dir={htmlDir} lang={htmlLang} className={`${fontClass} `}>
-          {/* Nav loads first on every page; HeaderNav shows at 820px+, MobileNav below */}
-          <HeaderNav />
-          <MobileNav />
-          {children}
-        </div>
+        <AwardNotificationProvider>
+          <div dir={htmlDir} lang={htmlLang} className={`${fontClass} `}>
+            {/* Nav loads first on every page; HeaderNav shows at 820px+, MobileNav below */}
+            <HeaderNav />
+            <MobileNav />
+            {children}
+            <AwardPopup />
+          </div>
+        </AwardNotificationProvider>
       </AppProviders>
     </NextIntlClientProvider>
   );
