@@ -143,6 +143,20 @@ export async function uploadMultiple(
 }
 
 /**
+ * Extract Cloudinary public_id from a secure_url or upload URL.
+ * Returns null if the URL is not a Cloudinary image URL.
+ * Example: https://res.cloudinary.com/.../image/upload/v123/folder/id.webp → "folder/id"
+ */
+export function getPublicIdFromCloudinaryUrl(url: string): string | null {
+  if (!url || typeof url !== 'string') return null;
+  const match = url.match(/\/upload\/(?:v\d+\/)?(.+)$/);
+  if (!match) return null;
+  const path = match[1];
+  const lastDot = path.lastIndexOf('.');
+  return lastDot > -1 ? path.slice(0, lastDot) : path;
+}
+
+/**
  * Delete an image
  */
 export async function deleteImage(publicId: string): Promise<void> {

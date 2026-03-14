@@ -167,8 +167,24 @@ export default function HeaderNav() {
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [userLevel, setUserLevel] = useState<{ title: string; color: string } | null>(null);
+  const [userLevel, setUserLevel] = useState<{
+    title: string;
+    color: string;
+    textColorLight?: string;
+    textColorDark?: string;
+  } | null>(null);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [profileFullName, setProfileFullName] = useState<string>('');
+  const [profileUsername, setProfileUsername] = useState<string>('');
   const xpSystemEnabled = process.env.NEXT_PUBLIC_ENABLE_XP_SYSTEM === 'true';
+
+  /** Same initials logic as account profile page (first + last initial, or first 2 chars) */
+  const getProfileInitials = useCallback((name: string) => {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    if (parts[0]) return parts[0].slice(0, 2).toUpperCase();
+    return '?';
+  }, []);
   const [_scrollY, setScrollY] = useState(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const prevScrollYRef = useRef(0);
@@ -601,25 +617,55 @@ export default function HeaderNav() {
       .catch(() => {});
   }, [locale]);
 
-  // Fetch user level for header badge when logged in and XP system enabled
-  useEffect(() => {
-    if (!session?.user?.id || !xpSystemEnabled) {
+  // Fetch user profile (level badge + profile photo + name) from same API as account profile page; refetch on event when profile page updates
+  const fetchProfile = useCallback(async () => {
+    if (!session?.user?.id) {
       setUserLevel(null);
+      setProfilePhoto(null);
+      setProfileFullName('');
+      setProfileUsername('');
       return;
     }
-    fetch('/api/account/profile')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        const u = data?.user;
-        if (u?.levelTitle && u?.levelColor) {
-          const title = typeof u.levelTitle === 'string' ? u.levelTitle : (u.levelTitle[locale as 'en' | 'he'] ?? u.levelTitle.en);
-          setUserLevel({ title, color: u.levelColor });
-        } else {
-          setUserLevel(null);
-        }
-      })
-      .catch(() => setUserLevel(null));
+    try {
+      const res = await fetch('/api/account/profile');
+      if (!res.ok) return;
+      const data = await res.json();
+      const u = data?.user;
+      setProfilePhoto(u?.profilePhoto ?? null);
+      setProfileFullName(u?.fullName ?? '');
+      setProfileUsername(u?.username ?? '');
+      if (xpSystemEnabled && u?.levelTitle && u?.levelColor) {
+        const title =
+          typeof u.levelTitle === 'string'
+            ? u.levelTitle
+            : (u.levelTitle[locale as 'en' | 'he'] ?? u.levelTitle.en);
+        setUserLevel({
+          title,
+          color: u.levelColor,
+          textColorLight: u.levelTextColorLight,
+          textColorDark: u.levelTextColorDark,
+        });
+      } else {
+        setUserLevel(null);
+      }
+    } catch {
+      setUserLevel(null);
+      setProfilePhoto(null);
+      setProfileFullName('');
+      setProfileUsername('');
+    }
   }, [session?.user?.id, xpSystemEnabled, locale]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  // Refetch profile when account profile page updates (save / photo change) so header stays in sync
+  useEffect(() => {
+    const onProfileUpdated = () => fetchProfile();
+    window.addEventListener('account-profile-updated', onProfileUpdated);
+    return () => window.removeEventListener('account-profile-updated', onProfileUpdated);
+  }, [fetchProfile]);
 
   // Group results by category (like MobileSidebar)
   const groupedResults = useMemo(() => {
@@ -1235,31 +1281,36 @@ export default function HeaderNav() {
               {loginEnabled && session && (
                 <Link
                   href={`/${locale}/account/profile`}
-                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sidebar-text dark:text-sidebar-text-dark hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
+                  className="grid grid-flow-col auto-cols-max items-stretch gap-1.5 px-2 py-1.5 rounded-lg text-sidebar-text dark:text-sidebar-text-dark hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
                   aria-label={tCommon('profile')}
                 >
-                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300 overflow-hidden">
-                    {(session.user as { image?: string }).image ? (
-                      <Image
-                        src={(session.user as { image: string }).image}
-                        alt=""
-                        width={32}
-                        height={32}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      (session.user?.name ?? session.user?.email ?? '?').charAt(0).toUpperCase()
-                    )}
-                  </span>
-                  {xpSystemEnabled && userLevel && (
-                    <span
-                      className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium text-white truncate max-w-[72px]"
-                      style={{ backgroundColor: userLevel.color }}
-                      title={userLevel.title}
-                    >
-                      {userLevel.title}
+                  <span className="h-full min-h-8 max-h-12 inline-flex items-center justify-center w-max">
+                    <span className="h-full aspect-square min-w-8 max-h-8 rounded-full overflow-hidden flex items-center justify-center bg-gray-200 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {profilePhoto ? (
+                        <Image
+                          src={profilePhoto}
+                          alt=""
+                          width={32}
+                          height={32}
+                          className="w-full h-full object-cover"
+                          sizes="32px"
+                          quality={95}
+                        />
+                      ) : (profileFullName || profileUsername) ? (
+                        getProfileInitials(profileFullName || profileUsername)
+                      ) : (session.user as { image?: string }).image ? (
+                        <Image
+                          src={(session.user as { image: string }).image}
+                          alt=""
+                          width={32}
+                          height={32}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        (session.user?.name ?? session.user?.email ?? '?').charAt(0).toUpperCase()
+                      )}
                     </span>
-                  )}
+                  </span>
                 </Link>
               )}
 

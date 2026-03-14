@@ -6,6 +6,8 @@ import User from '@/lib/models/User';
 import BadgeDefinition from '@/lib/models/BadgeDefinition';
 import AwardNotification from '@/lib/models/AwardNotification';
 import { getLevelFromXP, getNextLevel } from '@/lib/config/levels';
+import { deleteImage, getPublicIdFromCloudinaryUrl } from '@/lib/cloudinary/upload';
+import { configureCloudinary } from '@/lib/cloudinary/config';
 import mongoose from 'mongoose';
 
 const USERNAME_MIN = 2;
@@ -30,7 +32,7 @@ export async function GET(request: NextRequest) {
     const userId = new mongoose.Types.ObjectId(session.user.id);
     const user = await User.findById(userId)
       .select(
-        'username fullName bio profilePhoto city relatedSports totalXP levelId currentRank stats streak badges'
+        'username fullName bio profilePhoto city relatedSports totalXP levelId currentRank stats streak badges email'
       )
       .lean();
 
@@ -81,6 +83,7 @@ export async function GET(request: NextRequest) {
         bio: user.bio ?? '',
         profilePhoto: user.profilePhoto,
         city: user.city ?? '',
+        email: (user as any).email ?? '',
         relatedSports: user.relatedSports ?? [],
         totalXP: user.totalXP ?? 0,
         levelId: user.levelId ?? 1,
@@ -194,6 +197,17 @@ export async function PATCH(request: NextRequest) {
     if (typeof body.profilePhoto === 'string') {
       updates.profilePhoto = body.profilePhoto.trim() || null;
     } else if (body.profilePhoto === null || body.profilePhoto === '') {
+      if (user.profilePhoto) {
+        const publicId = getPublicIdFromCloudinaryUrl(user.profilePhoto);
+        if (publicId) {
+          try {
+            configureCloudinary();
+            await deleteImage(publicId);
+          } catch (err) {
+            console.warn('Could not delete profile photo from Cloudinary:', err);
+          }
+        }
+      }
       updates.profilePhoto = null;
     }
 

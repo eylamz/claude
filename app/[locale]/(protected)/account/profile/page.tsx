@@ -13,6 +13,7 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
+  Separator,
 } from '@/components/ui';
 import { Button } from '@/components/ui';
 import { Input } from '@/components/ui';
@@ -34,7 +35,7 @@ const RELATED_SPORTS = ['skateboarding', 'rollerblading', 'bmx', 'scootering'] a
 
 const RELATED_SPORTS_CONFIG = [
   { value: 'rollerblading' as const, iconName: 'Roller' as const, variant: 'teal' as const },
-  { value: 'skateboarding' as const, iconName: 'skate' as const, variant: 'teal' as const },
+  { value: 'skateboarding' as const, iconName: 'Skate' as const, variant: 'teal' as const },
   { value: 'scootering' as const, iconName: 'scooter' as const, variant: 'teal' as const },
   { value: 'bmx' as const, iconName: 'bmx-icon' as const, variant: 'teal' as const },
 ] as const;
@@ -46,6 +47,33 @@ const featureFlags = {
   personalRanking: process.env.NEXT_PUBLIC_ENABLE_PERSONAL_RANKING === 'true',
 };
 
+/** Rarity-based styles for badge cards so design differs by tier */
+function getBadgeRarityStyles(rarity: string): { card: string; pill: string } {
+  switch (rarity) {
+    case 'legendary':
+      return {
+        card: 'border-amber-400/60 dark:border-amber-500/50 bg-amber-50/50 dark:bg-amber-950/20 shadow-sm',
+        pill: 'bg-amber-200/80 dark:bg-amber-800/50 text-amber-900 dark:text-amber-100',
+      };
+    case 'epic':
+      return {
+        card: 'border-purple-400/60 dark:border-purple-500/50 bg-purple-50/50 dark:bg-purple-950/20 shadow-sm',
+        pill: 'bg-purple-200/80 dark:bg-purple-800/50 text-purple-900 dark:text-purple-100',
+      };
+    case 'rare':
+      return {
+        card: 'border-blue-400/50 dark:border-blue-500/50 bg-blue-50/40 dark:bg-blue-950/20 shadow-sm',
+        pill: 'bg-blue-200/80 dark:bg-blue-800/50 text-blue-900 dark:text-blue-100',
+      };
+    case 'common':
+    default:
+      return {
+        card: 'border-gray-200 dark:border-gray-700',
+        pill: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+      };
+  }
+}
+
 interface ProfileUser {
   _id: string;
   username: string;
@@ -53,6 +81,7 @@ interface ProfileUser {
   bio: string;
   profilePhoto?: string | null;
   city: string;
+  email?: string;
   relatedSports: string[];
   totalXP: number;
   levelId: number;
@@ -90,6 +119,8 @@ export default function AccountProfilePage() {
   const [user, setUser] = useState<ProfileUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savedSuccess, setSavedSuccess] = useState(false);
+  const savedSuccessTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
 
   const [username, setUsername] = useState('');
@@ -140,6 +171,12 @@ export default function AccountProfilePage() {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  useEffect(() => {
+    return () => {
+      if (savedSuccessTimeoutRef.current) clearTimeout(savedSuccessTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!featureFlags.xpSystem || !user) return;
@@ -193,6 +230,7 @@ export default function AccountProfilePage() {
       }
       const data = await res.json();
       setUser((prev) => (prev ? { ...prev, profilePhoto: data.profilePhoto } : null));
+      window.dispatchEvent(new CustomEvent('account-profile-updated'));
     } catch (err) {
       console.error(err);
       alert('Upload failed');
@@ -218,6 +256,7 @@ export default function AccountProfilePage() {
       const data = await res.json();
       if (data.user) setUser((prev) => (prev ? { ...prev, profilePhoto: data.user.profilePhoto ?? null } : null));
       else setUser((prev) => (prev ? { ...prev, profilePhoto: null } : null));
+      window.dispatchEvent(new CustomEvent('account-profile-updated'));
     } catch (err) {
       console.error(err);
       alert('Failed to remove photo');
@@ -249,6 +288,10 @@ export default function AccountProfilePage() {
         return;
       }
       setUser((prev) => (prev ? { ...prev, ...data.user } : null));
+      setSavedSuccess(true);
+      if (savedSuccessTimeoutRef.current) clearTimeout(savedSuccessTimeoutRef.current);
+      savedSuccessTimeoutRef.current = setTimeout(() => setSavedSuccess(false), 3000);
+      window.dispatchEvent(new CustomEvent('account-profile-updated'));
     } catch (err) {
       console.error(err);
       alert('Save failed');
@@ -321,11 +364,11 @@ export default function AccountProfilePage() {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="group relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900 cursor-pointer"
+                  className="group relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-text dark:focus:ring-brand-text dark:focus:ring-offset-gray-900 cursor-pointer"
                   aria-label={t('avatar')}
                 >
                   {photoUploading ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-200/90 dark:bg-gray-700/90 z-10">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
                       <LoadingSpinner size={40} variant="imageOverlay" className="w-10 h-10" />
                     </div>
                   ) : null}
@@ -334,43 +377,67 @@ export default function AccountProfilePage() {
                     alt=""
                     fill
                     className="object-cover"
-                    sizes="96px"
+                    sizes="288px"
+                    quality={95}
                   />
-                  <span className="absolute inset-0 rounded-full bg-black/10 dark:bg-white/10 opacity-0 transition-opacity pointer-events-none group-hover:opacity-100" aria-hidden />
+                  <span className="absolute inset-0 rounded-full bg-black/50 opacity-0 transition-opacity pointer-events-none group-hover:opacity-100 flex items-center justify-center" aria-hidden>
+                    <Icon name="edit" className="w-8 h-8 text-white drop-shadow-sm" />
+                  </span>
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="start" side="bottom" className="w-56 p-1">
-                <div className="grid gap-0.5">
-                  <button
+              <PopoverContent
+                align="start"
+                side="bottom"
+                className={`w-fit p-2 ${locale === 'he' ? '!left-0 !right-auto' : '!right-0 !left-auto'}`}
+              >
+                <div className="flex flex-col gap-2 justify-center items-center">
+                  <Button
+                    variant="none"
+                    size="sm"
                     type="button"
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
+                    className={`!px-2 group w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                     onClick={() => {
                       setAvatarPopoverOpen(false);
                       fileInputRef.current?.click();
                     }}
                   >
-                    <ImageIcon className="w-4 h-4 shrink-0" />
-                    {t('changeProfilePicture')}
-                  </button>
-                  <button
+                    <Icon
+                      name="edit"
+                      className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200"
+                    />
+                    <span className="text-text dark:text-text-dark/90">
+                      {t('changeProfilePicture')}
+                    </span>
+                  </Button>
+                  <Button
+                    variant="none"
+                    size="sm"
                     type="button"
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
+                    className={`!px-2 group w-full flex gap-2 font-medium justify-start ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                     onClick={() => {
                       setAvatarPopoverOpen(false);
                       setPhotoModalUrl(user.profilePhoto ?? null);
                     }}
                   >
-                    <ImageIcon className="w-4 h-4 shrink-0" />
-                    {t('seeProfilePicture')}
-                  </button>
-                  <button
+                    <Icon
+                      name="image"
+                      className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200"
+                    />
+                    <span className="text-text dark:text-text-dark/90">
+                      {t('seeProfilePicture')}
+                    </span>
+                  </Button>
+                  <Separator className="bg-popover-border dark:bg-popover-border-dark" />
+                  <Button
+                    variant="none"
+                    size="sm"
                     type="button"
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 text-left"
+                    className={`!px-2 w-full flex gap-2 font-medium justify-start border border-transparent hover:border-red-border dark:hover:border-red-border-dark hover:bg-red-bg dark:hover:bg-red-bg-dark text-red dark:text-red-dark hover:text-red dark:hover:text-red-dark transition-all duration-300 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row'}`}
                     onClick={handleRemovePhoto}
                   >
-                    <Trash2 className="w-4 h-4 shrink-0" />
-                    {t('removeProfilePicture')}
-                  </button>
+                    <Icon name="trash" className="w-4 h-4" />
+                    <span>{t('removeProfilePicture')}</span>
+                  </Button>
                 </div>
               </PopoverContent>
             </Popover>
@@ -378,7 +445,7 @@ export default function AccountProfilePage() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 dark:focus:ring-offset-gray-900 cursor-pointer flex items-center justify-center group"
+              className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 shrink-0 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-text dark:focus:ring-brand-main dark:focus:ring-offset-gray-900 cursor-pointer flex items-center justify-center group"
               aria-label={t('uploadPhoto')}
             >
               {photoUploading ? (
@@ -439,45 +506,49 @@ export default function AccountProfilePage() {
         <CardHeader>
           <CardTitle className="text-lg">{t('identity')}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('username')}
-            </label>
-            <Input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              maxLength={30}
-              className={'max-w-[400px] ' + (usernameError ? 'border-red-500' : '')}
-            />
-            {usernameError && (
-              <p className="text-sm text-red-500 mt-1">{usernameError}</p>
-            )}
+        <CardContent className="flex flex-col gap-8">
+          <div className="flex flex-col sm:flex-row gap-8">
+          <div className="max-w-[400px] w-full flex flex-col gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('username')}
+              </label>
+              <Input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                maxLength={30}
+                className={'max-w-[400px] ' + (usernameError ? 'border-red-500' : '')}
+              />
+              {usernameError && (
+                <p className="text-sm text-red dark:text-red-dark mt-1">{usernameError}</p>
+              )}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('fullName')}
+              </label>
+              <Input
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                maxLength={100}
+                className="max-w-[400px]"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {t('bio')}
+              </label>
+              <Textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                maxLength={300}
+                rows={3}
+                className="resize-none max-w-[400px]"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{bio.length}/300</p>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('fullName')}
-            </label>
-            <Input
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              maxLength={100}
-              className="max-w-[400px]"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('bio')} (max 300)
-            </label>
-            <Textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              maxLength={300}
-              rows={3}
-              className="resize-none max-w-[400px]"
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{bio.length}/300</p>
-          </div>
+          <div className="flex flex-col gap-4">
           <div>
             <IsraelCitiesAutocomplete
               value={city}
@@ -491,14 +562,13 @@ export default function AccountProfilePage() {
               {t('relatedSports')}
             </span>
             <TooltipProvider delayDuration={50}>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {RELATED_SPORTS_CONFIG.map((sport) => {
                   const isSelected = relatedSports.includes(sport.value);
                   return (
                     <Tooltip key={sport.value}>
                       <TooltipTrigger asChild>
                         <Button
-                          type="button"
                           variant={isSelected ? sport.variant : 'gray'}
                           size="sm"
                           onClick={() =>
@@ -508,11 +578,9 @@ export default function AccountProfilePage() {
                                 : [...prev, sport.value]
                             )
                           }
-                          aria-label={t(`sports.${sport.value}`)}
-                          className="inline-flex items-center gap-2"
+                          aria-label={t('sports.' + sport.value)}
                         >
-                          <Icon name={sport.iconName} className="w-5 h-5" />
-                          <span>{t(`sports.${sport.value}`)}</span>
+                          <Icon name={sport.iconName as any} className="w-5 h-5" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent
@@ -520,26 +588,33 @@ export default function AccountProfilePage() {
                         className="text-center"
                         variant={isSelected ? sport.variant : 'gray'}
                       >
-                        {t(`sports.${sport.value}`)}
+                        {t('sports.' + sport.value)}
                       </TooltipContent>
                     </Tooltip>
                   );
                 })}
               </div>
             </TooltipProvider>
+            </div>
           </div>
-          <Button 
+          </div>
+          <Button
             variant="primary"
-            onClick={handleSave} 
+            onClick={handleSave}
             disabled={saving}
-            >
+            className="w-20 flex gap-2 items-center text-sm"
+          >
             {saving ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {t('saving')}
+                <LoadingSpinner variant="brandText" size={20} className="animate-fadeIn shrink-0" />
+             
               </>
+            ) : savedSuccess ? (
+              <>
+                <Icon name="checkmark" className="w-10 h-10 opacity-0 animate-popFadeIn" />
+              </> 
             ) : (
-              t('save')
+              <span className="animate-fadeIn">{t('save')}</span>
             )}
           </Button>
         </CardContent>
@@ -610,7 +685,7 @@ export default function AccountProfilePage() {
         <Card className="max-w-[400px] mb-6">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Flame className="w-5 h-5 text-orange-500" />
+              <Flame className="w-5 h-5 fill-brand-main text-[#31c438]" />
               {t('streak')}
             </CardTitle>
           </CardHeader>
@@ -641,7 +716,7 @@ export default function AccountProfilePage() {
 
       {/* 5. Badges (only if xpSystem) */}
       {featureFlags.xpSystem && (
-        <Card className="max-w-[400px] mb-6">
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Trophy className="w-5 h-5 text-amber-500" />
@@ -650,26 +725,31 @@ export default function AccountProfilePage() {
           </CardHeader>
           <CardContent>
             {user.badgesWithDetails && user.badgesWithDetails.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {user.badgesWithDetails.map((b) => (
-                  <div
-                    key={b.id}
-                    className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 text-center"
-                  >
-                    <div className="text-2xl mb-2">{b.icon || '🏅'}</div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {b.name[locale] ?? b.name.en}
-                    </p>
-                    <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-                      {b.rarity}
-                    </span>
-                    {user.badgeEarnedAt[b.id] && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {new Date(user.badgeEarnedAt[b.id]).toLocaleDateString(locale)}
-                      </p>
-                    )}
-                  </div>
-                ))}
+              <div className="flex gap-4">
+                {user.badgesWithDetails.map((b) => {
+                  const styles = getBadgeRarityStyles(b.rarity);
+                  return (
+                    <div
+                      key={b.id}
+                      className={`flex flex-col min-h-[160px] w-full max-w-[120px] p-4 rounded-lg border text-center ${styles.card}`}
+                    >
+                      <div className="text-2xl mb-2">{b.icon || '🏅'}</div>
+                      <div className="min-h-[2.5rem] flex items-center justify-center">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 leading-tight text-center w-full">
+                          {b.name[locale] ?? b.name.en}
+                        </p>
+                      </div>
+                      <span className={`uppercase inline-block mt-2 px-2 py-0.5 text-xs rounded-full font-medium shrink-0 w-fit self-center ${styles.pill}`}>
+                        {b.rarity}
+                      </span>
+                      {user.badgeEarnedAt[b.id] && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-auto pt-2">
+                          {new Date(user.badgeEarnedAt[b.id]).toLocaleDateString(locale)}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-gray-500 dark:text-gray-400 text-center py-6">
@@ -682,7 +762,7 @@ export default function AccountProfilePage() {
 
       {/* 6. XP History (only if xpSystem) */}
       {featureFlags.xpSystem && (
-        <Card className="max-w-[400px] mb-6">
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">{t('xpHistory')}</CardTitle>
           </CardHeader>

@@ -170,7 +170,11 @@
     "xpAmount": "XP",
     "source": "מקור",
     "save": "שמור",
+    "resetPassword": "איפוס סיסמה",
+    "reset": "איפוס",
+    "resetPasswordLink": "איפוס",
     "saving": "שומר...",
+    "saved": "נשמר",
     "usernameTaken": "שם המשתמש כבר תפוס",
     "sports": {
       "skateboarding": "סקייטבורדינג",

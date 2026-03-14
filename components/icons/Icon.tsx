@@ -58,6 +58,7 @@ import Money from './money.svg';
 import MoneyBold from './moneyBold.svg';
 import Close from './close.svg';
 import X from './X.svg';
+import Image from './imageBold.svg';
 import ImageBold from './imageBold.svg';
 import BulkImage from './bulkImage.svg';
 import Logo from './logo.svg';
@@ -361,6 +362,7 @@ const iconMap: Record<string, SvgComponent> = {
   lightbulbBold: LightbulbBold,
   hours24: Hours24,
   imageBold: ImageBold,
+  image: Image,
   bulkImage: BulkImage,
   sparks: Sparks,
   sparksBold: SparksBold,
@@ -560,7 +562,7 @@ export type IconName =
   | 'sparks' | 'sparksBold'
   | 'searchQuest'
   | 'bulkImage'
-  | 'imageBold'
+  | 'image' | 'imageBold'
   | 'clock' | 'clockBold' 
   | 'closedPark'
   | 'couch'

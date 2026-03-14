@@ -205,7 +205,10 @@ img {
 }
 
 input {
-  caret-color: theme('colors.brand.main');
+  caret-color: #7ac109;
+}
+.dark input {
+  caret-color: theme('colors.brand.dark');
 }
 
 /* Default (light mode) */

@@ -2044,6 +2044,24 @@ const IsraelCitiesAutocomplete = React.forwardRef<
     const listRef = React.useRef<HTMLUListElement>(null);
     const finalPlaceholder = placeholder ?? (locale === 'he' ? 'חפש עיר...' : 'Search for a city...');
 
+    // Resolve value to a city by matching either English or Hebrew name (so locale switch still matches)
+    const resolvedCity = React.useMemo(() => {
+      const v = value.trim();
+      if (!v) return null;
+      const lower = v.toLowerCase();
+      return ISRAEL_CITIES.find((city) => {
+        const enMatch = city.en.toLowerCase() === lower;
+        const heMatch = city.he === v || city.he.trim() === v; // Hebrew: exact match
+        return enMatch || heMatch;
+      }) ?? null;
+    }, [value]);
+
+    // Treat as "selected" when value matches any known city (either locale)
+    const isExactMatch = !!resolvedCity;
+
+    // Show city name in current locale when we have a resolved city; otherwise show raw value
+    const displayValue = resolvedCity ? (locale === 'he' ? resolvedCity.he : resolvedCity.en) : value;
+
     // Filter logic: use .includes() for better UX (e.g., "Saba" finds "Kfar Saba")
     // Sort based on locale - English ABC or Hebrew אב"ג
     React.useEffect(() => {
@@ -2065,7 +2083,8 @@ const IsraelCitiesAutocomplete = React.forwardRef<
           return enMatch || heMatch;
         });
         setFilteredCities(sortByLocale(filtered));
-        setIsOpen(true);
+        // Keep suggestions closed when value is a selected city (e.g. pre-filled from profile)
+        setIsOpen(!isExactMatch);
         setHighlightedIndex(0);
       } else if (isFocused) {
         // Show all cities when focused but no search term
@@ -2076,7 +2095,7 @@ const IsraelCitiesAutocomplete = React.forwardRef<
         setFilteredCities([]);
         setIsOpen(false);
       }
-    }, [value, isFocused, locale]);
+    }, [value, isFocused, locale, isExactMatch]);
 
     const handleSelect = (cityValue: string) => {
       onChange(cityValue);
@@ -2135,8 +2154,8 @@ const IsraelCitiesAutocomplete = React.forwardRef<
           <div className="relative">
             <div
               className={cn(
-                'max-w-[14rem] flex-1',
-                'relative flex items-center h-10 w-full rounded-xl px-3 py-2 text-sm transition-all bord bg-input dark:bg-input-dark',
+                'max-w-[20rem] flex-1',
+                'relative flex items-center h-10 w-full rounded-xl px-3 py-2 text-sm transition-all border border-input-border dark:border-input-border-dark bg-input dark:bg-input-dark',
                 'focus-within:border-brand-main ',
                 disabled && 'opacity-50 cursor-not-allowed',
                 error && 'border-red-500'
@@ -2147,7 +2166,7 @@ const IsraelCitiesAutocomplete = React.forwardRef<
                   ref={ref}
                   id={finalId}
                   type="text"
-                  value={value}
+                  value={displayValue}
                   onChange={(e) => onChange(e.target.value)}
                   onKeyDown={handleKeyDown}
                   onFocus={() => setIsFocused(true)}
@@ -2160,7 +2179,7 @@ const IsraelCitiesAutocomplete = React.forwardRef<
                 />
               </Popover.Trigger>
 
-              {value && (
+              {displayValue && (
                 <button
                   type="button"
                   onClick={() => onChange('')}
@@ -2182,7 +2201,7 @@ const IsraelCitiesAutocomplete = React.forwardRef<
                 {filteredCities.length > 0 ? (
                   filteredCities.map((city, index) => {
                     const displayName = locale === 'he' ? city.he : city.en;
-                    const isSelected = value.toLowerCase() === displayName.toLowerCase();
+                    const isSelected = resolvedCity ? city.en === resolvedCity.en : value.toLowerCase() === displayName.toLowerCase();
                     
                     return (
                       <li key={`${city.en}-${index}`}>

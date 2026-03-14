@@ -169,7 +169,11 @@
     "xpAmount": "XP",
     "source": "Source",
     "save": "Save",
+    "resetPassword": "Reset password",
+    "reset": "Reset",
+    "resetPasswordLink": "Reset",
     "saving": "Saving...",
+    "saved": "Saved",
     "usernameTaken": "Username is already taken",
     "sports": {
       "skateboarding": "Skateboarding",

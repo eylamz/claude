@@ -33,7 +33,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             // Default variant
             variant === 'default' && [
               "bg-input dark:bg-input-dark",
-              "border border-input-border/50 dark:border-input-border-dark/50 md:focus-visible:border-brand-main dark:md:focus-visible:border-brand-main",
+              "border border-input-border dark:border-input-border-dark md:focus-visible:border-brand-main dark:md:focus-visible:border-brand-main",
               "hover:bg-input-hover dark:hover:bg-input-hover-dark",
               "placeholder:text-text-secondary dark:placeholder:text-text-secondary-dark",
               "text-text dark:text-text-dark",

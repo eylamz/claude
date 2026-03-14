@@ -10,6 +10,7 @@ export type { CloudinaryConfig, UploadOptions, TransformationOptions } from './c
 export {
   uploadImage,
   uploadMultiple,
+  getPublicIdFromCloudinaryUrl,
   deleteImage,
   deleteMultiple,
   getOptimizedUrl,

@@ -173,8 +173,8 @@ export const colors = {
     light: 'hsl(0, 0%, 100%)',
     dark: 'hsl(240, 3%, 15%)',
     border: {
-      light: 'hsl(0, 0%, 50%)',
-      dark: 'hsl(240, 1%, 42%)',
+      light: 'hsl(0, 0%,85%)',
+      dark: 'hsl(240, 1%, 30%)',
     },
     hover: {
       light: 'hsl(220, 6%, 99%)',
@@ -467,11 +467,11 @@ export const colors = {
     dark: 'hsl(83, 100%, 50%)',
     bg: {
       light: 'hsl(83, 84%, 85%)',
-      dark: 'hsl(261, 54%, 20%)',
+      dark: 'hsl(83, 54%, 20%)',
     },
     border: {
       light: 'hsl(83, 96%, 68%)',
-      dark: '#6e40c4',
+      dark: 'hsl(83, 62%, 25%)',
     },
     hover: {
       bg: {
