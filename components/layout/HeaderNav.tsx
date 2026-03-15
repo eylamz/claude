@@ -167,7 +167,7 @@ export default function HeaderNav() {
   const [updatingItems, setUpdatingItems] = useState<Set<string>>(new Set());
   const [removingItems, setRemovingItems] = useState<Set<string>>(new Set());
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [userLevel, setUserLevel] = useState<{
+  const [_userLevel, setUserLevel] = useState<{
     title: string;
     color: string;
     textColorLight?: string;

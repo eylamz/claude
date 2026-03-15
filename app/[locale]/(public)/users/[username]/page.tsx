@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
@@ -13,9 +13,10 @@ import {
   CardTitle,
 } from '@/components/ui';
 import { Skeleton } from '@/components/ui';
+import { NotFoundContent } from '@/components/not-found/NotFoundContent';
 import { Icon } from '@/components/icons';
 import { ISRAEL_CITIES } from '@/components/ui/israel-cities-autocomplete';
-import { Flame, Trophy, MapPin, ChevronRight } from 'lucide-react';
+import { Flame, Trophy, ChevronRight } from 'lucide-react';
 
 const featureFlags = {
   xpSystem: process.env.NEXT_PUBLIC_ENABLE_XP_SYSTEM === 'true',
@@ -98,10 +99,10 @@ interface XPEventItem {
 
 export default function PublicProfilePage() {
   const params = useParams();
-  const router = useRouter();
   const locale = useLocale() as 'en' | 'he';
   const { data: session } = useSession();
   const t = useTranslations('common.account');
+  const tCommon = useTranslations('common');
 
   const username = typeof params.username === 'string' ? params.username : '';
   const [user, setUser] = useState<PublicUser | null>(null);
@@ -276,17 +277,13 @@ export default function PublicProfilePage() {
 
   if (notFound || !user) {
     return (
-      <div className="min-h-screen max-w-4xl mx-auto p-4 lg:p-8 pt-24 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          {t('profile')} not found
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          This user does not exist or the username is incorrect.
-        </p>
-        <Link href={`/${locale}`} className="text-brand-main dark:text-brand-dark hover:underline">
-          Go home
-        </Link>
-      </div>
+      <NotFoundContent
+        locale={locale}
+        title={tCommon('userNotFound.title')}
+        description={tCommon('userNotFound.description')}
+        backHomeLabel={tCommon('userNotFound.backHome')}
+        homeHref={`/${locale}`}
+      />
     );
   }
 

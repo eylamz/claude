@@ -34,7 +34,7 @@ export function NotFoundContent({
       lang={lang}
     >
       <Card className="max-w-2xl w-full">
-        <CardContent className="p-12 text-center space-y-6">
+        <CardContent className="p-6 text-center space-y-6">
           <div className="flex justify-center">
             <Icon name="searchClose" className="w-20 h-20 text-purple dark:text-orange-dark" />
           </div>

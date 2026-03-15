@@ -20,7 +20,7 @@ const RELATED_SPORTS = ['skateboarding', 'rollerblading', 'bmx', 'scootering'] a
  * GET /api/account/profile
  * Authenticated. Returns current user profile for edit page (includes XP, level, streak, badges).
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {

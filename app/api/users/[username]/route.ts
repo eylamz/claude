@@ -3,7 +3,6 @@ import connectDB from '@/lib/db/mongodb';
 import User from '@/lib/models/User';
 import BadgeDefinition from '@/lib/models/BadgeDefinition';
 import { getLevelFromXP } from '@/lib/config/levels';
-import mongoose from 'mongoose';
 
 /**
  * GET /api/users/[username]

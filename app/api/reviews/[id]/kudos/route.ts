@@ -9,7 +9,7 @@ import { featureFlags, serverFlags } from '@/lib/config/feature-flags';
 import { awardXP } from '@/lib/services/xp.service';
 
 export async function POST(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {

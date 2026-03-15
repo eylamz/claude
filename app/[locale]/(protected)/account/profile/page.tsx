@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -29,9 +29,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { IsraelCitiesAutocomplete } from '@/components/ui/israel-cities-autocomplete';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Icon } from '@/components/icons';
-import { ChevronLeft, Upload, Flame, Trophy, Loader2, X, ImageIcon, Trash2 } from 'lucide-react';
-
-const RELATED_SPORTS = ['skateboarding', 'rollerblading', 'bmx', 'scootering'] as const;
+import { ChevronLeft, Upload, Flame, Trophy, Loader2, X } from 'lucide-react';
 
 const RELATED_SPORTS_CONFIG = [
   { value: 'rollerblading' as const, iconName: 'Roller' as const, variant: 'teal' as const },
@@ -111,7 +109,6 @@ interface XPEventItem {
 
 export default function AccountProfilePage() {
   const locale = useLocale() as 'en' | 'he';
-  const pathname = usePathname();
   const router = useRouter();
   const t = useTranslations('common.account');
   const tEventType = (key: string) => t(`xpEventTypes.${key}` as any);
