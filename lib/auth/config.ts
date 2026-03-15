@@ -1,9 +1,8 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { MongoDBAdapter } from '@auth/mongodb-adapter';
-import { MongoClient } from 'mongodb';
 import User from '@/lib/models/User';
-import { connectDB, isDBConnected } from '@/lib/db/mongodb';
+import { connectDB, getMongoClientPromise, isDBConnected } from '@/lib/db/mongodb';
 import { RateLimiter } from '@/lib/redis';
 
 /**
@@ -52,43 +51,6 @@ const isHttps = (): boolean => {
   }
 };
 
-/**
- * Resolve and validate the MongoDB URI for NextAuth.
- *
- * This mirrors the strict checks used in the main MongoDB utility so that:
- * - We fail fast when MONGODB_URI is missing or misconfigured.
- * - We avoid accidentally using an administrative connection string.
- */
-const getMongoDbUriForAuth = (): string => {
-  const uri = process.env.MONGODB_URI;
-
-  if (!uri) {
-    throw new Error(
-      'MONGODB_URI environment variable is not defined. ' +
-        'Set MONGODB_URI to a least-privilege MongoDB Atlas user (readWrite on your app database).'
-    );
-  }
-
-  return uri;
-};
-
-/**
- * MongoDB client for NextAuth adapter
- *
- * We lazily create and reuse a single MongoClient connection for the lifetime
- * of this module to avoid opening multiple clients in development.
- */
-let clientPromise: Promise<MongoClient> | null = null;
-
-const getMongoClientPromise = (): Promise<MongoClient> => {
-  if (!clientPromise) {
-    const uri = getMongoDbUriForAuth();
-    const client = new MongoClient(uri);
-    clientPromise = client.connect();
-  }
-  return clientPromise;
-};
-
 /** Rate limiter for login attempts: 5 attempts per minute per email (brute-force protection) */
 const loginRateLimiter = new RateLimiter(60000, 5);
 
@@ -96,8 +58,7 @@ const loginRateLimiter = new RateLimiter(60000, 5);
  * NextAuth configuration
  */
 export const authOptions: NextAuthOptions = {
-  // Use MongoDB adapter for session management
-  // Cast: @auth/mongodb-adapter uses @auth/core types; next-auth expects extended User (e.g. role)
+  // Use MongoDB adapter with shared Mongoose connection pool (single pool for app + sessions)
   adapter: MongoDBAdapter(getMongoClientPromise()) as NextAuthOptions['adapter'],
 
   // Providers

@@ -1,4 +1,10 @@
 import mongoose from 'mongoose';
+import type { MongoClient } from 'mongodb';
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __mongoose_connection_promise__: Promise<typeof mongoose> | undefined;
+}
 
 /**
  * Connection state types
@@ -56,28 +62,22 @@ const getDatabaseUri = (): string => {
 };
 
 /**
- * Connection options with pooling
+ * Connection options with pooling (reduced for Atlas free tier)
  */
 const getConnectionOptions = (): mongoose.ConnectOptions => {
   const env = getEnvironment();
-  
-  // Base configuration
+  const envMaxPool = process.env.MONGODB_MAX_POOL_SIZE;
+  const maxPoolFromEnv = envMaxPool ? Math.max(1, parseInt(envMaxPool, 10) || 5) : undefined;
+
+  // Base configuration - smaller pools to stay within Atlas free-tier connection limits
   const baseOptions: mongoose.ConnectOptions = {
-    // Connection pooling configuration
-    maxPoolSize: 10, // Maximum number of connections in the pool
-    minPoolSize: 2, // Minimum number of connections to maintain
-    serverSelectionTimeoutMS: 10000, // How long to try selecting a server (increased for DNS resolution)
-    socketTimeoutMS: 45000, // How long a send or receive on a socket can take before timeout
-    
-    // Retry configuration
+    maxPoolSize: maxPoolFromEnv ?? 5,
+    minPoolSize: 0,
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
     retryWrites: true,
     retryReads: true,
-    
-    // Additional options
     connectTimeoutMS: 30000,
-    
-    // Buffer commands until connected - prevents "Cannot call X before initial connection" in serverless
-    // when metadata/layout and API run in parallel or connection is still establishing.
     bufferCommands: true,
   };
 
@@ -85,17 +85,17 @@ const getConnectionOptions = (): mongoose.ConnectOptions => {
   if (env === 'production') {
     return {
       ...baseOptions,
-      maxPoolSize: 20, // More connections in production
-      minPoolSize: 5,
+      maxPoolSize: maxPoolFromEnv ?? 10,
+      minPoolSize: 1,
     };
   }
 
   if (env === 'test') {
     return {
       ...baseOptions,
-      maxPoolSize: 5,
+      maxPoolSize: maxPoolFromEnv ?? 5,
       minPoolSize: 1,
-      bufferCommands: true, // Allow buffering in tests
+      bufferCommands: true,
     };
   }
 
@@ -157,34 +157,20 @@ async function connectWithRetry(
 
 /**
  * Connect to the database
- * Uses connection caching for serverless environments
+ * Uses globalThis + in-memory caching so the same connection is reused across hot reloads and requests
  */
 export async function connectDB(): Promise<typeof mongoose> {
   // Check if already connected first (fastest check)
   if (mongoose.connection.readyState === 1) {
-    // Ensure event listeners are set up even if connection already exists
     if (!eventListenersSetup) {
       setupEventListeners();
     }
     return mongoose;
   }
 
-  // Return existing connection promise if available (prevents multiple simultaneous connections)
-  if (connectionPromise) {
-    return connectionPromise;
-  }
-
-  // If connecting (e.g. another request started connect), wait for that connection to complete
-  // instead of starting a duplicate connection.
-  if (mongoose.connection.readyState === 2) {
-    const maxWait = 15000; // 15s max wait for in-flight connection
-    const step = 50;
-    let elapsed = 0;
-    while (mongoose.connection.readyState === 2 && elapsed < maxWait) {
-      await new Promise((resolve) => setTimeout(resolve, step));
-      elapsed += step;
-    }
-    // Re-read state (may have changed to connected); assert number to avoid TS narrowing from outer branch
+  // Reuse cached promise from globalThis (survives Next.js hot reload)
+  const cached = globalThis.__mongoose_connection_promise__;
+  if (cached) {
     const state = mongoose.connection.readyState as number;
     if (state === 1) {
       if (!eventListenersSetup) {
@@ -192,7 +178,37 @@ export async function connectDB(): Promise<typeof mongoose> {
       }
       return mongoose;
     }
-    // Still connecting after maxWait - fall through to create/await connectionPromise below
+    if (state === 2) {
+      const connection = await cached;
+      if (!eventListenersSetup) {
+        setupEventListeners();
+      }
+      return connection;
+    }
+    // Cached promise exists but connection dropped; fall through to reconnect
+  }
+
+  // In-memory promise (prevents multiple simultaneous connections in same module load)
+  if (connectionPromise) {
+    return connectionPromise;
+  }
+
+  // If connecting, wait for in-flight connection
+  if (mongoose.connection.readyState === 2) {
+    const maxWait = 15000;
+    const step = 50;
+    let elapsed = 0;
+    while (mongoose.connection.readyState === 2 && elapsed < maxWait) {
+      await new Promise((resolve) => setTimeout(resolve, step));
+      elapsed += step;
+    }
+    const state = mongoose.connection.readyState as number;
+    if (state === 1) {
+      if (!eventListenersSetup) {
+        setupEventListeners();
+      }
+      return mongoose;
+    }
   }
 
   try {
@@ -200,22 +216,20 @@ export async function connectDB(): Promise<typeof mongoose> {
     const options = getConnectionOptions();
 
     console.log('🔌 Connecting to MongoDB...');
-    
-    // Create new connection promise
+
     connectionPromise = connectWithRetry(uri, options);
+    globalThis.__mongoose_connection_promise__ = connectionPromise;
 
     const connection = await connectionPromise;
 
-    // Set up event listeners (only once)
     setupEventListeners();
 
-    // Clear promise after successful connection
     connectionPromise = null;
-
     return connection;
   } catch (error) {
     console.error('❌ Failed to establish MongoDB connection:', error);
     connectionPromise = null;
+    globalThis.__mongoose_connection_promise__ = undefined;
     __isConnected = false;
     throw error;
   }
@@ -231,7 +245,8 @@ export async function disconnectDB(): Promise<void> {
       console.log('✅ MongoDB disconnected successfully');
       __isConnected = false;
       connectionPromise = null;
-      eventListenersSetup = false; // Reset flag on disconnect
+      globalThis.__mongoose_connection_promise__ = undefined;
+      eventListenersSetup = false;
     } else {
       console.log('ℹ️  MongoDB already disconnected');
     }
@@ -327,6 +342,7 @@ function setupEventListeners(): void {
     console.log('📴 MongoDB disconnected');
     __isConnected = false;
     connectionPromise = null;
+    globalThis.__mongoose_connection_promise__ = undefined;
   });
 
   mongoose.connection.on('reconnected', () => {
@@ -357,6 +373,15 @@ function setupEventListeners(): void {
  */
 export function getConnection(): typeof mongoose.connection {
   return mongoose.connection;
+}
+
+/**
+ * Returns the underlying MongoClient used by Mongoose. Use this with NextAuth's MongoDBAdapter
+ * so the app and NextAuth share a single connection pool.
+ */
+export async function getMongoClientPromise(): Promise<MongoClient> {
+  await connectDB();
+  return mongoose.connection.getClient();
 }
 
 /**
@@ -414,6 +439,7 @@ export async function forceReconnect(): Promise<void> {
   try {
     await disconnectDB();
     connectionPromise = null;
+    globalThis.__mongoose_connection_promise__ = undefined;
     __isConnected = false;
     await connectDB();
     console.log('✅ Force reconnected to MongoDB');
