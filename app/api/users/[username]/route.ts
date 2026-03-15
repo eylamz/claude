@@ -30,7 +30,10 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const level = getLevelFromXP(user.totalXP ?? 0);
+    const totalXP = user.totalXP ?? 0;
+    const usersAbove = await User.countDocuments({ totalXP: { $gt: totalXP } });
+    const computedRank = usersAbove + 1;
+    const level = getLevelFromXP(totalXP);
     const badgeIds = user.badges ?? [];
     let badgesWithDetails: Array<{ id: string; name: { en: string; he: string }; icon: string; rarity: string }> = [];
 
@@ -58,7 +61,7 @@ export async function GET(
       levelId: user.levelId ?? 1,
       levelTitle: level.title,
       levelColor: level.color,
-      currentRank: user.currentRank ?? 0,
+      currentRank: computedRank,
       stats: user.stats ?? {
         skateparksVisited: 0,
         guidesCompleted: 0,

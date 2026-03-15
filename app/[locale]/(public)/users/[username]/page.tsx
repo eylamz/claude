@@ -329,9 +329,9 @@ export default function PublicProfilePage() {
                     {levelTitle}
                   </span>
                 )}
-                {isOwnProfile && featureFlags.personalRanking && user.currentRank > 0 && (
+                {isOwnProfile && featureFlags.personalRanking && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
-                    Your rank: #{user.currentRank}
+                    Your rank: {user.currentRank > 0 ? `#${user.currentRank}` : '—'}
                   </span>
                 )}
               </div>

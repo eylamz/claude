@@ -41,6 +41,8 @@ export async function GET(_request: NextRequest) {
     }
 
     const totalXP = user.totalXP ?? 0;
+    const usersAbove = await User.countDocuments({ totalXP: { $gt: totalXP } });
+    const computedRank = usersAbove + 1;
     const level = getLevelFromXP(totalXP);
     const nextLevel = getNextLevel(totalXP);
     const badgeIds = user.badges ?? [];
@@ -95,7 +97,7 @@ export async function GET(_request: NextRequest) {
         currentLevelMinXP: level.minXP,
         nextLevelMinXP: nextLevel?.minXP ?? null,
         nextLevelTitle: nextLevel?.title ?? null,
-        currentRank: user.currentRank ?? 0,
+        currentRank: computedRank,
         stats: user.stats ?? {},
         streak: user.streak ?? {},
         badges: user.badges ?? [],

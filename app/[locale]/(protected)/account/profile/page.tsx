@@ -724,13 +724,13 @@ export default function AccountProfilePage() {
               >
                 {levelTitle}
               </span>
-              {featureFlags.personalRanking && user.currentRank > 0 && (
+              {featureFlags.personalRanking && (
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   <span className="dark:hidden" style={user.levelTextColorLight ? { color: user.levelTextColorLight } : undefined}>
-                    {t('currentRank')}: #{user.currentRank}
+                    {t('currentRank')}: {user.currentRank > 0 ? `#${user.currentRank}` : '—'}
                   </span>
                   <span className="hidden dark:inline" style={user.levelTextColorDark ? { color: user.levelTextColorDark } : undefined}>
-                    {t('currentRank')}: #{user.currentRank}
+                    {t('currentRank')}: {user.currentRank > 0 ? `#${user.currentRank}` : '—'}
                   </span>
                 </span>
               )}
