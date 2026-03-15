@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ExternalLink, ChevronLeft } from 'lucide-react';
+import { ExternalLink, ChevronLeft, X } from 'lucide-react';
 import { Icon } from '@/components/icons';
-import { Button, Skeleton } from '@/components/ui';
+import { Button, Skeleton, Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { generateArticleStructuredData, getGuideMetaFromData } from '@/lib/seo/utils';
 import type { GuideData } from '@/lib/api/guides';
@@ -17,6 +18,10 @@ import {
   isGuidesCacheFresh,
   getGuidesFetchedAtReadable,
 } from '@/lib/search-from-cache';
+import { featureFlags } from '@/lib/config/feature-flags';
+import { AnimatePresence, motion } from 'framer-motion';
+import { GuideQuizSection } from '@/components/guides/GuideQuizSection';
+import { Separator } from '@/components/ui';
 
 interface ILocalizedField {
   en: string;
@@ -143,7 +148,7 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
             href={safeHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-brand-main dark:text-brand-dark font-medium underline decoration-2 underline-offset-2 hover:decoration-brand-main/50 transition-all"
+            className="text-brand-color dark:text-brand-dark font-medium underline decoration-2 underline-offset-2 hover:decoration-brand-main/50 transition-all"
           >
             {match[1]}
           </a>
@@ -417,6 +422,7 @@ function ContentBlockRenderer({ blocks, locale }: { blocks: ContentBlock[] | { e
 export default function GuidePage() {
   const params = useParams();
   const locale = useLocale();
+  const { status } = useSession();
   const tGuides = useTranslations('guides');
   const slug = params.slug as string;
 
@@ -437,7 +443,88 @@ export default function GuidePage() {
   const [cacheInitialized, setCacheInitialized] = useState(false);
   const [, setCurrentVersion] = useState<number | null>(null);
   const [isNavigatingBack, setIsNavigatingBack] = useState(false);
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [quizModalClosing, setQuizModalClosing] = useState(false);
+  const [showAlreadyCompletedPopup, setShowAlreadyCompletedPopup] = useState(false);
+  const [userAlreadyPassedQuiz, setUserAlreadyPassedQuiz] = useState(false);
+  const [userNoQuizAvailable, setUserNoQuizAvailable] = useState(false);
+  const [showNoQuizPopup, setShowNoQuizPopup] = useState(false);
+  const quizModalCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const alreadyCompletedPopupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noQuizPopupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
+
+  const handleGoToQuiz = useCallback(async () => {
+    if (!guide?.slug || status !== 'authenticated') return;
+    try {
+      const quizRes = await fetch(`/api/guides/${encodeURIComponent(guide.slug)}/quiz`);
+      if (!quizRes.ok) {
+        setUserNoQuizAvailable(true);
+        setShowNoQuizPopup(true);
+        if (noQuizPopupTimeoutRef.current) clearTimeout(noQuizPopupTimeoutRef.current);
+        noQuizPopupTimeoutRef.current = setTimeout(() => {
+          setShowNoQuizPopup(false);
+          noQuizPopupTimeoutRef.current = null;
+        }, 2500);
+        return;
+      }
+      const attemptRes = await fetch(`/api/guides/${encodeURIComponent(guide.slug)}/quiz/attempt`, {
+        credentials: 'include',
+      });
+      if (attemptRes.ok) {
+        const data = await attemptRes.json();
+        if (data.attempt?.passed) {
+          setUserAlreadyPassedQuiz(true);
+          setShowAlreadyCompletedPopup(true);
+          if (alreadyCompletedPopupTimeoutRef.current) clearTimeout(alreadyCompletedPopupTimeoutRef.current);
+          alreadyCompletedPopupTimeoutRef.current = setTimeout(() => {
+            setShowAlreadyCompletedPopup(false);
+            alreadyCompletedPopupTimeoutRef.current = null;
+          }, 2500);
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    setShowQuizModal(true);
+  }, [guide?.slug, status]);
+
+  const closeQuizModal = useCallback(() => {
+    if (quizModalClosing) return;
+    setQuizModalClosing(true);
+    quizModalCloseTimeoutRef.current = setTimeout(() => {
+      setShowQuizModal(false);
+      setQuizModalClosing(false);
+      quizModalCloseTimeoutRef.current = null;
+    }, 320);
+  }, [quizModalClosing]);
+
+  useEffect(() => {
+    return () => {
+      if (quizModalCloseTimeoutRef.current) clearTimeout(quizModalCloseTimeoutRef.current);
+      if (alreadyCompletedPopupTimeoutRef.current) clearTimeout(alreadyCompletedPopupTimeoutRef.current);
+      if (noQuizPopupTimeoutRef.current) clearTimeout(noQuizPopupTimeoutRef.current);
+    };
+  }, []);
+
+  // On load: if no quiz or user already passed, show button as disabled with tooltip
+  useEffect(() => {
+    if (!guide?.slug || status !== 'authenticated') return;
+    let cancelled = false;
+    fetch(`/api/guides/${encodeURIComponent(guide.slug)}/quiz`)
+      .then((quizRes) => {
+        if (!quizRes.ok && !cancelled) setUserNoQuizAvailable(true);
+        return quizRes.ok
+          ? fetch(`/api/guides/${encodeURIComponent(guide.slug)}/quiz/attempt`, { credentials: 'include' }).then((r) => r.ok ? r.json() : null)
+          : Promise.resolve(null);
+      })
+      .then((data) => {
+        if (!cancelled && data?.attempt?.passed) setUserAlreadyPassedQuiz(true);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [guide?.slug, status]);
 
   // Check version and cache on mount (refetch only after 1 hour from last fetch)
   useEffect(() => {
@@ -970,19 +1057,170 @@ export default function GuidePage() {
             </div>
           )}
 
-          {/* Back to Guides - Bottom CTA */}
-          <div className="text-center pt-8">
-            <Button variant="primary" className={`px-6 font-semibold`} asChild>
-              <Link href={`/${locale}/guides`}
-              className={`flex items-center gap-2 ${locale === 'he' ? 'flex-row-reverse' : 'flex-row-reverse'}`}
+          {/* Back to Guides + Go to quiz (side by side) */}
+          <div className="flex flex-wrap justify-center items-center gap-3 pt-8">
+            <Button
+              variant={featureFlags.guideQuizzes && status === 'authenticated' ? 'gray' : 'primary'}
+              className="px-6 font-semibold inline-flex items-center gap-2"
+              asChild
+            >
+              <Link
+                href={`/${locale}/guides`}
+                className={locale === 'he' ? 'flex-row-reverse' : 'flex-row-reverse'}
               >
                 {locale === 'he' ? 'חזרה למדריכים' : 'Back to Guides'}
                 <ChevronLeft className={`w-4 h-4 ${locale === 'he' ? 'rotate-180' : ''}`} />
               </Link>
             </Button>
+            {featureFlags.guideQuizzes && status === 'authenticated' && (
+              userAlreadyPassedQuiz ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex">
+                        <Button
+                          variant="yellowBtn"
+                          disabled
+                          className="inline-flex items-center gap-2 px-6 font-semibold cursor-not-allowed opacity-70"
+                        >
+                {locale === 'he' ? 'בחן את עצמך' : 'Take the quiz'}
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" variant="yellow">
+                      {locale === 'he' ? 'כבר הושלם' : 'Already completed'}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : userNoQuizAvailable ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex">
+                        <Button
+                          variant="yellowBtn"
+                          disabled
+                          className="inline-flex items-center gap-2 px-6 font-semibold cursor-not-allowed opacity-70"
+                        >
+                         {locale === 'he' ? 'בחן את עצמך' : 'Take the quiz'}
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" variant="yellow">
+                      {locale === 'he' ? 'אין בוחן למדריך זה' : 'No quiz available'}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : (
+                <Button
+                  variant="yellowBtn"
+                  onClick={handleGoToQuiz}
+                  className="inline-flex items-center gap-2 px-6 font-semibold"
+                >
+                {locale === 'he' ? 'בחן את עצמך' : 'Take the quiz'}
+                </Button>
+              )
+            )}
           </div>
         </main>
       </div>
+
+      {/* Quiz modal */}
+      {showQuizModal && guide && (
+        <div className={`fixed inset-0 z-50 overflow-y-auto ${quizModalClosing ? 'animate-fadeOut' : ''}`}>
+          <div
+            className={`fixed inset-0 bg-black/50 dark:bg-black/40 backdrop-blur-[2px] ${quizModalClosing ? 'animate-fadeOut' : ''}`}
+            onClick={closeQuizModal}
+            aria-hidden
+          />
+          <div className={`fixed inset-0 flex items-center justify-center p-4 pointer-events-none ${quizModalClosing ? 'animate-fadeOut' : ''}`}>
+            <div
+              className={`max-w-2xl w-full max-h-[90vh] overflow-y-auto relative z-10 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 bg-background dark:bg-background-dark pointer-events-auto ${quizModalClosing ? 'animate-fadeOut' : 'animate-scaleFadeUp'}`}
+              role="dialog"
+              aria-modal="true"
+              aria-label={locale === 'he' ? `${guideTitle} בוחן` : `${guideTitle} quiz`}
+            >
+              <div className="sticky top-0 flex items-center justify-between z-10 bg-background dark:bg-background-dark pb-2">
+                <h2 className="text-base font-bold text-text dark:text-text-dark">
+                  {locale === 'he' ? `${guideTitle} בוחן` : `${guideTitle} quiz`}
+                </h2>
+                <button
+                  type="button"
+                  onClick={closeQuizModal}
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                  aria-label={locale === 'he' ? 'סגור' : 'Close'}
+                >
+                  <X className="w-5 h-5 text-text dark:text-text-dark" />
+                </button>
+              </div>
+              <Separator className="my-2" />
+              <div className="min-h-[240px] pt-2">
+                <GuideQuizSection
+                  key={`quiz-modal-${guide.slug}`}
+                  slug={guide.slug}
+                  locale={locale}
+                  inModal
+                  onClose={closeQuizModal}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Already completed quiz – thank you style popup (no error) */}
+      <AnimatePresence>
+        {showAlreadyCompletedPopup && (
+          <motion.div
+            key="quiz-already-completed-popup"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="backdrop-blur-sm fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none"
+            aria-live="polite"
+          >
+            <div
+              dir={locale === 'he' ? 'rtl' : 'ltr'}
+              className="pointer-events-auto rounded-xl px-6 py-4 shadow-lg bg-sidebar dark:bg-sidebar-dark border border-border dark:border-border-dark text-center max-w-sm"
+              style={{
+                filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))',
+              }}
+            >
+              <p className="text-base font-medium text-text dark:text-text-dark">
+                {locale === 'he' ? 'כבר השלמת את הבוחן ✓' : "You've already completed this quiz ✓"}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* No quiz available – thank you style popup */}
+      <AnimatePresence>
+        {showNoQuizPopup && (
+          <motion.div
+            key="quiz-no-quiz-popup"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="backdrop-blur-sm fixed inset-0 z-[60] flex items-center justify-center p-4 pointer-events-none"
+            aria-live="polite"
+          >
+            <div
+              dir={locale === 'he' ? 'rtl' : 'ltr'}
+              className="pointer-events-auto rounded-xl px-6 py-4 shadow-lg bg-sidebar dark:bg-sidebar-dark border border-border dark:border-border-dark text-center max-w-sm"
+              style={{
+                filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))',
+              }}
+            >
+              <p className="text-base font-medium text-text dark:text-text-dark">
+                {locale === 'he' ? 'אין בוחן למדריך זה.' : 'No quiz available for this guide.'}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

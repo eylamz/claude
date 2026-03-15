@@ -17,6 +17,7 @@ import {
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import Link from 'next/link';
 import { ChevronLeft, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import { Icon } from '@/components/icons';
@@ -797,12 +798,17 @@ export default function EditGuidePage() {
             {error && <span className="text-red-500 ml-2">{error}</span>}
           </p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center flex-wrap gap-2">
           <Button type="button" variant="red" onClick={() => router.back()}>
             Cancel
           </Button>
           <Button type="button" variant="blue" onClick={() => setPreviewMode(!previewMode)}>
             {previewMode ? 'Edit' : 'Preview'}
+          </Button>
+          <Button variant="orange" asChild>
+            <Link href={`/${params.locale || 'en'}/admin/guides/${formData.slug || id}/quiz`}>
+              Quiz
+            </Link>
           </Button>
           <Button
             type="button"

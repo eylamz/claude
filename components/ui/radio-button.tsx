@@ -94,7 +94,7 @@ const RadioButton = React.forwardRef<HTMLInputElement, RadioButtonProps>(
             {...props}
           />
           <label htmlFor={radioId} className="radio-button__label">
-            <span className="radio-button__custom"></span>
+            <span className="radio-button__custom cursor-pointer"></span>
           </label>
         </div>
       </>

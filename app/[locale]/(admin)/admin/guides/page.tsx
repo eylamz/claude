@@ -1218,6 +1218,10 @@ export default function GuidesPage() {
                       <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/guides/${guideSlug}/edit`)}>
                         Edit
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push(`/${locale}/admin/guides/${guideSlug}/quiz`)}>
+                        Edit Quiz
+                      </DropdownMenuItem>
+
                       <DropdownMenuItem onClick={() => handleToggleFeature(guide.id)}>
                         {guide.isFeatured ? 'Unfeature' : 'Feature'}
                       </DropdownMenuItem>

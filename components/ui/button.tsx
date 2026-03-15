@@ -62,6 +62,16 @@ const buttonVariants = cva(
         pink: 'border-pink-border dark:border-pink-border-dark bg-pink-bg dark:bg-pink-bg-dark text-pink dark:text-pink-dark hover:bg-pink-hover-bg dark:hover:bg-pink-hover-bg-dark',
         teal: 'border-teal-border dark:border-teal-border-dark bg-teal-bg dark:bg-teal-bg-dark text-teal dark:text-teal-dark hover:bg-teal-hover-bg dark:hover:bg-teal-hover-bg-dark',
         yellow: 'border-yellow-border dark:border-yellow-border-dark bg-yellow-bg dark:bg-yellow-bg-dark text-yellow dark:text-yellow-dark hover:bg-yellow-hover-bg dark:hover:bg-yellow-hover-bg-dark',
+        // Solid fill variants
+        orangeBtn: 'bg-orange dark:bg-orange-dark text-orange-bg dark:text-orange-bg-dark',
+        tealBtn: 'bg-teal dark:bg-teal-dark text-teal-bg dark:text-teal-bg-dark',
+        greenBtn: 'bg-green dark:bg-green-dark text-green-bg dark:text-green-bg-dark',
+        blueBtn: 'bg-blue dark:bg-blue-dark text-blue-bg dark:text-blue-bg-dark',
+        redBtn: 'bg-red dark:bg-red-dark text-red-bg dark:text-red-bg-dark',
+        pinkBtn: 'bg-pink dark:bg-pink-dark text-pink-bg dark:text-pink-bg-dark',
+        limeBtn: 'bg-lime dark:bg-lime-dark text-lime-bg dark:text-lime-bg-dark',
+        purpleBtn: 'bg-purple dark:bg-purple-dark text-purple-bg dark:text-purple-bg-dark',
+        yellowBtn: 'bg-yellow dark:bg-yellow-dark text-yellow-bg dark:text-yellow-bg-dark',
       },
       size: {
         default: 'h-9 sm:h-10 px-3 sm:px-4 py-1.5 sm:py-2',
