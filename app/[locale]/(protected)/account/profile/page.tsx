@@ -308,9 +308,95 @@ export default function AccountProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen pb-16 lg:pb-0 max-w-4xl mx-auto p-4 lg:p-8">
+        {/* Back link */}
+        <Skeleton className="h-5 w-32 mb-6" />
+        {/* Page title */}
         <Skeleton className="h-8 w-48 mb-6" />
-        <Skeleton className="h-64 w-full rounded-xl mb-6" />
-        <Skeleton className="h-32 w-full rounded-xl" />
+
+        {/* Avatar card */}
+        <Card className="mb-6">
+          <CardHeader>
+            <Skeleton className="h-6 w-20" />
+          </CardHeader>
+          <CardContent className="flex items-center gap-6">
+            <Skeleton className="h-24 w-24 shrink-0 rounded-full" />
+          </CardContent>
+        </Card>
+
+        {/* Identity card */}
+        <Card className="mb-6">
+          <CardHeader>
+            <Skeleton className="h-6 w-24" />
+          </CardHeader>
+          <CardContent className="flex flex-col gap-8">
+            <div className="flex flex-col sm:flex-row gap-8">
+              <div className="max-w-[400px] w-full flex flex-col gap-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-10 w-full max-w-[400px] rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full max-w-[400px] rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="h-20 w-full max-w-[400px] rounded-xl" />
+                </div>
+              </div>
+              <div className="flex flex-col gap-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-10 w-full rounded-xl" />
+                </div>
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-28 mb-2" />
+                  <div className="flex gap-2 flex-wrap">
+                    <Skeleton className="h-9 w-20 rounded-full" />
+                    <Skeleton className="h-9 w-20 rounded-full" />
+                    <Skeleton className="h-9 w-20 rounded-full" />
+                    <Skeleton className="h-9 w-20 rounded-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <Skeleton className="h-10 w-20 rounded-xl" />
+          </CardContent>
+        </Card>
+
+        {/* Progress card */}
+        <Card className="max-w-[400px] mb-6">
+          <CardHeader>
+            <Skeleton className="h-6 w-24" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3 flex-wrap">
+              <Skeleton className="h-8 w-28 rounded-full" />
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+              <Skeleton className="h-2 w-full rounded-full" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Badges / XP History card */}
+        <Card className="mb-6">
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <Skeleton className="h-12 w-full rounded-lg" />
+              <Skeleton className="h-12 w-full rounded-lg" />
+              <Skeleton className="h-12 w-full rounded-lg" />
+              <Skeleton className="h-12 w-3/4 rounded-lg" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -349,10 +435,14 @@ export default function AccountProfilePage() {
       {/* 1. Avatar */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="text-lg">{t('avatar')}</CardTitle>
+          <h2 className="text-lg font-semibold leading-none tracking-tight">{t('avatar')}</h2>
         </CardHeader>
         <CardContent className="flex items-center gap-6">
+          <label htmlFor="profile-avatar-upload" className="sr-only">
+            {t('avatar')}
+          </label>
           <input
+            id="profile-avatar-upload"
             ref={fileInputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
@@ -510,10 +600,11 @@ export default function AccountProfilePage() {
           <div className="flex flex-col sm:flex-row gap-8">
           <div className="max-w-[400px] w-full flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="profile-username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('username')}
               </label>
               <Input
+                id="profile-username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 maxLength={30}
@@ -524,10 +615,11 @@ export default function AccountProfilePage() {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="profile-fullName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('fullName')}
               </label>
               <Input
+                id="profile-fullName"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 maxLength={100}
@@ -535,10 +627,11 @@ export default function AccountProfilePage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label htmlFor="profile-bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {t('bio')}
               </label>
               <Textarea
+                id="profile-bio"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 maxLength={300}
@@ -685,7 +778,7 @@ export default function AccountProfilePage() {
         <Card className="max-w-[400px] mb-6">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Flame className="w-5 h-5 fill-brand-main text-[#31c438]" />
+              <Flame className="w-5 h-5 fill-brand-main text-brand-color" />
               {t('streak')}
             </CardTitle>
           </CardHeader>
@@ -695,19 +788,19 @@ export default function AccountProfilePage() {
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {user.streak.currentWeeklyStreak ?? 0}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{t('weeklyStreak')}</p>
+                <h3 className="text-sm font-normal text-gray-600 dark:text-gray-400">{t('weeklyStreak')}</h3>
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {user.streak.currentMonthlyStreak ?? 0}
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{t('monthlyStreak')}</p>
+                <h3 className="text-sm font-normal text-gray-600 dark:text-gray-400">{t('monthlyStreak')}</h3>
               </div>
               <div>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {user.streak.weeklyHoursThisWeek ?? 0}h
                 </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">{t('weeklyHours')}</p>
+                <h3 className="text-sm font-normal text-gray-600 dark:text-gray-400">{t('weeklyHours')}</h3>
               </div>
             </div>
           </CardContent>
@@ -792,7 +885,7 @@ export default function AccountProfilePage() {
                           {tEventType(ev.type) || ev.type}
                         </TableCell>
                         <TableCell className="text-right">
-                          <span className={ev.xpAmount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                          <span className={ev.xpAmount >= 0 ? 'text-brand-text dark:text-brand-dark' : 'text-red dark:text-red-dark'}>
                             {ev.xpAmount >= 0 ? '+' : ''}{ev.xpAmount}
                           </span>
                         </TableCell>

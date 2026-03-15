@@ -38,5 +38,9 @@ export const serverFlags = {
   xpStreakMonthlyBonus: Number(process.env.XP_STREAK_MONTHLY_BONUS ?? 200),
   xpPioneerBonus: Number(process.env.XP_PIONEER_FIRST_CHECKIN ?? 100),
   xpCrewContribution: Number(process.env.XP_CREW_CONTRIBUTION_BONUS ?? 10),
+  /** Min check-in hours in a week to count that week for the streak (default 4). */
+  streakWeeklyMinHours: Number(process.env.STREAK_WEEKLY_MIN_HOURS ?? 4),
+  /** Min check-in hours in a month to count that month for the streak (default 16). */
+  streakMonthlyMinHours: Number(process.env.STREAK_MONTHLY_MIN_HOURS ?? 16),
 } as const;
 

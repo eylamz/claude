@@ -3,7 +3,7 @@ export const colors = {
     main: 'hsl(83, 100%, 50%)',
     dark: 'hsl(83, 100%, 50%)',
     text: 'hsl(83, 100%, 17%)',
-    color: 'hsl(162, 56%, 45%)',
+    color: '#7ac109',
     accent: 'hsl(249, 60%, 57%)',
     hover: 'hsl(83, 100%, 47%)',
     stroke: 'hsl(122, 100%, 12%)',

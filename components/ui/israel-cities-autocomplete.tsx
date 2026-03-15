@@ -2156,7 +2156,8 @@ const IsraelCitiesAutocomplete = React.forwardRef<
               className={cn(
                 'max-w-[20rem] flex-1',
                 'relative flex items-center h-10 w-full rounded-xl px-3 py-2 text-sm transition-all border border-input-border dark:border-input-border-dark bg-input dark:bg-input-dark',
-                'focus-within:border-brand-main ',
+                'outline-transparent outline-offset-2',
+                'sm:focus-within:outline-brand-main ',
                 disabled && 'opacity-50 cursor-not-allowed',
                 error && 'border-red-500'
               )}
@@ -2211,9 +2212,9 @@ const IsraelCitiesAutocomplete = React.forwardRef<
                           className={cn(
                             'w-full px-3 py-1.5 my-0.5 text-sm rounded-md transition-colors text-start',
                             highlightedIndex === index
-                              ? 'bg-brand-main/5 dark:bg-brand-dark/10 text-brand-main dark:text-brand-dark'
+                              ? 'bg-brand-main/5 dark:bg-brand-dark/10 text-brand-stroke dark:text-brand-dark'
                               : 'text-gray dark:text-gray-dark hover:bg-gray-bg/50 dark:hover:bg-gray-bg-dark ',
-                            isSelected && 'bg-brand-main/50 dark:bg-brand-dark/20 font-medium'
+                            isSelected && 'bg-brand-color/30 dark:bg-brand-dark/20 font-medium'
                           )}
                         >
                           {displayName}

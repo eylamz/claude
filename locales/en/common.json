@@ -162,6 +162,18 @@
     "weeklyHours": "Hours this week",
     "badges": "Badges",
     "noBadgesYet": "Start riding to earn your first badge",
+    "stats": "Stats",
+    "parksVisited": "Parks Visited",
+    "guidesCompleted": "Guides Completed",
+    "eventsAttended": "Events Attended",
+    "recentXp": "Recent XP",
+    "location": "Location",
+    "sportLabels": {
+      "skater": "Skater",
+      "blader": "Blader",
+      "scooter": "Scooter",
+      "biker": "Biker"
+    },
     "xpHistory": "XP History",
     "loadMore": "Load more",
     "date": "Date",

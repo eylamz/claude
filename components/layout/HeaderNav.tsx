@@ -1035,7 +1035,7 @@ export default function HeaderNav() {
                 className="group flex items-center gap-2 px-3 py-2 rounded-lg text-sidebar-text dark:text-sidebar-text-dark hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
                 aria-label={locale === 'he' ? 'חיפוש פארקים' : 'Search parks'}
               >
-                <span className="inline-flex items-center justify-center w-4 h-4">
+                <span className="search-hover-wrapper inline-flex items-center justify-center w-4 h-4">
                   <NavIcons name="searchBold" className="w-4 h-4" />
                 </span>
               </button>
@@ -1277,42 +1277,6 @@ export default function HeaderNav() {
                 </div>
               )}
 
-              {/* Profile link (avatar or username + level badge when logged in) */}
-              {loginEnabled && session && (
-                <Link
-                  href={`/${locale}/account/profile`}
-                  className="grid grid-flow-col auto-cols-max items-stretch gap-1.5 px-2 py-1.5 rounded-lg text-sidebar-text dark:text-sidebar-text-dark hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
-                  aria-label={tCommon('profile')}
-                >
-                  <span className="h-full min-h-8 max-h-12 inline-flex items-center justify-center w-max">
-                    <span className="h-full aspect-square min-w-8 max-h-8 rounded-full overflow-hidden flex items-center justify-center bg-gray-200 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {profilePhoto ? (
-                        <Image
-                          src={profilePhoto}
-                          alt=""
-                          width={32}
-                          height={32}
-                          className="w-full h-full object-cover"
-                          sizes="32px"
-                          quality={95}
-                        />
-                      ) : (profileFullName || profileUsername) ? (
-                        getProfileInitials(profileFullName || profileUsername)
-                      ) : (session.user as { image?: string }).image ? (
-                        <Image
-                          src={(session.user as { image: string }).image}
-                          alt=""
-                          width={32}
-                          height={32}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        (session.user?.name ?? session.user?.email ?? '?').charAt(0).toUpperCase()
-                      )}
-                    </span>
-                  </span>
-                </Link>
-              )}
 
               {/* Settings */}
               <div className="relative">
@@ -1323,10 +1287,10 @@ export default function HeaderNav() {
                       aria-label={locale === 'he' ? 'הגדרות' : 'Settings'}
                       type="button"
                     >
-                      <span className="inline-flex items-center justify-center w-5 h-5">
+                      <span className="settings-rotate-wrapper inline-flex items-center justify-center w-5 h-5">
                         <NavIcons
                           name="settingsBold"
-                          className="w-5 h-5 group-hover:rotate-[46deg] transition-transform duration-500"
+                          className="settings-rotate-icon w-5 h-5"
                         />
                       </span>
                     </button>
@@ -1375,12 +1339,12 @@ export default function HeaderNav() {
                         {locale === 'en' ? (
                           <Icon
                             name="hebrewBold"
-                            className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-[#8be100] dark:group-hover:text-brand-dark"
+                            className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-brand-color dark:group-hover:text-brand-dark"
                           />
                         ) : (
                           <Icon
                             name="englishBold"
-                            className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-[#8be100] dark:group-hover:text-brand-dark"
+                            className="w-4 h-4 text-gray/75 dark:text-gray-dark/75 transition-all duration-200 group-hover:text-brand-color dark:group-hover:text-brand-dark"
                           />
                         )}
                         <span className="text-text dark:text-text-dark/90">
@@ -1603,6 +1567,45 @@ export default function HeaderNav() {
                   </PopoverContent>
                 </Popover>
               </div>
+
+              {/* Profile link (avatar or username + level badge when logged in) */}
+              {loginEnabled && session && (
+                <Link
+                  href={`/${locale}/account/profile`}
+                  className="grid grid-flow-col auto-cols-max items-stretch gap-1.5 px-2 py-1.5 rounded-lg text-sidebar-text dark:text-sidebar-text-dark hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-all duration-200"
+                  aria-label={tCommon('profile')}
+                >
+                  <span className="h-full min-h-8 max-h-12 inline-flex items-center justify-center w-max">
+                    <span className="h-full aspect-square min-w-8 max-h-8 rounded-full overflow-hidden flex items-center justify-center bg-gray-200 dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {profilePhoto ? (
+                        <Image
+                          src={profilePhoto}
+                          alt=""
+                          width={32}
+                          height={32}
+                          className="w-full h-full object-cover"
+                          sizes="32px"
+                          quality={95}
+                        />
+                      ) : (profileFullName || profileUsername) ? (
+                        getProfileInitials(profileFullName || profileUsername)
+                      ) : (session.user as { image?: string }).image ? (
+                        <Image
+                          src={(session.user as { image: string }).image}
+                          alt=""
+                          width={32}
+                          height={32}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        (session.user?.name ?? session.user?.email ?? '?').charAt(0).toUpperCase()
+                      )}
+                    </span>
+                  </span>
+                </Link>
+              )}
+
+
             </div>
           </div>
         </div>

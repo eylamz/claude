@@ -6,9 +6,6 @@ import StreakRecord from '../models/StreakRecord';
 import AwardNotification from '../models/AwardNotification';
 import { awardXP } from './xp.service';
 
-const STREAK_WEEKLY_MIN_HOURS = serverFlags.xpStreakWeeklyBonus > 0 ?  serverFlags.xpStreakWeeklyBonus / serverFlags.xpSkatepark : 1;
-const STREAK_MONTHLY_MIN_HOURS = serverFlags.xpStreakMonthlyBonus > 0 ? serverFlags.xpStreakMonthlyBonus / serverFlags.xpSkatepark : 4;
-
 export async function addCheckinHours(
   userId: string,
   durationMinutes: number,
@@ -45,7 +42,7 @@ export async function processWeeklyStreaks(): Promise<void> {
 
   for (const user of users) {
     const hours = user.streak.weeklyHoursThisWeek;
-    const metThreshold = hours >= STREAK_WEEKLY_MIN_HOURS;
+    const metThreshold = hours >= serverFlags.streakWeeklyMinHours;
 
     if (metThreshold) {
       const currentStreak = user.streak.currentWeeklyStreak + 1;
@@ -126,7 +123,7 @@ export async function processMonthlyStreaks(): Promise<void> {
 
   for (const user of users) {
     const hours = user.streak.monthlyHoursThisMonth;
-    const metThreshold = hours >= STREAK_MONTHLY_MIN_HOURS;
+    const metThreshold = hours >= serverFlags.streakMonthlyMinHours;
 
     if (metThreshold) {
       const currentStreak = user.streak.currentMonthlyStreak + 1;

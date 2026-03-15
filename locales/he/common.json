@@ -163,6 +163,18 @@
     "weeklyHours": "שעות השבוע",
     "badges": "תגים",
     "noBadgesYet": "התחל לרכוב כדי להרוויח את התג הראשון שלך",
+    "stats": "סטטיסטיקות",
+    "parksVisited": "פארקים שבוקרו",
+    "guidesCompleted": "מדריכים שהושלמו",
+    "eventsAttended": "השתתפות באירועים",
+    "recentXp": "XP אחרון",
+    "location": "מיקום",
+    "sportLabels": {
+      "skater": "סקייטר",
+      "blader": "בליידר",
+      "scooter": "קורקינט",
+      "biker": "רוכב אופניים"
+    },
     "xpHistory": "היסטוריית XP",
     "loadMore": "טען עוד",
     "date": "תאריך",

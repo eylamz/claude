@@ -205,7 +205,7 @@ img {
 }
 
 input {
-  caret-color: #7ac109;
+  caret-color: theme('colors.brand.color');
 }
 .dark input {
   caret-color: theme('colors.brand.dark');
@@ -543,4 +543,25 @@ html:not(.dark) .navLowShadow {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Search icon hover: scale circle and nudge top-left */
+.group:hover .search-hover-wrapper .search-hover {
+  transform: scale(1.2) translate(-1.5px, -1.5px);
+  transform-origin: 50% 50%;
+  transition: transform 0.2s ease;
+}
+
+.search-hover-wrapper .search-hover {
+  transition: all 0.4s ease;
+}
+
+/* Settings icon: snappier hover-in, smoother return to default */
+.group:hover .settings-rotate-wrapper .settings-rotate-icon {
+  transform: rotate(46deg);
+  transition: transform 0.25s ease;
+}
+
+.settings-rotate-wrapper .settings-rotate-icon {
+  transition: transform 0.55s ease;
 }
